@@ -38,15 +38,15 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 
 | ID | Título | Status | Data |
 |---|---|---|---|
-| [001](0001-stack-react-vite-dotnet-postgresql.md) | Stack: React + Vite + .NET 10 + PostgreSQL | ⏳ Pendente | — |
-| [002](0002-revogacao-do-pitch.md) | Revogação da stack declarada no pitch | ⏳ Pendente | — |
-| [003](0003-multi-tenancy-por-coluna.md) | Multi-tenancy por coluna `business_id` | ⏳ Pendente | — |
-| [004](0004-identidade-papeis-conta-global.md) | Identidade, papéis e conta global do consumidor | ⏳ Pendente | — |
-| [005](0005-dupla-reserva-constraint-exclusao.md) | Prevenção de dupla reserva por constraint de exclusão | ⏳ Pendente | — |
-| [006](0006-slot-calculado-nao-persistido.md) | Slot calculado, não persistido | ⏳ Pendente | — |
-| [007](0007-monolito-modular-fronteiras.md) | Monólito modular e fronteiras de módulo | ⏳ Pendente | — |
-| [008](0008-hospedagem-e-postgis.md) | Hospedagem e PostGIS | ⏳ Pendente | — |
-| [009](0009-paridade-mobile-do-painel.md) | Paridade mobile do painel como decisão de inclusão | ⏳ Pendente | — |
+| [001](0001-stack-react-vite-dotnet-postgresql.md) | Stack: React + Vite + .NET 10 + PostgreSQL | ✅ Aceito | 2026-09-09 |
+| 002 | Revogação da stack declarada no pitch | ⏳ Pendente | — |
+| [003](0003-multi-tenancy-por-coluna.md) | Multi-tenancy por coluna `business_id` | ✅ Aceito | 2026-09-09 |
+| [004](0004-identidade-papeis-conta-global.md) | Identidade, papéis e conta global do consumidor | ✅ Aceito | 2026-09-09 |
+| [005](0005-dupla-reserva-constraint-exclusao.md) | Prevenção de dupla reserva por constraint de exclusão | ✅ Aceito | 2026-09-09 |
+| [006](0006-slot-calculado-nao-persistido.md) | Slot calculado, não persistido | ✅ Aceito | 2026-09-09 |
+| [007](0007-monolito-modular-fronteiras.md) | Monólito modular e fronteiras de módulo | ✅ Aceito | 2026-09-09 |
+| 008 | Hospedagem e PostGIS | ⏳ Pendente — depende do spike | — |
+| [009](0009-paridade-mobile-do-painel.md) | Paridade mobile do painel como decisão de inclusão | ✅ Aceito | 2026-09-09 |
 
 ### Notas sobre a fila
 
