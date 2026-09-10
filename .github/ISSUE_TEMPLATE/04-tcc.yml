@@ -1,0 +1,75 @@
+name: "🎓 TCC"
+description: "Tarefa acadêmica: redação, coleta de evidência, medição de RNF, metodologia."
+title: "[TCC] "
+labels: ["type:tcc"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **Nunca inventar entrevista, métrica, resultado ou referência bibliográfica.**
+        Separar sempre **evidência** (dado bruto) · **interpretação** (nossa leitura) ·
+        **hipótese** (ainda não testada) · **decisão** (o que passou a valer).
+
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de tarefa
+      options:
+        - Redação de seção do texto
+        - Coleta de evidência (teste de usabilidade, entrevista, questionário)
+        - Medição de RNF
+        - Metodologia / Design Science Research
+        - Revisão bibliográfica
+        - Diário de bordo / registro
+    validations:
+      required: true
+
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hipotese
+    attributes:
+      label: Hipótese relacionada
+      options:
+        - "H1′ — ≥ 85% concluem um agendamento sem ajuda, na primeira tentativa"
+        - "H2′ — SUS médio ≥ 68"
+        - "H3′ — prestador configura serviço, profissional e jornada sozinho em < 10 min"
+        - "Nenhuma — tarefa de redação ou metodologia"
+
+  - type: dropdown
+    id: rnf
+    attributes:
+      label: RNF relacionado
+      options:
+        - "RNF-01 — busca com slots p95 ≤ 800 ms"
+        - "RNF-02 — cálculo de disponibilidade p95 ≤ 200 ms"
+        - "RNF-03 — zero dupla reserva sob 50 requisições concorrentes"
+        - "RNF-04 — Lighthouse mobile ≥ 85 perf, ≥ 95 a11y"
+        - "RNF-05 — da busca à confirmação em ≤ 4 passos"
+        - "RNF-06 — Argon2id, TLS, zero dado sensível em página pública"
+        - "Nenhum"
+
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidência esperada
+      description: O artefato concreto que esta tarefa produz e onde será arquivado em docs/tcc/.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: etica
+    attributes:
+      label: Envolve participantes humanos?
+      description: >
+        Se sim, exige TCLE assinado e a definição da instituição sobre Comitê de Ética
+        ANTES da coleta. Dado coletado sem isso não pode ser usado no texto.
+      options:
+        - label: Sim — TCLE preparado
+        - label: Sim — situação do Comitê de Ética confirmada com a orientadora
+        - label: Não envolve participantes

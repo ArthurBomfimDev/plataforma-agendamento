@@ -1,0 +1,188 @@
+name: backend
+
+# Roda só quando o backend muda. PR de frontend não deve esperar build de .NET —
+# com duas pessoas trabalhando em paralelo, é a diferença entre CI útil e CI ignorado.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "!src/web/**"
+      - "tests/**"
+      - ".github/workflows/backend-ci.yml"
+      - "*.sln"
+      - "Directory.Build.props"
+  pull_request:
+    paths:
+      - "src/**"
+      - "!src/web/**"
+      - "tests/**"
+      - ".github/workflows/backend-ci.yml"
+      - "*.sln"
+      - "Directory.Build.props"
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # Nome único e estável: é este que vira required check na proteção da branch.
+  build-test:
+    name: backend / build-test
+    runs-on: ubuntu-latest
+
+    # PostGIS e btree_gist são requisito duro: o cálculo de disponibilidade usa
+    # geografia e a prevenção de dupla reserva usa EXCLUDE USING gist.
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: booking_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Detectar projetos .NET
+        id: detect
+        shell: bash
+        run: |
+          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nenhum projeto .NET ainda. Bootstrap em andamento — job encerrado com sucesso."
+          fi
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.detect.outputs.found == 'true'
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache de pacotes NuGet
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        if: steps.detect.outputs.found == 'true'
+        run: dotnet restore
+
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Habilitar extensões do PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d booking_test -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+          psql -h localhost -U postgres -d booking_test -c "CREATE EXTENSION IF NOT EXISTS btree_gist;"
+
+      # Prova que a GARANTIA funciona, não só que a extensão carrega.
+      # Sem este passo, o CI verifica que `CREATE EXTENSION` não falha — o que é
+      # muito menos do que a ADR-005 afirma. Aqui a sobreposição é de fato rejeitada.
+      - name: Provar a constraint de exclusão (ADR-005)
+        env:
+          PGPASSWORD: postgres
+          PSQL: psql -h localhost -U postgres -d booking_test -v ON_ERROR_STOP=1 -q
+        run: |
+          set -euo pipefail
+
+          $PSQL -c "
+            CREATE TABLE exclusion_probe (
+              id              int PRIMARY KEY,
+              professional_id uuid        NOT NULL,
+              period          tstzrange   NOT NULL,
+              EXCLUDE USING gist (professional_id WITH =, period WITH &&)
+            );"
+
+          echo '1/4 — primeira reserva (deve passar)'
+          $PSQL -c "
+            INSERT INTO exclusion_probe VALUES
+              (1, '11111111-1111-1111-1111-111111111111',
+               tstzrange('2026-01-05 13:00Z','2026-01-05 14:00Z','[)'));"
+
+          echo '2/4 — sobreposição do MESMO profissional (deve ser REJEITADA)'
+          if $PSQL -c "
+            INSERT INTO exclusion_probe VALUES
+              (2, '11111111-1111-1111-1111-111111111111',
+               tstzrange('2026-01-05 13:30Z','2026-01-05 14:30Z','[)'));" 2>/dev/null
+          then
+            echo '::error::A constraint de exclusão NÃO rejeitou a sobreposição. A garantia da ADR-005 está quebrada.'
+            exit 1
+          fi
+          echo '      rejeitada, como esperado'
+
+          echo '3/4 — mesmo horário, OUTRO profissional (deve passar)'
+          $PSQL -c "
+            INSERT INTO exclusion_probe VALUES
+              (3, '22222222-2222-2222-2222-222222222222',
+               tstzrange('2026-01-05 13:30Z','2026-01-05 14:30Z','[)'));"
+
+          echo '4/4 — encostado, sem sobrepor: 14:00 começa quando 13:00–14:00 termina'
+          $PSQL -c "
+            INSERT INTO exclusion_probe VALUES
+              (4, '11111111-1111-1111-1111-111111111111',
+               tstzrange('2026-01-05 14:00Z','2026-01-05 15:00Z','[)'));"
+
+          echo '::notice::Constraint de exclusão verificada: rejeita sobreposição, aceita adjacência e outro profissional.'
+          $PSQL -c "DROP TABLE exclusion_probe;"
+
+      - name: Testes
+        if: steps.detect.outputs.found == 'true'
+        env:
+          ConnectionStrings__Default: "Host=localhost;Port=5432;Database=booking_test;Username=postgres;Password=postgres"
+        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+
+      - name: Publicar resultado dos testes
+        if: always() && steps.detect.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: "**/*.trx"
+          if-no-files-found: ignore
+
+  format:
+    name: backend / format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Detectar projetos .NET
+        id: detect
+        shell: bash
+        run: |
+          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.detect.outputs.found == 'true'
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Verificar formatação
+        if: steps.detect.outputs.found == 'true'
+        run: dotnet format --verify-no-changes --verbosity diagnostic

@@ -1,0 +1,99 @@
+name: "🐛 Bug"
+description: "Algo que existe e não funciona como deveria."
+title: "[BUG] "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: o-que-acontece
+    attributes:
+      label: O que acontece
+      description: O comportamento observado. Fato, não interpretação.
+    validations:
+      required: true
+
+  - type: textarea
+    id: o-que-deveria
+    attributes:
+      label: O que deveria acontecer
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducao
+    attributes:
+      label: Como reproduzir
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidência
+      description: Log, stack trace, print, resposta da API. Cole a saída real — não descreva de memória.
+      render: text
+
+  - type: dropdown
+    id: ambiente
+    attributes:
+      label: Onde aconteceu
+      options:
+        - Local
+        - CI
+        - Ambiente hospedado
+    validations:
+      required: true
+
+  - type: dropdown
+    id: viewport
+    attributes:
+      label: Viewport
+      description: O painel tem paridade mobile — bug de layout precisa dizer a largura.
+      options:
+        - Mobile (390px)
+        - Desktop
+        - Ambos
+        - Não se aplica
+    validations:
+      required: true
+
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo suspeito
+      options:
+        - Identity
+        - Tenancy
+        - People
+        - Catalog
+        - Availability
+        - Scheduling
+        - Reputation
+        - Compliance
+        - Frontend
+        - Infra
+        - Não sei
+
+  - type: dropdown
+    id: gravidade
+    attributes:
+      label: Gravidade
+      options:
+        - "P0 — bloqueia a fatia vertical ou a defesa"
+        - "P1 — funcionalidade principal quebrada, sem contorno"
+        - "P2 — quebrada com contorno"
+        - "P3 — incômodo, cosmético"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: sensivel
+    attributes:
+      label: Este bug envolve área sensível?
+      options:
+        - label: Vazamento entre tenants, autenticação ou autorização
+        - label: Dupla reserva ou perda de agendamento
+        - label: Dado pessoal exposto

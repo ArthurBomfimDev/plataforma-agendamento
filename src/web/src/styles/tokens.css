@@ -1,0 +1,278 @@
+/* =============================================================================
+ * TOKENS DE DESIGN — revisão 2
+ * =============================================================================
+ *
+ * FONTE: lidos do Figma via MCP em 2026-09-09.
+ *   Arquivo: https://www.figma.com/design/E2M0TJehjcrSk4uaXlHI0s
+ *   Página "Design System", 11 component sets, `codeSyntax` WEB.
+ *
+ * ⚠️ A revisão 1 foi REPROVADA. Se você encontrar `#0F6E83`, `#8C867B`, `#8E5426`,
+ *    `#C97F4A`, neutros bege ou Source Serif 4 em qualquer lugar do código,
+ *    é resíduo da revisão 1 — remova.
+ *
+ * ⚠️ `docs/design/eixo-paleta-tipografia.md` no repositório ainda descreve a
+ *    REVISÃO 1 (datado de 05/09). Os valores deste arquivo vieram do Figma,
+ *    não daquele documento. O documento precisa ser atualizado.
+ *
+ * As primitivas (escala completa de azul-água e de neutros) têm escopo `[]` no
+ * Figma e por isso não são expostas pelo MCP — de propósito, para que nenhum
+ * componente ligue nelas. Este arquivo define apenas a camada SEMÂNTICA, que é
+ * exatamente onde os componentes devem ligar.
+ *
+ * -----------------------------------------------------------------------------
+ * REGRAS QUE NÃO PODEM SE PERDER NA TRADUÇÃO
+ * -----------------------------------------------------------------------------
+ *
+ * 1. BORDA DE COMPONENTE INTERATIVO usa N500 #7E7E7B — nunca N300 #D2D2D0.
+ *    N300 dá 1,51:1 e reprova o critério de contraste não-textual (WCAG 1.4.11).
+ *    É exatamente onde o Lighthouse derruba a nota de acessibilidade (RNF-04).
+ *
+ * 2. CAMPO DE FORMULÁRIO obrigatoriamente 16px. Abaixo disso o Safari do iOS
+ *    dá zoom automático no foco e desloca o layout (compromete o RNF-05).
+ *
+ * 3. ALTURA DE LINHA EM PX, nunca unitless. A grade de slots da agenda é
+ *    calculada por top/height e a célula precisa de altura previsível.
+ *
+ * 4. TOM CLARO DE AZUL-ÁGUA NUNCA É FUNDO DE BOTÃO. `--action-soft` é superfície,
+ *    não ação. Fundo de botão é `--action-primary`.
+ *
+ * 5. STATUS DO AGENDAMENTO sempre em DOIS CANAIS — cor + forma, ícone ou
+ *    preenchimento. Nunca só cor. Este arquivo entrega a cor; a forma vem do
+ *    componente. Um sem o outro é bug de acessibilidade, não detalhe visual.
+ *    `Pending` e `Confirmed` diferem em quatro canais — requisito duro, porque
+ *    aprovação manual é o padrão do produto.
+ *
+ * Não existe família serifada. `family/serif` foi removida do Figma de propósito.
+ * Modo escuro está fora de escopo.
+ * ========================================================================== */
+
+:root {
+  /* ===========================================================================
+   * COR — fundo
+   * ======================================================================== */
+  --bg-page:            #fafafa;
+  --bg-surface:         #ffffff;
+  --bg-surface-raised:  #f3f3f2;
+  --bg-accent-soft:     #f3f3f2;
+  --bg-disabled:        #d2d2d0;
+
+  /* ===========================================================================
+   * COR — texto
+   * ======================================================================== */
+  --text-strong:    #141413;  /* títulos, ênfase máxima */
+  --text-body:      #454542;  /* corpo padrão */
+  --text-muted:     #5f5f5c;  /* secundário, metadado */
+  --text-disabled:  #a6a6a3;  /* ⚠ nunca para informação essencial */
+  --text-on-action: #ffffff;
+  --text-link:      #0b7690;
+
+  /* ===========================================================================
+   * COR — borda
+   * ======================================================================== */
+  --border-subtle:      #e6e6e4;  /* divisória decorativa */
+  --border-interactive: #7e7e7b;  /* ⚠ REGRA 1 — campo, botão-fantasma, célula */
+  --border-focus:       #0b7690;
+  --border-error:       #a32a22;  /* alinhado a --status-rejected-fg */
+
+  /* ===========================================================================
+   * COR — ação
+   * ======================================================================== */
+  --action-primary: #0b7690;  /* ⚠ REGRA 4 — único fundo de botão primário */
+  --action-soft:    #e8f6f9;  /* superfície de realce. NUNCA fundo de botão */
+
+  /* TODO(figma): action/primary-hover, -active e -disabled não aparecem ligados
+     em nenhum nó do component set "Botão". Confirmar com o Rafael se os estados
+     usam variável própria ou opacidade. Não inventar valor. */
+
+  /* ===========================================================================
+   * COR — status do agendamento (7 estados, 3 matizes)
+   *
+   * Só 3 matizes carregam cor: âmbar (pendente/urgente), verde (confirmado) e
+   * vermelho (recusado/falta). Os demais são neutros de propósito — estado
+   * encerrado não compete por atenção com estado que exige ação.
+   *
+   * ⚠ REGRA 5 — o segundo canal vem do componente:
+   *   pending    borda tracejada + ícone relógio + contador "expira em Xh"
+   *   confirmed  preenchimento sólido, borda contínua + ícone check
+   *   rejected   ícone ✕ em círculo contornado
+   *   expired    borda tracejada + ícone ampulheta
+   *   cancelled  texto do serviço riscado + ícone barra
+   *   completed  check duplo, chip sem matiz
+   *   noshow     ícone pessoa-✕ + borda pontilhada grossa
+   *
+   * `noshow` compartilha o matiz de `rejected` — por isso o ícone e a borda
+   * pontilhada grossa NÃO são opcionais: são o que os distingue.
+   * ======================================================================== */
+  --status-pending-fg:    #96560a;
+  --status-pending-bg:    #fbf2e3;
+  --status-confirmed-fg:  #1b6b45;
+  --status-confirmed-bg:  #eaf3ee;
+  --status-rejected-fg:   #a32a22;
+  --status-rejected-bg:   #f9eceb;
+  --status-expired-fg:    #5f5f5c;
+  --status-expired-bg:    #f3f3f2;
+  --status-cancelled-fg:  #454542;
+  --status-cancelled-bg:  #f3f3f2;
+  --status-completed-fg:  #2a2a28;
+  --status-completed-bg:  #e6e6e4;
+  --status-noshow-fg:     #a32a22;
+  --status-noshow-bg:     #f9eceb;
+
+  /* ===========================================================================
+   * COR — agenda (5 estados de célula)
+   *
+   * A grade é desenhada à mão: blocos posicionados por top/height calculados,
+   * sem biblioteca de scheduler (PROJECT-CONTEXT §4.2).
+   *
+   * Segundo canal por estado:
+   *   livre            rótulo do horário
+   *   ocupado          nome do serviço + ícone pessoa
+   *   bloqueado        hachura diagonal + borda tracejada + ícone cadeado + motivo
+   *   fora-expediente  sem borda, célula não focável, sem rótulo
+   *   feriado          faixa superior pontilhada + ícone bandeira + nome do feriado
+   *
+   * Feriado COEXISTE com os demais estados: faixa e ícone permanecem mesmo
+   * quando a empresa abre e a célula está livre.
+   * ======================================================================== */
+  --agenda-free-bg:         #ffffff;
+  --agenda-free-border:     #7e7e7b;
+  --agenda-busy-bg:         #e8f6f9;
+  --agenda-busy-border:     #0b7690;
+  --agenda-blocked-bg:      #f3f3f2;
+  --agenda-blocked-border:  #7e7e7b;
+  --agenda-off-hours-bg:    #f3f3f2;   /* sem borda, de propósito */
+  --agenda-holiday-bg:      #f3f3f2;
+  --agenda-holiday-marker:  #141413;
+
+  /* ===========================================================================
+   * COR — marcadores
+   *
+   * `marker-sensitive` é NEUTRO de propósito: categoria sensível não deve parecer
+   * status nem marca. O peso vem do ícone de cadeado e do bloco de consentimento
+   * que BLOQUEIA o fluxo — não de matiz chamativo (LGPD Art. 11).
+   * ======================================================================== */
+  --marker-verified:       #0b7690;  /* + ícone escudo-check + rótulo "Verificado" */
+  --marker-urgent-fg:      #96560a;  /* + contador regressivo + borda tracejada    */
+  --marker-urgent-bg:      #fbf2e3;
+  --marker-overflow:       #5f5f5c;  /* + borda pontilhada + rótulo "fora do horário" */
+  --marker-sensitive-fg:   #141413;  /* + ícone cadeado + consentimento bloqueante */
+  --marker-sensitive-bg:   #f3f3f2;
+
+  /* ===========================================================================
+   * ELEVAÇÃO
+   * ======================================================================== */
+  --elevation-card: 0 1px 3px 0 #1c1a170f;
+
+  /* ===========================================================================
+   * ESPAÇAMENTO
+   * ======================================================================== */
+  --space-2:  2px;
+  --space-4:  4px;
+  --space-8:  8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  /* TODO(figma): a coleção `space` tem 18 variáveis (space/2…64). Os passos
+     32, 48 e 64 não aparecem ligados em nenhum component set — ler direto da
+     coleção quando houver acesso a ela. Não inventar. */
+
+  /* ===========================================================================
+   * TAMANHO
+   * ======================================================================== */
+  /* Alvo mínimo de toque. Vale para TODO controle, inclusive os densos do painel
+     — decisão de paridade mobile, PROJECT-CONTEXT §4.1. Não é sugestão. */
+  --size-touch-min: 44px;
+  --size-avatar-md: 40px;
+  /* TODO(figma): size/avatar-sm (32) e size/avatar-lg (56) aparecem no component
+     set "Avatar" como valor de frame; confirmar se existem como variável. */
+
+  /* ===========================================================================
+   * RAIO
+   * ======================================================================== */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-full: 999px;
+  /* TODO(figma): radius/none e radius/xl (20) constam da coleção mas não
+     aparecem ligados nos component sets auditados. */
+
+  /* ===========================================================================
+   * TIPOGRAFIA
+   *
+   * Uma única família. Source Serif 4 foi REMOVIDA na revisão 2 — não existe
+   * `--family-serif`, e recriar a variável reintroduz o problema.
+   *
+   * Por que IBM Plex Sans em 390px: aberturas abertas em `a c e s`;
+   * `1 l I` desambiguados; figuras tabulares (`tnum`) — o produto empilha número
+   * em coluna (grade de horários, agenda do dia, os quatro números do relatório)
+   * e sem largura fixa de dígito a coluna treme.
+   * ======================================================================== */
+  --family-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+
+  /* --- Tamanho e altura de linha (⚠ REGRA 3 — em px) ---------------------- */
+  --size-caption:        12px;
+  --line-height-caption: 16px;
+  --size-label:          14px;
+  --line-height-label:   20px;
+  --size-body:           16px;
+  --line-height-body:    24px;
+  --size-heading:        20px;
+  --line-height-heading: 27px;
+
+  /* TODO(figma): `display`, `title` e `body-lg` não aparecem ligados em nenhum
+     component set — as telas da vitrine é que os consomem. Na revisão 1 eram
+     Source Serif; na revisão 2 passam a ser Plex, mas os valores precisam ser
+     lidos da coleção `type`. Não reaproveitar os números da revisão 1. */
+
+  /* ⚠ REGRA 2 — campo de formulário é 16px, sempre. Não derive de --size-body:
+     se um dia o corpo cair para 14px, o iOS passa a dar zoom no foco. */
+  --size-input:        16px;
+  --line-height-input: 24px;
+}
+
+/* =============================================================================
+ * COMPOSIÇÕES DE TEXTO
+ * Espelham os tokens `type/*` do Figma, que são composições e não valores soltos.
+ * ========================================================================== */
+
+.type-caption {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  font-size: var(--size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: 0;
+}
+
+.type-label {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-medium);
+  font-size: var(--size-label);
+  line-height: var(--line-height-label);
+  letter-spacing: 0;
+}
+
+.type-body {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  font-size: var(--size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: 0;
+}
+
+.type-heading {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semibold);
+  font-size: var(--size-heading);
+  line-height: var(--line-height-heading);
+  letter-spacing: 0;
+}
+
+/* Número em coluna — grade de horários, agenda do dia, relatório.
+   Sem isso a coluna treme conforme os dígitos mudam. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

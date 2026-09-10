@@ -1,0 +1,71 @@
+name: "🏛 ADR — decisão arquitetural"
+description: "Registrar uma decisão arquitetural que precisa ser tomada ou documentada."
+title: "[ADR] "
+labels: ["type:adr"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Esta issue **discute** a decisão. Quando ela for tomada, o resultado vira um arquivo
+        em `docs/decisions/` no formato Nygard e a issue é fechada pelo PR que adiciona o ADR.
+
+  - type: input
+    id: numero
+    attributes:
+      label: Número proposto
+      description: Próximo livre em docs/decisions/. Ver o índice em docs/decisions/README.md.
+      placeholder: "ADR-010"
+    validations:
+      required: true
+
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: A situação que força uma escolha. Forças em jogo, restrições reais.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema
+      description: A pergunta que precisa de resposta, em uma frase.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: Pelo menos duas, com o argumento a favor e contra de cada. Sem palha de espantalho.
+      value: |
+        **A —**
+        - A favor:
+        - Contra:
+
+        **B —**
+        - A favor:
+        - Contra:
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequencias
+    attributes:
+      label: Consequências previstas
+      description: O que fica mais fácil e o que fica mais difícil. Inclua as consequências ruins.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: impacto
+    attributes:
+      label: Impacto
+      options:
+        - label: Afeta fronteira de módulo
+        - label: Afeta o modelo de dados ou exige migration
+        - label: Afeta multi-tenancy ou segurança
+        - label: Afeta o contrato de API
+        - label: Reverte ou revoga decisão anterior
+        - label: Exige revisão humana obrigatória

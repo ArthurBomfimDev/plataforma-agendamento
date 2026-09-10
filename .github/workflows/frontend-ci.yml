@@ -1,0 +1,75 @@
+name: frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/web/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    paths:
+      - "src/web/**"
+      - ".github/workflows/frontend-ci.yml"
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: src/web
+
+jobs:
+  # Nome único e estável: é este que vira required check na proteção da branch.
+  build-lint:
+    name: frontend / build-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Detectar app do frontend
+        id: detect
+        working-directory: .
+        shell: bash
+        run: |
+          if [ -f "src/web/package.json" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/web/package.json ainda não existe. Bootstrap em andamento — job encerrado com sucesso."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.found == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Instalar dependências
+        if: steps.detect.outputs.found == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.detect.outputs.found == 'true'
+        run: npm run lint
+
+      - name: Verificação de tipos
+        if: steps.detect.outputs.found == 'true'
+        run: npm run typecheck
+
+      - name: Verificar formatação
+        if: steps.detect.outputs.found == 'true'
+        run: npm run format:check
+
+      - name: Testes
+        if: steps.detect.outputs.found == 'true'
+        run: npm run test -- --run
+
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: npm run build

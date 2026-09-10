@@ -1,0 +1,69 @@
+# ---------- Segredos — nunca commitar ----------
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# ---------- .NET ----------
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+*.user
+*.suo
+*.userprefs
+*.cache
+*.dll
+*.exe
+*.pdb
+.vs/
+artifacts/
+TestResults/
+coverage/
+*.coverage
+*.trx
+BenchmarkDotNet.Artifacts/
+
+# ---------- Node / Vite ----------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+.eslintcache
+.npm
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- Testes de frontend ----------
+playwright-report/
+test-results/
+.nyc_output/
+
+# ---------- Ferramentas / SO ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# ---------- Editores ----------
+.idea/
+.fleet/
+*.sln.docstates
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+
+# ---------- Agentes ----------
+# Skills instaladas via `npx skills` são versionadas de propósito
+# (skills-lock.json garante reprodutibilidade). Nada a ignorar aqui.

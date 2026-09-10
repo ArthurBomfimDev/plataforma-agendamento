@@ -1,0 +1,126 @@
+name: "✨ Feature"
+description: "Funcionalidade nova ou mudança de comportamento visível para quem usa."
+title: "[FEATURE] "
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Uma feature entrega **resultado demonstrável por uma pessoa**.
+        Não abra issue como "fazer o backend de X" ou "fazer as telas de Y" —
+        vale a fatia vertical inteira.
+
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Por que isso existe. Qual dor, de qual ator.
+      placeholder: "O Owner precisa de… porque hoje…"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ator
+    attributes:
+      label: Ator
+      description: Quem se beneficia. Use o glossário canônico — "cliente" não é resposta válida.
+      options:
+        - Customer (consumidor)
+        - Owner
+        - Professional
+        - Admin (plataforma)
+        - Nenhum — tarefa interna
+    validations:
+      required: true
+
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: O que passa a ser possível quando isso estiver pronto.
+    validations:
+      required: true
+
+  - type: textarea
+    id: escopo
+    attributes:
+      label: Escopo
+      description: O que entra nesta issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fora-escopo
+    attributes:
+      label: Fora do escopo
+      description: O que explicitamente NÃO entra. Este campo evita metade das discussões de PR.
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação
+      description: Verificáveis, não opinativos. Um por linha.
+      value: |
+        - [ ]
+        - [ ]
+        - [ ] Funciona em 390px e em desktop
+        - [ ] Alvo de toque ≥ 44px nos controles novos
+    validations:
+      required: true
+
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options:
+        - Identity
+        - Tenancy
+        - People
+        - Catalog
+        - Availability
+        - Scheduling
+        - Reputation
+        - Compliance
+        - Frontend
+        - Infra
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependências
+      description: Issues, contratos de API ou telas do Figma que precisam existir antes.
+
+  - type: textarea
+    id: riscos
+    attributes:
+      label: Riscos
+
+  - type: textarea
+    id: testes
+    attributes:
+      label: Testes esperados
+      description: Unitário, integração, concorrência, manual. O que prova que funciona.
+    validations:
+      required: true
+
+  - type: input
+    id: referencia
+    attributes:
+      label: Referência arquitetural
+      description: ADR, seção do PROJECT-CONTEXT.md ou documento que fundamenta esta issue.
+
+  - type: checkboxes
+    id: sensivel
+    attributes:
+      label: Áreas sensíveis
+      description: Marcar aqui já sinaliza que o PR vai exigir revisão humana obrigatória.
+      options:
+        - label: Autenticação ou autorização
+        - label: Multi-tenancy (`business_id`)
+        - label: Dado de saúde / LGPD
+        - label: Migration de banco
+        - label: Infraestrutura ou segredo

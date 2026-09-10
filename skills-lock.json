@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "brand-identity": {
+      "source": "arnabbagxd/brand-building-skills",
+      "sourceType": "github",
+      "skillPath": "skills/brand-identity/SKILL.md",
+      "computedHash": "364810e68d7402e74e815e9d5c42ec0146124b9ae138fda82ce1c8a9a71dd950"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
+    },
+    "product-name": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-marketing-growth/skills/product-name/SKILL.md",
+      "computedHash": "3a5bad48c840519b2c775bdb5d69fed37537de77001a8822aa31676a21cf163e"
+    }
+  }
+}

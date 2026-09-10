@@ -1,0 +1,43 @@
+# CODEOWNERS
+#
+# Cada linha define quem é solicitado automaticamente para revisar um PR.
+# A ÚLTIMA regra que casa com o arquivo é a que vale — ordem importa.
+#
+# Arthur Bomfim  — backend, arquitetura, banco, infraestrutura
+# Rafael Ernandes — frontend, design system
+
+# ---------- Padrão: os dois revisam o que não tem dono específico ----------
+*                               @ArthurBomfimDev @RafaelErnandes
+
+# ---------- Backend ----------
+/src/Booking.Api/               @ArthurBomfimDev
+/src/Booking.Modules.*/         @ArthurBomfimDev
+/src/Booking.Shared/            @ArthurBomfimDev
+/tests/                         @ArthurBomfimDev
+
+# ---------- Frontend ----------
+/src/web/                       @RafaelErnandes
+
+# Tokens de design: nascem no Figma, sob responsabilidade do Rafael
+/src/web/src/styles/            @RafaelErnandes
+
+# ---------- Contratos: fronteira entre as duas frentes, revisão dupla ----------
+/src/web/src/lib/api/           @ArthurBomfimDev @RafaelErnandes
+
+# ---------- Infraestrutura e automação ----------
+/.github/                       @ArthurBomfimDev
+/infra/                         @ArthurBomfimDev
+/docker-compose.yml             @ArthurBomfimDev
+/.editorconfig                  @ArthurBomfimDev
+/.gitattributes                 @ArthurBomfimDev
+
+# ---------- Documentação ----------
+/docs/decisions/                @ArthurBomfimDev
+/docs/produto/                  @ArthurBomfimDev @RafaelErnandes
+/docs/design/                   @RafaelErnandes
+/docs/diagramas/                @ArthurBomfimDev
+/docs/tcc/                      @ArthurBomfimDev @RafaelErnandes
+
+# ---------- Contexto compartilhado: mudança aqui afeta os dois ----------
+/CLAUDE.md                      @ArthurBomfimDev @RafaelErnandes
+/PROJECT-CONTEXT.md             @ArthurBomfimDev @RafaelErnandes
