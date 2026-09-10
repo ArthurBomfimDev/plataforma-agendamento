@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# commit-msg — remove trailers de atribuição de IA da mensagem de commit.
+#
+# POR QUE ISTO EXISTE (não apague achando que é lixo):
+#
+#   Assistentes de IA acrescentam trailers como `Co-Authored-By: Claude ...`
+#   às mensagens de commit. O GitHub lê esse trailer e passa a listar a IA
+#   como *Contributor* do repositório, ao lado do Arthur e do Rafael.
+#
+#   Este é um TCC. A autoria precisa ser inequívoca: o trabalho é de duas
+#   pessoas, e a ferramenta usada para produzi-lo é ferramenta, não autora.
+#   Ferramenta se cita na metodologia, não na lista de contribuidores.
+#
+#   A configuração do cliente resolve o futuro dele; este hook resolve o
+#   repositório inteiro, para qualquer pessoa e qualquer ferramenta —
+#   inclusive as que ainda não usamos.
+#
+# COMO ATIVAR (uma vez por clone):
+#
+#   git config core.hooksPath .githooks
+#
+#   O hook está versionado justamente para o Rafael herdá-lo no clone.
+#   Sem o comando acima, o Git ignora a pasta e o hook não roda.
+#
+# O QUE ELE REMOVE:
+#
+#   Co-Authored-By: Claude ...
+#   Claude-Session: ...
+#   🤖 Generated with [Claude Code](...)
+#
+#   Nada além disso. Coautoria humana legítima é preservada: um
+#   `Co-Authored-By: Rafael Ernandes <...>` passa intacto.
+#
+# Ver ADR pendente sobre uso de IA no processo e `CLAUDE.md`.
+
+msg_file="$1"
+
+[ -f "$msg_file" ] || exit 0
+
+tmp_file="${msg_file}.attribution-tmp"
+
+# Remove só os trailers de IA. O `-i` cobre `Co-authored-by` e variações.
+grep -v -i -E '^[[:space:]]*co-authored-by:[[:space:]]*claude' "$msg_file" \
+  | grep -v -i -E '^[[:space:]]*claude-session:' \
+  | grep -v -F 'Generated with [Claude Code]' \
+  > "$tmp_file" || true
+
+# Colapsa as linhas em branco que sobraram no fim da mensagem.
+awk '
+  { lines[NR] = $0 }
+  END {
+    last = NR
+    while (last > 0 && lines[last] ~ /^[[:space:]]*$/) { last-- }
+    for (i = 1; i <= last; i++) { print lines[i] }
+  }
+' "$tmp_file" > "${tmp_file}.2" || true
+
+# Só substitui se sobrou conteúdo — nunca esvazia a mensagem do usuário.
+if [ -s "${tmp_file}.2" ]; then
+  mv "${tmp_file}.2" "$msg_file"
+fi
+
+rm -f "$tmp_file" "${tmp_file}.2"
+exit 0

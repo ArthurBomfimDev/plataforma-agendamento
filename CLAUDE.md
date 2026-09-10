@@ -160,10 +160,32 @@ chore(ci): separar job de formatação do de build
 Tipos: `feat` · `fix` · `docs` · `refactor` · `test` · `chore` · `perf`.
 Um commit resolve uma coisa. Referencie a issue: `Refs #12`.
 
+**Nenhum trailer de atribuição de IA.** Nada de `Co-Authored-By: Claude`, `Claude-Session:`
+ou `🤖 Generated with [Claude Code]` nas mensagens de commit e nas descrições de PR.
+
+O repositório versiona um hook que remove esses trailers automaticamente:
+
+```bash
+git config core.hooksPath .githooks   # uma vez por clone, obrigatório
+```
+
+> ### Por que o hook existe — não apague
+> O GitHub lê o trailer `Co-Authored-By` e passa a listar a IA como **Contributor** do
+> repositório, ao lado do Arthur e do Rafael. Este é um TCC: a autoria precisa ser inequívoca.
+> A ferramenta usada para produzir o trabalho se cita na **metodologia**, não na lista de
+> contribuidores. Coautoria humana legítima (`Co-Authored-By: Rafael Ernandes <…>`) passa intacta.
+>
+> A configuração do cliente resolve só a máquina de quem a configurou; o hook resolve o
+> repositório para qualquer pessoa e qualquer ferramenta. Ver `.githooks/commit-msg` e o README.
+
 ### Branches
 
 `main` protegida. Trunk-based, sem `develop`.
 `feat/<issue>-<slug>` · `fix/<issue>-<slug>` · `docs/<issue>-<slug>` · `chore/<issue>-<slug>`
+
+`enforce_admins` está **desligado** de propósito — a justificativa está no README, seção
+"Governança do repositório". A regra continua sendo o PR revisado; a válvula é exceção
+registrada, não hábito.
 
 ---
 
