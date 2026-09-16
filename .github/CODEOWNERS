@@ -1,43 +1,54 @@
 # CODEOWNERS
 #
-# Cada linha define quem é solicitado automaticamente para revisar um PR.
-# A ÚLTIMA regra que casa com o arquivo é a que vale — ordem importa.
+# ⚠️ POR QUE TODO CAMINHO TEM OS DOIS COMO OWNERS — não "simplifique"
 #
-# Arthur Bomfim  — backend, arquitetura, banco, infraestrutura
+# A proteção da main exige aprovação de code owner (`require_code_owner_reviews`).
+# O GitHub NUNCA aceita aprovação do próprio autor do PR.
+#
+# Se um caminho tivesse um único owner, todo PR desse owner naquele caminho ficaria
+# SEM NINGUÉM QUE PUDESSE APROVAR. Na configuração anterior, com `/src/web/` só do
+# Rafael, nenhum PR de frontend do Rafael seria mergeável — e ele, por não ser admin,
+# nem teria a válvula de emergência. O mesmo valeria para o Arthur no backend.
+#
+# Com uma equipe de duas pessoas, "code owner diferente do autor" é sempre "a outra
+# pessoa". Por isso os dois aparecem em tudo.
+#
+# O RESPONSÁVEL PRINCIPAL vem primeiro na linha. É informação de quem responde pela
+# área — a obrigação de revisão é mútua.
+#
+# Arthur Bomfim   — backend, arquitetura, banco, infraestrutura
 # Rafael Ernandes — frontend, design system
+#
+# A ÚLTIMA regra que casa com o arquivo é a que vale — ordem importa.
 
-# ---------- Padrão: os dois revisam o que não tem dono específico ----------
+# ---------- Padrão ----------
 *                               @ArthurBomfimDev @RafaelErnandes
 
-# ---------- Backend ----------
-/src/Booking.Api/               @ArthurBomfimDev
-/src/Booking.Modules.*/         @ArthurBomfimDev
-/src/Booking.Shared/            @ArthurBomfimDev
-/tests/                         @ArthurBomfimDev
+# ---------- Backend — principal: Arthur ----------
+/src/Booking.Api/               @ArthurBomfimDev @RafaelErnandes
+/src/Booking.Modules.*/         @ArthurBomfimDev @RafaelErnandes
+/src/Booking.Shared/            @ArthurBomfimDev @RafaelErnandes
+/tests/                         @ArthurBomfimDev @RafaelErnandes
 
-# ---------- Frontend ----------
-/src/web/                       @RafaelErnandes
+# ---------- Frontend — principal: Rafael ----------
+/src/web/                       @RafaelErnandes @ArthurBomfimDev
+/src/web/src/styles/            @RafaelErnandes @ArthurBomfimDev
 
-# Tokens de design: nascem no Figma, sob responsabilidade do Rafael
-/src/web/src/styles/            @RafaelErnandes
-
-# ---------- Contratos: fronteira entre as duas frentes, revisão dupla ----------
+# ---------- Contrato entre as frentes — responsabilidade conjunta ----------
 /src/web/src/lib/api/           @ArthurBomfimDev @RafaelErnandes
 
-# ---------- Infraestrutura e automação ----------
-/.github/                       @ArthurBomfimDev
-/infra/                         @ArthurBomfimDev
-/docker-compose.yml             @ArthurBomfimDev
-/.editorconfig                  @ArthurBomfimDev
-/.gitattributes                 @ArthurBomfimDev
+# ---------- Infraestrutura e automação — principal: Arthur ----------
+/.github/                       @ArthurBomfimDev @RafaelErnandes
+/.githooks/                     @ArthurBomfimDev @RafaelErnandes
+/infra/                         @ArthurBomfimDev @RafaelErnandes
 
 # ---------- Documentação ----------
-/docs/decisions/                @ArthurBomfimDev
+/docs/decisions/                @ArthurBomfimDev @RafaelErnandes
+/docs/diagramas/                @ArthurBomfimDev @RafaelErnandes
 /docs/produto/                  @ArthurBomfimDev @RafaelErnandes
-/docs/design/                   @RafaelErnandes
-/docs/diagramas/                @ArthurBomfimDev
+/docs/design/                   @RafaelErnandes @ArthurBomfimDev
 /docs/tcc/                      @ArthurBomfimDev @RafaelErnandes
 
-# ---------- Contexto compartilhado: mudança aqui afeta os dois ----------
+# ---------- Contexto compartilhado ----------
 /CLAUDE.md                      @ArthurBomfimDev @RafaelErnandes
 /PROJECT-CONTEXT.md             @ArthurBomfimDev @RafaelErnandes

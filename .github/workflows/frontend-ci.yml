@@ -1,15 +1,13 @@
 name: frontend
 
+# SEM filtro de caminho no gatilho — de propósito. Ver o cabeçalho de backend-ci.yml:
+# check obrigatório com filtro de caminho bloqueia para sempre PR que não toca a área.
+# O job `changes` decide; quando o frontend não mudou, build-lint é pulado e reporta sucesso.
+
 on:
   push:
     branches: [main]
-    paths:
-      - "src/web/**"
-      - ".github/workflows/frontend-ci.yml"
   pull_request:
-    paths:
-      - "src/web/**"
-      - ".github/workflows/frontend-ci.yml"
 
 concurrency:
   group: frontend-${{ github.ref }}
@@ -18,15 +16,61 @@ concurrency:
 permissions:
   contents: read
 
-defaults:
-  run:
-    working-directory: src/web
-
 jobs:
-  # Nome único e estável: é este que vira required check na proteção da branch.
-  build-lint:
-    name: frontend / build-lint
+  changes:
+    name: frontend / changes
     runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detectar mudanças no frontend
+        id: filter
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            base="$PR_BASE"; head="$PR_HEAD"
+          else
+            base="$PUSH_BEFORE"; head="$PUSH_AFTER"
+          fi
+
+          if [ -z "$base" ] \
+             || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "Sem base comparável (primeiro push ou histórico reescrito) — tratando como alterado."
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$base" "$head")"
+          echo "Arquivos alterados:"; echo "$changed" | sed 's/^/  /'
+
+          if echo "$changed" | grep -qE '^(src/web/|\.github/workflows/frontend-ci\.yml$)'; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Frontend não alterado — build-lint será pulado (reporta sucesso)."
+          fi
+
+  build-lint:
+    # Nome estável: é check obrigatório na proteção da main.
+    name: frontend / build-lint
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src/web
 
     steps:
       - uses: actions/checkout@v5
@@ -40,7 +84,7 @@ jobs:
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::src/web/package.json ainda não existe. Bootstrap em andamento — job encerrado com sucesso."
+            echo "::notice::src/web/package.json ainda não existe. Bootstrap em andamento."
           fi
 
       - uses: actions/setup-node@v4

@@ -1,25 +1,19 @@
 name: backend
 
-# Roda só quando o backend muda. PR de frontend não deve esperar build de .NET —
-# com duas pessoas trabalhando em paralelo, é a diferença entre CI útil e CI ignorado.
+# SEM filtro de caminho no gatilho — de propósito.
+#
+# Os jobs deste workflow são checks OBRIGATÓRIOS na proteção da main. Filtro de caminho
+# em `on:` faz o workflow não rodar em PR que não toca o backend, e check que não roda
+# nunca fica verde: todo PR só de documentação ficaria bloqueado para sempre.
+#
+# A solução é o workflow sempre rodar e o job `changes` decidir. Quando o backend não
+# mudou, os jobs pesados são PULADOS — e job pulado por condição reporta sucesso ao
+# check obrigatório. Um nome de check, um resultado, sem workflow-espelho duplicado.
+
 on:
   push:
     branches: [main]
-    paths:
-      - "src/**"
-      - "!src/web/**"
-      - "tests/**"
-      - ".github/workflows/backend-ci.yml"
-      - "*.sln"
-      - "Directory.Build.props"
   pull_request:
-    paths:
-      - "src/**"
-      - "!src/web/**"
-      - "tests/**"
-      - ".github/workflows/backend-ci.yml"
-      - "*.sln"
-      - "Directory.Build.props"
 
 concurrency:
   group: backend-${{ github.ref }}
@@ -34,13 +28,59 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  # Nome único e estável: é este que vira required check na proteção da branch.
+  changes:
+    name: backend / changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detectar mudanças no backend
+        id: filter
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            base="$PR_BASE"; head="$PR_HEAD"
+          else
+            base="$PUSH_BEFORE"; head="$PUSH_AFTER"
+          fi
+
+          if [ -z "$base" ] \
+             || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "Sem base comparável (primeiro push ou histórico reescrito) — tratando como alterado."
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$base" "$head")"
+          echo "Arquivos alterados:"; echo "$changed" | sed 's/^/  /'
+
+          if echo "$changed" | grep -qE '^(src/Booking\.|tests/|Directory\.(Build|Packages)\.(props|targets)$|global\.json$|nuget\.config$|[^/]*\.slnx?$|\.editorconfig$|\.github/workflows/backend-ci\.yml$)'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Backend não alterado — build-test e format serão pulados (reportam sucesso)."
+          fi
+
   build-test:
+    # Nome estável: é check obrigatório na proteção da main.
     name: backend / build-test
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
 
-    # PostGIS e btree_gist são requisito duro: o cálculo de disponibilidade usa
-    # geografia e a prevenção de dupla reserva usa EXCLUDE USING gist.
+    # PostGIS e btree_gist são requisito duro: busca geográfica e prevenção de dupla
+    # reserva por EXCLUDE USING gist (ADR-005).
     services:
       postgres:
         image: postgis/postgis:17-3.5
@@ -59,38 +99,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Detectar projetos .NET
-        id: detect
-        shell: bash
-        run: |
-          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Nenhum projeto .NET ainda. Bootstrap em andamento — job encerrado com sucesso."
-          fi
-
-      - uses: actions/setup-dotnet@v4
-        if: steps.detect.outputs.found == 'true'
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Cache de pacotes NuGet
-        if: steps.detect.outputs.found == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
-          restore-keys: nuget-${{ runner.os }}-
-
-      - name: Restore
-        if: steps.detect.outputs.found == 'true'
-        run: dotnet restore
-
-      - name: Build
-        if: steps.detect.outputs.found == 'true'
-        run: dotnet build --no-restore --configuration Release
-
       - name: Habilitar extensões do PostgreSQL
         env:
           PGPASSWORD: postgres
@@ -99,8 +107,6 @@ jobs:
           psql -h localhost -U postgres -d booking_test -c "CREATE EXTENSION IF NOT EXISTS btree_gist;"
 
       # Prova que a GARANTIA funciona, não só que a extensão carrega.
-      # Sem este passo, o CI verifica que `CREATE EXTENSION` não falha — o que é
-      # muito menos do que a ADR-005 afirma. Aqui a sobreposição é de fato rejeitada.
       - name: Provar a constraint de exclusão (ADR-005)
         env:
           PGPASSWORD: postgres
@@ -148,6 +154,38 @@ jobs:
           echo '::notice::Constraint de exclusão verificada: rejeita sobreposição, aceita adjacência e outro profissional.'
           $PSQL -c "DROP TABLE exclusion_probe;"
 
+      - name: Detectar projetos .NET
+        id: detect
+        shell: bash
+        run: |
+          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null || compgen -G "*.slnx" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nenhum projeto .NET ainda. Bootstrap em andamento."
+          fi
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.detect.outputs.found == 'true'
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache de pacotes NuGet
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        if: steps.detect.outputs.found == 'true'
+        run: dotnet restore
+
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: dotnet build --no-restore --configuration Release
+
       - name: Testes
         if: steps.detect.outputs.found == 'true'
         env:
@@ -163,7 +201,10 @@ jobs:
           if-no-files-found: ignore
 
   format:
+    # Nome estável: é check obrigatório na proteção da main.
     name: backend / format
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -172,7 +213,7 @@ jobs:
         id: detect
         shell: bash
         run: |
-          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null; then
+          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null || compgen -G "*.slnx" > /dev/null; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"

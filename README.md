@@ -50,9 +50,40 @@ legítima é preservada pelo hook.
 
 ## Governança do repositório
 
-A branch `main` é protegida: pull request obrigatório, uma aprovação, CODEOWNERS, conversas
-resolvidas, sem force push e sem deleção. Os três checks obrigatórios são
-`backend / build-test`, `backend / format` e `frontend / build-lint`.
+A branch `main` é protegida: pull request obrigatório, uma aprovação de code owner, conversas
+resolvidas, sem force push e sem deleção. Quatro checks obrigatórios:
+
+| Check | O que garante |
+|---|---|
+| `backend / build-test` | Build, testes e a prova da constraint de exclusão da ADR-005 |
+| `backend / format` | `dotnet format --verify-no-changes` |
+| `frontend / build-lint` | Lint, tipos, formatação, testes e build |
+| `governance / no-ai-coauthor` | Nenhum commit do PR tem trailer de atribuição de IA |
+
+### Por que os workflows não têm filtro de caminho
+
+Check obrigatório com filtro de caminho no gatilho não roda em PR que não toca a área — e check
+que não roda nunca fica verde. Todo PR só de documentação ficaria **bloqueado para sempre**.
+
+Os workflows rodam sempre; um job `changes` decide se há o que verificar. Quando não há, os jobs
+pesados são pulados, e o GitHub trata job pulado por condição como sucesso no check obrigatório.
+Assim PR de documentação passa em segundos e PR de código roda a verificação completa, com o
+mesmo nome de check nos dois casos.
+
+### Por que todo caminho do CODEOWNERS tem os dois
+
+O GitHub nunca aceita aprovação do autor do próprio PR. Um caminho com um único code owner
+deixaria todo PR desse owner naquele caminho **sem ninguém que pudesse aprovar**. Numa equipe
+de duas pessoas, "code owner que não é o autor" é sempre a outra pessoa — então os dois aparecem
+em tudo, com o responsável principal primeiro na linha.
+
+### Por que existe o check `governance / no-ai-coauthor`
+
+O hook local só funciona em quem rodou `git config core.hooksPath .githooks`. Um commit com
+`Co-Authored-By: Claude` que escape faz o GitHub listar a IA como Contributor — e isso **não sai
+reescrevendo o histórico**: o GitHub guarda os commits antigos e a contagem em cache. Este
+repositório já foi apagado e recriado uma vez por esse motivo. O check no CI é a proteção que não
+depende da configuração de ninguém.
 
 ### Por que `enforce_admins` está desligado
 

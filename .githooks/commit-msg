@@ -41,10 +41,16 @@ msg_file="$1"
 tmp_file="${msg_file}.attribution-tmp"
 
 # Remove só os trailers de IA. O `-i` cobre `Co-authored-by` e variações.
-grep -v -i -E '^[[:space:]]*co-authored-by:[[:space:]]*claude' "$msg_file" \
-  | grep -v -i -E '^[[:space:]]*claude-session:' \
-  | grep -v -F 'Generated with [Claude Code]' \
-  > "$tmp_file" || true
+#
+# O padrão é estreito de propósito. Um prefixo simples `claude` também removeria
+# `Co-Authored-By: Claudete Souza` ou `Claudio`, que são coautoria humana legítima.
+# Por isso só casa: e-mail @anthropic.com, o nome exato "Claude" seguido de
+# `<` ou fim de linha, ou "Claude" seguido do nome de um modelo.
+#
+# O MESMO padrão é usado em .github/workflows/governance.yml — mantenha os dois iguais.
+AI_ATTRIBUTION='^[[:space:]]*co-authored-by:.*@anthropic\.com|^[[:space:]]*co-authored-by:[[:space:]]*claude[[:space:]]*(<|$)|^[[:space:]]*co-authored-by:[[:space:]]*claude[[:space:]]+(opus|sonnet|haiku|fable)([[:space:]]|$)|^[[:space:]]*claude-session:|generated with \[claude code\]'
+
+grep -v -i -E "$AI_ATTRIBUTION" "$msg_file" > "$tmp_file" || true
 
 # Colapsa as linhas em branco que sobraram no fim da mensagem.
 awk '

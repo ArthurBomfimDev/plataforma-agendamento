@@ -177,6 +177,13 @@ git config core.hooksPath .githooks   # uma vez por clone, obrigatório
 >
 > A configuração do cliente resolve só a máquina de quem a configurou; o hook resolve o
 > repositório para qualquer pessoa e qualquer ferramenta. Ver `.githooks/commit-msg` e o README.
+>
+> **Reescrever o histórico não desfaz o estrago.** O GitHub guarda os commits antigos e a lista de
+> Contributors em cache; o repositório já foi apagado e recriado uma vez por isso. Por isso existe
+> também o check obrigatório `governance / no-ai-coauthor`, que reprova o PR no servidor.
+>
+> O padrão de detecção é estreito de propósito — não pode casar `Claudete` nem `Claudio`.
+> O hook e o workflow usam **o mesmo padrão**: mudou um, mude o outro.
 
 ### Branches
 
