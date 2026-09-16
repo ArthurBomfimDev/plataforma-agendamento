@@ -25,17 +25,14 @@
 *                               @ArthurBomfimDev @RafaelErnandes
 
 # ---------- Backend — principal: Arthur ----------
-/src/Booking.Api/               @ArthurBomfimDev @RafaelErnandes
-/src/Booking.Modules.*/         @ArthurBomfimDev @RafaelErnandes
-/src/Booking.Shared/            @ArthurBomfimDev @RafaelErnandes
-/tests/                         @ArthurBomfimDev @RafaelErnandes
+/backend/                       @ArthurBomfimDev @RafaelErnandes
 
 # ---------- Frontend — principal: Rafael ----------
-/src/web/                       @RafaelErnandes @ArthurBomfimDev
-/src/web/src/styles/            @RafaelErnandes @ArthurBomfimDev
+/frontend/                      @RafaelErnandes @ArthurBomfimDev
 
 # ---------- Contrato entre as frentes — responsabilidade conjunta ----------
-/src/web/src/lib/api/           @ArthurBomfimDev @RafaelErnandes
+/backend/src/Core/Booking.Arguments/   @ArthurBomfimDev @RafaelErnandes
+/frontend/src/lib/api/                 @ArthurBomfimDev @RafaelErnandes
 
 # ---------- Infraestrutura e automação — principal: Arthur ----------
 /.github/                       @ArthurBomfimDev @RafaelErnandes

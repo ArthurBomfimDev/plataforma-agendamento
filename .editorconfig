@@ -63,7 +63,7 @@ dotnet_naming_style.underscore_camel_style.required_prefix = _
 dotnet_naming_style.underscore_camel_style.capitalization = camel_case
 
 # ---------- Projetos e soluções ----------
-[*.{csproj,props,targets}]
+[*.{csproj,props,targets,slnx}]
 indent_size = 2
 
 [*.sln]

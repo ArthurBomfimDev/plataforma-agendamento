@@ -103,13 +103,19 @@ Uso da válvula deve ser registrado no PR ou na issue correspondente, com a raz�
 ## Comandos
 
 ```bash
-# Backend
-dotnet restore && dotnet build && dotnet test
-dotnet format --verify-no-changes
+# Backend (em backend/) — requer SDK .NET 10
+dotnet build Booking.slnx
+dotnet test Booking.slnx          # inclui os testes de arquitetura
+dotnet format Booking.slnx --verify-no-changes
 
-# Frontend (em src/web)
+# Frontend (em frontend/)
 npm ci && npm run lint && npm run typecheck && npm run build
 ```
+
+O backend é organizado em camadas (`src/Core`, `src/Infrastructure`, `src/Presentation`), com os
+8 módulos como pastas `Module/<Contexto>` dentro de cada camada. A fronteira entre módulos não é
+garantida pelo compilador — é garantida por `Booking.ArchitectureTests`, que quebra o build.
+Detalhes e motivo de cada regra: `CLAUDE.md` §5 e ADR-010.
 
 ## Licença
 

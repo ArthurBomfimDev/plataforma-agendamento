@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Casos de uso. Conhece o domínio e o contrato da API; não conhece infraestrutura. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Booking.Domain\Booking.Domain.csproj" />
+    <ProjectReference Include="..\Booking.Arguments\Booking.Arguments.csproj" />
+  </ItemGroup>
+
+</Project>

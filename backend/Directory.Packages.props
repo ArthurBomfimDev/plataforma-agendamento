@@ -1,0 +1,35 @@
+<Project>
+  <!--
+    Versões de pacote centralizadas: uma versão por pacote na solution inteira.
+    Os .csproj declaram só <PackageReference Include="..." />, sem Version.
+
+    Versões resolvidas pelo NuGet e pelos templates oficiais do SDK 10.0.100 em 2026-09-16.
+
+    Microsoft.AspNetCore.OpenApi: o template do SDK traz 10.0.0, que depende de Microsoft.OpenApi 2.0.0,
+    afetada pela CVE-2026-49451 (GHSA-v5pm-xwqc-g5wc, gravidade alta, corrigida em 2.7.5). O NuGet Audit
+    com TreatWarningsAsErrors barrou o build — é para isso que ele existe. Não rebaixe esta versão.
+
+    ⚠️ PACOTES PROIBIDOS — verificado por Booking.ArchitectureTests (ForbiddenDependencyTests):
+      AutoMapper, MediatR      mapeamento por reflexão pode recalcular o snapshot (ADR-010, decisão 6)
+      MassTransit, RabbitMQ…   o Outbox já é a fila de eventos; sem barramento novo (ADR-010, decisão 7)
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Presentation">
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup Label="Infrastructure">
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="NetArchTest.eNhancedEdition" Version="1.4.5" />
+  </ItemGroup>
+</Project>

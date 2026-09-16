@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ⚠️ ESTE PROJETO CONTÉM VIOLAÇÕES DE ARQUITETURA DE PROPÓSITO.
+
+    Cada tipo aqui quebra uma das decisões da ADR-010 (ou é o contraexemplo correto que NÃO pode
+    ser acusado). Os testes de arquitetura rodam cada regra contra este assembly e exigem que ela
+    acuse exatamente as violações plantadas.
+
+    Motivo: uma regra que só roda contra código correto passa verde para sempre — inclusive quando
+    está quebrada. Sem a violação plantada, não há prova de que a regra funciona.
+
+    Nunca é referenciado por código de produção. Os namespaces imitam os de produção de propósito;
+    as regras de produção varrem só os assemblies de produção, então não há contaminação.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Core\Booking.Domain\Booking.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Core\Booking.Application\Booking.Application.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Booking.Infrastructure\Booking.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
