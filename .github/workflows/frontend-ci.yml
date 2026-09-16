@@ -54,7 +54,7 @@ jobs:
           changed="$(git diff --name-only "$base" "$head")"
           echo "Arquivos alterados:"; echo "$changed" | sed 's/^/  /'
 
-          if echo "$changed" | grep -qE '^(src/web/|\.github/workflows/frontend-ci\.yml$)'; then
+          if echo "$changed" | grep -qE '^(frontend/|\.github/workflows/frontend-ci\.yml$)'; then
             echo "frontend=true" >> "$GITHUB_OUTPUT"
           else
             echo "frontend=false" >> "$GITHUB_OUTPUT"
@@ -70,7 +70,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: src/web
+        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v5
@@ -80,11 +80,11 @@ jobs:
         working-directory: .
         shell: bash
         run: |
-          if [ -f "src/web/package.json" ]; then
+          if [ -f "frontend/package.json" ]; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::src/web/package.json ainda não existe. Bootstrap em andamento."
+            echo "::notice::frontend/package.json ainda não existe. Bootstrap em andamento."
           fi
 
       - uses: actions/setup-node@v4
@@ -92,7 +92,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: src/web/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Instalar dependências
         if: steps.detect.outputs.found == 'true'

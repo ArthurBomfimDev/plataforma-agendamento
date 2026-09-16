@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.eNhancedEdition" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Core\Booking.Domain\Booking.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Core\Booking.Application\Booking.Application.csproj" />
+    <ProjectReference Include="..\..\src\Core\Booking.Arguments\Booking.Arguments.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Booking.Infrastructure\Booking.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Presentation\Booking.Api\Booking.Api.csproj" />
+    <ProjectReference Include="..\Booking.ArchitectureTests.Fixtures\Booking.ArchitectureTests.Fixtures.csproj" />
+  </ItemGroup>
+
+</Project>

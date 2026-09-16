@@ -65,7 +65,7 @@ jobs:
           changed="$(git diff --name-only "$base" "$head")"
           echo "Arquivos alterados:"; echo "$changed" | sed 's/^/  /'
 
-          if echo "$changed" | grep -qE '^(src/Booking\.|tests/|Directory\.(Build|Packages)\.(props|targets)$|global\.json$|nuget\.config$|[^/]*\.slnx?$|\.editorconfig$|\.github/workflows/backend-ci\.yml$)'; then
+          if echo "$changed" | grep -qE '^(backend/|\.editorconfig$|\.github/workflows/backend-ci\.yml$)'; then
             echo "backend=true" >> "$GITHUB_OUTPUT"
           else
             echo "backend=false" >> "$GITHUB_OUTPUT"
@@ -78,6 +78,10 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
 
     # PostGIS e btree_gist são requisito duro: busca geográfica e prevenção de dupla
     # reserva por EXCLUDE USING gist (ADR-005).
@@ -154,51 +158,42 @@ jobs:
           echo '::notice::Constraint de exclusão verificada: rejeita sobreposição, aceita adjacência e outro profissional.'
           $PSQL -c "DROP TABLE exclusion_probe;"
 
-      - name: Detectar projetos .NET
-        id: detect
-        shell: bash
-        run: |
-          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null || compgen -G "*.slnx" > /dev/null; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Nenhum projeto .NET ainda. Bootstrap em andamento."
-          fi
-
+      # global.json fixa 10.0.100 com rollForward latestFeature: aceita a SDK 10.0.x mais nova.
       - uses: actions/setup-dotnet@v4
-        if: steps.detect.outputs.found == 'true'
         with:
           dotnet-version: "10.0.x"
 
       - name: Cache de pacotes NuGet
-        if: steps.detect.outputs.found == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('backend/**/*.csproj', 'backend/Directory.Packages.props') }}
           restore-keys: nuget-${{ runner.os }}-
 
+      # O NuGet Audit roda no restore; com TreatWarningsAsErrors, pacote com vulnerabilidade
+      # conhecida reprova o build aqui.
       - name: Restore
-        if: steps.detect.outputs.found == 'true'
-        run: dotnet restore
+        run: dotnet restore Booking.slnx
 
       - name: Build
-        if: steps.detect.outputs.found == 'true'
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build Booking.slnx --no-restore --configuration Release
 
+      # Inclui Booking.ArchitectureTests: fronteira de módulo e as 7 decisões da ADR-010.
       - name: Testes
-        if: steps.detect.outputs.found == 'true'
         env:
           ConnectionStrings__Default: "Host=localhost;Port=5432;Database=booking_test;Username=postgres;Password=postgres"
-        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: >-
+          dotnet test Booking.slnx --no-build --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --logger "console;verbosity=normal"
 
       - name: Publicar resultado dos testes
-        if: always() && steps.detect.outputs.found == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-results
-          path: "**/*.trx"
-          if-no-files-found: ignore
+          path: backend/**/*.trx
+          if-no-files-found: warn
 
   format:
     # Nome estável: é check obrigatório na proteção da main.
@@ -206,24 +201,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
       - uses: actions/checkout@v5
 
-      - name: Detectar projetos .NET
-        id: detect
-        shell: bash
-        run: |
-          if compgen -G "src/**/*.csproj" > /dev/null || compgen -G "*.sln" > /dev/null || compgen -G "*.slnx" > /dev/null; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/setup-dotnet@v4
-        if: steps.detect.outputs.found == 'true'
         with:
           dotnet-version: "10.0.x"
 
       - name: Verificar formatação
-        if: steps.detect.outputs.found == 'true'
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet format Booking.slnx --verify-no-changes --verbosity diagnostic

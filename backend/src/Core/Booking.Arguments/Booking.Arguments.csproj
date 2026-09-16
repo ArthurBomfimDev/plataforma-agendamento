@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Contrato da API: request e response. Não referencia o domínio — o contrato público não pode
+    mudar por acidente quando uma entidade muda. É daqui que sai o OpenAPI e o cliente TypeScript.
+  -->
+
+</Project>

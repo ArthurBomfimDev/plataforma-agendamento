@@ -98,41 +98,55 @@ um profissional por vez, seletor horizontal no topo, dia como lista cronológica
 
 ## 5. Convenções de código
 
-### Organização por módulo
+### Organização do backend — camadas como projetos, módulos como pastas
 
 ```
-src/
-  Booking.Api/                    Host, endpoints, autenticação, composição
-  Booking.Modules.Identity/       Conta, login, token, papéis
-  Booking.Modules.Tenancy/        Business, onboarding, verificação, assentos
-  Booking.Modules.People/         Customer, Professional, vínculos
-  Booking.Modules.Catalog/        Service, categoria, preço, duração, buffer
-  Booking.Modules.Availability/   Jornada, bloqueio, feriado, cálculo de slot
-  Booking.Modules.Scheduling/     Appointment, máquina de estados, transbordo
-  Booking.Modules.Reputation/     Avaliação e resposta
-  Booking.Modules.Compliance/     Consentimento, auditoria, retenção
-  Booking.Shared/                 Tipos base, tenant context, Result, erros
-  web/                            App React + TypeScript + Vite
-tests/
-  Booking.UnitTests/
-  Booking.IntegrationTests/
-  Booking.ArchitectureTests/
+backend/
+  Booking.slnx  global.json  Directory.Build.props  Directory.Packages.props
+  src/
+    Core/
+      Booking.Domain/           Base/ · Module/<Contexto>/          entidades, value objects, repositórios
+      Booking.Application/      Base/ · Contracts/<Contexto>/ · Module/<Contexto>/{Commands,Queries,Converter}
+      Booking.Arguments/        Module/<Contexto>/                  contrato da API: request e response
+    Infrastructure/
+      Booking.Infrastructure/   Persistence/Context · Module/<Contexto>/{Mapping,Repository}
+    Presentation/
+      Booking.Api/              Module/<Contexto>/                  controllers
+  tests/
+    Booking.ArchitectureTests/           trava a ADR-010 no CI
+    Booking.ArchitectureTests.Fixtures/  ⚠️ violações plantadas de propósito — não "corrija"
+frontend/                       App React + TypeScript + Vite
 ```
 
-**Fronteiras de módulo — quatro regras:**
+`<Contexto>` é um dos 8 módulos: `Identity` · `Tenancy` · `People` · `Catalog` · `Availability` ·
+`Scheduling` · `Reputation` · `Compliance`. O namespace sempre segue a forma
+`Booking.<Camada>.Module.<Contexto>` — é esse segmento que os testes de arquitetura verificam.
 
-1. Um módulo **não** referencia tipo interno de outro. Só a interface pública (`ICatalogQueries`).
-2. Escrita entre módulos **só por evento de domínio**, publicado via **Outbox** na mesma transação.
-3. Nenhuma chave estrangeira atravessa fronteira de módulo.
-4. `Booking.ArchitectureTests` **quebra o build** quando 1 ou 3 são violados.
-   É isso que impede o monólito modular de virar monólito comum em seis semanas.
+**As 7 decisões da ADR-010, todas verificadas por `Booking.ArchitectureTests`:**
+
+| # | Regra | Por quê |
+|---|---|---|
+| 1 | `Module.X` não depende de `Module.Y`. Entre módulos, só `Booking.Application.Contracts.Y` ou evento de domínio | 22 projetos não se justificam para 2 devs; a fronteira fica no teste |
+| 2 | `Base/` só para `Category`, `Service`, `WorkSchedule`. Agregado com estado usa `Commands/` + `Queries/` | `Update`/`Remove` genérico pularia a máquina de estados e apagaria histórico |
+| 3 | Toda entidade com `Guid` v7; todo `…Id` do domínio é `Guid` | Id sequencial permite enumerar dado de outro tenant |
+| 4 | Coleção em `Base`, `Queries/` ou `*QueryService` só como `PagedResult<T>` | RNF-01 não se sustenta com listagem sem limite |
+| 5 | Sem entidade de persistência separada; o EF mapeia o domínio em `Mapping/` | Cada forma a mais é um lugar para reescrever o snapshot |
+| 6 | Sem AutoMapper e MediatR; em `Scheduling`, `Reputation`, `Compliance`, conversão manual em `Converter/` | Mapeamento por reflexão recalcula o preço congelado sem teste perceber |
+| 7 | Sem barramento de mensagens; o Outbox na mesma transação é a fila | Não há problema que um broker resolva nesta escala |
+
+Mais: nenhuma chave estrangeira atravessa fronteira de módulo; Domain não depende de EF Core nem de
+ASP.NET; Arguments não depende do Domain.
+
+> **Uma regra só vale se já falhou.** Cada teste de produção tem um par que roda a mesma regra contra
+> `Booking.ArchitectureTests.Fixtures` e exige que ela acuse a violação plantada — e não acuse o
+> contraexemplo correto. Regra nova entra com as duas metades, ou não entra.
 
 ### Nomenclatura
 
 | Elemento | Padrão | Exemplo |
 |---|---|---|
-| Projeto | `Booking.Modules.<Módulo>` | `Booking.Modules.Scheduling` |
-| Namespace | Espelha a pasta, escopo de arquivo | `namespace Booking.Modules.Scheduling.Domain;` |
+| Projeto | `Booking.<Camada>` | `Booking.Application` |
+| Namespace | Espelha a pasta, escopo de arquivo | `namespace Booking.Application.Module.Scheduling.Commands;` |
 | Classe, método, propriedade | `PascalCase` | `AvailabilityCalculator` |
 | Campo privado | `_camelCase` | `_appointmentRepository` |
 | Interface | `I` + `PascalCase` | `IPaymentGateway` |
@@ -199,13 +213,13 @@ registrada, não hábito.
 ## 6. Comandos
 
 ```bash
-# Backend
-dotnet restore
-dotnet format --verify-no-changes
-dotnet build
-dotnet test
+# Backend  (em backend/)
+dotnet restore Booking.slnx
+dotnet format Booking.slnx --verify-no-changes
+dotnet build Booking.slnx
+dotnet test Booking.slnx
 
-# Frontend  (em src/web)
+# Frontend  (em frontend/)
 npm ci
 npm run lint
 npm run typecheck

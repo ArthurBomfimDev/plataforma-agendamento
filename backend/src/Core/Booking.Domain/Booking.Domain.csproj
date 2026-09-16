@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Núcleo. Não referencia nenhum outro projeto e nenhum framework:
+    sem EF Core, sem ASP.NET. Verificado por LayerDependencyTests.
+  -->
+
+</Project>
