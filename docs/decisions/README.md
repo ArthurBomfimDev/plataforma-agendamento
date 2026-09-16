@@ -44,15 +44,22 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [004](0004-identidade-papeis-conta-global.md) | Identidade, papéis e conta global do consumidor | ✅ Aceito | 2026-09-09 |
 | [005](0005-dupla-reserva-constraint-exclusao.md) | Prevenção de dupla reserva por constraint de exclusão | ✅ Aceito | 2026-09-09 |
 | [006](0006-slot-calculado-nao-persistido.md) | Slot calculado, não persistido | ✅ Aceito | 2026-09-09 |
-| [007](0007-monolito-modular-fronteiras.md) | Monólito modular e fronteiras de módulo | ✅ Aceito | 2026-09-09 |
+| [007](0007-monolito-modular-fronteiras.md) | Monólito modular com fronteira de módulo verificada pelo build | ✅ Aceito · reescrita antes do merge | 2026-09-16 |
 | 008 | Hospedagem e PostGIS | ⏳ Pendente — depende do spike | — |
 | [009](0009-paridade-mobile-do-painel.md) | Paridade mobile do painel como decisão de inclusão | ✅ Aceito | 2026-09-09 |
+| [010](0010-organizacao-do-backend.md) | Organização do backend: camadas físicas, módulos por namespace e regras verificadas no CI | ✅ Aceito | 2026-09-16 |
 
 ### Notas sobre a fila
 
 - **001 e 002 são par.** O 002 revoga publicamente a stack declarada no pitch entregue à FATEC
   (React Native + Node/NestJS + AWS). Sem ele registrado, a mudança lida pela banca é incoerência;
   com ele, é maturidade de engenharia.
+- **007 e 010 são par.** A 007 decide que existe fronteira entre módulos e que ela é verificada;
+  a 010 decide a organização física e as sete regras que o CI verifica. A 007 foi reescrita antes
+  do merge, quando a fronteira por projeto físico foi trocada por fronteira por namespace.
+- **Seção "Premissa não verificada".** Toda ADR que se apoia em premissa não medida declara qual é,
+  que ela é inferência, e o que muda se a coleta de dados contradisser. Já está nas ADRs 007 e 010.
+  A 009 tem a nota no contexto, ainda fora da seção padronizada. Falta aplicar às demais.
 - **005 e 006 sustentam o núcleo técnico do TCC.** São os dois ADRs que a banca tem mais chance
   de questionar e os que rendem mais se estiverem bem escritos.
 - **008 depende do spike de infraestrutura** — confirmar `CREATE EXTENSION postgis` e `btree_gist`
