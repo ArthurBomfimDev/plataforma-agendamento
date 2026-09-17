@@ -1,0 +1,5 @@
+dist
+node_modules
+
+# Escrito pelo Bun. Formatar por fora deixaria o arquivo diferente a cada `bun install`.
+bun.lock

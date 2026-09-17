@@ -38,11 +38,17 @@ dist/
 dist-ssr/
 .vite/
 *.local
+*.tsbuildinfo
 .eslintcache
-.npm
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# ---------- Bun ----------
+# bun.lock é versionado de propósito: é texto e precisa aparecer no diff do PR (ADR-011).
+.bun/
+bun-debug.log*
+bun.lockb
 
 # ---------- Testes de frontend ----------
 playwright-report/
