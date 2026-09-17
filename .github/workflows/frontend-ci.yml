@@ -62,7 +62,8 @@ jobs:
           fi
 
   build-lint:
-    # Nome estável: é check obrigatório na proteção da main.
+    # Nome estável: é check obrigatório na proteção da main. NÃO renomear — mudar este nome
+    # trava todo PR até a regra de proteção ser reconfigurada.
     name: frontend / build-lint
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
@@ -75,45 +76,28 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Detectar app do frontend
-        id: detect
-        working-directory: .
-        shell: bash
-        run: |
-          if [ -f "frontend/package.json" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::frontend/package.json ainda não existe. Bootstrap em andamento."
-          fi
-
-      - uses: actions/setup-node@v4
-        if: steps.detect.outputs.found == 'true'
+      # Bun é gerenciador de pacotes e executor de scripts. O bundler continua sendo o Vite
+      # (ADR-011). A versão vem de frontend/.bun-version, para o CI e as duas máquinas baterem.
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          bun-version-file: frontend/.bun-version
 
+      # --frozen-lockfile é o equivalente do `npm ci`: falha se o bun.lock estiver desatualizado
+      # em relação ao package.json, em vez de atualizá-lo em silêncio.
       - name: Instalar dependências
-        if: steps.detect.outputs.found == 'true'
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Lint
-        if: steps.detect.outputs.found == 'true'
-        run: npm run lint
+        run: bun run lint
 
       - name: Verificação de tipos
-        if: steps.detect.outputs.found == 'true'
-        run: npm run typecheck
+        run: bun run typecheck
 
       - name: Verificar formatação
-        if: steps.detect.outputs.found == 'true'
-        run: npm run format:check
+        run: bun run format:check
 
       - name: Testes
-        if: steps.detect.outputs.found == 'true'
-        run: npm run test -- --run
+        run: bun run test
 
       - name: Build
-        if: steps.detect.outputs.found == 'true'
-        run: npm run build
+        run: bun run build
