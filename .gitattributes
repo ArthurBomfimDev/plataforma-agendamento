@@ -46,3 +46,4 @@ Dockerfile  text eol=lf
 docs/**        linguist-documentation
 *.md           linguist-documentation
 .agents/**     linguist-vendored
+graphify-out/graph.json merge=graphify

@@ -67,3 +67,17 @@ desktop.ini
 # ---------- Agentes ----------
 # Skills instaladas via `npx skills` são versionadas de propósito
 # (skills-lock.json garante reprodutibilidade). Nada a ignorar aqui.
+
+# ---------- graphify ----------
+# graph.json e GRAPH_REPORT.md SÃO versionados: é o mapa que o Rafael recebe pronto no clone.
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/memory/
+graphify-out/reflections/
+# mtimes da máquina: muda a cada rebuild sem o grafo mudar.
+graphify-out/manifest.json
+# backups datados que a ferramenta cria ao reconstruir
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+# 600 KB de HTML gerado, reescrito a cada rebuild. Regenerar custa um `graphify update .`,
+# sem chamada de LLM — não vale o ruído em todo diff.
+graphify-out/graph.html

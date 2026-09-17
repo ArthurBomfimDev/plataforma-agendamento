@@ -255,3 +255,39 @@ CI verde · issue e Project atualizados · evidência registrada quando relevant
 **Economia de contexto:** carregue só as skills necessárias, leia só a seção necessária de
 documento longo, reutilize resumo existente. Antes de adicionar complexidade, pergunte:
 *que problema concreto isso resolve?*
+
+## 9. graphify — consultar o grafo antes de ler o repositório
+
+O repositório está mapeado em `graphify-out/graph.json`: nós, comunidades e relações entre
+arquivos. **Consultar o grafo custa muito menos contexto do que reler arquivo ou grepar.**
+
+```bash
+graphify query "onde está o cálculo de slot disponível?"   # subgrafo relevante
+graphify path "Business" "Appointment"                     # relação entre dois nós
+graphify explain "Appointment"                             # um nó e a vizinhança dele
+graphify god-nodes                                         # nós mais conectados
+```
+
+Regras de uso:
+
+- **Pergunta sobre o código começa por `graphify query`**, não por leitura de arquivo inteiro.
+- `GRAPH_REPORT.md` só para revisão ampla de arquitetura, quando `query`, `path` e `explain`
+  não trouxerem contexto suficiente.
+- **Depois de mexer no código, rode `graphify update .`** — é só AST local, sem LLM e sem custo.
+  O hook de `post-commit` já faz isso; o comando serve para quando você quiser atualizar antes de commitar.
+- O grafo é um **índice, não fonte de verdade**. Onde ele divergir do `modelo-de-dominio.md` ou de
+  uma ADR, o documento vence — e a divergência provavelmente indica código que ainda não existe.
+
+### Depois de clonar, uma vez
+
+```bash
+graphify hook install    # post-commit, post-checkout e o driver de merge do graph.json
+```
+
+Mesmo espírito do `git config core.hooksPath .githooks`: é configuração por clone, porque o driver
+de merge guarda o caminho absoluto da instalação de cada máquina. Sem isso o grafo não se atualiza
+sozinho e o `graph.json` volta a dar conflito em merge.
+
+A ferramenta é instalada fora do repositório (`uv tool install graphifyy`, ou um venv dedicado).
+Extração de código é local, via tree-sitter, sem rede. Extração semântica de documento usa o modelo
+da própria sessão. **`graphify extract` com chave de API só com aprovação humana** — é credencial.

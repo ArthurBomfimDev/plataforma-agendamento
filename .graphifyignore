@@ -1,0 +1,25 @@
+# O que não entra no grafo de conhecimento.
+
+# Dependências e artefatos de build
+node_modules/
+bin/
+obj/
+dist/
+graphify-out/cache/
+
+# Material histórico, já superado pelo PROJECT-CONTEXT.md e pelas ADRs.
+# Manter fora evita que decisão revogada apareça no grafo como se valesse.
+docs/contexto/
+
+# ⚠️ CÓDIGO ERRADO DE PROPÓSITO — não pode entrar no grafo.
+# Este projeto contém as violações plantadas que provam os testes de arquitetura (ADR-010).
+# Na primeira construção do grafo, o nó mais conectado de todo o repositório era o `Appointment`
+# DESTE projeto: a documentação de domínio apontava para uma fixture de teste, porque é a única
+# classe com esse nome que existe hoje. Um índice que responde "onde está o Appointment?" com
+# código deliberadamente incorreto é pior do que não ter índice.
+backend/tests/Booking.ArchitectureTests.Fixtures/
+
+# Documentação de ferramenta de terceiro, não do projeto. O SKILL.md do graphify sozinho tem 44 KB
+# e domina as comunidades do grafo com instruções que não dizem nada sobre o nosso domínio.
+.claude/skills/
+.agents/skills/
