@@ -219,13 +219,26 @@ dotnet format Booking.slnx --verify-no-changes
 dotnet build Booking.slnx
 dotnet test Booking.slnx
 
-# Frontend  (em frontend/)
-npm ci
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+# Frontend  (em frontend/) — requer Bun 1.4.2
+bun install
+bun run lint
+bun run typecheck
+bun run format:check
+bun run test
+bun run build
+bun run dev
 ```
+
+**Bun 1.4.2**, fixado em `frontend/.bun-version` e lido pelo CI. As duas máquinas precisam usar
+a mesma versão; instale com `winget install Oven-sh.Bun`.
+
+> ### Bun é gerenciador de pacotes, não bundler
+> O Bun instala pacotes, roda scripts e sobe o dev server. **O bundler continua sendo o Vite**, e o
+> bundler e o dev server nativos do Bun estão rejeitados (ADR-011).
+>
+> O motivo: o frontend não tem runtime em produção — o Vite gera arquivos estáticos. Os problemas
+> conhecidos do Bun como runtime de servidor não se aplicam aqui. Trocar o Vite é decisão nova,
+> com ADR. Se parecer tentador, pare e pergunte.
 
 Se um comando ainda não existir, **registre** em vez de inventar saída.
 

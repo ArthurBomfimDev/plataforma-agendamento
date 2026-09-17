@@ -108,9 +108,14 @@ dotnet build Booking.slnx
 dotnet test Booking.slnx          # inclui os testes de arquitetura
 dotnet format Booking.slnx --verify-no-changes
 
-# Frontend (em frontend/)
-npm ci && npm run lint && npm run typecheck && npm run build
+# Frontend (em frontend/) — requer Bun 1.4.2 (winget install Oven-sh.Bun)
+bun install
+bun run lint && bun run typecheck && bun run format:check && bun run test && bun run build
+bun run dev
 ```
+
+O Bun é o gerenciador de pacotes e o executor de scripts; **o bundler é o Vite** (ADR-011).
+A versão do Bun fica em `frontend/.bun-version` e é a mesma usada no CI.
 
 O backend é organizado em camadas (`src/Core`, `src/Infrastructure`, `src/Presentation`), com os
 8 módulos como pastas `Module/<Contexto>` dentro de cada camada. A fronteira entre módulos não é
