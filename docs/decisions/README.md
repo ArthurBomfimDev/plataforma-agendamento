@@ -48,6 +48,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | 008 | Hospedagem e PostGIS | ⏳ Pendente — depende do spike | — |
 | [009](0009-paridade-mobile-do-painel.md) | Paridade mobile do painel como decisão de inclusão | ✅ Aceito | 2026-09-09 |
 | [010](0010-organizacao-do-backend.md) | Organização do backend: camadas físicas, módulos por namespace e regras verificadas no CI | ✅ Aceito | 2026-09-16 |
+| [011](0011-bun-como-gerenciador-de-pacotes.md) | Bun como gerenciador de pacotes do frontend; Vite permanece o bundler | ✅ Aceito | 2026-09-17 |
 
 ### Notas sobre a fila
 
