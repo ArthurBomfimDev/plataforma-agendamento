@@ -45,15 +45,15 @@ claude mcp add --transport http figma https://mcp.figma.com/mcp
 
 `get_variable_defs` devolve as variáveis ligadas a um nó. Nós úteis da página Design System:
 
-| Nó | Component set | Cobre |
-|---|---|---|
-| `19:26` | Botão | `action/*`, `text-on-action`, `bg-disabled`, radius, touch-min |
-| `20:107` | Chip de status | os 7 `status/*` |
-| `23:86` | Célula de agenda | os 5 `agenda/*` |
-| `22:74` | Badge | os 4 `marker/*`, `action-soft` |
-| `21:48` | Campo | `border-focus`, `border-error`, escala de texto |
-| `24:104` | Card | `bg-surface-raised`, `radius-lg`, elevação |
-| `23:60` | Célula de calendário | marcadores de feriado |
+| Nó       | Component set        | Cobre                                                          |
+| -------- | -------------------- | -------------------------------------------------------------- |
+| `19:26`  | Botão                | `action/*`, `text-on-action`, `bg-disabled`, radius, touch-min |
+| `20:107` | Chip de status       | os 7 `status/*`                                                |
+| `23:86`  | Célula de agenda     | os 5 `agenda/*`                                                |
+| `22:74`  | Badge                | os 4 `marker/*`, `action-soft`                                 |
+| `21:48`  | Campo                | `border-focus`, `border-error`, escala de texto                |
+| `24:104` | Card                 | `bg-surface-raised`, `radius-lg`, elevação                     |
+| `23:60`  | Célula de calendário | marcadores de feriado                                          |
 
 Onde o nome do Figma divergir do CSS, **o Figma vence** — ajuste o CSS, não o Figma.
 
@@ -82,10 +82,14 @@ Estão no cabeçalho de `tokens.css`, em detalhe. Resumo:
 }
 
 /* ✘ valor hardcoded onde existe token */
-.button-primary { background: #0b7690; }
+.button-primary {
+  background: #0b7690;
+}
 
 /* ✘ tom claro como fundo de botão — reprova contraste */
-.button-primary { background: var(--action-soft); }
+.button-primary {
+  background: var(--action-soft);
+}
 ```
 
 Valor hardcoded onde existe token é item do checklist de PR. O Figma foi auditado com
