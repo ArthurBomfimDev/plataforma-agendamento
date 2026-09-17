@@ -100,13 +100,32 @@
       "source_location": "L50"
     },
     {
+      "id": "backend_src_infrastructure_booking_infrastructure_persistence_context_bookingdbcontext_booking_infrastructure_persistence_context_bookingdbcontext",
+      "label": "BookingDbContext",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 15,
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.Infrastructure.Persistence.Context",
+        "scope_chain": [
+          "s38"
+        ]
+      },
+      "norm_label": "bookingdbcontext",
+      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
+      "source_location": "L13"
+    },
+    {
       "id": "backend_tests_booking_architecturetests_forbiddendependencytests_booking_architecturetests_forbiddendependencytests",
       "label": "ForbiddenDependencyTests",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests",
@@ -119,70 +138,13 @@
       "source_location": "L21"
     },
     {
-      "id": "backend_tests_booking_architecturetests_identifiertests_booking_architecturetests_identifiertests",
-      "label": "IdentifierTests",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.ArchitectureTests",
-        "scope_chain": [
-          "s108"
-        ]
-      },
-      "norm_label": "identifiertests",
-      "source_file": "backend/tests/Booking.ArchitectureTests/IdentifierTests.cs",
-      "source_location": "L14"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_moduleboundarytests_booking_architecturetests_moduleboundarytests",
-      "label": "ModuleBoundaryTests",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.ArchitectureTests",
-        "scope_chain": [
-          "s106"
-        ]
-      },
-      "norm_label": "moduleboundarytests",
-      "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
-      "source_location": "L18"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_persistencemappingtests_booking_architecturetests_persistencemappingtests",
-      "label": "PersistenceMappingTests",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.ArchitectureTests",
-        "scope_chain": [
-          "s81"
-        ]
-      },
-      "norm_label": "persistencemappingtests",
-      "source_file": "backend/tests/Booking.ArchitectureTests/PersistenceMappingTests.cs",
-      "source_location": "L13"
-    },
-    {
       "id": "backend_tests_booking_architecturetests_rules_packagerules_booking_architecturetests_rules_packagerules",
       "label": "PackageRules",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests.Rules",
@@ -195,32 +157,13 @@
       "source_location": "L5"
     },
     {
-      "id": "backend_tests_booking_architecturetests_support_archassert_booking_architecturetests_support_archassert",
-      "label": "ArchAssert",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.ArchitectureTests.Support",
-        "scope_chain": [
-          "s26"
-        ]
-      },
-      "norm_label": "archassert",
-      "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
-      "source_location": "L5"
-    },
-    {
       "id": "backend_tests_booking_architecturetests_support_backendroot_booking_architecturetests_support_backendroot",
       "label": "BackendRoot",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests.Support",
@@ -252,6 +195,25 @@
       "source_location": "L13"
     },
     {
+      "id": "backend_tests_booking_architecturetests_moduleboundarytests_booking_architecturetests_moduleboundarytests",
+      "label": "ModuleBoundaryTests",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 26,
+      "community_name": ".ModuleBoundary",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.ArchitectureTests",
+        "scope_chain": [
+          "s106"
+        ]
+      },
+      "norm_label": "moduleboundarytests",
+      "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
+      "source_location": "L18"
+    },
+    {
       "id": "backend_tests_booking_architecturetests_rules_namespacerules_booking_architecturetests_rules_namespacerules",
       "label": "NamespaceRules",
       "_callable": true,
@@ -269,6 +231,25 @@
       "norm_label": "namespacerules",
       "source_file": "backend/tests/Booking.ArchitectureTests/Rules/NamespaceRules.cs",
       "source_location": "L10"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_support_archassert_booking_architecturetests_support_archassert",
+      "label": "ArchAssert",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 26,
+      "community_name": ".ModuleBoundary",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.ArchitectureTests.Support",
+        "scope_chain": [
+          "s26"
+        ]
+      },
+      "norm_label": "archassert",
+      "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
+      "source_location": "L5"
     },
     {
       "id": "backend_tests_booking_architecturetests_baseusagetests_booking_architecturetests_baseusagetests",
@@ -290,6 +271,25 @@
       "source_location": "L14"
     },
     {
+      "id": "backend_tests_booking_architecturetests_identifiertests_booking_architecturetests_identifiertests",
+      "label": "IdentifierTests",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "ReflectionRules",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.ArchitectureTests",
+        "scope_chain": [
+          "s108"
+        ]
+      },
+      "norm_label": "identifiertests",
+      "source_file": "backend/tests/Booking.ArchitectureTests/IdentifierTests.cs",
+      "source_location": "L14"
+    },
+    {
       "id": "backend_tests_booking_architecturetests_paginationtests_booking_architecturetests_paginationtests",
       "label": "PaginationTests",
       "_callable": true,
@@ -306,6 +306,25 @@
       },
       "norm_label": "paginationtests",
       "source_file": "backend/tests/Booking.ArchitectureTests/PaginationTests.cs",
+      "source_location": "L13"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_persistencemappingtests_booking_architecturetests_persistencemappingtests",
+      "label": "PersistenceMappingTests",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "ReflectionRules",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.ArchitectureTests",
+        "scope_chain": [
+          "s81"
+        ]
+      },
+      "norm_label": "persistencemappingtests",
+      "source_file": "backend/tests/Booking.ArchitectureTests/PersistenceMappingTests.cs",
       "source_location": "L13"
     },
     {
@@ -350,7 +369,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Application",
@@ -369,7 +388,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Arguments",
@@ -388,7 +407,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Domain",
@@ -407,7 +426,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Infrastructure",
@@ -420,32 +439,13 @@
       "source_location": "L6"
     },
     {
-      "id": "backend_src_infrastructure_booking_infrastructure_persistence_context_bookingdbcontext_booking_infrastructure_persistence_context_bookingdbcontext",
-      "label": "BookingDbContext",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "ReflectionRules.cs",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.Infrastructure.Persistence.Context",
-        "scope_chain": [
-          "s38"
-        ]
-      },
-      "norm_label": "bookingdbcontext",
-      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
-      "source_location": "L13"
-    },
-    {
       "id": "backend_tests_booking_architecturetests_architectureconventions_booking_architecturetests_architectureconventions",
       "label": "ArchitectureConventions",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests",
@@ -548,12 +548,38 @@
       "source_location": "L27"
     },
     {
+      "id": "backend_src_infrastructure_booking_infrastructure_persistence_context_bookingdbcontext_booking_infrastructure_persistence_context_bookingdbcontext_onmodelcreating",
+      "label": ".OnModelCreating()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 15,
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.Infrastructure.Persistence.Context",
+        "scope_chain": [
+          "s38"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "ApplyConfigurationsFromAssembly",
+            "receiver_type": "ModelBuilder",
+            "lang": "csharp",
+            "line": "L17"
+          }
+        ]
+      },
+      "norm_label": ".onmodelcreating()",
+      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
+      "source_location": "L15"
+    },
+    {
       "id": "backend_tests_booking_architecturetests_forbiddendependencytests_booking_architecturetests_forbiddendependencytests_no_project_declares_a_forbidden_package",
       "label": ".No_project_declares_a_forbidden_package()",
       "_callable": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests",
@@ -586,12 +612,30 @@
       "source_location": "L34"
     },
     {
+      "id": "backend_tests_booking_architecturetests_forbiddendependencytests_booking_architecturetests_forbiddendependencytests_rule_catches_reflection_mapper_in_stateful_module",
+      "label": ".Rule_catches_reflection_mapper_in_stateful_module()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "Decis\u00e3o",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.ArchitectureTests",
+        "scope_chain": [
+          "s106"
+        ]
+      },
+      "norm_label": ".rule_catches_reflection_mapper_in_stateful_module()",
+      "source_file": "backend/tests/Booking.ArchitectureTests/ForbiddenDependencyTests.cs",
+      "source_location": "L85"
+    },
+    {
       "id": "backend_tests_booking_architecturetests_forbiddendependencytests_booking_architecturetests_forbiddendependencytests_scan_catches_forbidden_packages_and_allows_mit_alternative",
       "label": ".Scan_catches_forbidden_packages_and_allows_mit_alternative()",
       "_callable": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests",
@@ -617,7 +661,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests",
@@ -638,38 +682,12 @@
       "source_location": "L23"
     },
     {
-      "id": "backend_tests_booking_architecturetests_moduleboundarytests_booking_architecturetests_moduleboundarytests_modules",
-      "label": ".Modules()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.ArchitectureTests",
-        "scope_chain": [
-          "s106"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "Add",
-            "receiver_type": "TheoryData",
-            "lang": "csharp",
-            "line": "L25"
-          }
-        ]
-      },
-      "norm_label": ".modules()",
-      "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
-      "source_location": "L20"
-    },
-    {
       "id": "backend_tests_booking_architecturetests_rules_packagerules_booking_architecturetests_rules_packagerules_forbiddenpackages",
       "label": ".ForbiddenPackages()",
       "_callable": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests.Rules",
@@ -701,7 +719,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests.Support",
@@ -744,24 +762,6 @@
       "norm_label": ".modulenamespacepattern()",
       "source_file": "backend/tests/Booking.ArchitectureTests/ArchitectureConventions.cs",
       "source_location": "L78"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_forbiddendependencytests_booking_architecturetests_forbiddendependencytests_rule_catches_reflection_mapper_in_stateful_module",
-      "label": ".Rule_catches_reflection_mapper_in_stateful_module()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 26,
-      "community_name": ".ModuleBoundary",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.ArchitectureTests",
-        "scope_chain": [
-          "s106"
-        ]
-      },
-      "norm_label": ".rule_catches_reflection_mapper_in_stateful_module()",
-      "source_file": "backend/tests/Booking.ArchitectureTests/ForbiddenDependencyTests.cs",
-      "source_location": "L85"
     },
     {
       "id": "backend_tests_booking_architecturetests_forbiddendependencytests_booking_architecturetests_forbiddendependencytests_stateful_module_does_not_use_reflection_mapping",
@@ -876,6 +876,32 @@
       "norm_label": ".module_reaches_other_modules_only_through_contracts()",
       "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
       "source_location": "L31"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_moduleboundarytests_booking_architecturetests_moduleboundarytests_modules",
+      "label": ".Modules()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 26,
+      "community_name": ".ModuleBoundary",
+      "file_type": "code",
+      "metadata": {
+        "namespace": "Booking.ArchitectureTests",
+        "scope_chain": [
+          "s106"
+        ],
+        "unresolved_calls": [
+          {
+            "callee": "Add",
+            "receiver_type": "TheoryData",
+            "lang": "csharp",
+            "line": "L25"
+          }
+        ]
+      },
+      "norm_label": ".modules()",
+      "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
+      "source_location": "L20"
     },
     {
       "id": "backend_tests_booking_architecturetests_moduleboundarytests_booking_architecturetests_moduleboundarytests_rule_catches_planted_cross_module_dependency_and_allows_contract",
@@ -1582,32 +1608,6 @@
       "norm_label": ".noviolations()",
       "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
       "source_location": "L23"
-    },
-    {
-      "id": "backend_src_infrastructure_booking_infrastructure_persistence_context_bookingdbcontext_booking_infrastructure_persistence_context_bookingdbcontext_onmodelcreating",
-      "label": ".OnModelCreating()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "ReflectionRules.cs",
-      "file_type": "code",
-      "metadata": {
-        "namespace": "Booking.Infrastructure.Persistence.Context",
-        "scope_chain": [
-          "s38"
-        ],
-        "unresolved_calls": [
-          {
-            "callee": "ApplyConfigurationsFromAssembly",
-            "receiver_type": "ModelBuilder",
-            "lang": "csharp",
-            "line": "L17"
-          }
-        ]
-      },
-      "norm_label": ".onmodelcreating()",
-      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
-      "source_location": "L15"
     },
     {
       "id": "backend_src_core_booking_domain_base_baseentity",
@@ -2878,6 +2878,18 @@
       "source_location": "L123"
     },
     {
+      "id": "docs_decisions_0004_identidade_papeis_conta_global",
+      "label": "0004-identidade-papeis-conta-global.md",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "ADR-004 \u2014 Identidade \u00fanica, pap\u00e9is por associa\u00e7\u00e3o e conta global do consumidor",
+      "file_type": "document",
+      "node_kind": "page",
+      "norm_label": "0004-identidade-papeis-conta-global.md",
+      "source_file": "docs/decisions/0004-identidade-papeis-conta-global.md",
+      "source_location": "L1"
+    },
+    {
       "id": "docs_decisions_0004_identidade_papeis_conta_global_a_tipos_de_conta_separados_customeraccount_professionalaccount_owneraccount",
       "label": "A \u2014 Tipos de conta separados: `CustomerAccount`, `ProfessionalAccount`, `OwnerAccount`",
       "_origin": "ast",
@@ -3046,184 +3058,64 @@
       "source_location": "L123"
     },
     {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido",
-      "label": "0006-slot-calculado-nao-persistido.md",
+      "id": "backend_src_infrastructure_booking_infrastructure_persistence_context_bookingdbcontext",
+      "label": "BookingDbContext.cs",
       "_origin": "ast",
       "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "page",
-      "norm_label": "0006-slot-calculado-nao-persistido.md",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "norm_label": "bookingdbcontext.cs",
+      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
       "source_location": "L1"
     },
     {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_a_tabela_de_slots_pr\u00e9_gerada",
-      "label": "A \u2014 Tabela de slots pr\u00e9-gerada",
+      "id": "csharp_namespace:58e3fd873706b713",
+      "label": "Booking.Infrastructure.Persistence.Context",
       "_origin": "ast",
       "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "a \u2014 tabela de slots pre-gerada",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L40"
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "metadata": {
+        "kind": "csharp_namespace",
+        "namespace": "Booking.Infrastructure.Persistence.Context"
+      },
+      "norm_label": "booking.infrastructure.persistence.context",
+      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
+      "source_location": "L3",
+      "type": "namespace"
     },
     {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_adr_006_slot_\u00e9_resultado_de_c\u00e1lculo_n\u00e3o_linha_de_tabela",
-      "label": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
+      "id": "dbcontext",
+      "label": "DbContext",
       "_origin": "ast",
       "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "adr-006 \u2014 slot e resultado de calculo, nao linha de tabela",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L1"
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "norm_label": "dbcontext",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_alternativas_consideradas",
-      "label": "Alternativas consideradas",
+      "id": "dbcontextoptions",
+      "label": "DbContextOptions",
       "_origin": "ast",
       "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "alternativas consideradas",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L38"
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "norm_label": "dbcontextoptions",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_b_tabela_de_slots_com_cache_invalidado_por_evento",
-      "label": "B \u2014 Tabela de slots com cache invalidado por evento",
+      "id": "modelbuilder",
+      "label": "ModelBuilder",
       "_origin": "ast",
       "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "b \u2014 tabela de slots com cache invalidado por evento",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L61"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_c_c\u00e1lculo_sob_demanda_com_slot_como_objeto_de_valor_ef\u00eamero",
-      "label": "C \u2014 C\u00e1lculo sob demanda, com `Slot` como objeto de valor ef\u00eamero",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "c \u2014 calculo sob demanda, com `slot` como objeto de valor efemero",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L68"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_como_saber_que_erramos",
-      "label": "Como saber que erramos",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "como saber que erramos",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L139"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_consequ\u00eancias",
-      "label": "Consequ\u00eancias",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "consequencias",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L114"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_contexto",
-      "label": "Contexto",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "contexto",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L12"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_decis\u00e3o",
-      "label": "Decis\u00e3o",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "decisao",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L77"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_o_que_fica_mais_dif\u00edcil",
-      "label": "O que fica mais dif\u00edcil",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "o que fica mais dificil",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L123"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_o_que_fica_mais_f\u00e1cil",
-      "label": "O que fica mais f\u00e1cil",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "o que fica mais facil",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L116"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_o_que_passa_a_ser_proibido",
-      "label": "O que passa a ser proibido",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "o que passa a ser proibido",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L132"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_problema",
-      "label": "Problema",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "problema",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L34"
-    },
-    {
-      "id": "docs_decisions_0006_slot_calculado_nao_persistido_refer\u00eancias",
-      "label": "Refer\u00eancias",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "referencias",
-      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
-      "source_location": "L148"
+      "community_name": "BookingDbContext",
+      "file_type": "code",
+      "norm_label": "modelbuilder",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "docs_design_eixo_paleta_tipografia",
@@ -3646,28 +3538,184 @@
       "source_location": "L126"
     },
     {
-      "id": "docs_decisions_0003_multi_tenancy_por_coluna",
-      "label": "0003-multi-tenancy-por-coluna.md",
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido",
+      "label": "0006-slot-calculado-nao-persistido.md",
       "_origin": "ast",
       "community": 2,
       "community_name": "decisions/README.md",
       "file_type": "document",
       "node_kind": "page",
-      "norm_label": "0003-multi-tenancy-por-coluna.md",
-      "source_file": "docs/decisions/0003-multi-tenancy-por-coluna.md",
+      "norm_label": "0006-slot-calculado-nao-persistido.md",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
       "source_location": "L1"
     },
     {
-      "id": "docs_decisions_0004_identidade_papeis_conta_global",
-      "label": "0004-identidade-papeis-conta-global.md",
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_a_tabela_de_slots_pr\u00e9_gerada",
+      "label": "A \u2014 Tabela de slots pr\u00e9-gerada",
       "_origin": "ast",
       "community": 2,
       "community_name": "decisions/README.md",
       "file_type": "document",
-      "node_kind": "page",
-      "norm_label": "0004-identidade-papeis-conta-global.md",
-      "source_file": "docs/decisions/0004-identidade-papeis-conta-global.md",
+      "node_kind": "heading",
+      "norm_label": "a \u2014 tabela de slots pre-gerada",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L40"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_adr_006_slot_\u00e9_resultado_de_c\u00e1lculo_n\u00e3o_linha_de_tabela",
+      "label": "ADR-006 \u2014 Slot \u00e9 resultado de c\u00e1lculo, n\u00e3o linha de tabela",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "adr-006 \u2014 slot e resultado de calculo, nao linha de tabela",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
       "source_location": "L1"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_alternativas_consideradas",
+      "label": "Alternativas consideradas",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "alternativas consideradas",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L38"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_b_tabela_de_slots_com_cache_invalidado_por_evento",
+      "label": "B \u2014 Tabela de slots com cache invalidado por evento",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "b \u2014 tabela de slots com cache invalidado por evento",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L61"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_c_c\u00e1lculo_sob_demanda_com_slot_como_objeto_de_valor_ef\u00eamero",
+      "label": "C \u2014 C\u00e1lculo sob demanda, com `Slot` como objeto de valor ef\u00eamero",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "c \u2014 calculo sob demanda, com `slot` como objeto de valor efemero",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L68"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_como_saber_que_erramos",
+      "label": "Como saber que erramos",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "como saber que erramos",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L139"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_consequ\u00eancias",
+      "label": "Consequ\u00eancias",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "consequencias",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L114"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_contexto",
+      "label": "Contexto",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "contexto",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L12"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_decis\u00e3o",
+      "label": "Decis\u00e3o",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "decisao",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L77"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_o_que_fica_mais_dif\u00edcil",
+      "label": "O que fica mais dif\u00edcil",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "o que fica mais dificil",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L123"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_o_que_fica_mais_f\u00e1cil",
+      "label": "O que fica mais f\u00e1cil",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "o que fica mais facil",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L116"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_o_que_passa_a_ser_proibido",
+      "label": "O que passa a ser proibido",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "o que passa a ser proibido",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L132"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_problema",
+      "label": "Problema",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "problema",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L34"
+    },
+    {
+      "id": "docs_decisions_0006_slot_calculado_nao_persistido_refer\u00eancias",
+      "label": "Refer\u00eancias",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "decisions/README.md",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "referencias",
+      "source_file": "docs/decisions/0006-slot-calculado-nao-persistido.md",
+      "source_location": "L148"
     },
     {
       "id": "docs_decisions_0007_monolito_modular_fronteiras",
@@ -4054,121 +4102,33 @@
       "source_location": "L81"
     },
     {
-      "id": "backend_tests_booking_architecturetests_baseusagetests",
-      "label": "BaseUsageTests.cs",
+      "id": "backend_tests_booking_architecturetests_forbiddendependencytests_cs_fact",
+      "label": "Fact",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
-      "norm_label": "baseusagetests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/BaseUsageTests.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_forbiddendependencytests",
-      "label": "ForbiddenDependencyTests.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "forbiddendependencytests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/ForbiddenDependencyTests.cs",
-      "source_location": "L1"
+      "norm_label": "fact",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "backend_tests_booking_architecturetests_forbiddendependencytests_cs_theorydata",
       "label": "TheoryData",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "norm_label": "theorydata",
       "source_file": "",
       "source_location": ""
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_identifiertests",
-      "label": "IdentifierTests.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "identifiertests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/IdentifierTests.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_layerdependencytests",
-      "label": "LayerDependencyTests.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "layerdependencytests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/LayerDependencyTests.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_moduleboundarytests",
-      "label": "ModuleBoundaryTests.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "moduleboundarytests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_moduleboundarytests_cs_theorydata",
-      "label": "TheoryData",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "theorydata",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_paginationtests",
-      "label": "PaginationTests.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "paginationtests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/PaginationTests.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_persistencemappingtests",
-      "label": "PersistenceMappingTests.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "persistencemappingtests.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/PersistenceMappingTests.cs",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_rules_namespacerules",
-      "label": "NamespaceRules.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "namespacerules.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/Rules/NamespaceRules.cs",
-      "source_location": "L1"
     },
     {
       "id": "backend_tests_booking_architecturetests_rules_packagerules",
       "label": "PackageRules.cs",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "norm_label": "packagerules.cs",
       "source_file": "backend/tests/Booking.ArchitectureTests/Rules/PackageRules.cs",
@@ -4179,111 +4139,40 @@
       "label": "IReadOnlyList",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "norm_label": "ireadonlylist",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "backend_tests_booking_architecturetests_support_archassert",
-      "label": "ArchAssert.cs",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "norm_label": "archassert.cs",
-      "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
-      "source_location": "L1"
-    },
-    {
       "id": "backend_tests_booking_architecturetests_support_backendroot",
       "label": "BackendRoot.cs",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "norm_label": "backendroot.cs",
       "source_file": "backend/tests/Booking.ArchitectureTests/Support/BackendRoot.cs",
       "source_location": "L1"
     },
     {
-      "id": "csharp_namespace:06aecd342ab1ce5f",
-      "label": "Booking.ArchitectureTests.Rules",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "kind": "csharp_namespace",
-        "namespace": "Booking.ArchitectureTests.Rules"
-      },
-      "norm_label": "booking.architecturetests.rules",
-      "source_file": "backend/tests/Booking.ArchitectureTests/Rules/NamespaceRules.cs",
-      "source_location": "L4",
-      "type": "namespace"
-    },
-    {
-      "id": "csharp_namespace:af8ee1b397a9a122",
-      "label": "Booking.ArchitectureTests",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "kind": "csharp_namespace",
-        "namespace": "Booking.ArchitectureTests"
-      },
-      "norm_label": "booking.architecturetests",
-      "source_file": "backend/tests/Booking.ArchitectureTests/ArchitectureConventions.cs",
-      "source_location": "L3",
-      "type": "namespace"
-    },
-    {
-      "id": "csharp_namespace:c979583c040092b9",
-      "label": "Booking.ArchitectureTests.Support",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "code",
-      "metadata": {
-        "kind": "csharp_namespace",
-        "namespace": "Booking.ArchitectureTests.Support"
-      },
-      "norm_label": "booking.architecturetests.support",
-      "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
-      "source_location": "L3",
-      "type": "namespace"
-    },
-    {
       "id": "directoryinfo",
       "label": "DirectoryInfo",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "code",
       "norm_label": "directoryinfo",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "docs_decisions_0010_organizacao_do_backend_1_fronteira_de_m\u00f3dulo_por_teste_de_arquitetura_n\u00e3o_por_projeto_f\u00edsico",
-      "label": "1. Fronteira de m\u00f3dulo por teste de arquitetura, n\u00e3o por projeto f\u00edsico",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "1. fronteira de modulo por teste de arquitetura, nao por projeto fisico",
-      "source_file": "docs/decisions/0010-organizacao-do-backend.md",
-      "source_location": "L59"
-    },
-    {
       "id": "docs_decisions_0010_organizacao_do_backend_3_guid_v7_em_todas_as_entidades",
       "label": "3. `Guid` v7 em todas as entidades",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "3. `guid` v7 em todas as entidades",
@@ -4295,7 +4184,7 @@
       "label": "4. Pagina\u00e7\u00e3o obrigat\u00f3ria",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "4. paginacao obrigatoria",
@@ -4307,7 +4196,7 @@
       "label": "5. Sem entidade de persist\u00eancia separada",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "5. sem entidade de persistencia separada",
@@ -4319,7 +4208,7 @@
       "label": "6. `Converter/` manual obrigat\u00f3rio onde h\u00e1 snapshot ou m\u00e1quina de estado",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "6. `converter/` manual obrigatorio onde ha snapshot ou maquina de estado",
@@ -4331,7 +4220,7 @@
       "label": "7. Outbox como fila de evento",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "7. outbox como fila de evento",
@@ -4343,7 +4232,7 @@
       "label": "Como as regras s\u00e3o verificadas",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "como as regras sao verificadas",
@@ -4355,7 +4244,7 @@
       "label": "Decis\u00e3o",
       "_origin": "ast",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "decisao",
@@ -4651,17 +4540,6 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_tests_booking_architecturetests_forbiddendependencytests_cs_fact",
-      "label": "Fact",
-      "_origin": "ast",
-      "community": 26,
-      "community_name": ".ModuleBoundary",
-      "file_type": "code",
-      "norm_label": "fact",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_tests_booking_architecturetests_forbiddendependencytests_cs_memberdata",
       "label": "MemberData",
       "_origin": "ast",
@@ -4728,6 +4606,17 @@
       "source_location": ""
     },
     {
+      "id": "backend_tests_booking_architecturetests_moduleboundarytests_cs_theorydata",
+      "label": "TheoryData",
+      "_origin": "ast",
+      "community": 26,
+      "community_name": ".ModuleBoundary",
+      "file_type": "code",
+      "norm_label": "theorydata",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "backend_tests_booking_architecturetests_rules_namespacerules_cs_assembly",
       "label": "Assembly",
       "_origin": "ast",
@@ -4770,6 +4659,18 @@
       "norm_label": "testresult",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "docs_decisions_0010_organizacao_do_backend_1_fronteira_de_m\u00f3dulo_por_teste_de_arquitetura_n\u00e3o_por_projeto_f\u00edsico",
+      "label": "1. Fronteira de m\u00f3dulo por teste de arquitetura, n\u00e3o por projeto f\u00edsico",
+      "_origin": "ast",
+      "community": 26,
+      "community_name": ".ModuleBoundary",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "1. fronteira de modulo por teste de arquitetura, nao por projeto fisico",
+      "source_file": "docs/decisions/0010-organizacao-do-backend.md",
+      "source_location": "L59"
     },
     {
       "id": "github_pull_request_template",
@@ -5595,6 +5496,18 @@
       "source_location": "L1"
     },
     {
+      "id": "docs_decisions_0003_multi_tenancy_por_coluna",
+      "label": "0003-multi-tenancy-por-coluna.md",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "ADR-003 \u2014 Multi-tenancy por coluna `business_id`, com filtro global e RLS",
+      "file_type": "document",
+      "node_kind": "page",
+      "norm_label": "0003-multi-tenancy-por-coluna.md",
+      "source_file": "docs/decisions/0003-multi-tenancy-por-coluna.md",
+      "source_location": "L1"
+    },
+    {
       "id": "docs_decisions_0003_multi_tenancy_por_coluna_a_banco_por_tenant",
       "label": "A \u2014 Banco por tenant",
       "_origin": "ast",
@@ -5779,7 +5692,7 @@
       "label": "Booking.Application/AssemblyReference.cs",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "booking.application/assemblyreference.cs",
       "source_file": "backend/src/Core/Booking.Application/AssemblyReference.cs",
@@ -5790,7 +5703,7 @@
       "label": "Assembly",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Application",
@@ -5807,7 +5720,7 @@
       "label": "Booking.Arguments/AssemblyReference.cs",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "booking.arguments/assemblyreference.cs",
       "source_file": "backend/src/Core/Booking.Arguments/AssemblyReference.cs",
@@ -5818,7 +5731,7 @@
       "label": "Assembly",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Arguments",
@@ -5835,7 +5748,7 @@
       "label": "Booking.Domain/AssemblyReference.cs",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "booking.domain/assemblyreference.cs",
       "source_file": "backend/src/Core/Booking.Domain/AssemblyReference.cs",
@@ -5846,7 +5759,7 @@
       "label": "Assembly",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Domain",
@@ -5863,7 +5776,7 @@
       "label": "Booking.Infrastructure/AssemblyReference.cs",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "booking.infrastructure/assemblyreference.cs",
       "source_file": "backend/src/Infrastructure/Booking.Infrastructure/AssemblyReference.cs",
@@ -5874,7 +5787,7 @@
       "label": "Assembly",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.Infrastructure",
@@ -5887,22 +5800,11 @@
       "source_location": "L8"
     },
     {
-      "id": "backend_src_infrastructure_booking_infrastructure_persistence_context_bookingdbcontext",
-      "label": "BookingDbContext.cs",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "ReflectionRules.cs",
-      "file_type": "code",
-      "norm_label": "bookingdbcontext.cs",
-      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
-      "source_location": "L1"
-    },
-    {
       "id": "backend_tests_booking_architecturetests_architectureconventions",
       "label": "ArchitectureConventions.cs",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "architectureconventions.cs",
       "source_file": "backend/tests/Booking.ArchitectureTests/ArchitectureConventions.cs",
@@ -5913,7 +5815,7 @@
       "label": "FixturesAssembly",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "namespace": "Booking.ArchitectureTests",
@@ -5930,29 +5832,144 @@
       "label": "Assembly",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "assembly",
       "source_file": "",
       "source_location": ""
     },
     {
+      "id": "backend_tests_booking_architecturetests_baseusagetests",
+      "label": "BaseUsageTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "baseusagetests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/BaseUsageTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_forbiddendependencytests",
+      "label": "ForbiddenDependencyTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "forbiddendependencytests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/ForbiddenDependencyTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_identifiertests",
+      "label": "IdentifierTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "identifiertests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/IdentifierTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_layerdependencytests",
+      "label": "LayerDependencyTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "layerdependencytests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/LayerDependencyTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_moduleboundarytests",
+      "label": "ModuleBoundaryTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "moduleboundarytests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/ModuleBoundaryTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_paginationtests",
+      "label": "PaginationTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "paginationtests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/PaginationTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_persistencemappingtests",
+      "label": "PersistenceMappingTests.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "persistencemappingtests.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/PersistenceMappingTests.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_booking_architecturetests_rules_namespacerules",
+      "label": "NamespaceRules.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "namespacerules.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/Rules/NamespaceRules.cs",
+      "source_location": "L1"
+    },
+    {
       "id": "backend_tests_booking_architecturetests_rules_reflectionrules",
       "label": "ReflectionRules.cs",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "norm_label": "reflectionrules.cs",
       "source_file": "backend/tests/Booking.ArchitectureTests/Rules/ReflectionRules.cs",
       "source_location": "L1"
     },
     {
+      "id": "backend_tests_booking_architecturetests_support_archassert",
+      "label": "ArchAssert.cs",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "norm_label": "archassert.cs",
+      "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
+      "source_location": "L1"
+    },
+    {
+      "id": "csharp_namespace:06aecd342ab1ce5f",
+      "label": "Booking.ArchitectureTests.Rules",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "metadata": {
+        "kind": "csharp_namespace",
+        "namespace": "Booking.ArchitectureTests.Rules"
+      },
+      "norm_label": "booking.architecturetests.rules",
+      "source_file": "backend/tests/Booking.ArchitectureTests/Rules/NamespaceRules.cs",
+      "source_location": "L4",
+      "type": "namespace"
+    },
+    {
       "id": "csharp_namespace:387a7790e62e13d5",
       "label": "Booking.Arguments",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "kind": "csharp_namespace",
@@ -5968,7 +5985,7 @@
       "label": "Booking.Infrastructure",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "kind": "csharp_namespace",
@@ -5984,7 +6001,7 @@
       "label": "Booking.Domain",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "kind": "csharp_namespace",
@@ -5996,18 +6013,34 @@
       "type": "namespace"
     },
     {
-      "id": "csharp_namespace:58e3fd873706b713",
-      "label": "Booking.Infrastructure.Persistence.Context",
+      "id": "csharp_namespace:af8ee1b397a9a122",
+      "label": "Booking.ArchitectureTests",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "kind": "csharp_namespace",
-        "namespace": "Booking.Infrastructure.Persistence.Context"
+        "namespace": "Booking.ArchitectureTests"
       },
-      "norm_label": "booking.infrastructure.persistence.context",
-      "source_file": "backend/src/Infrastructure/Booking.Infrastructure/Persistence/Context/BookingDbContext.cs",
+      "norm_label": "booking.architecturetests",
+      "source_file": "backend/tests/Booking.ArchitectureTests/ArchitectureConventions.cs",
+      "source_location": "L3",
+      "type": "namespace"
+    },
+    {
+      "id": "csharp_namespace:c979583c040092b9",
+      "label": "Booking.ArchitectureTests.Support",
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "Booking.ArchitectureTests.Rules",
+      "file_type": "code",
+      "metadata": {
+        "kind": "csharp_namespace",
+        "namespace": "Booking.ArchitectureTests.Support"
+      },
+      "norm_label": "booking.architecturetests.support",
+      "source_file": "backend/tests/Booking.ArchitectureTests/Support/ArchAssert.cs",
       "source_location": "L3",
       "type": "namespace"
     },
@@ -6016,7 +6049,7 @@
       "label": "Booking.Application",
       "_origin": "ast",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "file_type": "code",
       "metadata": {
         "kind": "csharp_namespace",
@@ -6026,39 +6059,6 @@
       "source_file": "backend/src/Core/Booking.Application/AssemblyReference.cs",
       "source_location": "L3",
       "type": "namespace"
-    },
-    {
-      "id": "dbcontext",
-      "label": "DbContext",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "ReflectionRules.cs",
-      "file_type": "code",
-      "norm_label": "dbcontext",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "dbcontextoptions",
-      "label": "DbContextOptions",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "ReflectionRules.cs",
-      "file_type": "code",
-      "norm_label": "dbcontextoptions",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "modelbuilder",
-      "label": "ModelBuilder",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "ReflectionRules.cs",
-      "file_type": "code",
-      "norm_label": "modelbuilder",
-      "source_file": "",
-      "source_location": ""
     },
     {
       "id": "backend_booking",
@@ -6135,17 +6135,6 @@
       "file_type": "code",
       "norm_label": "booking.architecturetests.csproj",
       "source_file": "backend/tests/Booking.ArchitectureTests/Booking.ArchitectureTests.csproj",
-      "source_location": null
-    },
-    {
-      "id": "backend_tests_booking_architecturetests_fixtures_booking_architecturetests_fixtures",
-      "label": "Booking.ArchitectureTests.Fixtures.csproj",
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "Booking.ArchitectureTests.csproj",
-      "file_type": "code",
-      "norm_label": "booking.architecturetests.fixtures.csproj",
-      "source_file": "backend/tests/Booking.ArchitectureTests.Fixtures/Booking.ArchitectureTests.Fixtures.csproj",
       "source_location": null
     },
     {
@@ -6496,14 +6485,14 @@
       "source_location": "L170"
     },
     {
-      "id": "netarchtest_rules",
-      "label": "netarchtest_rules",
+      "id": "microsoft_entityframeworkcore",
+      "label": "microsoft_entityframeworkcore",
       "_origin": "semantic",
-      "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community": 15,
+      "community_name": "BookingDbContext",
       "external": true,
       "file_type": "concept",
-      "norm_label": "netarchtest_rules",
+      "norm_label": "microsoft_entityframeworkcore",
       "source_file": "",
       "type": "external"
     },
@@ -6512,7 +6501,7 @@
       "label": "system_xml_linq",
       "_origin": "semantic",
       "community": 21,
-      "community_name": "Booking.ArchitectureTests.Rules",
+      "community_name": "Decis\u00e3o",
       "external": true,
       "file_type": "concept",
       "norm_label": "system_xml_linq",
@@ -6532,14 +6521,14 @@
       "type": "external"
     },
     {
-      "id": "microsoft_entityframeworkcore",
-      "label": "microsoft_entityframeworkcore",
+      "id": "netarchtest_rules",
+      "label": "netarchtest_rules",
       "_origin": "semantic",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "external": true,
       "file_type": "concept",
-      "norm_label": "microsoft_entityframeworkcore",
+      "norm_label": "netarchtest_rules",
       "source_file": "",
       "type": "external"
     },
@@ -6548,7 +6537,7 @@
       "label": "system_collections",
       "_origin": "semantic",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "external": true,
       "file_type": "concept",
       "norm_label": "system_collections",
@@ -6560,7 +6549,7 @@
       "label": "system_reflection",
       "_origin": "semantic",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "external": true,
       "file_type": "concept",
       "norm_label": "system_reflection",
@@ -6572,7 +6561,7 @@
       "label": "system_runtime_compilerservices",
       "_origin": "semantic",
       "community": 7,
-      "community_name": "ReflectionRules.cs",
+      "community_name": "Booking.ArchitectureTests.Rules",
       "external": true,
       "file_type": "concept",
       "norm_label": "system_runtime_compilerservices",
@@ -8904,16 +8893,6 @@
     {
       "source": "backend_booking",
       "target": "backend_tests_booking_architecturetests_booking_architecturetests",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "backend/Booking.slnx",
-      "weight": 1.0
-    },
-    {
-      "source": "backend_booking",
-      "target": "backend_tests_booking_architecturetests_fixtures_booking_architecturetests_fixtures",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -12781,16 +12760,6 @@
     },
     {
       "source": "backend_tests_booking_architecturetests_booking_architecturetests",
-      "target": "backend_tests_booking_architecturetests_fixtures_booking_architecturetests_fixtures",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "backend/tests/Booking.ArchitectureTests/Booking.ArchitectureTests.csproj",
-      "weight": 1.0
-    },
-    {
-      "source": "backend_tests_booking_architecturetests_booking_architecturetests",
       "target": "nuget_coverlet_collector",
       "relation": "imports",
       "_origin": "ast",
@@ -13671,5 +13640,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ef0f288d20e17b7c4e623b02bfb955614acc6315"
+  "built_at_commit": "5758643445ed8bd7820c21523a88a1ecf7d8dc9e"
 }
