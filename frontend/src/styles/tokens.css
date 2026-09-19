@@ -62,9 +62,9 @@
   --text-strong: #141413; /* títulos, ênfase máxima */
   --text-body: #454542; /* corpo padrão */
   --text-muted: #5f5f5c; /* secundário, metadado */
-  --text-disabled: #a6a6a3; /* ⚠ nunca para informação essencial */
+  --text-disabled: #7e7e7b; /* ⚠ nunca para informação essencial */
   --text-on-action: #ffffff;
-  --text-link: #0b7690;
+  --text-link: #0c7d99;
 
   /* ===========================================================================
    * COR — borda
@@ -77,8 +77,8 @@
   /* ===========================================================================
    * COR — ação
    * ======================================================================== */
-  --action-primary: #0b7690; /* ⚠ REGRA 4 — único fundo de botão primário */
-  --action-soft: #e8f6f9; /* superfície de realce. NUNCA fundo de botão */
+  --action-primary: #0c7d99; /* ⚠ REGRA 4 — único fundo de botão primário */
+  --action-soft: #f5fcfd; /* superfície de realce. NUNCA fundo de botão */
 
   /* TODO(figma): action/primary-hover, -active e -disabled não aparecem ligados
      em nenhum nó do component set "Botão". Confirmar com o Rafael se os estados
@@ -151,7 +151,7 @@
    * status nem marca. O peso vem do ícone de cadeado e do bloco de consentimento
    * que BLOQUEIA o fluxo — não de matiz chamativo (LGPD Art. 11).
    * ======================================================================== */
-  --marker-verified: #0b7690; /* + ícone escudo-check + rótulo "Verificado" */
+  --marker-verified: #0c7d99; /* + ícone escudo-check + rótulo "Verificado" */
   --marker-urgent-fg: #96560a; /* + contador regressivo + borda tracejada    */
   --marker-urgent-bg: #fbf2e3;
   --marker-overflow: #5f5f5c; /* + borda pontilhada + rótulo "fora do horário" */
@@ -171,6 +171,7 @@
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
   /* TODO(figma): a coleção `space` tem 18 variáveis (space/2…64). Os passos
      32, 48 e 64 não aparecem ligados em nenhum component set — ler direto da
@@ -207,7 +208,9 @@
    * em coluna (grade de horários, agenda do dia, os quatro números do relatório)
    * e sem largura fixa de dígito a coluna treme.
    * ======================================================================== */
-  --family-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --family-sans:
+    'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -222,6 +225,8 @@
   --line-height-body: 24px;
   --size-heading: 20px;
   --line-height-heading: 27px;
+  --size-title: 24px;
+  --line-height-title: 31px;
 
   /* TODO(figma): `display`, `title` e `body-lg` não aparecem ligados em nenhum
      component set — as telas da vitrine é que os consomem. Na revisão 1 eram
@@ -268,6 +273,14 @@
   font-weight: var(--weight-semibold);
   font-size: var(--size-heading);
   line-height: var(--line-height-heading);
+  letter-spacing: 0;
+}
+
+.type-title {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semibold);
+  font-size: var(--size-title);
+  line-height: var(--line-height-title);
   letter-spacing: 0;
 }
 
