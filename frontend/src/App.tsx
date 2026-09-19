@@ -1,3 +1,5 @@
+import { CardEstablishment } from './components/CardEstablishment'
+
 /**
  * Tela provisória. Existe só para o build e o dev server terem o que renderizar enquanto
  * o esqueleto do frontend não é montado. Usa tokens semânticos, nunca valor fixo.
@@ -22,6 +24,7 @@ export default function App() {
       >
         Plataforma de agendamento
       </h1>
+      <CardEstablishment />
       <p>Esqueleto do frontend. Nenhuma tela implementada ainda.</p>
     </main>
   )
