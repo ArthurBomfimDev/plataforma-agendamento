@@ -6,11 +6,15 @@ import { CardEstablishment } from '../../components/card-establishment'
 import { CategoryCard } from '../../components/category-card'
 import { MapPin } from 'lucide-react'
 import { SearchField } from '../../components/search-field'
+import { businessPath } from '../../router/consts'
+import { useNavigate } from 'react-router'
 
 /**
  * Tela 01 · Home — busca e descoberta (Figma, 390px).
  */
 export const HomeScreen = () => {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-dvh bg-(--bg-page)">
       <header className="flex flex-col gap-(--space-12) bg-(--bg-surface) p-(--space-16) pt-[calc(var(--space-16)+env(safe-area-inset-top))]">
@@ -46,7 +50,7 @@ export const HomeScreen = () => {
           <ul className="flex flex-col gap-(--space-12)">
             {HOME_NEARBY_ESTABLISHMENTS.map(({ id, ...establishment }) => (
               <li key={id}>
-                <CardEstablishment {...establishment} />
+                <CardEstablishment {...establishment} onClick={() => navigate(businessPath(id))} />
               </li>
             ))}
           </ul>

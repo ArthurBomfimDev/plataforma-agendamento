@@ -8,5 +8,7 @@ export type CardEstablishmentProps = {
   verified?: boolean
   /** Sem foto, o card mostra o bloco neutro do wireframe. */
   imageUrl?: string
+  /** Quando presente, o card inteiro vira clicável, pelo botão que envolve o nome. */
+  onClick?: () => void
   className?: string
 }
