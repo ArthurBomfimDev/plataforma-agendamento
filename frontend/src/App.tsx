@@ -1,5 +1,5 @@
-import { HomeScreen } from './features/home'
+import { AppRoutes } from './router/route'
 
 export default function App() {
-  return <HomeScreen />
+  return <AppRoutes />
 }
