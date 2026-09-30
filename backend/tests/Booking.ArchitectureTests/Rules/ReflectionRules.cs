@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Booking.Domain.Base;
+using Booking.Domain.Entity.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Booking.ArchitectureTests.Rules;

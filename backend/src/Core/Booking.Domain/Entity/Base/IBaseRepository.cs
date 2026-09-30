@@ -1,4 +1,4 @@
-namespace Booking.Domain.Base;
+namespace Booking.Domain.Entity.Base;
 
 public interface IBaseRepository<TEntity>
     where TEntity : BaseEntity
