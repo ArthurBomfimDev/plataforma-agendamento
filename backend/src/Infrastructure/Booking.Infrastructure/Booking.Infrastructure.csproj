@@ -2,11 +2,16 @@
 
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Booking.Application\Booking.Application.csproj" />
     <ProjectReference Include="..\..\Core\Booking.Domain\Booking.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Persistence\Mapping\" />
   </ItemGroup>
 
 </Project>

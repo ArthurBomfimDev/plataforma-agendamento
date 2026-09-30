@@ -1,5 +1,5 @@
 using Booking.Application.Contracts.Catalog;
-using Booking.Domain.Module.Catalog;
+using Booking.Domain.Entity.Module.Catalog;
 
 namespace Booking.Application.Module.Scheduling.Commands;
 

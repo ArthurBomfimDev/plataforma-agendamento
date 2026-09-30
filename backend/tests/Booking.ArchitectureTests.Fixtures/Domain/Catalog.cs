@@ -1,6 +1,6 @@
-using Booking.Domain.Base;
+using Booking.Domain.Entity.Base;
 
-namespace Booking.Domain.Module.Catalog;
+namespace Booking.Domain.Entity.Module.Catalog;
 
 /// <summary>Entidade interna do módulo Catalog — alvo da violação de fronteira plantada.</summary>
 public sealed class Category : BaseEntity;

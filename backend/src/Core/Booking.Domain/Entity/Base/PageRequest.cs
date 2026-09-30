@@ -1,3 +1,3 @@
-namespace Booking.Domain.Base;
+namespace Booking.Domain.Entity.Base;
 
 public sealed record PageRequest(int Page, int PageSize);
