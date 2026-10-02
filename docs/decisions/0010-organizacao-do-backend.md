@@ -7,6 +7,8 @@
 - **Substitui:** —
 - **Substituído por:** —
 - **Detalha:** ADR-007
+- **Emenda:** 2026-10-01 — raízes de módulo explícitas, módulo `Notifications`, `Category` fora do
+  `Base` e isenção do mapeamento base. Ver "Emenda de 2026-10-01", ao final.
 
 ---
 
@@ -52,25 +54,40 @@ backend/src/
   Presentation/    Booking.Api
 ```
 
-Cada camada tem `Base/` e `Module/<Contexto>/`. O namespace segue sempre
-`Booking.<Camada>.Module.<Contexto>` — é o segmento que os testes verificam. A superfície pública de um
-módulo fica fora de `Module`, em `Booking.Application.Contracts.<Contexto>`.
+Cada camada tem `Base/` e `Module/<Contexto>/`, às vezes abaixo de uma pasta de tipo (`Entity/`, `Enum/`,
+`Persistence/Mapping/`). O namespace de código de módulo é sempre `<raiz>.<Contexto>`, e as raízes
+válidas estão listadas em `ArchitectureConventions.ModuleRoots` (ver emenda, ao final, para o motivo da
+mudança em relação à redação original):
+
+| Raiz | Conteúdo |
+|---|---|
+| `Booking.Domain.Entity.Module` | Entidades |
+| `Booking.Domain.Enum.Module` | Enums do módulo |
+| `Booking.Domain.Event.Module` | Eventos de domínio |
+| `Booking.Application.Module` | Commands, Queries, Converters |
+| `Booking.Arguments.Module` | Contrato da API |
+| `Booking.Infrastructure.Module` | Repositórios |
+| `Booking.Infrastructure.Persistence.Mapping.Module` | Mapeamento EF Core |
+| `Booking.Api.Module` | Controllers |
+
+A superfície pública de um módulo fica fora de `Module`, em `Booking.Application.Contracts.<Contexto>`.
 
 ### 1. Fronteira de módulo por teste de arquitetura, não por projeto físico
 
-**Regra.** `Booking.*.Module.X` não depende de `Booking.*.Module.Y`. Controller, Command e Query de um
-módulo não chamam outro módulo direto — só por `Contracts` ou evento de domínio.
+**Regra.** `<raiz>.X` não depende de `<raiz>.Y`, para qualquer par de raízes da tabela acima. Controller,
+Command e Query de um módulo não chamam outro módulo direto — só por `Contracts` ou evento de domínio.
 
 **Motivo.** Um projeto por módulo, com projeto de contratos separado, somaria 22 projetos. Não se
 justifica para duas pessoas em dez semanas.
 
 **Alternativa rejeitada.** Fronteira por projeto físico (ADR-007, alternativa E).
 
-**Verificação.** `ModuleBoundaryTests`.
+**Verificação.** `ModuleBoundaryTests`. Um segundo teste reprova qualquer namespace com `.Module.` que
+nenhuma raiz cubra: sem ele, uma pasta nova ou digitada errado escaparia da regra com o CI verde.
 
 ### 2. `Base/` restrito a cadastro sem regra de estado
 
-**Regra.** Abstrações genéricas de `Base/` só podem ser usadas com `Category`, `Service` e `WorkSchedule`.
+**Regra.** Abstrações genéricas de `Base/` só podem ser usadas com `Service` e `WorkSchedule`.
 `Appointment`, `Review`, `AppointmentEvent`, `ConsentRecord` e `SensitiveAccessLog` usam `Commands/` e
 `Queries/` com operações nomeadas.
 
@@ -80,6 +97,12 @@ snapshot existe para preservar.
 
 **Por que lista permitida, e não proibida.** Entidade nova começa fora do `Base` e só entra por decisão
 explícita. Uma lista proibida deixaria passar o próximo agregado com estado que ninguém lembrou de incluir.
+
+**Exceção.** `Booking.Infrastructure.Persistence.Mapping.Base` (`BaseMapping<T>`) fica fora da regra: o
+mapeamento base não expõe `Update` nem `Remove`, e toda entidade precisa de um mapeamento, inclusive as
+com máquina de estado. A isenção é por namespace exato, listada em
+`ArchitectureConventions.BaseNamespacesExemptFromDecision2`; qualquer outra pasta `Base/` nova continua
+coberta.
 
 **Verificação.** `BaseUsageTests`.
 
@@ -199,6 +222,16 @@ conversão manual passar a gerar mais bug do que evita, a premissa foi contradit
 com k6 prevista no próprio RNF-01. Se a meta for atingida por outro meio, a regra continua valendo por
 outro motivo: listagem sem limite é risco de disponibilidade, não só de desempenho.
 
+## Emenda de 2026-10-01
+
+| Mudança | Motivo |
+|---|---|
+| Namespace de módulo passa de `Booking.<Camada>.Module.<Contexto>` para `<raiz>.<Contexto>`, com raízes listadas em `ModuleRoots` | A estrutura adotada agrupa por tipo antes do módulo (`Entity/Module`, `Persistence/Mapping/Module`). A regex antiga não casava com esses namespaces, e o teste de fronteira passava sem verificar nada |
+| Teste novo de raízes desconhecidas (`Every_module_namespace_is_under_a_known_root`) | Impede que o mesmo silêncio volte com uma pasta nova ou digitada errado |
+| Módulo `Notifications` incluído na lista de módulos | `docs/produto/decisoes-localizacao-notificacao-modelo.md` §1, decisão 8 |
+| `Category` removida da lista permitida do `Base` (decisão 2) | Virou enum em código, não é mais entidade (mesmo documento, §4) |
+| Isenção de `Persistence.Mapping.Base` na decisão 2 | O mapeamento base nunca expôs `Update`/`Remove`; a regra original isentava por acidente ao não cobrir esse namespace, e a correção deixa isso explícito em vez de depender de uma coincidência de nomenclatura |
+
 ## Como saber que erramos
 
 - Se exceções às regras começarem a ser pedidas com frequência, alguma regra está no lugar errado.
@@ -207,11 +240,14 @@ outro motivo: listagem sem limite é risco de disponibilidade, não só de desem
   o exclui do `Base` pela lista permitida; a decisão 6 não o protege de mapeador por reflexão.
 - Se o Outbox for implementado e a garantia transacional não ganhar teste de integração, a decisão 7
   virou declaração em vez de fato.
+- Se a lista de `ModuleRoots` crescer sem o teste de raízes desconhecidas acusar a pasta antiga: a
+  emenda de 2026-10-01 não está fazendo o que deveria.
 
 ## Referências
 
 - ADR-003 — multi-tenancy por coluna · ADR-007 — monólito modular
 - `docs/produto/modelo-de-dominio.md` §2, §3, §8
+- `docs/produto/decisoes-localizacao-notificacao-modelo.md` §1, §4 — módulo `Notifications`, `Category` como enum
 - `PROJECT-CONTEXT.md` §9 — RNF-01
 - `backend/tests/Booking.ArchitectureTests/` e `backend/tests/Booking.ArchitectureTests.Fixtures/`
 - PR #2 — prova da regra de fronteira com violação em código de produção
