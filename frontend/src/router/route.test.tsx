@@ -36,6 +36,21 @@ describe('AppRoutes', () => {
     expect(html).toContain('Horários — ')
   })
 
+  it('abre a revisão do pedido com dia e horário vindos da busca', () => {
+    const html = renderAt(
+      '/businesses/estudio-duartina/services/corte-masculino/review?date=2026-09-11&time=09:30',
+    )
+
+    expect(html).toContain('Revise seu pedido')
+    expect(html).toContain('09:30 — 10:00')
+  })
+
+  it('abre a 404 na revisão sem dia válido', () => {
+    const path = '/businesses/estudio-duartina/services/corte-masculino/review?date=x&time=09:30'
+
+    expect(renderAt(path)).toContain('Página não encontrada')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })
