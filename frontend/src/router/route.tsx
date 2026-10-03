@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router'
 
+import { AppointmentsRoute } from './appointments-route'
 import { AvailabilityRoute } from './availability-route'
 import { BookingReviewRoute } from './booking-review-route'
 import { BookingSentRoute } from './booking-sent-route'
@@ -25,6 +26,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.availability} element={<AvailabilityRoute />} />
       <Route path={ROUTES.bookingReview} element={<BookingReviewRoute />} />
       <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
+      <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
       <Route path="*" element={<NotFoundScreen />} />
     </Routes>
   )

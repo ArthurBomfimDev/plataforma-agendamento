@@ -4,6 +4,8 @@ import { cn } from 'cn'
 
 const VARIANT_CLASSES: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary: 'bg-(--action-primary) text-(--text-on-action) hover:bg-(--action-primary)',
+  secondary:
+    'border-(--border-interactive) bg-(--bg-surface) text-(--text-link) hover:bg-(--bg-surface) hover:text-(--text-link)',
   ghost: 'bg-transparent text-(--text-link) hover:bg-transparent hover:text-(--text-link)',
 }
 
@@ -14,8 +16,7 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps['size']>, string> = {
 
 /**
  * Botão do Figma, construído sobre o Button do shadcn (Base UI). A lib dá semântica, foco e
- * estados; aqui entram os tokens do design system. A variante `secondary` do Figma entra quando
- * uma tela precisar.
+ * estados; aqui entram os tokens do design system.
  *
  * TODO(figma): hover, active e disabled dependem de tokens que o Figma ainda não expõe (ver
  * `tokens.css`). O hover fica igual ao repouso até lá; o `opacity-50` do disabled é padrão do

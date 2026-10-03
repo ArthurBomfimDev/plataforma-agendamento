@@ -1,12 +1,12 @@
 import { HOME_CATEGORIES, HOME_NEARBY_ESTABLISHMENTS } from './mock'
 
 import { BottomNavigation } from '../../components/bottom-navigation'
-import { CONTENT_BOTTOM_PADDING } from './consts'
+import { CONTENT_BOTTOM_PADDING } from '../../components/bottom-navigation/conts'
 import { CardEstablishment } from '../../components/card-establishment'
 import { CategoryCard } from '../../components/category-card'
 import { MapPin } from 'lucide-react'
 import { SearchField } from '../../components/search-field'
-import { businessPath } from '../../router/consts'
+import { NAVIGATION_PATHS, businessPath } from '../../router/consts'
 import { useNavigate } from 'react-router'
 
 /**
@@ -57,7 +57,13 @@ export const HomeScreen = () => {
         </section>
       </main>
 
-      <BottomNavigation activeItem="search" />
+      <BottomNavigation
+        activeItem="search"
+        onNavigate={(item) => {
+          const path = NAVIGATION_PATHS[item]
+          if (path) navigate(path)
+        }}
+      />
     </div>
   )
 }

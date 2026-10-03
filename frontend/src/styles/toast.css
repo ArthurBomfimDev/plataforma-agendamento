@@ -20,6 +20,14 @@
   bottom: calc(var(--space-16) + env(safe-area-inset-bottom));
 }
 
+/* Com a navegação inferior na tela, o toast sobe acima dela em vez de cobri-la. */
+body:has(nav[aria-label='Navegação principal']) .Toastify__toast-container--bottom-center {
+  bottom: calc(
+    var(--space-8) + var(--size-touch-min) + var(--space-16) + var(--space-16) +
+      env(safe-area-inset-bottom)
+  );
+}
+
 .Toastify__toast {
   border: 1px solid var(--border-subtle);
   font-size: var(--size-label);
