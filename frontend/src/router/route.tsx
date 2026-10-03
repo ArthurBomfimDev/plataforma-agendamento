@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router'
 
 import { AvailabilityRoute } from './availability-route'
 import { BookingReviewRoute } from './booking-review-route'
+import { BookingSentRoute } from './booking-sent-route'
 import { BusinessDetailRoute } from './business-detail-route'
 import { ChooseProfessionalRoute } from './choose-professional-route'
 import { HomeScreen } from '../features/home'
@@ -23,6 +24,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.chooseProfessional} element={<ChooseProfessionalRoute />} />
       <Route path={ROUTES.availability} element={<AvailabilityRoute />} />
       <Route path={ROUTES.bookingReview} element={<BookingReviewRoute />} />
+      <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
       <Route path="*" element={<NotFoundScreen />} />
     </Routes>
   )

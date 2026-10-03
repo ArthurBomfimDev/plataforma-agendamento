@@ -120,7 +120,8 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
         <Button
           disabled={!selectedDate || !selectedTime}
           onClick={() => selectedDate && selectedTime && onContinue?.(selectedDate, selectedTime)}
-          className="type-body w-full px-(--space-24) py-(--space-16)"
+          size="lg"
+          className="w-full"
         >
           Continuar
         </Button>

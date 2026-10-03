@@ -149,10 +149,7 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
 
       {/* TODO(figma): a sombra para cima não tem token; o valor é o do Figma. */}
       <footer className="fixed inset-x-0 bottom-0 flex flex-col gap-(--space-8) border-t border-(--border-subtle) bg-(--bg-surface) px-(--space-16) pt-(--space-12) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_0_#1c1a1714]">
-        <Button
-          onClick={() => onSubmit?.(note.trim())}
-          className="type-body w-full px-(--space-24) py-(--space-16)"
-        >
+        <Button onClick={() => onSubmit?.(note.trim())} size="lg" className="w-full">
           Enviar pedido
         </Button>
         <p className="type-caption text-center text-(--text-muted)">
