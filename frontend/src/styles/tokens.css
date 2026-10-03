@@ -62,9 +62,9 @@
   --text-strong: #141413; /* títulos, ênfase máxima */
   --text-body: #454542; /* corpo padrão */
   --text-muted: #5f5f5c; /* secundário, metadado */
-  --text-disabled: #a6a6a3; /* ⚠ nunca para informação essencial */
+  --text-disabled: #7e7e7b; /* ⚠ nunca para informação essencial */
   --text-on-action: #ffffff;
-  --text-link: #0b7690;
+  --text-link: #0c7d99;
 
   /* ===========================================================================
    * COR — borda
@@ -77,8 +77,8 @@
   /* ===========================================================================
    * COR — ação
    * ======================================================================== */
-  --action-primary: #0b7690; /* ⚠ REGRA 4 — único fundo de botão primário */
-  --action-soft: #e8f6f9; /* superfície de realce. NUNCA fundo de botão */
+  --action-primary: #0c7d99; /* ⚠ REGRA 4 — único fundo de botão primário */
+  --action-soft: #f5fcfd; /* superfície de realce. NUNCA fundo de botão */
 
   /* TODO(figma): action/primary-hover, -active e -disabled não aparecem ligados
      em nenhum nó do component set "Botão". Confirmar com o Rafael se os estados
@@ -151,7 +151,7 @@
    * status nem marca. O peso vem do ícone de cadeado e do bloco de consentimento
    * que BLOQUEIA o fluxo — não de matiz chamativo (LGPD Art. 11).
    * ======================================================================== */
-  --marker-verified: #0b7690; /* + ícone escudo-check + rótulo "Verificado" */
+  --marker-verified: #0c7d99; /* + ícone escudo-check + rótulo "Verificado" */
   --marker-urgent-fg: #96560a; /* + contador regressivo + borda tracejada    */
   --marker-urgent-bg: #fbf2e3;
   --marker-overflow: #5f5f5c; /* + borda pontilhada + rótulo "fora do horário" */
@@ -171,10 +171,12 @@
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
+  --space-20: 20px;
   --space-24: 24px;
-  /* TODO(figma): a coleção `space` tem 18 variáveis (space/2…64). Os passos
-     32, 48 e 64 não aparecem ligados em nenhum component set — ler direto da
-     coleção quando houver acesso a ela. Não inventar. */
+  /* Lidos das variáveis do Figma nos frames desktop (01D–08D). */
+  --space-32: 32px;
+  --space-40: 40px;
+  /* TODO(figma): os passos 48 e 64 da coleção `space` ainda não foram lidos. Não inventar. */
 
   /* ===========================================================================
    * TAMANHO
@@ -183,8 +185,10 @@
      — decisão de paridade mobile, PROJECT-CONTEXT §4.1. Não é sugestão. */
   --size-touch-min: 44px;
   --size-avatar-md: 40px;
-  /* TODO(figma): size/avatar-sm (32) e size/avatar-lg (56) aparecem no component
-     set "Avatar" como valor de frame; confirmar se existem como variável. */
+  /* Lido da variável do Figma no frame 04D. */
+  --size-avatar-lg: 56px;
+  /* TODO(figma): size/avatar-sm (32) aparece no component set "Avatar" como valor de
+     frame; confirmar se existe como variável. */
 
   /* ===========================================================================
    * RAIO
@@ -207,7 +211,9 @@
    * em coluna (grade de horários, agenda do dia, os quatro números do relatório)
    * e sem largura fixa de dígito a coluna treme.
    * ======================================================================== */
-  --family-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --family-sans:
+    'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -222,11 +228,13 @@
   --line-height-body: 24px;
   --size-heading: 20px;
   --line-height-heading: 27px;
-
-  /* TODO(figma): `display`, `title` e `body-lg` não aparecem ligados em nenhum
-     component set — as telas da vitrine é que os consomem. Na revisão 1 eram
-     Source Serif; na revisão 2 passam a ser Plex, mas os valores precisam ser
-     lidos da coleção `type`. Não reaproveitar os números da revisão 1. */
+  --size-title: 24px;
+  --line-height-title: 31px;
+  /* `display` e `body-lg`: lidos das variáveis do Figma nos frames desktop (01D–08D). */
+  --size-display: 32px;
+  --line-height-display: 38px;
+  --size-body-lg: 18px;
+  --line-height-body-lg: 28px;
 
   /* ⚠ REGRA 2 — campo de formulário é 16px, sempre. Não derive de --size-body:
      se um dia o corpo cair para 14px, o iOS passa a dar zoom no foco. */
@@ -237,6 +245,9 @@
 /* =============================================================================
  * COMPOSIÇÕES DE TEXTO
  * Espelham os tokens `type/*` do Figma, que são composições e não valores soltos.
+ *
+ * Ficam fora das camadas do Tailwind e por isso vencem qualquer utilitário. Para trocar a
+ * tipografia num breakpoint, use o utilitário com `!` (ex.: `lg:text-(length:--size-display)!`).
  * ========================================================================== */
 
 .type-caption {
@@ -271,8 +282,33 @@
   letter-spacing: 0;
 }
 
+.type-title {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semibold);
+  font-size: var(--size-title);
+  line-height: var(--line-height-title);
+  letter-spacing: 0;
+}
+
 /* Número em coluna — grade de horários, agenda do dia, relatório.
    Sem isso a coluna treme conforme os dígitos mudam. */
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Composições usadas só no desktop (frames 01D–08D). */
+.type-display {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semibold);
+  font-size: var(--size-display);
+  line-height: var(--line-height-display);
+  letter-spacing: 0;
+}
+
+.type-body-lg {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  font-size: var(--size-body-lg);
+  line-height: var(--line-height-body-lg);
+  letter-spacing: 0;
 }
