@@ -1,4 +1,4 @@
-import { SEARCH_PARAMS, businessPath } from './consts'
+import { ROUTES, SEARCH_PARAMS, businessPath } from './consts'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { BookingSentScreen } from '../features/booking-sent'
@@ -27,7 +27,7 @@ export const BookingSentRoute = () => {
       date={booking.date}
       time={booking.time}
       sentAt={sentAt}
-      // TODO: "Meus agendamentos" ainda não existe; o botão não faz nada.
+      onViewAppointments={() => navigate(ROUTES.appointments)}
       // TODO: cancelar de verdade depende da API de Scheduling. Por enquanto só avisa e volta ao
       // estabelecimento, de onde é um toque para pedir outro horário (remarcar = cancelar + novo
       // pedido). `replace`: o "voltar" do navegador não reabre um pedido cancelado.

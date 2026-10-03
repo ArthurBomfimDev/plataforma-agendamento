@@ -1,3 +1,5 @@
+import type { NavigationItemId } from '../components/bottom-navigation/types'
+
 export const ROUTES = {
   home: '/',
   business: '/businesses/:businessId',
@@ -5,7 +7,15 @@ export const ROUTES = {
   availability: '/businesses/:businessId/services/:serviceId/availability',
   bookingReview: '/businesses/:businessId/services/:serviceId/review',
   bookingSent: '/businesses/:businessId/services/:serviceId/sent',
+  appointments: '/appointments',
 } as const
+
+/** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
+export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {
+  search: ROUTES.home,
+  appointments: ROUTES.appointments,
+  // TODO: "Perfil" ainda não tem tela.
+}
 
 /** Parâmetros de busca do fluxo de agendamento. `professional` ausente = "Sem preferência". */
 export const SEARCH_PARAMS = {

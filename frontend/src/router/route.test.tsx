@@ -68,6 +68,10 @@ describe('AppRoutes', () => {
     expect(renderAt(path)).toContain('Página não encontrada')
   })
 
+  it('abre meus agendamentos em /appointments', () => {
+    expect(renderAt('/appointments')).toContain('Meus agendamentos')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })
