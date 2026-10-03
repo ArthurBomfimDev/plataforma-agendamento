@@ -27,6 +27,15 @@ describe('AppRoutes', () => {
     expect(renderAt(path)).toContain('Com quem você quer agendar?')
   })
 
+  it('abre calendário e horários com o profissional vindo da busca', () => {
+    const path =
+      '/businesses/estudio-duartina/services/corte-masculino/availability?professional=rafael-lima'
+    const html = renderAt(path)
+
+    expect(html).toContain('Rafael Lima')
+    expect(html).toContain('Horários — ')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })
