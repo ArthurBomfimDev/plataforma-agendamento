@@ -11,7 +11,7 @@ export const BottomNavigation = (props: BottomNavigationProps) => {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-(--border-subtle) bg-(--bg-surface) px-(--space-16) pt-(--space-8) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_0_rgb(28_26_23/0.08)]"
+      className="fixed inset-x-0 bottom-0 z-10 border-t lg:hidden border-(--border-subtle) bg-(--bg-surface) px-(--space-16) pt-(--space-8) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_0_rgb(28_26_23/0.08)] md:px-[max(var(--space-16),calc((100%-40rem)/2+var(--space-16)))]"
     >
       <ul className="flex gap-(--space-8)">
         {ITEMS.map(({ id, label, icon: Icon }) => (

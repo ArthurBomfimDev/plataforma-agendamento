@@ -26,7 +26,20 @@ describe('ChooseProfessionalScreen', () => {
       <ChooseProfessionalScreen businessId="estudio-duartina" serviceId="corte-masculino" />,
     )
 
-    expect(html.match(/<button[^>]*type="button"/g)).toHaveLength(5) // voltar + 4 opções
+    // Celular: voltar + 4 opções da lista. Desktop: "Sem preferência" + 3 cards (a trilha só vira
+    // botão com `onBack`). As duas versões vão no HTML; o breakpoint esconde uma delas.
+    expect(html.match(/<button[^>]*type="button"/g)).toHaveLength(9)
+    expect(html).toContain('aria-label="Ver horários sem preferência de profissional"')
+    expect(html).toContain('aria-label="Ver horários com Marina Souza"')
+  })
+
+  it('mostra a trilha do desktop com o estabelecimento e o serviço', () => {
+    const html = render(
+      <ChooseProfessionalScreen businessId="estudio-duartina" serviceId="corte-masculino" />,
+    )
+
+    expect(html).toMatch(/<nav aria-label="Trilha de navegação"[^>]*>.*Estúdio Duartina/)
+    expect(html).toContain('aria-current="page"')
   })
 
   it('cai na página 404 quando o serviço não existe no estabelecimento', () => {

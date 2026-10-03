@@ -1,7 +1,7 @@
-import { Hourglass, MapPin } from 'lucide-react'
+import { Hourglass, MapPin, Star } from 'lucide-react'
 import { MOCK_REVIEW_WINDOW_DAYS, createMockAppointments } from './mock'
 import type { AppointmentsScreenProps, CustomerAppointment } from './types'
-import { addHours, differenceInMinutes, format, parse } from 'date-fns'
+import { addHours, addMinutes, differenceInMinutes, format, parse } from 'date-fns'
 
 import { AppointmentCard } from '../../components/appointment-card'
 import { BottomNavigation } from '../../components/bottom-navigation'
@@ -9,6 +9,7 @@ import { Button } from '../../components/button'
 import { CONTENT_BOTTOM_PADDING } from '../../components/bottom-navigation/conts'
 import { ConfirmDialog } from '../../components/confirm-dialog'
 import { MOCK_CONFIRMATION_HOURS } from '../availability/mock'
+import { PageContainer } from '../../components/page-container'
 import { TabBar } from '../../components/tab-bar'
 import { distanceFormat } from '../../components/card-establishment/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
@@ -21,10 +22,20 @@ const UPCOMING = ['pending', 'confirmed']
 
 const parseDay = (date: string) => parse(date, 'yyyy-MM-dd', new Date())
 
-/** "Corte masculino · sex, 11 set · 09:30"; passados sem dia da semana: "… · 22 ago · 10:00". */
-const summary = ({ serviceName, date, time, status }: CustomerAppointment) => {
-  const pattern = UPCOMING.includes(status) ? 'EEEEEE, d MMM' : 'd MMM'
-  return `${serviceName} · ${format(parseDay(date), pattern, { locale: ptBR })} · ${time}`
+/** Próximos levam o dia da semana ("sex, 11 set"); passados não ("22 ago"). */
+const dayLabel = ({ date, status }: CustomerAppointment) =>
+  format(parseDay(date), UPCOMING.includes(status) ? 'EEEEEE, d MMM' : 'd MMM', { locale: ptBR })
+
+/** Celular: "Corte masculino · sex, 11 set · 09:30". */
+const summary = (appointment: CustomerAppointment) =>
+  `${appointment.serviceName} · ${dayLabel(appointment)} · ${appointment.time}`
+
+/** Desktop: "sex, 11 set · 09:30 — 10:00"; passados só com o início, como no 08D. */
+const whenLine = (appointment: CustomerAppointment) => {
+  const { time, durationMinutes, status } = appointment
+  if (!UPCOMING.includes(status)) return `${dayLabel(appointment)} · ${time}`
+  const end = format(addMinutes(parse(time, 'HH:mm', new Date(0)), durationMinutes), 'HH:mm')
+  return `${dayLabel(appointment)} · ${time} — ${end}`
 }
 
 /** "11 h", "40 min". */
@@ -33,8 +44,12 @@ const expiryLabel = (remainingMinutes: number) =>
 
 const emptyState = (text: string) => <p className="type-body text-(--text-muted)">{text}</p>
 
+/** Desktop (08D): "Adicionar à agenda" vira a ação principal do card confirmado. */
+const PRIMARY_ON_DESKTOP =
+  'lg:border-transparent lg:bg-(--action-primary) lg:text-(--text-on-action) lg:hover:bg-(--action-primary) lg:hover:text-(--text-on-action)'
+
 /**
- * Tela 08 · Meus agendamentos (Figma, 390px).
+ * Tela 08 · Meus agendamentos (Figma, 390px; desktop: 08D, 1440px).
  */
 export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
   const { onNavigate } = props
@@ -48,7 +63,10 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
   const toReview = appointments.filter(
     ({ status, reviewable }) => status === 'completed' && reviewable,
   )
-  const past = appointments.filter(({ status }) => !UPCOMING.includes(status))
+  const past = appointments.filter(
+    ({ status }) => !UPCOMING.includes(status) && status !== 'cancelled',
+  )
+  const cancelled = appointments.filter(({ status }) => status === 'cancelled')
 
   // TODO: cancelar de verdade depende da API de Scheduling; por enquanto só muda o estado local.
   const confirmCancel = () => {
@@ -63,7 +81,16 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
   }
 
   const renderCard = (appointment: CustomerAppointment) => {
-    const { id, businessName, status, requestedAt, address, distanceKm } = appointment
+    const { id, businessName, serviceName, durationMinutes, status, requestedAt } = appointment
+    const { address, distanceKm } = appointment
+
+    const common = {
+      businessName,
+      status,
+      summary: summary(appointment),
+      serviceLine: `${serviceName} · ${durationMinutes} min`,
+      whenLine: whenLine(appointment),
+    }
 
     if (status === 'pending') {
       const remaining = requestedAt
@@ -72,9 +99,8 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
 
       return (
         <AppointmentCard
-          businessName={businessName}
-          status={status}
-          summary={summary(appointment)}
+          {...common}
+          highlight
           detail={
             <p className="type-caption tabular flex items-center gap-(--space-4) text-(--marker-urgent-fg)">
               <Hourglass aria-hidden="true" className="size-4 shrink-0" />
@@ -99,9 +125,7 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
     if (status === 'confirmed') {
       return (
         <AppointmentCard
-          businessName={businessName}
-          status={status}
-          summary={summary(appointment)}
+          {...common}
           detail={
             address && (
               <p className="type-caption tabular flex items-center gap-(--space-4) text-(--text-muted)">
@@ -117,7 +141,7 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
             <div className="flex gap-(--space-8)">
               <Button
                 variant="secondary"
-                className="min-w-0 flex-1"
+                className="min-w-0 flex-1 lg:flex-none"
                 aria-label={`Cancelar agendamento em ${businessName}`}
                 onClick={() => setCancelTarget(appointment)}
               >
@@ -125,15 +149,15 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
               </Button>
               <Button
                 variant="secondary"
-                className="min-w-0 flex-1"
+                className={`min-w-0 flex-1 lg:flex-none ${PRIMARY_ON_DESKTOP}`}
                 onClick={() =>
                   addToCalendar({
                     id,
-                    title: `${appointment.serviceName} — ${businessName}`,
+                    title: `${serviceName} — ${businessName}`,
                     location: address,
                     date: appointment.date,
                     time: appointment.time,
-                    durationMinutes: appointment.durationMinutes,
+                    durationMinutes,
                     timeZone: appointment.timeZone,
                   })
                 }
@@ -146,20 +170,26 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
       )
     }
 
+    const reviewable = status === 'completed' && appointment.reviewable
+    const reviewWindow = `Você tem ${MOCK_REVIEW_WINDOW_DAYS} dias para avaliar.`
+
     return (
       <AppointmentCard
-        businessName={businessName}
-        status={status}
-        summary={summary(appointment)}
+        {...common}
+        detail={
+          reviewable && (
+            <p className="type-caption hidden items-center gap-(--space-4) text-(--text-muted) lg:flex">
+              <Star aria-hidden="true" className="size-4 shrink-0" />
+              {reviewWindow}
+            </p>
+          )
+        }
         actions={
-          status === 'completed' &&
-          appointment.reviewable && (
+          reviewable && (
             // TODO: a tela de avaliação ainda não existe; o botão não faz nada.
             <div className="flex flex-col gap-(--space-12)">
               <Button className="w-full">Avaliar atendimento</Button>
-              <p className="type-caption text-(--text-muted)">
-                Você tem {MOCK_REVIEW_WINDOW_DAYS} dias para avaliar.
-              </p>
+              <p className="type-caption text-(--text-muted) lg:hidden">{reviewWindow}</p>
             </div>
           )
         }
@@ -177,43 +207,62 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
 
   return (
     <div className={`min-h-dvh bg-(--bg-page) ${CONTENT_BOTTOM_PADDING}`}>
-      <header className="bg-(--bg-surface) px-(--space-16) pt-[calc(var(--space-20)+env(safe-area-inset-top))] pb-(--space-12)">
-        <h1 className="type-title text-(--text-strong)">Meus agendamentos</h1>
-      </header>
+      <PageContainer width="medium">
+        <header className="bg-(--bg-surface) px-(--space-16) pt-[calc(var(--space-20)+env(safe-area-inset-top))] pb-(--space-12) md:bg-transparent lg:px-0 lg:pt-(--space-24) lg:pb-(--space-20)">
+          <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
+            Meus agendamentos
+          </h1>
+        </header>
 
-      <main>
-        <TabBar
-          label="Agendamentos"
-          panelClassName="p-(--space-16)"
-          items={[
-            {
-              id: 'upcoming',
-              label: 'Próximos',
-              content: (
-                <div className="flex flex-col gap-(--space-16)">
-                  {upcoming.length > 0 ? list(upcoming) : emptyState('Nenhum agendamento próximo.')}
-                  {toReview.length > 0 && (
-                    <section
-                      aria-labelledby="appointments-to-review"
-                      className="flex flex-col gap-(--space-16)"
-                    >
-                      <h2 id="appointments-to-review" className="type-heading text-(--text-strong)">
-                        Concluídos
-                      </h2>
-                      {list(toReview)}
-                    </section>
-                  )}
-                </div>
-              ),
-            },
-            {
-              id: 'past',
-              label: 'Passados',
-              content: past.length > 0 ? list(past) : emptyState('Nenhum agendamento passado.'),
-            },
-          ]}
-        />
-      </main>
+        <main>
+          <TabBar
+            label="Agendamentos"
+            listClassName="md:bg-transparent lg:gap-(--space-32) lg:px-0"
+            panelClassName="p-(--space-16) lg:px-0 lg:pt-(--space-16)"
+            items={[
+              {
+                id: 'upcoming',
+                label: 'Próximos',
+                content: (
+                  <div className="flex flex-col gap-(--space-16)">
+                    {upcoming.length > 0
+                      ? list(upcoming)
+                      : emptyState('Nenhum agendamento próximo.')}
+                    {toReview.length > 0 && (
+                      <section
+                        aria-labelledby="appointments-to-review"
+                        className="flex flex-col gap-(--space-16)"
+                      >
+                        {/* No desktop (08D) os concluídos seguem na mesma lista, sem título. */}
+                        <h2
+                          id="appointments-to-review"
+                          className="type-heading text-(--text-strong) lg:sr-only"
+                        >
+                          Concluídos
+                        </h2>
+                        {list(toReview)}
+                      </section>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                id: 'past',
+                label: 'Passados',
+                content: past.length > 0 ? list(past) : emptyState('Nenhum agendamento passado.'),
+              },
+              {
+                id: 'cancelled',
+                label: 'Cancelados',
+                content:
+                  cancelled.length > 0
+                    ? list(cancelled)
+                    : emptyState('Nenhum agendamento cancelado.'),
+              },
+            ]}
+          />
+        </main>
+      </PageContainer>
 
       <ConfirmDialog
         open={cancelTarget !== null}

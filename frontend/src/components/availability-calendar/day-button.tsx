@@ -29,7 +29,7 @@ export const AvailabilityDayButton = (props: ComponentProps<typeof UiCalendarDay
       modifiers={modifiers}
       aria-label={`${buttonProps['aria-label']}, ${accessibleStatus}`}
       // Desfaz o visual do botão do shadcn: o destaque fica no círculo de 32px, não na célula toda.
-      className="size-(--size-touch-min) min-w-0 justify-center gap-(--space-4) rounded-(--radius-full) bg-transparent text-inherit group-data-[focused=true]/day:ring-0 hover:bg-transparent hover:text-inherit focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-(--border-focus) disabled:opacity-100 data-[selected-single=true]:bg-transparent data-[selected-single=true]:text-inherit [&>span]:opacity-100"
+      className="aspect-auto h-(--size-touch-min) w-full min-w-0 justify-center gap-(--space-4) rounded-(--radius-full) bg-transparent text-inherit group-data-[focused=true]/day:ring-0 hover:bg-transparent hover:text-inherit focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-(--border-focus) disabled:opacity-100 data-[selected-single=true]:bg-transparent data-[selected-single=true]:text-inherit [&>span]:opacity-100"
     >
       <span className="flex flex-col items-center gap-(--space-4)">
         {isHoliday && <HolidayMarker className="absolute top-0.5 left-1/2 -translate-x-1/2" />}
