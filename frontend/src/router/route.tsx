@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router'
 
+import { AppLayout } from './app-layout'
 import { AppointmentsRoute } from './appointments-route'
 import { AvailabilityRoute } from './availability-route'
 import { BookingReviewRoute } from './booking-review-route'
@@ -20,14 +21,16 @@ import { ROUTES } from './consts'
 export const AppRoutes = () => {
   return (
     <Routes>
-      <Route path={ROUTES.home} element={<HomeScreen />} />
-      <Route path={ROUTES.business} element={<BusinessDetailRoute />} />
-      <Route path={ROUTES.chooseProfessional} element={<ChooseProfessionalRoute />} />
-      <Route path={ROUTES.availability} element={<AvailabilityRoute />} />
-      <Route path={ROUTES.bookingReview} element={<BookingReviewRoute />} />
-      <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
-      <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
-      <Route path="*" element={<NotFoundScreen />} />
+      <Route element={<AppLayout />}>
+        <Route path={ROUTES.home} element={<HomeScreen />} />
+        <Route path={ROUTES.business} element={<BusinessDetailRoute />} />
+        <Route path={ROUTES.chooseProfessional} element={<ChooseProfessionalRoute />} />
+        <Route path={ROUTES.availability} element={<AvailabilityRoute />} />
+        <Route path={ROUTES.bookingReview} element={<BookingReviewRoute />} />
+        <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
+        <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
+        <Route path="*" element={<NotFoundScreen />} />
+      </Route>
     </Routes>
   )
 }

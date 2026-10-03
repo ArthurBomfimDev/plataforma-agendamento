@@ -12,5 +12,7 @@ export type AvailabilityScreenProps = {
   /** Data de hoje no fuso do estabelecimento. Dias anteriores aparecem como passados. */
   today: Date
   onBack?: () => void
+  /** Trilha do desktop: volta à página do estabelecimento. */
+  onOpenBusiness?: () => void
   onContinue?: (date: Date, time: string) => void
 }

@@ -13,6 +13,8 @@ export type TabBarProps = {
   items: TabBarItem[]
   /** Aba aberta no início. Padrão: a primeira. */
   defaultId?: string
+  /** Classes da lista de abas, por exemplo o layout do desktop. */
+  listClassName?: string
   /** Classes do painel de cada aba, por exemplo o espaçamento interno. */
   panelClassName?: string
   className?: string

@@ -71,18 +71,22 @@ export const AvailabilityCalendar = (props: AvailabilityCalendarProps) => {
           months: 'relative flex flex-col',
           month: 'flex w-full flex-col gap-(--space-8)',
           // Chevron de 20px com área de toque de 44px; o `-top` mantém a linha de 20px do Figma.
-          nav: 'absolute inset-x-0 -top-(--space-12) z-10 flex items-center justify-between',
+          nav: 'absolute inset-x-0 -top-(--space-12) z-10 flex items-center justify-between lg:-top-2',
           button_previous: NAV_BUTTON_CLASSES,
           button_next: NAV_BUTTON_CLASSES,
           chevron: 'size-5',
-          month_caption: 'flex h-5 items-center justify-center',
-          caption_label: 'type-label text-(--text-strong)',
+          month_caption: 'flex h-5 items-center justify-center lg:h-7',
+          // Desktop (05D): o mês sobe para `heading`.
+          caption_label:
+            'type-label text-(--text-strong) lg:text-(length:--size-heading)! lg:leading-(--line-height-heading)! lg:font-semibold!',
           month_grid: 'w-full',
           weekdays: 'flex justify-between',
           weekday:
-            'type-caption flex h-6 w-(--size-touch-min) items-center justify-center font-normal text-(--text-muted)',
+            'type-caption flex h-6 max-w-(--size-touch-min) min-w-0 flex-1 items-center justify-center font-normal text-(--text-muted)',
           week: 'mt-(--space-8) flex justify-between',
-          day: 'size-(--size-touch-min) p-0',
+          // Até 44px de largura; abaixo de ~360px de tela as sete colunas encolhem para caber.
+          // A altura fica sempre em 44px (regra de alvo de toque).
+          day: 'h-(--size-touch-min) max-w-(--size-touch-min) min-w-0 flex-1 p-0',
           today: '',
           disabled: '',
           outside: '',

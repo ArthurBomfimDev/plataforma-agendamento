@@ -10,14 +10,17 @@ import { cn } from 'cn'
  * do design system e o sublinhado animado, que desliza entre as abas.
  */
 export const TabBar = (props: TabBarProps) => {
-  const { label, items, defaultId, panelClassName, className } = props
+  const { label, items, defaultId, listClassName, panelClassName, className } = props
 
   return (
     <Tabs defaultValue={defaultId ?? items[0]?.id} className={cn('gap-0', className)}>
       <TabsList
         variant="line"
         aria-label={label}
-        className="relative w-full justify-start gap-(--space-24) overflow-x-auto rounded-none border-b border-(--border-subtle) bg-(--bg-surface) px-(--space-16) py-(--space-2) group-data-horizontal/tabs:h-auto"
+        className={cn(
+          'relative w-full justify-start gap-(--space-24) overflow-x-auto rounded-none border-b border-(--border-subtle) bg-(--bg-surface) px-(--space-16) py-(--space-2) group-data-horizontal/tabs:h-auto',
+          listClassName,
+        )}
       >
         {items.map(({ id, label: itemLabel }) => (
           <TabsTrigger
