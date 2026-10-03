@@ -51,6 +51,23 @@ describe('AppRoutes', () => {
     expect(renderAt(path)).toContain('Página não encontrada')
   })
 
+  it('abre o pedido enviado com o instante do envio vindo da busca', () => {
+    const sentAt = encodeURIComponent(new Date().toISOString())
+    const html = renderAt(
+      `/businesses/estudio-duartina/services/corte-masculino/sent?date=2026-09-11&time=09:30&sentAt=${sentAt}`,
+    )
+
+    expect(html).toContain('Pedido enviado')
+    expect(html).toContain('Expira em')
+  })
+
+  it('abre a 404 no pedido enviado sem instante de envio', () => {
+    const path =
+      '/businesses/estudio-duartina/services/corte-masculino/sent?date=2026-09-11&time=09:30'
+
+    expect(renderAt(path)).toContain('Página não encontrada')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

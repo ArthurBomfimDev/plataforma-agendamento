@@ -1,0 +1,34 @@
+/*
+ * react-toastify com os tokens do design system. O CSS da lib vem antes (main.tsx); aqui só se
+ * sobrescrevem as variáveis dela. TODO(figma): não há wireframe de toast.
+ */
+:root {
+  --toastify-font-family: var(--family-sans);
+  --toastify-text-color-light: var(--text-strong);
+  --toastify-color-light: var(--bg-surface);
+  --toastify-color-success: var(--status-confirmed-fg);
+  --toastify-icon-color-success: var(--status-confirmed-fg);
+  --toastify-color-error: var(--status-rejected-fg);
+  --toastify-icon-color-error: var(--status-rejected-fg);
+  --toastify-toast-bd-radius: var(--radius-md);
+  --toastify-toast-min-height: var(--size-touch-min);
+  --toastify-toast-shadow: var(--elevation-card);
+}
+
+/* Acima da barra de gestos do iPhone (regra 6 de empacotamento). */
+.Toastify__toast-container--bottom-center {
+  bottom: calc(var(--space-16) + env(safe-area-inset-bottom));
+}
+
+.Toastify__toast {
+  border: 1px solid var(--border-subtle);
+  font-size: var(--size-label);
+  line-height: var(--line-height-label);
+}
+
+/* No celular a lib cola o toast nas bordas; mantém a margem lateral das telas. */
+@media only screen and (max-width: 480px) {
+  .Toastify__toast-container {
+    padding: 0 var(--space-16);
+  }
+}

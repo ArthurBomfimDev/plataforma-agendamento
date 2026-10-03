@@ -1,23 +1,23 @@
-import { SEARCH_PARAMS, availabilityPath } from './consts'
-import { isValid, parse } from 'date-fns'
+import { availabilityPath, bookingSentPath } from './consts'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { BookingReviewScreen } from '../features/booking-review'
 import { MOCK_TODAY } from '../features/availability/mock'
 import { NotFoundScreen } from '../features/not-found'
+import { readBookingSearch } from './booking-search'
 
 export const BookingReviewRoute = () => {
   const { businessId = '', serviceId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
-  const professionalId = searchParams.get(SEARCH_PARAMS.professional)
-  const date = parse(searchParams.get(SEARCH_PARAMS.date) ?? '', 'yyyy-MM-dd', new Date())
-  const time = searchParams.get(SEARCH_PARAMS.time)
+  const booking = readBookingSearch(searchParams)
 
-  if (!isValid(date) || !time) {
+  if (!booking) {
     return <NotFoundScreen />
   }
+
+  const { professionalId, date, dateParam, time } = booking
 
   return (
     <BookingReviewScreen
@@ -30,7 +30,19 @@ export const BookingReviewRoute = () => {
       today={MOCK_TODAY}
       // Volta ao calendário; o dia e o horário escolhidos não são restaurados.
       onBack={() => navigate(availabilityPath(businessId, serviceId, professionalId))}
-      // TODO: enviar o pedido depende da API de Scheduling; "Enviar pedido" não faz nada por enquanto.
+      // TODO: enviar o pedido (e a observação) depende da API de Scheduling. Por enquanto só
+      // avança; `replace` evita que o "voltar" do navegador reabra a revisão de um pedido enviado.
+      onSubmit={() =>
+        navigate(
+          bookingSentPath(businessId, serviceId, {
+            professionalId,
+            date: dateParam,
+            time,
+            sentAt: new Date().toISOString(),
+          }),
+          { replace: true },
+        )
+      }
     />
   )
 }

@@ -1,5 +1,7 @@
 import './styles/tokens.css'
 import './index.css'
+import 'react-toastify/dist/ReactToastify.css'
+import './styles/toast.css'
 
 import App from './App.tsx'
 import { HashRouter } from 'react-router'

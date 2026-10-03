@@ -4,6 +4,7 @@ export const ROUTES = {
   chooseProfessional: '/businesses/:businessId/services/:serviceId/professionals',
   availability: '/businesses/:businessId/services/:serviceId/availability',
   bookingReview: '/businesses/:businessId/services/:serviceId/review',
+  bookingSent: '/businesses/:businessId/services/:serviceId/sent',
 } as const
 
 /** Parâmetros de busca do fluxo de agendamento. `professional` ausente = "Sem preferência". */
@@ -13,6 +14,8 @@ export const SEARCH_PARAMS = {
   date: 'date',
   /** Horário de início, `HH:mm`. */
   time: 'time',
+  /** Instante do envio do pedido, ISO 8601. */
+  sentAt: 'sentAt',
 } as const
 
 export const businessPath = (businessId: string) => `/businesses/${encodeURIComponent(businessId)}`
@@ -39,13 +42,27 @@ export const availabilityPath = (
     [SEARCH_PARAMS.professional]: professionalId,
   })
 
-export const bookingReviewPath = (
+type BookingSearch = { professionalId: string | null; date: string; time: string }
+
+const bookingSearch = (booking: BookingSearch) => ({
+  [SEARCH_PARAMS.professional]: booking.professionalId,
+  [SEARCH_PARAMS.date]: booking.date,
+  [SEARCH_PARAMS.time]: booking.time,
+})
+
+export const bookingReviewPath = (businessId: string, serviceId: string, booking: BookingSearch) =>
+  withSearch(`${servicePath(businessId, serviceId)}/review`, bookingSearch(booking))
+
+/**
+ * TODO: provisório enquanto não há API. Com o pedido criado no backend, a tela passa a ser
+ * `/appointments/:id` e os dados vêm do agendamento, não da URL.
+ */
+export const bookingSentPath = (
   businessId: string,
   serviceId: string,
-  booking: { professionalId: string | null; date: string; time: string },
+  booking: BookingSearch & { sentAt: string },
 ) =>
-  withSearch(`${servicePath(businessId, serviceId)}/review`, {
-    [SEARCH_PARAMS.professional]: booking.professionalId,
-    [SEARCH_PARAMS.date]: booking.date,
-    [SEARCH_PARAMS.time]: booking.time,
+  withSearch(`${servicePath(businessId, serviceId)}/sent`, {
+    ...bookingSearch(booking),
+    [SEARCH_PARAMS.sentAt]: booking.sentAt,
   })
