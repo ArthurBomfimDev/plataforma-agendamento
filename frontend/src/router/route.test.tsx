@@ -21,6 +21,12 @@ describe('AppRoutes', () => {
     expect(renderAt('/businesses/estudio-duartina')).toContain('Aberto hoje até 18:00')
   })
 
+  it('abre a escolha de profissional em /businesses/:businessId/services/:serviceId/professionals', () => {
+    const path = '/businesses/estudio-duartina/services/corte-masculino/professionals'
+
+    expect(renderAt(path)).toContain('Com quem você quer agendar?')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

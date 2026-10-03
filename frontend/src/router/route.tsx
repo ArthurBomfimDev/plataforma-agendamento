@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router'
 
 import { BusinessDetailRoute } from './business-detail-route'
+import { ChooseProfessionalRoute } from './choose-professional-route'
 import { HomeScreen } from '../features/home'
 import { NotFoundScreen } from '../features/not-found'
 import { ROUTES } from './consts'
@@ -17,6 +18,7 @@ export const AppRoutes = () => {
     <Routes>
       <Route path={ROUTES.home} element={<HomeScreen />} />
       <Route path={ROUTES.business} element={<BusinessDetailRoute />} />
+      <Route path={ROUTES.chooseProfessional} element={<ChooseProfessionalRoute />} />
       <Route path="*" element={<NotFoundScreen />} />
     </Routes>
   )
