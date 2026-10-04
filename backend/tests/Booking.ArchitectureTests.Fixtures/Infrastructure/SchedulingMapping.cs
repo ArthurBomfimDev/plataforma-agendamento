@@ -1,4 +1,4 @@
-using Booking.Domain.Module.Scheduling;
+using Booking.Domain.Entity.Module.Scheduling;
 using Booking.Infrastructure.Persistence.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -14,5 +14,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Booking.ArchitectureTests.Fixtures/Booking.ArchitectureTests.Fixtures.csproj" />
     <Project Path="tests/Booking.ArchitectureTests/Booking.ArchitectureTests.csproj" />
+    <Project Path="tests/Booking.UnitTests/Booking.UnitTests.csproj" />
   </Folder>
 </Solution>
