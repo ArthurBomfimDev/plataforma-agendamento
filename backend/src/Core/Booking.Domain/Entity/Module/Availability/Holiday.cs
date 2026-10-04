@@ -6,11 +6,11 @@ namespace Booking.Domain.Entity.Module.Availability;
 
 public sealed class Holiday : BaseEntity
 {
-    public DateOnly Date { get; private  set; }
+    public DateOnly Date { get; private set; }
     public string Name { get; private set; } = null!;
     public HolidayKind Kind { get; private set; }
 
-    private  Holiday()
+    private Holiday()
     {
     }
 

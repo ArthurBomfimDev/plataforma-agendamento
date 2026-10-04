@@ -1,3 +1,3 @@
 namespace Booking.Domain.Entity.Base;
 
-public interface IAuditable {}
+public interface IAuditable { }
