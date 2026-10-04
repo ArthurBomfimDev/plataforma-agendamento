@@ -9,6 +9,7 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Boo
     public BookingDbContext CreateDbContext(string[] args) =>
         new(new DbContextOptionsBuilder<BookingDbContext>()
                 .UseNpgsql("Host=localhost;Database=booking", o => o.UseNetTopologySuite())
+                .UseSnakeCaseNamingConvention()
                 .Options,
             new NoTenantContext());
 
