@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-09-08 · Fase: **definição concluída, início do desenvolvimento**
+> **Última atualização:** 2026-09-10 · Fase: **definição concluída, início do desenvolvimento**
 
 ---
 
@@ -65,6 +65,7 @@ Também é o **TCC** de Arthur Bomfim e Rafael Ernandes — FATEC Garça, ADS, o
 | 16 | **Slot é cálculo, não tabela** |
 | 17 | **Snapshot de preço, duração e nome** no `Appointment` |
 | 18 | Banco **local** por enquanto. Hospedagem sem pressa |
+| 19 | **Bun** no frontend como gerenciador de pacotes, executor de scripts e dev server. **Vite continua sendo o bundler** — o bundler e o dev server do Bun foram rejeitados. O frontend não tem runtime em produção (Vite gera estáticos), então os problemas conhecidos de Bun como runtime de servidor não se aplicam. Lockfile `bun.lock` em texto, para aparecer em diff de PR. Versão fixada no CI e documentada no `CLAUDE.md`. ⚠️ Premissa não verificada: maturidade do Bun no Windows é menor que em Linux/macOS, e a máquina do Rafael ainda não foi validada |
 
 ### 4.1 ⚠️ REVERSÃO — paridade mobile completa
 
@@ -199,18 +200,28 @@ Publicação via **Outbox**, na mesma transação da escrita.
 
 **Eixo:** híbrido, base "precisão calma" com calor de "ofício". É clara, confiável, acolhedora. Não é corporativa, fria, genérica. Quando calor e legibilidade brigam, legibilidade ganha.
 
-**Primária:** azul-água. Ação em `#0F6E83` (P600). Tons claros nunca são fundo de botão.
-**Secundária:** argila `#8E5426` (texto) / `#C97F4A` (não-texto).
-**Neutros quentes**, 11 passos. Borda de componente interativo usa **N500 `#8C867B`**, nunca N300.
+⚠️ **Vigente é a REVISÃO 2.** A revisão 1 (bege quente + `#0F6E83` + serifada + 6 matizes de status) foi **reprovada**. Se aparecer `#0F6E83` como ação ou `#8C867B` como borda em qualquer prompt, documento ou anotação, está desatualizado. Fonte da verdade: o arquivo Figma e `docs/design/eixo-paleta-tipografia.md`.
+
+**Primária — azul-água.** Ação é **P600 `#0B7690`** (branco sobre ela dá 5,24:1). Hover é P700 `#085F75`. Escala: `50 #E8F6F9` · `100 #C7EBF2` · `200 #93D8E6` · `300 #52BFD4` · `400 #1FA3BE` · `500 #0E8AA6` · `600 #0B7690` · `700 #085F75` · `800 #06485A` · `900 #043440`. Tons claros nunca são fundo de botão.
+
+**Neutros quase puros** (cinza, não bege), 11 passos: `0 #FFFFFF` · `50 #FAFAFA` · `100 #F3F3F2` · `200 #E6E6E4` · `300 #D2D2D0` · `400 #A6A6A3` · `500 #7E7E7B` · `600 #5F5F5C` · `700 #454542` · `800 #2A2A28` · `900 #141413`.
+Borda de componente interativo usa **N500 `#7E7E7B`**, nunca N300 (1,51:1 reprova o critério não-textual).
+
+**Argila, ameixa e violeta foram removidos.** `marker/sensitive` é neutro `#141413` / `#F3F3F2` — não reintroduzir o violeta.
+
+**Status — três matizes apenas:** âmbar `#96560A`/`#FBF2E3` (Pending) · verde `#1B6B45`/`#EAF3EE` (Confirmed) · vermelho `#A32A22`/`#F9ECEB` (Rejected, NoShow). Expired, Cancelled e Completed usam neutros.
+
 **Risco registrado:** vizinhança cromática com Calendly, Google Calendar e Doctoralia. A diferenciação depende de tipografia, forma e temperatura dos neutros.
 
-**Tipografia:** IBM Plex Sans (interface, corpo, painel inteiro) + Source Serif 4 (só `display` e `title` da vitrine). Ambas OFL. **Zero serifada no painel.** Campo de formulário obrigatoriamente 16px.
+**Tipografia: uma família só — IBM Plex Sans** (OFL), do caption ao display. **Source Serif 4 foi removida** e a variável `family/serif` foi apagada. Campo de formulário obrigatoriamente 16px. Altura de linha em px, não unitless.
 
-**Tokens:** 4 coleções, 128 variáveis, modo Light, zero `ALL_SCOPES`, arquitetura primitiva → alias semântico. Componentes ligam só em tokens semânticos.
+**Tokens:** 4 coleções, **127 variáveis**, modo Light, zero `ALL_SCOPES`, arquitetura primitiva → alias semântico. Componentes ligam só em tokens semânticos — foi o que permitiu refazer a paleta inteira (27 primitivas, 18 realias) sem tocar em nenhuma tela.
 
 **Componentes:** 11 component sets, 215 nós auditados, zero valor hardcoded.
 
-**Telas:** 20 (12 originais + 8 versões desktop do consumidor), 1.379 nós, 0 instâncias soltas, 0 cores hardcoded.
+**Telas:** 20 em `Page 1` + página `Painel — mobile` em andamento (P01 agenda do dia, P01b feriado com expediente especial).
+
+**Regra de geometria (permanente):** a geometria do wireframe é a referência de usabilidade. **Aplicar estilo nunca pode encolher um alvo de toque.** Origem: a `Célula de calendário` chegou a 44×20px e amassou a grade. Meça antes e depois; se encolheu, está errado.
 
 **Status do agendamento sempre em dois canais** — cor + forma/ícone. `Pending` e `Confirmed` diferem em quatro canais.
 
@@ -286,11 +297,11 @@ Substituto do chat: campo de observação estruturado + telefone da empresa vis�
 | # | Pendência | Bloqueia | Quem |
 |---|---|---|---|
 | A | Nome da marca | Logotipo, marca nominativa, slogan | Ambos |
-| B | `gh auth login --scopes "repo,workflow,read:org,project"` | Repo, Project, CI | Arthur |
+| ~~B~~ | ~~`gh auth login`~~ — **RESOLVIDO.** Autenticado como `ArthurBomfimDev` com escopos corretos | — | — |
 | C | Repositório público (recomendado) ou privado | Actions e proteção de branch | Ambos |
 | **F** | **Comitê de Ética + aceitação do DSR** | Coleta em outubro | Perguntar à orientadora |
 | G | Hospedagem com PostGIS habilitável | Migration e deploy | Arthur |
-| H | **Etapa 7 do Figma** — telas faltantes + paridade mobile do painel | Fatia vertical | Rafael |
+| H | **Etapa 7 do Figma** — em andamento. P01 e P01b prontas; 11 telas mobile do painel + telas faltantes | Fatia vertical | Rafael |
 | I | E-mail `@fatec.sp.gov.br` ativo? (Azure for Students) | Cold start na defesa | Ambos |
 | J | Assento Figma do Rafael é **View** — limita escrita via MCP | Automação de design | Rafael |
 
@@ -311,6 +322,7 @@ Substituto do chat: campo de observação estruturado + telefone da empresa vis�
 | 007 | Monólito modular e fronteiras de módulo |
 | 008 | Hospedagem e PostGIS |
 | 009 | Paridade mobile do painel como decisão de inclusão |
+| 010 | Bun como gerenciador de pacotes do frontend, mantendo Vite como bundler |
 
 ---
 
