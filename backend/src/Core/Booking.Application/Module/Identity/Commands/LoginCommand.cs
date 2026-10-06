@@ -32,6 +32,10 @@ public sealed class LoginCommand(
 
         if (user is null)
         {
+<<<<<<< HEAD
+=======
+            // Gasta o mesmo tempo de um login real, para não revelar por latência quais e-mails existem.
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
             hasher.Hash(request.Password ?? string.Empty);
             throw new DomainException("auth.invalid_credentials");
         }
@@ -41,6 +45,10 @@ public sealed class LoginCommand(
             throw new DomainException("auth.invalid_credentials");
         }
 
+<<<<<<< HEAD
+=======
+        // Só vale depois da senha correta: quem erra a senha não descobre o estado da conta.
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
         if (user.Status != UserStatus.Active)
         {
             throw new DomainException("auth.account_not_active");

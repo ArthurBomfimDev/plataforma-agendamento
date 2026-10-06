@@ -1,5 +1,5 @@
-using Booking.Domain.Base;
-using Booking.Domain.Module.Catalog;
+using Booking.Domain.Entity.Base;
+using Booking.Domain.Entity.Module.Catalog;
 
 namespace Booking.Application.Module.Catalog.Queries;
 

@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.Api.Common;
 
+<<<<<<< HEAD
+=======
+/// <summary>Traduz <see cref="DomainException"/> em ProblemDetails. O <c>code</c> é estável e é o que o frontend usa para traduzir.</summary>
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
 public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)

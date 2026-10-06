@@ -1,6 +1,6 @@
-using Booking.Domain.Base;
+using Booking.Domain.Entity.Base;
 
-namespace Booking.Domain.Module.Scheduling;
+namespace Booking.Domain.Entity.Module.Scheduling;
 
 public sealed class Appointment : BaseEntity;
 

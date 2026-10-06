@@ -8,6 +8,13 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Booking.Infrastructure.Module.Identity.Security;
 
+<<<<<<< HEAD
+=======
+/// <summary>
+/// Emite o access token. Leva só a identidade (sub, e-mail, nome). O contexto de empresa
+/// (<c>businessId</c>, <c>ctx</c>) entra quando o módulo Tenancy existir: ADR-004 prevê o token carregando a associação ativa.
+/// </summary>
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
 public sealed class JwtAccessTokenIssuer(IOptions<JwtOptions> options) : IAccessTokenIssuer
 {
     private readonly JwtOptions _options = options.Value;

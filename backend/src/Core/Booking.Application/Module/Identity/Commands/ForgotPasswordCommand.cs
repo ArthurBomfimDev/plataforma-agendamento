@@ -18,6 +18,10 @@ public sealed class ForgotPasswordCommand(
     TimeProvider clock,
     IdentityPolicy policy)
 {
+<<<<<<< HEAD
+=======
+    /// <summary>Resposta idêntica exista o e-mail ou não: a rota não pode servir para enumerar contas.</summary>
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
     public async Task ExecuteAsync(ForgotPasswordRequest request, CancellationToken ct = default)
     {
         Email email;

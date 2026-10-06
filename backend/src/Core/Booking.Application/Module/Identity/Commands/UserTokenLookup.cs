@@ -8,6 +8,10 @@ namespace Booking.Application.Module.Identity.Commands;
 
 internal static class UserTokenLookup
 {
+<<<<<<< HEAD
+=======
+    /// <summary>Token inexistente, usado ou expirado viram o mesmo erro: não revela qual foi o caso.</summary>
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
     public static async Task<UserToken> RequireValidAsync(
         IUserTokenRepository repository,
         ISecureTokenGenerator tokens,

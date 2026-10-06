@@ -1,6 +1,6 @@
 using Booking.ArchitectureTests.Rules;
 using Booking.ArchitectureTests.Support;
-using Booking.Domain.Base;
+using Booking.Domain.Entity.Base;
 
 namespace Booking.ArchitectureTests;
 

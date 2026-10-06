@@ -5,6 +5,13 @@ using Konscious.Security.Cryptography;
 
 namespace Booking.Infrastructure.Module.Identity.Security;
 
+<<<<<<< HEAD
+=======
+/// <summary>
+/// Argon2id com os parÃ¢metros mÃ­nimos recomendados pela OWASP (19 MiB, 2 iteraÃ§Ãµes, 1 thread).
+/// Formato: <c>$argon2id$v=19$m=19456,t=2,p=1$salt$hash</c>, para poder subir os parÃ¢metros sem invalidar hashes antigos.
+/// </summary>
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
 public sealed class Argon2PasswordHasher : IPasswordHasher
 {
     private const int _saltSize = 16;

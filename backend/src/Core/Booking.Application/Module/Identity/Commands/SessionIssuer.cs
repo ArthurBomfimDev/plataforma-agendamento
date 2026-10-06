@@ -5,6 +5,10 @@ using Booking.Domain.Interface.Repository.Module.Identity;
 
 namespace Booking.Application.Module.Identity.Commands;
 
+<<<<<<< HEAD
+=======
+/// <summary>Abre uma sessão: access token (JWT) + refresh token opaco persistido só como hash.</summary>
+>>>>>>> 072927b623995e9cdf1f2a39df62404aca1719cf
 public sealed class SessionIssuer(
     IAccessTokenIssuer accessTokens,
     ISecureTokenGenerator tokens,
