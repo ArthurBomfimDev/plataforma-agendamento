@@ -1,0 +1,32 @@
+using Booking.Application.Common.Persistence;
+using Booking.Application.Contracts.Identity;
+using Booking.Arguments.Module.Identity;
+using Booking.Domain.Entity.Module.Identity;
+using Booking.Domain.Interface.Repository.Module.Identity;
+
+namespace Booking.Application.Module.Identity.Commands;
+
+public sealed class LogoutCommand(
+    IRefreshTokenRepository refreshTokens,
+    ISecureTokenGenerator tokens,
+    IUnitOfWork unitOfWork,
+    TimeProvider clock)
+{
+    public async Task ExecuteAsync(LogoutRequest request, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return;
+        }
+
+        RefreshToken? token = await refreshTokens.GetByHashAsync(tokens.Hash(request.RefreshToken), ct);
+
+        if (token is null || token.RevokedAt is not null)
+        {
+            return;
+        }
+
+        token.Revoke(clock.GetUtcNow());
+        await unitOfWork.SaveChangesAsync(ct);
+    }
+}
