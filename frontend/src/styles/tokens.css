@@ -75,6 +75,9 @@
   --text-disabled: #64748b; /* ⚠ nunca para informação essencial */
   --text-on-action: #ffffff;
   --text-on-inverse: #ffffff;
+  /* Destaque em azul sobre fundo escuro (painel visual do Entrar). Reusa o link do modo Dark:
+     o #2563eb não dá contraste sobre o véu. */
+  --text-on-inverse-accent: #60a5fa;
   --text-link: #2563eb;
   --text-accent: #334155;
 
@@ -96,6 +99,11 @@
   --action-soft: #eff6ff; /* superfície de realce. NUNCA fundo de botão */
 
   /* TODO(figma): action/primary-active e -disabled não existem na coleção. Não inventar valor. */
+
+  /* Exceção à camada semântica: a camada "Tom de marca" do painel visual do Entrar (A01, A03)
+     liga direto nesta primitiva no Figma, com `mix-blend-mode: color`. É o único uso; o valor é o
+     mesmo nos modos Light e Dark. */
+  --primitive-primary-500: #3b82f6;
 
   /* ===========================================================================
    * COR — status do agendamento (7 estados, 3 matizes)
@@ -249,6 +257,10 @@
   --line-height-display: 38px;
   --size-body-lg: 18px;
   --line-height-body-lg: 28px;
+  /* `hero`: lido do frame A01 (painel visual do Entrar). No Figma as variáveis são
+     `size/hero` e `line/hero`, ainda sem `codeSyntax` WEB. */
+  --size-hero: 44px;
+  --line-height-hero: 52px;
 
   /* ⚠ REGRA 2 — campo de formulário é 16px, sempre. Não derive de --size-body:
      se um dia o corpo cair para 14px, o iOS passa a dar zoom no foco. */
@@ -278,6 +290,7 @@
   --text-disabled: #64748b;
   --text-on-action: #0e1627;
   --text-on-inverse: #f2f6fb;
+  --text-on-inverse-accent: #60a5fa;
   --text-link: #60a5fa;
   --text-accent: #b6c2d4;
 
@@ -392,5 +405,14 @@
   font-weight: var(--weight-regular);
   font-size: var(--size-body-lg);
   line-height: var(--line-height-body-lg);
+  letter-spacing: 0;
+}
+
+/* Título do painel visual do Entrar (A01), só no desktop. */
+.type-hero {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semibold);
+  font-size: var(--size-hero);
+  line-height: var(--line-height-hero);
   letter-spacing: 0;
 }

@@ -14,6 +14,7 @@ export const AppLayout = () => {
         showSearch={!isHome}
         onHome={() => navigate(ROUTES.home)}
         onAppointments={() => navigate(ROUTES.appointments)}
+        onSignIn={() => navigate(ROUTES.signIn)}
       />
       <Outlet />
     </>

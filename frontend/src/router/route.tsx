@@ -10,6 +10,7 @@ import { ChooseProfessionalRoute } from './choose-professional-route'
 import { HomeScreen } from '../features/home'
 import { NotFoundScreen } from '../features/not-found'
 import { ROUTES } from './consts'
+import { SignInRoute } from './sign-in-route'
 
 /**
  * Rotas da aplicação, no modo declarativo do React Router. O `<HashRouter>` fica em `main.tsx`.
@@ -31,6 +32,8 @@ export const AppRoutes = () => {
         <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>
+      {/* Fora da moldura: a tela de entrar não tem barra superior. */}
+      <Route path={ROUTES.signIn} element={<SignInRoute />} />
     </Routes>
   )
 }

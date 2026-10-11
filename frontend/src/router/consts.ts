@@ -8,6 +8,7 @@ export const ROUTES = {
   bookingReview: '/businesses/:businessId/services/:serviceId/review',
   bookingSent: '/businesses/:businessId/services/:serviceId/sent',
   appointments: '/appointments',
+  signIn: '/sign-in',
 } as const
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
