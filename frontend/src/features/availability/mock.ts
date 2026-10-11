@@ -1,5 +1,5 @@
 import type { DaySlots } from './types'
-import type { CalendarDayInfo } from '../../components/availability-calendar/types'
+import type { CalendarDayInfo } from '@components/availability-calendar/types'
 import { format } from 'date-fns'
 
 /**

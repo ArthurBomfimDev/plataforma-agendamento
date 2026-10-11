@@ -1,5 +1,5 @@
-import type { AppointmentStatus } from '../../components/status-chip/types'
-import type { NavigationItemId } from '../../components/bottom-navigation/types'
+import type { AppointmentStatus } from '@components/status-chip/types'
+import type { NavigationItemId } from '@components/bottom-navigation/types'
 
 export type CustomerAppointment = {
   id: string

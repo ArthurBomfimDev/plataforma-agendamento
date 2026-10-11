@@ -1,4 +1,4 @@
-import { AvatarFallback, AvatarImage, Avatar as UiAvatar } from '../ui/avatar'
+import { AvatarFallback, AvatarImage, Avatar as UiAvatar } from '@components/ui/avatar'
 
 import type { AvatarProps } from './types'
 import { User } from 'lucide-react'

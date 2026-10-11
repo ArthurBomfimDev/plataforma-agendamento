@@ -1,4 +1,4 @@
-import type { NavigationItemId } from '../components/bottom-navigation/types'
+import type { NavigationItemId } from '@components/bottom-navigation/types'
 
 export const ROUTES = {
   home: '/',

@@ -1,11 +1,11 @@
 import { ROUTES, SEARCH_PARAMS, businessPath } from './consts'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
-import { BookingSentScreen } from '../features/booking-sent'
-import { NotFoundScreen } from '../features/not-found'
+import { BookingSentScreen } from '@features/booking-sent'
+import { NotFoundScreen } from '@features/not-found'
 import { isValid } from 'date-fns'
 import { readBookingSearch } from './booking-search'
-import { toast } from '../lib/toast'
+import { toast } from '@lib/toast'
 
 export const BookingSentRoute = () => {
   const { businessId = '', serviceId = '' } = useParams()

@@ -3,7 +3,7 @@ import { eachDayOfInterval, endOfMonth, format, startOfMonth } from 'date-fns'
 
 import { AvailabilityDayButton } from './day-button'
 import type { AvailabilityCalendarProps } from './types'
-import { Calendar } from '../ui/calendar'
+import { Calendar } from '@components/ui/calendar'
 import { Flag } from 'lucide-react'
 import { cn } from 'cn'
 import { ptBR } from 'date-fns/locale/pt-BR'

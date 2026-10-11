@@ -1,4 +1,4 @@
-import { AppointmentsScreen } from '../features/appointments'
+import { AppointmentsScreen } from '@features/appointments'
 import { NAVIGATION_PATHS } from './consts'
 import { useNavigate } from 'react-router'
 

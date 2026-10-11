@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router'
 
-import { BusinessDetailScreen } from '../features/business-detail'
+import { BusinessDetailScreen } from '@features/business-detail'
 import { chooseProfessionalPath } from './consts'
 
 export const BusinessDetailRoute = () => {

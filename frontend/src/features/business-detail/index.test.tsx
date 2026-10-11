@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { BusinessDetailScreen } from '.'
-import { HomeScreen } from '../home'
+import { HomeScreen } from '@features/home'
 import { MemoryRouter } from 'react-router'
 import { renderToString } from 'react-dom/server'
 

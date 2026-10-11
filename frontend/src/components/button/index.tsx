@@ -1,5 +1,5 @@
 import type { ButtonProps } from './types'
-import { Button as UiButton } from '../ui/button'
+import { Button as UiButton } from '@components/ui/button'
 import { cn } from 'cn'
 
 const VARIANT_CLASSES: Record<NonNullable<ButtonProps['variant']>, string> = {

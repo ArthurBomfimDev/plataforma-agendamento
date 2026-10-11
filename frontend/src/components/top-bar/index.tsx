@@ -1,8 +1,8 @@
-import { Button } from '../button'
-import { Logotype } from '../logotype'
+import { Button } from '@components/button'
+import { Logotype } from '@components/logotype'
 import { MOCK_LOCATION } from './consts'
 import { MapPin } from 'lucide-react'
-import { SearchField } from '../search-field'
+import { SearchField } from '@components/search-field'
 import type { TopBarProps } from './types'
 
 /**

@@ -1,7 +1,7 @@
 import { availabilityPath, businessPath } from './consts'
 import { useNavigate, useParams } from 'react-router'
 
-import { ChooseProfessionalScreen } from '../features/choose-professional'
+import { ChooseProfessionalScreen } from '@features/choose-professional'
 
 export const ChooseProfessionalRoute = () => {
   const { businessId = '', serviceId = '' } = useParams()

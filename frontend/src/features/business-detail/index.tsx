@@ -4,18 +4,18 @@ import {
   MOCK_TODAY,
   getMockDayInfo,
   getMockDaySlots,
-} from '../availability/mock'
-import { distanceFormat, ratingFormat } from '../../components/card-establishment/consts'
+} from '@features/availability/mock'
+import { distanceFormat, ratingFormat } from '@components/card-establishment/consts'
 
 import type { BusinessDetailScreenProps } from './types'
-import { Button } from '../../components/button'
+import { Button } from '@components/button'
 import { MOCK_BUSINESSES } from './mock'
-import { NotFoundScreen } from '../not-found'
-import { PageContainer } from '../../components/page-container'
-import { ServiceCard } from '../../components/service-card'
-import { TabBar } from '../../components/tab-bar'
-import { TimeSlotChip } from '../../components/time-slot-chip'
-import { VerifiedBadge } from '../../components/card-establishment/components/VerifiedBadge'
+import { NotFoundScreen } from '@features/not-found'
+import { PageContainer } from '@components/page-container'
+import { ServiceCard } from '@components/service-card'
+import { TabBar } from '@components/tab-bar'
+import { TimeSlotChip } from '@components/time-slot-chip'
+import { VerifiedBadge } from '@components/card-establishment/components/VerifiedBadge'
 import { addDays } from 'date-fns'
 import { useRef } from 'react'
 

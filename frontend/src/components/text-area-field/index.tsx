@@ -1,6 +1,6 @@
-import { Label } from '../ui/label'
+import { Label } from '@components/ui/label'
 import type { TextAreaFieldProps } from './types'
-import { Textarea } from '../ui/textarea'
+import { Textarea } from '@components/ui/textarea'
 import { cn } from 'cn'
 
 /**

@@ -1,6 +1,6 @@
 import type { AppointmentStatus, StatusChipProps } from './types'
 
-import { Badge } from '../ui/badge'
+import { Badge } from '@components/ui/badge'
 import { Ban, Check, CheckCheck, Clock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from 'cn'

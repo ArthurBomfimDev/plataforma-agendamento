@@ -3,7 +3,7 @@ import { DayMarker, HolidayMarker } from './day-marker'
 
 import type { CalendarDayStatus } from './types'
 import type { ComponentProps } from 'react'
-import { CalendarDayButton as UiCalendarDayButton } from '../ui/calendar'
+import { CalendarDayButton as UiCalendarDayButton } from '@components/ui/calendar'
 import { cn } from 'cn'
 
 const STATUSES: CalendarDayStatus[] = ['available', 'no-slots', 'closed', 'past']

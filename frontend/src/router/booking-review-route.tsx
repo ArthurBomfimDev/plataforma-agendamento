@@ -1,9 +1,9 @@
 import { availabilityPath, bookingSentPath } from './consts'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
-import { BookingReviewScreen } from '../features/booking-review'
-import { MOCK_TODAY } from '../features/availability/mock'
-import { NotFoundScreen } from '../features/not-found'
+import { BookingReviewScreen } from '@features/booking-review'
+import { MOCK_TODAY } from '@features/availability/mock'
+import { NotFoundScreen } from '@features/not-found'
 import { readBookingSearch } from './booking-search'
 
 export const BookingReviewRoute = () => {
