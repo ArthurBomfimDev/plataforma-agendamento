@@ -46,7 +46,7 @@ const emptyState = (text: string) => <p className="type-body text-(--text-muted)
 
 /** Desktop (08D): "Adicionar à agenda" vira a ação principal do card confirmado. */
 const PRIMARY_ON_DESKTOP =
-  'lg:border-transparent lg:bg-(--action-primary) lg:text-(--text-on-action) lg:hover:bg-(--action-primary) lg:hover:text-(--text-on-action)'
+  'lg:border-transparent lg:bg-(--action-primary) lg:text-(--text-on-action) lg:hover:bg-(--action-primary-hover) lg:hover:text-(--text-on-action)'
 
 /**
  * Tela 08 · Meus agendamentos (Figma, 390px; desktop: 08D, 1440px).

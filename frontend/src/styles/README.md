@@ -5,31 +5,35 @@
 O Figma. Este diretório **espelha** o que está lá — não decide nada.
 
 Arquivo: `https://www.figma.com/design/E2M0TJehjcrSk4uaXlHI0s` · página **Design System**
-Estado: 4 coleções · 128 variáveis · modo Light · arquitetura primitiva → alias semântico ·
+Estado: 4 coleções · coleção `color` com modos Light e Dark · arquitetura primitiva → alias semântico ·
 `codeSyntax` WEB configurado como `var(--…)` · 11 component sets.
 
 ## Estado atual
 
-✅ `tokens.css` está preenchido com a **revisão 2**, lida do Figma via MCP em **2026-09-09**.
+✅ `tokens.css` está preenchido com a **revisão 3** (marca **vagoo**), lida do Figma via MCP
+em **2026-10-10**. Ação em azul `#2563EB`, neutros frios (escala slate), status em âmbar,
+verde e vermelho.
 
-Cobertura confirmada: `bg/*` · `text/*` · `border/*` · `action/*` · os 7 estados de
-`status/<estado>/{fg,bg}` · os 5 estados de `agenda/*` · os 4 `marker/*` · elevação ·
-`space` (2–24) · `radius` (sm, md, lg, full) · `type` (caption, label, body, heading).
+Cobertura confirmada: `bg/*` · `text/*` · `border/*` · `action/*` (com `primary-hover`) ·
+os 7 estados de `status/<estado>/{fg,bg}` · `agenda/*` (com `blocked/hatch`) · os 4
+`marker/*` · elevação · `space` · `radius` · `type`.
+
+O **modo Dark** está no bloco `.dark` de `tokens.css`, mas nada aplica a classe ainda.
 
 Lacunas marcadas com `TODO(figma)` no arquivo, **nenhuma preenchida por aproximação**:
-`action/primary-{hover,active,disabled}` · `space/{32,48,64}` · `radius/{none,xl}` ·
-`type/{display,title,body-lg}` · `size/avatar-{sm,lg}`.
+`action/primary-{active,disabled}` · `space/{48,64}` · `radius/{none,xl}` · `size/avatar-sm`.
 
-As **primitivas** (escala completa de azul-água e de neutros) têm escopo `[]` no Figma e
-por isso não são expostas pelo MCP — de propósito, para que nenhum componente ligue nelas.
+O Figma também expõe as **primitivas** (`--primitive-*`), mas nenhum componente liga nelas.
 Este arquivo define só a camada semântica, que é onde os componentes devem ligar.
+
+As variáveis do shadcn (`--primary`, `--muted`, `--ring`…) em `src/index.css` apontam para
+esses tokens, então as primitivas de `components/ui` seguem a mesma paleta.
 
 ## ⚠️ Duas advertências
 
-**A revisão 1 foi reprovada.** Se encontrar `#0F6E83`, `#8C867B`, `#8E5426`, `#C97F4A`,
-neutros bege (matiz ~40°) ou Source Serif 4 em qualquer lugar do código, é resíduo —
-remova. A revisão 2 usa ação `#0B7690`, borda interativa `#7E7E7B`, neutros quase puros,
-três matizes de status e uma única família tipográfica.
+**Resíduo de revisão anterior se remove.** Revisão 1 (reprovada): `#0F6E83`, `#8C867B`,
+`#8E5426`, `#C97F4A`, neutros bege, Source Serif 4. Revisão 2 (azul-água, substituída pela
+marca): `#0C7D99`, `#0B7690`, `#7E7E7B`, `#F5FCFD`.
 
 **`docs/design/eixo-paleta-tipografia.md` está desatualizado.** O arquivo no repositório
 é de 05/09 e descreve a revisão 1. Os valores aqui vieram do Figma, não dele.
@@ -61,11 +65,11 @@ Onde o nome do Figma divergir do CSS, **o Figma vence** — ajuste o CSS, não o
 
 Estão no cabeçalho de `tokens.css`, em detalhe. Resumo:
 
-1. Borda de componente interativo é **N500 `#7E7E7B`**, nunca N300 `#D2D2D0` — N300 dá
-   1,51:1, reprova o contraste não-textual (WCAG 1.4.11) e derruba o RNF-04.
+1. Borda de componente interativo é **neutral/500 `#64748B`**, nunca neutral/300 `#CBD5E1` —
+   neutral/300 dá ~1,5:1, reprova o contraste não-textual (WCAG 1.4.11) e derruba o RNF-04.
 2. Campo de formulário obrigatoriamente **16px** — abaixo disso o Safari do iOS dá zoom no foco.
 3. Altura de linha **em px**, nunca unitless — a grade de slots é calculada.
-4. Tom claro de azul-água **nunca** é fundo de botão. `--action-soft` é superfície.
+4. Tom claro de azul **nunca** é fundo de botão. `--action-soft` é superfície.
 5. Status do agendamento em **dois canais** — cor + forma/ícone. Nunca só cor.
    `noshow` e `rejected` **compartilham o matiz**: o ícone e a borda pontilhada grossa
    não são enfeite, são o que os distingue.
@@ -83,7 +87,7 @@ Estão no cabeçalho de `tokens.css`, em detalhe. Resumo:
 
 /* ✘ valor hardcoded onde existe token */
 .button-primary {
-  background: #0b7690;
+  background: #2563eb;
 }
 
 /* ✘ tom claro como fundo de botão — reprova contraste */
