@@ -14,7 +14,7 @@ import { StatusChip } from '@components/status-chip'
 import { cn } from 'cn'
 import { priceFormat } from '@components/service-card/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
-import { useNow } from '@hooks/useNow'
+import { useNow } from '@hooks/use-now'
 import { useState } from 'react'
 
 /** "11 h 58 min", "12 h", "40 min". */

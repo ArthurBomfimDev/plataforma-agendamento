@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { AppointmentsScreen } from '.'
 import { MemoryRouter } from 'react-router'
-import { calendarEventToIcs } from '@hooks/useAddToCalendar'
+import { calendarEventToIcs } from '@hooks/use-add-to-calendar'
 import { renderToString } from 'react-dom/server'
 
 // O React separa trechos de texto com `<!-- -->` no HTML do servidor; tiramos para comparar o texto.

@@ -1,8 +1,11 @@
 import { Slide, ToastContainer } from './lib/toast'
 
 import { AppRoutes } from './router/route'
+import { useApplyTheme } from '@hooks/use-theme'
 
 export default function App() {
+  useApplyTheme()
+
   return (
     <>
       <AppRoutes />

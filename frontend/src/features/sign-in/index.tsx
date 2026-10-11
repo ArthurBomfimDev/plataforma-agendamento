@@ -16,6 +16,7 @@ import { HeroPanel } from './components/hero-panel'
 import { Logotype } from '../../components/logotype'
 import { SegmentedControl } from '../../components/segmented-control'
 import { TextField } from '../../components/text-field'
+import { ThemeToggle } from '@components/theme-toggle'
 
 /** Link de texto com alvo de toque de 44px: 20px de linha + 12px acima e abaixo. */
 const LINK_CLASSES =
@@ -70,7 +71,10 @@ export const SignInScreen = (props: SignInScreenProps) => {
       <main className="min-h-dvh bg-(--bg-surface) lg:flex">
         <HeroPanel />
 
-        <div className="px-(--space-16) pt-(--space-24) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] lg:flex lg:min-w-0 lg:flex-1 lg:items-center lg:justify-center lg:p-(--space-40)">
+        <div className="relative px-(--space-16) pt-(--space-24) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] lg:flex lg:min-w-0 lg:flex-1 lg:items-center lg:justify-center lg:p-(--space-40)">
+          {/* A tela fica fora da moldura com a barra superior, então traz o próprio seletor de tema. */}
+          <ThemeToggle className="absolute top-(--space-16) right-(--space-16) lg:top-(--space-24) lg:right-(--space-24)" />
+
           <motion.div
             variants={stagger(0.2)}
             initial="hidden"
@@ -78,7 +82,8 @@ export const SignInScreen = (props: SignInScreenProps) => {
             className="mx-auto flex w-full max-w-md flex-col gap-(--space-16) lg:max-w-95.25"
           >
             <motion.div variants={fadeUp} className="hidden self-start lg:block">
-              <Logotype className="h-11.75" alt="" />
+              <Logotype className="h-11.75 dark:hidden" alt="" />
+              <Logotype tone="dark" className="hidden h-11.75 dark:block" alt="" />
             </motion.div>
 
             <motion.div variants={fadeUp} className="flex flex-col gap-(--space-4)">

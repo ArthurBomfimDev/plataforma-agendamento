@@ -47,9 +47,9 @@
  * Não existe família serifada. `family/serif` foi removida do Figma de propósito.
  *
  * MODO ESCURO: o Figma já tem o modo Dark da coleção `color`, e os valores estão no
- * bloco `.dark` no fim deste arquivo. Nada aplica a classe ainda — falta decidir quem
- * liga o tema (preferência do sistema, seletor do usuário ou os dois). Quando ligar,
- * aplique em `<html>`: as variáveis do shadcn em `index.css` resolvem na raiz.
+ * bloco `.dark` no fim deste arquivo. A classe vai em `<html>` (as variáveis do shadcn
+ * em `index.css` resolvem na raiz) e quem a liga é o `useApplyTheme` (src/hooks/useTheme.ts):
+ * segue o sistema até a pessoa escolher no `ThemeToggle`; a escolha fica no localStorage.
  * ========================================================================== */
 
 :root {
@@ -272,7 +272,7 @@
  * MODO ESCURO — modo Dark da coleção `color` do Figma
  *
  * Só cor muda; espaço, raio e tipografia são os mesmos. A classe `.dark` é a mesma do
- * `@custom-variant dark` em `index.css`. Nada a aplica ainda (ver cabeçalho).
+ * `@custom-variant dark` em `index.css`. Quem a aplica está no cabeçalho.
  * ========================================================================== */
 .dark {
   --bg-page: #070b14;

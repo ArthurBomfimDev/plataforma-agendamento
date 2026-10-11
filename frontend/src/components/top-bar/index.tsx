@@ -3,6 +3,7 @@ import { Logotype } from '@components/logotype'
 import { MOCK_LOCATION } from './consts'
 import { MapPin } from 'lucide-react'
 import { SearchField } from '@components/search-field'
+import { ThemeToggle } from '@components/theme-toggle'
 import type { TopBarProps } from './types'
 
 /**
@@ -44,6 +45,7 @@ export const TopBar = (props: TopBarProps) => {
           <div className="flex-1" />
         )}
 
+        <ThemeToggle />
         <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
           Meus agendamentos
         </Button>
