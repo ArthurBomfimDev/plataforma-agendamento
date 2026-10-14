@@ -15,6 +15,8 @@ builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+builder.Services.AddScoped<IActorContext, HttpActorContext>();
+builder.Services.AddHostedService<PendingExpirationWorker>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();

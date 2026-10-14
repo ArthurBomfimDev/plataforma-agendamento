@@ -19,6 +19,6 @@ public sealed class RefreshTokenRepository(BookingDbContext context) : IRefreshT
             .ExecuteUpdateAsync(
                 s => s
                     .SetProperty(x => x.RevokedAt, now)
-                    .SetProperty(x => EF.Property<DateTimeOffset?>(x, AuditColumns.UpdateAt), now),
+                    .SetProperty(x => EF.Property<DateTimeOffset?>(x, AuditColumns.UpdatedAt), now),
                 ct);
 }
