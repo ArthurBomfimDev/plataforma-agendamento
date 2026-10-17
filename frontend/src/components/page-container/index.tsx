@@ -11,7 +11,7 @@ import { cn } from 'cn'
 
 /** Coluna central das telas. No celular não faz nada: cada tela mantém o próprio layout. */
 export const PageContainer = (props: PageContainerProps) => {
-  const { children, className, width } = props
+  const { children, className, width = 'wide' } = props
 
   return (
     <div
