@@ -1,18 +1,15 @@
-import { DayMarker, HolidayMarker } from './day-marker'
+import { NAV_BUTTON_CLASSES, capitalize } from './consts'
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from 'date-fns'
 
-import { AvailabilityDayButton } from './day-button'
 import type { AvailabilityCalendarProps } from './types'
+import { AvailabilityDayButton } from './components/day-button'
 import { Calendar } from '@components/ui/calendar'
+import { DayMarker } from './components/day-marker'
 import { Flag } from 'lucide-react'
+import { HolidayMarker } from './components/holyday-marker'
 import { cn } from 'cn'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { useState } from 'react'
-
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
-
-const NAV_BUTTON_CLASSES =
-  'flex size-(--size-touch-min) items-center justify-center text-(--text-link) focus-visible:outline-2 focus-visible:outline-(--border-focus) aria-disabled:text-(--text-disabled)'
 
 /**
  * Calendário da vitrine (Figma, tela 05), construído sobre o Calendar do shadcn (react-day-picker).
@@ -38,7 +35,7 @@ export const AvailabilityCalendar = (props: AvailabilityCalendarProps) => {
   return (
     <div
       className={cn(
-        'flex flex-col gap-(--space-8) rounded-(--radius-lg) border border-(--border-subtle) bg-(--bg-surface) p-(--space-12)',
+        'flex flex-col gap-(--space-8) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-12)',
         className,
       )}
     >

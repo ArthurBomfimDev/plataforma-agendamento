@@ -1,12 +1,10 @@
 import { MotionConfig, motion } from 'framer-motion'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 
+import { INDICATOR_TRANSITION } from './consts'
 import type { SegmentedControlProps } from './types'
 import { cn } from 'cn'
 import { useId } from 'react'
-
-/** Mola curta e sem quique exagerado: a pílula chega rápido e assenta. */
-const INDICATOR_TRANSITION = { type: 'spring', bounce: 0.18, duration: 0.45 } as const
 
 /**
  * Seletor segmentado do Figma ("Sou consumidor · Sou estabelecimento", frames A01–A04),

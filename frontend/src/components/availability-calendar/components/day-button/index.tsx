@@ -1,12 +1,11 @@
-import { DAY_STATUS_LABEL, HOLIDAY_LABEL } from './consts'
-import { DayMarker, HolidayMarker } from './day-marker'
+import { DAY_STATUS_LABEL, HOLIDAY_LABEL } from '../../consts'
 
-import type { CalendarDayStatus } from './types'
 import type { ComponentProps } from 'react'
+import { DayMarker } from '../day-marker'
+import { HolidayMarker } from '../holyday-marker'
+import { STATUSES } from './conts'
 import { CalendarDayButton as UiCalendarDayButton } from '@components/ui/calendar'
 import { cn } from 'cn'
-
-const STATUSES: CalendarDayStatus[] = ['available', 'no-slots', 'closed', 'past']
 
 /**
  * Célula de calendário do Figma (44×44), sobre o `CalendarDayButton` do shadcn, que cuida do foco

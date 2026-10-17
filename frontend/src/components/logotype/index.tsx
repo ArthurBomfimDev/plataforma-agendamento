@@ -1,3 +1,5 @@
+import { LOGOTYPE_HEIGHT, LOGOTYPE_WIDTH } from './consts'
+
 import type { LogotypeProps } from './types'
 import { cn } from 'cn'
 import logotypeDark from '../../global/images/vagoo-logotipo-escuro.png'
@@ -15,8 +17,8 @@ export const Logotype = (props: LogotypeProps) => {
     <img
       src={tone === 'dark' ? logotypeDark : logotypeLight}
       alt={alt}
-      width={280}
-      height={94}
+      width={LOGOTYPE_WIDTH}
+      height={LOGOTYPE_HEIGHT}
       className={cn('h-10 w-auto', className)}
     />
   )
