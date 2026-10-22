@@ -1,0 +1,80 @@
+# Ambiente local completo: banco, migrations, API e frontend.
+#
+#   1. Gere o .env:   ./scripts/setup-env.ps1   (Windows)   ou   ./scripts/setup-env.sh
+#   2. Suba tudo:     docker compose up --build
+#
+#   Frontend  http://localhost:8080
+#   API       http://localhost:8081      (OpenAPI em /openapi/v1.json)
+#   Postgres  localhost:5433             (5433 para não colidir com um Postgres local na 5432)
+#
+# Os segredos vêm do .env, que não é versionado. Sem ele o compose recusa subir.
+#
+# As portas só escutam em 127.0.0.1: nada fica exposto na rede local, e evita o travamento do
+# Docker Desktop quando localhost resolve primeiro para IPv6 (::1).
+
+name: booking
+
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-booking}
+      POSTGRES_USER: ${POSTGRES_USER:-booking}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env (rode scripts/setup-env)}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Por TCP (-h 127.0.0.1), não pelo socket: na primeira inicialização a imagem sobe um servidor
+      # temporário só no socket para instalar o PostGIS, e o healthcheck pelo socket mentiria "pronto".
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Cria o banco a partir das migrations do EF Core e termina. Roda a cada `up`; é idempotente.
+  migrations:
+    build:
+      context: ./backend
+      target: migrations
+    environment:
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-booking};Username=${POSTGRES_USER:-booking};Password=${POSTGRES_PASSWORD};Gss Encryption Mode=Disable
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ./backend
+      target: runtime
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-booking};Username=${POSTGRES_USER:-booking};Password=${POSTGRES_PASSWORD};Gss Encryption Mode=Disable
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?defina JWT_SIGNING_KEY no .env (rode scripts/setup-env)}
+      Cors__AllowedOrigins__0: http://localhost:${WEB_PORT:-8080}
+      # Sem provedor de e-mail, o token de confirmação e de redefinição de senha só aparece no log,
+      # em nível Debug. Veja com: docker compose logs api
+      Logging__LogLevel__Booking.Infrastructure.Module.Identity.LoggingIdentityMailer: Debug
+    ports:
+      - "127.0.0.1:${API_PORT:-8081}:8080"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:${API_PORT:-8081}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

@@ -30,6 +30,17 @@ builder.Services.AddRateLimiter(limiter =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
 });
 
+// O frontend roda em outra origem (e, depois, o Capacitor e o Tauri também). Só as origens
+// configuradas em Cors:AllowedOrigins são liberadas; sem configuração, nenhuma. Sem credenciais:
+// a autenticação é por token no header, não por cookie (regra 3 de empacotamento).
+string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
+builder.Services.AddHealthChecks();
+
 WebApplication app = builder.Build();
 
 app.UseExceptionHandler();
@@ -40,10 +51,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 
