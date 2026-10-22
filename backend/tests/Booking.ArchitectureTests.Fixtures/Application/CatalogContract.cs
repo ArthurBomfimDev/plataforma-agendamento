@@ -1,4 +1,4 @@
-namespace Booking.Application.Contracts.Catalog;
+namespace Booking.Application.Contracts.Catalog.Planted;
 
 /// <summary>Superfície pública do Catalog — o único jeito permitido de outro módulo consultá-lo.</summary>
 public interface IServiceCatalog

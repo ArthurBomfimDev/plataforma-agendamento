@@ -8,6 +8,10 @@ using Booking.Domain.Interface.Repository.Module.Identity;
 
 namespace Booking.Application.Module.Identity.Commands;
 
+/// <summary>
+/// Rotação de refresh token: cada token vale uma vez. Apresentar um token já revogado indica
+/// roubo ou cópia, e derruba todas as sessões do usuário.
+/// </summary>
 public sealed class RefreshSessionCommand(
     IRefreshTokenRepository refreshTokens,
     IUserRepository users,
