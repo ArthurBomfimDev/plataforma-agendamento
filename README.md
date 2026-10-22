@@ -144,6 +144,20 @@ versionado e o compose recusa subir sem ele.
 O banco é criado pelas migrations na primeira subida e fica no volume `booking_db-data`.
 Para recomeçar do zero: `docker compose down -v`.
 
+### Dados de demonstração
+
+Com o ambiente no ar, popule o banco com estabelecimentos fictícios em Garça-SP (onde é feita a
+demonstração do TCC), profissionais, serviços, jornadas e uma conta de consumidor:
+
+```bash
+bun scripts/seed-demo.ts
+```
+
+O roteiro passa pela própria API, com as mesmas regras do app. A única exceção é a aprovação do
+estabelecimento, papel do Admin que ainda não tem endpoint: ela é feita por SQL no container do
+banco. As contas de teste e a senha aparecem no fim da execução e no topo de
+`scripts/seed-demo.ts`. O roteiro pode rodar de novo; se as contas já existem, ele não cria nada.
+
 Sem provedor de e-mail, o token de confirmação e o de redefinição de senha aparecem só no log
 da API (`docker compose logs api`). A URL da API é embutida no frontend no build: mudou
 `API_PORT`, rode `docker compose up --build` de novo.
