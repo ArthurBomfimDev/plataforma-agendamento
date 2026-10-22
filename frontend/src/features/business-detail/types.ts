@@ -1,4 +1,4 @@
-import type { ServiceCardProps } from '../../components/service-card/types'
+import type { ServiceCardProps } from '@components/service-card/types'
 
 export type BusinessService = Pick<ServiceCardProps, 'name' | 'durationMinutes' | 'priceCents'> & {
   id: string

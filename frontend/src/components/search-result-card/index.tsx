@@ -1,11 +1,11 @@
-import { Card, CardContent } from '../ui/card'
+import { Card, CardContent } from '@components/ui/card'
 import { Clock, Hourglass } from 'lucide-react'
 import { NO_AVAILABILITY_MESSAGE, priceFormat, priceWholeFormat } from './consts'
 
 import type { SearchResultCardProps } from './types'
-import { TimeSlotChip } from '../time-slot-chip'
+import { TimeSlotChip } from '@components/time-slot-chip'
 import { cn } from 'cn'
-import { distanceFormat } from '../card-establishment/consts'
+import { distanceFormat } from '@components/card-establishment/consts'
 
 export const SearchResultCard = (props: SearchResultCardProps) => {
   const {

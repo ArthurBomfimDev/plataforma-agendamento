@@ -1,8 +1,8 @@
 import { SEARCH_PARAMS, bookingReviewPath, businessPath, chooseProfessionalPath } from './consts'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
-import { AvailabilityScreen } from '../features/availability'
-import { MOCK_TODAY } from '../features/availability/mock'
+import { AvailabilityScreen } from '@features/availability'
+import { MOCK_TODAY } from '@features/availability/mock'
 import { format } from 'date-fns'
 
 export const AvailabilityRoute = () => {

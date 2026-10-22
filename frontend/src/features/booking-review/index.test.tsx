@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { BookingReviewScreen } from '.'
-import { MOCK_TODAY } from '../availability/mock'
+import { MOCK_TODAY } from '@features/availability/mock'
 import { MemoryRouter } from 'react-router'
 import { renderToString } from 'react-dom/server'
 

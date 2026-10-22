@@ -7,9 +7,9 @@ import {
 } from './mock'
 
 import { ChevronLeft } from 'lucide-react'
-import { FilterChip } from '../../components/filter-chip'
-import { SearchField } from '../../components/search-field'
-import { SearchResultCard } from '../../components/search-result-card'
+import { FilterChip } from '@components/filter-chip'
+import { SearchField } from '@components/search-field'
+import { SearchResultCard } from '@components/search-result-card'
 import type { SearchResultsScreenProps } from './types'
 import { useState } from 'react'
 

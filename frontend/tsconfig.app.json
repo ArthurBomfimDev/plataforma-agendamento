@@ -10,6 +10,13 @@
 
     "baseUrl": ".",
     "paths": {
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@global/*": ["./src/global/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@router/*": ["./src/router/*"],
+      "@styles/*": ["./src/styles/*"],
       "@/*": ["./src/*"]
     },
 

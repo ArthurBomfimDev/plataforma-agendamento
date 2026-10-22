@@ -1,21 +1,21 @@
+import type { AppointmentsScreenProps, CustomerAppointment } from './types'
 import { Hourglass, MapPin, Star } from 'lucide-react'
 import { MOCK_REVIEW_WINDOW_DAYS, createMockAppointments } from './mock'
-import type { AppointmentsScreenProps, CustomerAppointment } from './types'
 import { addHours, addMinutes, differenceInMinutes, format, parse } from 'date-fns'
 
-import { AppointmentCard } from '../../components/appointment-card'
-import { BottomNavigation } from '../../components/bottom-navigation'
-import { Button } from '../../components/button'
-import { CONTENT_BOTTOM_PADDING } from '../../components/bottom-navigation/conts'
-import { ConfirmDialog } from '../../components/confirm-dialog'
-import { MOCK_CONFIRMATION_HOURS } from '../availability/mock'
-import { PageContainer } from '../../components/page-container'
-import { TabBar } from '../../components/tab-bar'
-import { distanceFormat } from '../../components/card-establishment/consts'
+import { AppointmentCard } from '@components/appointment-card'
+import { BottomNavigation } from '@components/bottom-navigation'
+import { Button } from '@components/button'
+import { CONTENT_BOTTOM_PADDING } from '@components/bottom-navigation/conts'
+import { ConfirmDialog } from '@components/confirm-dialog'
+import { MOCK_CONFIRMATION_HOURS } from '@features/availability/mock'
+import { PageContainer } from '@components/page-container'
+import { TabBar } from '@components/tab-bar'
+import { distanceFormat } from '@components/card-establishment/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
-import { toast } from '../../lib/toast'
-import { useAddToCalendar } from '../../hooks/useAddToCalendar'
-import { useNow } from '../../hooks/useNow'
+import { toast } from '@lib/toast'
+import { useAddToCalendar } from '@hooks/use-add-to-calendar'
+import { useNow } from '@hooks/use-now'
 import { useState } from 'react'
 
 const UPCOMING = ['pending', 'confirmed']
@@ -46,7 +46,7 @@ const emptyState = (text: string) => <p className="type-body text-(--text-muted)
 
 /** Desktop (08D): "Adicionar à agenda" vira a ação principal do card confirmado. */
 const PRIMARY_ON_DESKTOP =
-  'lg:border-transparent lg:bg-(--action-primary) lg:text-(--text-on-action) lg:hover:bg-(--action-primary) lg:hover:text-(--text-on-action)'
+  'lg:border-transparent lg:bg-(--action-primary) lg:text-(--text-on-action) lg:hover:bg-(--action-primary-hover) lg:hover:text-(--text-on-action)'
 
 /**
  * Tela 08 · Meus agendamentos (Figma, 390px; desktop: 08D, 1440px).

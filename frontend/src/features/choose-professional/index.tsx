@@ -1,16 +1,16 @@
 import { Check, ChevronLeft, Star } from 'lucide-react'
 
-import { Avatar } from '../../components/avatar'
-import { Breadcrumb } from '../../components/breadcrumb'
-import { Button } from '../../components/button'
+import { Avatar } from '@components/avatar'
+import { Breadcrumb } from '@components/breadcrumb'
+import { Button } from '@components/button'
 import type { ChooseProfessionalScreenProps } from './types'
-import { MOCK_BUSINESSES } from '../business-detail/mock'
+import { MOCK_BUSINESSES } from '@features/business-detail/mock'
 import { MOCK_PROFESSIONALS } from './mock'
-import { NotFoundScreen } from '../not-found'
-import { PageContainer } from '../../components/page-container'
-import { ProfessionalOption } from '../../components/professional-option'
-import { priceFormat } from '../../components/service-card/consts'
-import { ratingFormat } from '../../components/card-establishment/consts'
+import { NotFoundScreen } from '@features/not-found'
+import { PageContainer } from '@components/page-container'
+import { ProfessionalOption } from '@components/professional-option'
+import { priceFormat } from '@components/service-card/consts'
+import { ratingFormat } from '@components/card-establishment/consts'
 
 const yearsLabel = (years: number) => `${years} ${years === 1 ? 'ano' : 'anos'}`
 

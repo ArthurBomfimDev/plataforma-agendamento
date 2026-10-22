@@ -1,4 +1,4 @@
-import type { TimeSlotOption } from '../../components/time-slot-group/types'
+import type { TimeSlotOption } from '@components/time-slot-group/types'
 
 export type DayPeriod = 'morning' | 'afternoon' | 'evening'
 

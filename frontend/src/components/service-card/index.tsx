@@ -1,6 +1,6 @@
-import { Card, CardContent } from '../ui/card'
+import { Card, CardContent } from '@components/ui/card'
 
-import { Button } from '../button'
+import { Button } from '@components/button'
 import { Clock } from 'lucide-react'
 import type { ServiceCardProps } from './types'
 import { cn } from 'cn'
