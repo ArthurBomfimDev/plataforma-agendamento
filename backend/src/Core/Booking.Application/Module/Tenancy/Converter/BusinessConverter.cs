@@ -48,5 +48,8 @@ public static class BusinessConverter
             ToAddress(business),
             business.LocationConfirmedAt is null ? null : business.Location?.Latitude,
             business.LocationConfirmedAt is null ? null : business.Location?.Longitude,
-            business.CancellationWindowHours);
+            business.CancellationWindowHours,
+            business.PendingExpirationHours,
+            business.AutoConfirm,
+            business.TimeZone);
 }

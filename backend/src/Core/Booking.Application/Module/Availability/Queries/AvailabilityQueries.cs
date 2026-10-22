@@ -57,3 +57,58 @@ public sealed class GetAvailableSlotsQuery(IServiceCatalog catalog, IBusinessDir
         return new AvailableSlotsResponse(professionalId, serviceId, date, business.TimeZone, BrazilianHolidays.NameOf(date), slots);
     }
 }
+
+/// <summary>
+/// Calendário da vitrine: para cada dia do intervalo, se o profissional trabalha e quantos horários livres há.
+/// Mesmo cálculo de <see cref="GetAvailableSlotsQuery"/>, dia a dia, no servidor — o navegador faz uma chamada só.
+/// </summary>
+public sealed class GetAvailabilityCalendarQuery(
+    IServiceCatalog catalog,
+    IBusinessDirectory businesses,
+    IAvailabilityService availability,
+    IWorkScheduleRepository schedules)
+{
+    /// <summary>Dois meses de calendário. Acima disso, cada chamada custaria centenas de consultas.</summary>
+    public const int MaxDays = 62;
+
+    public async Task<AvailabilityCalendarResponse> ExecuteAsync(
+        Guid businessId, Guid serviceId, Guid professionalId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        if (to < from || to.DayNumber - from.DayNumber >= MaxDays)
+        {
+            throw new DomainException("availability.range_invalid");
+        }
+
+        BusinessSchedulingInfo business = await businesses.GetSchedulingInfoAsync(businessId, ct) ?? throw new DomainException("business.not_found");
+
+        if (!business.IsBookable)
+        {
+            throw new DomainException("business.not_found");
+        }
+
+        BookableService service = await catalog.GetBookableAsync(businessId, serviceId, professionalId, ct)
+            ?? throw new DomainException("service.not_found");
+
+        IReadOnlyList<WorkSchedule> professionalSchedules = await schedules.ListOfProfessionalAsync(businessId, professionalId, ct);
+
+        List<AvailabilityDayResponse> days = [];
+
+        for (DateOnly date = from; date <= to; date = date.AddDays(1))
+        {
+            bool works = professionalSchedules.Any(s => s.AppliesOn(date));
+            int slotCount = 0;
+
+            if (works)
+            {
+                IReadOnlyList<DateTimeOffset> slots = await availability.GetSlotStartsAsync(
+                    new SlotQuery(businessId, professionalId, date, service.DurationMinutes, service.BufferBeforeMinutes, service.BufferAfterMinutes, service.SlotStepMinutes),
+                    ct);
+                slotCount = slots.Count;
+            }
+
+            days.Add(new AvailabilityDayResponse(date, works, slotCount, BrazilianHolidays.NameOf(date)));
+        }
+
+        return new AvailabilityCalendarResponse(professionalId, serviceId, business.TimeZone, days);
+    }
+}

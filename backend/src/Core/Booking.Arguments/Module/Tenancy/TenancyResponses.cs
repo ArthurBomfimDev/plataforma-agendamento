@@ -39,7 +39,10 @@ public sealed record BusinessDetailResponse(
     bool LocationConfirmed,
     SchedulingPolicyResponse Policy);
 
-/// <summary>Visão pública da vitrine. Sem documento e sem política interna.</summary>
+/// <summary>
+/// Visão pública da vitrine. Sem documento. Da política, só o que o consumidor precisa ver antes de pedir:
+/// prazo de cancelamento, prazo de confirmação, se confirma sozinho e o fuso dos horários.
+/// </summary>
 public sealed record PublicBusinessResponse(
     Guid Id,
     string Name,
@@ -48,7 +51,10 @@ public sealed record PublicBusinessResponse(
     AddressResponse Address,
     double? Latitude,
     double? Longitude,
-    int CancellationWindowHours);
+    int CancellationWindowHours,
+    int PendingExpirationHours,
+    bool AutoConfirm,
+    string TimeZone);
 
 public sealed record BusinessSearchItemResponse(
     Guid Id,

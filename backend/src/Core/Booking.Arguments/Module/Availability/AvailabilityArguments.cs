@@ -42,3 +42,16 @@ public sealed record AvailableSlotsResponse(
     string TimeZone,
     string? Holiday,
     IReadOnlyList<DateTimeOffset> Slots);
+
+/// <summary>
+/// Um dia do calendário da vitrine. <c>Works</c>: o profissional tem jornada neste dia (falso = fechado).
+/// <c>SlotCount</c> zero com <c>Works</c> verdadeiro = dia aberto e lotado.
+/// </summary>
+public sealed record AvailabilityDayResponse(DateOnly Date, bool Works, int SlotCount, string? Holiday);
+
+/// <summary>Resumo de vários dias numa chamada, para o calendário não pedir dia a dia.</summary>
+public sealed record AvailabilityCalendarResponse(
+    Guid ProfessionalId,
+    Guid ServiceId,
+    string TimeZone,
+    IReadOnlyList<AvailabilityDayResponse> Days);

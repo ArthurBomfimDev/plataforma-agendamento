@@ -71,4 +71,16 @@ public sealed class PublicAvailabilityController : ControllerBase
         [FromServices] GetAvailableSlotsQuery query,
         CancellationToken ct) =>
         Ok(await query.ExecuteAsync(businessId, serviceId, professionalId, date, ct));
+
+    [HttpGet("calendar")]
+    [ProducesResponseType<AvailabilityCalendarResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Calendar(
+        Guid businessId,
+        [FromQuery] Guid serviceId,
+        [FromQuery] Guid professionalId,
+        [FromQuery] DateOnly from,
+        [FromQuery] DateOnly to,
+        [FromServices] GetAvailabilityCalendarQuery query,
+        CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(businessId, serviceId, professionalId, from, to, ct));
 }

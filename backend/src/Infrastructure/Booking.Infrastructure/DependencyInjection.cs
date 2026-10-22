@@ -166,6 +166,7 @@ public static class DependencyInjection
         services.AddScoped<ListWorkSchedulesQuery>();
         services.AddScoped<ListScheduleExceptionsQuery>();
         services.AddScoped<GetAvailableSlotsQuery>();
+        services.AddScoped<GetAvailabilityCalendarQuery>();
     }
 
     private static void AddSchedulingModule(this IServiceCollection services)
