@@ -2,74 +2,54 @@ import { describe, expect, it } from 'vitest'
 
 import { AppRoutes } from './route'
 import { MemoryRouter } from 'react-router'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createQueryClient } from '@lib/api/query-client'
 import { renderToString } from 'react-dom/server'
 
-// O React separa trechos de texto com `<!-- -->` no HTML do servidor; tiramos para comparar o texto.
+// No HTML do servidor as consultas não rodam (não há efeito); cada rota mostra o estado inicial.
+// O React separa trechos de texto com `<!-- -->`; tiramos para comparar o texto.
 const renderAt = (path: string) =>
   renderToString(
-    <MemoryRouter initialEntries={[path]}>
-      <AppRoutes />
-    </MemoryRouter>,
+    <QueryClientProvider client={createQueryClient()}>
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>
+    </QueryClientProvider>,
   ).replaceAll('<!-- -->', '')
 
 describe('AppRoutes', () => {
-  it('abre a Home em /', () => {
-    expect(renderAt('/')).toContain('O que você quer agendar?')
+  it('abre a Home em / e busca os estabelecimentos perto', () => {
+    const html = renderAt('/')
+
+    expect(html).toContain('O que você quer agendar?')
+    expect(html).toContain('Buscando estabelecimentos…')
   })
 
-  it('abre a página do estabelecimento em /businesses/:businessId', () => {
-    expect(renderAt('/businesses/estudio-duartina')).toContain('Aberto hoje até 18:00')
+  it('carrega o estabelecimento em /businesses/:businessId', () => {
+    expect(renderAt('/businesses/b1')).toContain('Carregando…')
   })
 
-  it('abre a escolha de profissional em /businesses/:businessId/services/:serviceId/professionals', () => {
-    const path = '/businesses/estudio-duartina/services/corte-masculino/professionals'
-
-    expect(renderAt(path)).toContain('Com quem você quer agendar?')
+  it('carrega a escolha de profissional e o calendário', () => {
+    expect(renderAt('/businesses/b1/services/s1/professionals')).toContain('Carregando…')
+    expect(renderAt('/businesses/b1/services/s1/availability')).toContain('Carregando…')
   })
 
-  it('abre calendário e horários com o profissional vindo da busca', () => {
-    const path =
-      '/businesses/estudio-duartina/services/corte-masculino/availability?professional=rafael-lima'
-    const html = renderAt(path)
+  it('exige sessão para revisar o pedido', () => {
+    const path = '/businesses/b1/services/s1/review?professional=p1&startsAt=2026-11-03T12:00:00Z'
 
-    expect(html).toContain('Rafael Lima')
-    expect(html).toContain('Horários — ')
+    expect(renderAt(path)).not.toContain('Revise seu pedido')
   })
 
-  it('abre a revisão do pedido com dia e horário vindos da busca', () => {
-    const html = renderAt(
-      '/businesses/estudio-duartina/services/corte-masculino/review?date=2026-09-11&time=09:30',
-    )
+  // A 404 de link montado à mão (sem horário ou sem agendamento) é coberta em `adapters.test.ts`,
+  // em `readBookingSearch`/`readSentSearch`: no HTML do servidor o zustand lê o estado inicial da
+  // store, então aqui não dá para simular uma sessão aberta.
 
-    expect(html).toContain('Revise seu pedido')
-    expect(html).toContain('09:30 — 10:00')
+  it('pede para entrar em /appointments sem sessão', () => {
+    expect(renderAt('/appointments')).toContain('Entre na sua conta para ver seus agendamentos.')
   })
 
-  it('abre a 404 na revisão sem dia válido', () => {
-    const path = '/businesses/estudio-duartina/services/corte-masculino/review?date=x&time=09:30'
-
-    expect(renderAt(path)).toContain('Página não encontrada')
-  })
-
-  it('abre o pedido enviado com o instante do envio vindo da busca', () => {
-    const sentAt = encodeURIComponent(new Date().toISOString())
-    const html = renderAt(
-      `/businesses/estudio-duartina/services/corte-masculino/sent?date=2026-09-11&time=09:30&sentAt=${sentAt}`,
-    )
-
-    expect(html).toContain('Pedido enviado')
-    expect(html).toContain('Expira em')
-  })
-
-  it('abre a 404 no pedido enviado sem instante de envio', () => {
-    const path =
-      '/businesses/estudio-duartina/services/corte-masculino/sent?date=2026-09-11&time=09:30'
-
-    expect(renderAt(path)).toContain('Página não encontrada')
-  })
-
-  it('abre meus agendamentos em /appointments', () => {
-    expect(renderAt('/appointments')).toContain('Meus agendamentos')
+  it('abre criar conta em /sign-up', () => {
+    expect(renderAt('/sign-up')).toContain('Data de nascimento')
   })
 
   it('abre a 404 em rota desconhecida', () => {

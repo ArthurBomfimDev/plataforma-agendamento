@@ -20,6 +20,6 @@ public sealed class UserTokenRepository(BookingDbContext context) : IUserTokenRe
             .ExecuteUpdateAsync(
                 s => s
                     .SetProperty(x => x.UsedAt, now)
-                    .SetProperty(x => EF.Property<DateTimeOffset?>(x, AuditColumns.UpdateAt), now),
+                    .SetProperty(x => EF.Property<DateTimeOffset?>(x, AuditColumns.UpdatedAt), now),
                 ct);
 }

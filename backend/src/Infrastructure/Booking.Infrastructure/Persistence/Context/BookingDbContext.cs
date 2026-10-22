@@ -2,8 +2,11 @@ using System.Reflection;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Domain.Entity.Base;
+using Booking.Domain.Exceptions;
 using Booking.Infrastructure.Persistence.Mapping.Base;
+using Booking.Infrastructure.Persistence.Mapping.Module.Scheduling;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Booking.Infrastructure.Persistence.Context;
 
@@ -30,14 +33,46 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         StampAuditColumns();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
+
+        try
+        {
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+        catch (DbUpdateException e) when (Translate(e) is DomainException domain)
+        {
+            throw domain;
+        }
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         StampAuditColumns();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        catch (DbUpdateException e) when (Translate(e) is DomainException domain)
+        {
+            throw domain;
+        }
     }
+
+    /// <summary>
+    /// A constraint de exclusão recusou a sobreposição (ADR-005): vira erro de domínio e HTTP 409, nunca 500.
+    /// A violação do índice de idempotência é o toque duplo que chegou ao mesmo tempo.
+    /// </summary>
+    private static DomainException? Translate(DbUpdateException exception) =>
+        exception.InnerException is PostgresException postgres
+            ? (postgres.SqlState, postgres.ConstraintName) switch
+            {
+                (PostgresErrorCodes.ExclusionViolation, AppointmentMapping.NoOverlapConstraint) =>
+                    new DomainException("appointment.slot_no_longer_available"),
+                (PostgresErrorCodes.UniqueViolation, AppointmentMapping.IdempotencyIndex) =>
+                    new DomainException("appointment.duplicate_request"),
+                _ => null,
+            }
+            : null;
 
     private void StampAuditColumns()
     {
@@ -52,7 +87,7 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
             }
             else if (entry.State == EntityState.Modified)
             {
-                entry.Property(AuditColumns.UpdateAt).CurrentValue = now;
+                entry.Property(AuditColumns.UpdatedAt).CurrentValue = now;
             }
         }
     }

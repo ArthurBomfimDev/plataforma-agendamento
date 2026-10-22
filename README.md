@@ -122,6 +122,49 @@ O backend é organizado em camadas (`src/Core`, `src/Infrastructure`, `src/Prese
 garantida pelo compilador — é garantida por `Booking.ArchitectureTests`, que quebra o build.
 Detalhes e motivo de cada regra: `CLAUDE.md` §5 e ADR-010.
 
+## Rodando o projeto com Docker
+
+Sobe banco, migrations, API e frontend com um comando. Só precisa do Docker Desktop.
+
+```bash
+./scripts/setup-env.ps1        # Windows — no Linux/macOS: ./scripts/setup-env.sh
+docker compose up --build
+```
+
+O `setup-env` cria o `.env` na raiz com senha do banco e chave JWT aleatórias. O `.env` não é
+versionado e o compose recusa subir sem ele.
+
+| Serviço | Endereço | O que é |
+|---|---|---|
+| `web` | http://localhost:8080 | Frontend (build do Vite servido pelo nginx) |
+| `api` | http://localhost:8081 | API; OpenAPI em `/openapi/v1.json`, saúde em `/health` |
+| `db` | `localhost:5433` | PostgreSQL 17 + PostGIS; usuário e senha no `.env` |
+| `migrations` | — | Aplica as migrations do EF Core e termina; roda a cada `up` |
+
+O banco é criado pelas migrations na primeira subida e fica no volume `booking_db-data`.
+Para recomeçar do zero: `docker compose down -v`.
+
+### Dados de demonstração
+
+Com o ambiente no ar, popule o banco com estabelecimentos fictícios em Garça-SP (onde é feita a
+demonstração do TCC), profissionais, serviços, jornadas e uma conta de consumidor:
+
+```bash
+bun scripts/seed-demo.ts
+```
+
+O roteiro passa pela própria API, com as mesmas regras do app. A única exceção é a aprovação do
+estabelecimento, papel do Admin que ainda não tem endpoint: ela é feita por SQL no container do
+banco. As contas de teste e a senha aparecem no fim da execução e no topo de
+`scripts/seed-demo.ts`. O roteiro pode rodar de novo; se as contas já existem, ele não cria nada.
+
+Sem provedor de e-mail, o token de confirmação e o de redefinição de senha aparecem só no log
+da API (`docker compose logs api`). A URL da API é embutida no frontend no build: mudou
+`API_PORT`, rode `docker compose up --build` de novo.
+
+As portas escutam só em `127.0.0.1`. A imagem do PostGIS é só amd64: em Mac com chip Apple ela
+roda emulada, mais devagar.
+
 ## Licença
 
 Ainda não definida. Enquanto isso, todos os direitos reservados aos autores.

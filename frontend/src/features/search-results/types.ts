@@ -1,4 +1,4 @@
-import type { SearchResultCardProps } from '../../components/search-result-card/types'
+import type { SearchResultCardProps } from '@components/search-result-card/types'
 
 export type SearchResult = Omit<SearchResultCardProps, 'onSelectSlot' | 'className'> & {
   id: string

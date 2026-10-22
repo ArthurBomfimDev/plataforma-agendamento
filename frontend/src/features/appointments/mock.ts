@@ -1,9 +1,8 @@
 import type { CustomerAppointment } from './types'
 
 /**
- * Dados PROVISÓRIOS, copiados do wireframe "08 · Meus agendamentos" do Figma.
- * Não são dado real. Saem quando existir a consulta de agendamentos do Customer em `src/lib/api`.
- * Por isso o pedido feito na tela 06 não aparece aqui.
+ * Dados de TESTE, copiados do wireframe "08 · Meus agendamentos" do Figma. O app usa a API;
+ * estes servem às histórias de teste da tela.
  */
 
 /** Dias que o consumidor tem para avaliar um atendimento concluído. */
@@ -20,7 +19,8 @@ export const createMockAppointments = (now = new Date()): CustomerAppointment[] 
     durationMinutes: 30,
     timeZone: 'America/Sao_Paulo',
     // Enviado há 50 min: "expira em 11 h", como no wireframe.
-    requestedAt: new Date(now.getTime() - 50 * 60_000),
+    // Enviado há 50 min, com prazo de confirmação de 12 h.
+    expiresAt: new Date(now.getTime() + (12 * 60 - 50) * 60_000),
   },
   {
     id: 'apt-barbearia-norte',

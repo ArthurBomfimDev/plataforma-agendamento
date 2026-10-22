@@ -1,7 +1,9 @@
-import { Button } from '../button'
-import { MOCK_LOCATION } from './consts'
+import { Button } from '@components/button'
+import { Logotype } from '@components/logotype'
+import { DEFAULT_LOCATION } from './consts'
 import { MapPin } from 'lucide-react'
-import { SearchField } from '../search-field'
+import { SearchField } from '@components/search-field'
+import { ThemeToggle } from '@components/theme-toggle'
 import type { TopBarProps } from './types'
 
 /**
@@ -12,24 +14,25 @@ import type { TopBarProps } from './types'
  * Em 1920px isso alinha a barra com a coluna larga das telas.
  */
 export const TopBar = (props: TopBarProps) => {
-  const { showSearch, onHome, onAppointments, onSignIn } = props
+  const { showSearch, onHome, onAppointments, onSignIn, signedIn, onSignOut } = props
 
   return (
     <header className="hidden border-b border-(--border-subtle) bg-(--bg-surface) lg:block">
       <div className="mx-auto flex max-w-[calc(1440px+2*var(--space-40))] items-center gap-(--space-24) px-(--space-40) py-(--space-12)">
-        {/* TODO(figma): marca ainda não existe; o quadrado neutro é o placeholder do wireframe. */}
+        {/* Logotipo com 119×40 na barra (01D). A versão escura só aparece com o tema escuro ligado. */}
         <button
           type="button"
-          aria-label="Página inicial"
+          aria-label="vagoo — página inicial"
           onClick={onHome}
-          className="size-11 shrink-0 rounded-md p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+          className="flex min-h-(--size-touch-min) shrink-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
         >
-          <span aria-hidden="true" className="block size-9 rounded-md bg-(--bg-disabled)" />
+          <Logotype alt="" className="dark:hidden" />
+          <Logotype tone="dark" alt="" className="hidden dark:block" />
         </button>
 
         <p className="type-label flex shrink-0 items-center gap-(--space-4) text-(--text-link)">
           <MapPin aria-hidden="true" className="size-4" />
-          {MOCK_LOCATION}
+          {DEFAULT_LOCATION.label}
         </p>
 
         {showSearch ? (
@@ -42,13 +45,20 @@ export const TopBar = (props: TopBarProps) => {
           <div className="flex-1" />
         )}
 
+        <ThemeToggle />
         <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
           Meus agendamentos
         </Button>
-        {/* TODO: autenticação ainda não existe; "Entrar" não faz nada. Logado, vira o avatar. */}
-        <Button className="shrink-0" onClick={onSignIn}>
-          Entrar
-        </Button>
+        {/* TODO(figma): logado, o Figma prevê o avatar com menu; por ora é só "Sair". */}
+        {signedIn ? (
+          <Button variant="secondary" className="shrink-0" onClick={onSignOut}>
+            Sair
+          </Button>
+        ) : (
+          <Button className="shrink-0" onClick={onSignIn}>
+            Entrar
+          </Button>
+        )}
       </div>
     </header>
   )

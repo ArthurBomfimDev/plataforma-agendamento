@@ -1,20 +1,16 @@
 import { Check, Clock, Hourglass } from 'lucide-react'
-import { addHours, addMinutes, differenceInMinutes, format, parse } from 'date-fns'
+import { addMinutes, differenceInMinutes, format, parse } from 'date-fns'
 
 import type { BookingSentScreenProps } from './types'
-import { Button } from '../../components/button'
-import { ConfirmDialog } from '../../components/confirm-dialog'
-import { MOCK_BUSINESSES } from '../business-detail/mock'
-import { MOCK_CONFIRMATION_HOURS } from '../availability/mock'
-import { MOCK_PROFESSIONALS } from '../choose-professional/mock'
+import { Button } from '@components/button'
+import { ConfirmDialog } from '@components/confirm-dialog'
 import { MOCK_REMINDER_HOURS } from './consts'
-import { NotFoundScreen } from '../not-found'
-import { PageContainer } from '../../components/page-container'
-import { StatusChip } from '../../components/status-chip'
+import { PageContainer } from '@components/page-container'
+import { StatusChip } from '@components/status-chip'
 import { cn } from 'cn'
-import { priceFormat } from '../../components/service-card/consts'
+import { priceFormat } from '@components/service-card/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
-import { useNow } from '../../hooks/useNow'
+import { useNow } from '@hooks/use-now'
 import { useState } from 'react'
 
 /** "11 h 58 min", "12 h", "40 min". */
@@ -57,12 +53,15 @@ const SummaryRow = ({
  */
 export const BookingSentScreen = (props: BookingSentScreenProps) => {
   const {
-    businessId,
-    serviceId,
-    professionalId,
+    businessName,
+    service,
+    professionalName,
     date,
     time,
     sentAt,
+    expiresAt,
+    confirmationHours,
+    cancelling,
     onViewAppointments,
     onCancel,
   } = props
@@ -70,15 +69,7 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
   const now = useNow()
   const [confirmingCancel, setConfirmingCancel] = useState(false)
 
-  const business = MOCK_BUSINESSES[businessId]
-  const service = business?.services.find(({ id }) => id === serviceId)
-  const professional = MOCK_PROFESSIONALS[businessId]?.find(({ id }) => id === professionalId)
-
-  if (!business || !service || (professionalId && !professional)) {
-    return <NotFoundScreen />
-  }
-
-  const remainingMinutes = differenceInMinutes(addHours(sentAt, MOCK_CONFIRMATION_HOURS), now)
+  const remainingMinutes = differenceInMinutes(expiresAt, now)
   const weekday = format(date, 'EEEEEE', { locale: ptBR })
   const expiryText =
     remainingMinutes > 0
@@ -87,7 +78,7 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
 
   const steps = [
     { label: 'Pedido enviado', detail: elapsedLabel(sentAt, now), done: true },
-    { label: 'Empresa confirma', detail: `até ${MOCK_CONFIRMATION_HOURS} h`, done: false },
+    { label: 'Empresa confirma', detail: `até ${confirmationHours} h`, done: false },
     {
       label: 'Lembrete',
       detail: `${MOCK_REMINDER_HOURS.map((hours) => `${hours} h`).join(' e ')} antes`,
@@ -108,7 +99,7 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
               Pedido enviado
             </h1>
             <p className="type-body text-(--text-muted) lg:text-(length:--size-body-lg)! lg:leading-(--line-height-body-lg)!">
-              Aguardando confirmação do {business.name}
+              Aguardando confirmação do {businessName}
             </p>
           </header>
 
@@ -128,7 +119,7 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
                 </span>
               </SummaryRow>
               <SummaryRow label="Serviço">{service.name}</SummaryRow>
-              {professional && <SummaryRow label="Profissional">{professional.name}</SummaryRow>}
+              {professionalName && <SummaryRow label="Profissional">{professionalName}</SummaryRow>}
               <SummaryRow label="Quando">
                 <span className="lg:hidden">
                   {format(date, "EEEEEE, d 'de' MMMM", { locale: ptBR })} · {time}
@@ -193,8 +184,8 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
 
           {/* Desktop: as ações ficam no fim da coluna, sem rodapé fixo. */}
           <div className="hidden items-center gap-(--space-12) lg:flex">
-            <Button variant="ghost" onClick={() => setConfirmingCancel(true)}>
-              Cancelar pedido
+            <Button variant="ghost" disabled={cancelling} onClick={() => setConfirmingCancel(true)}>
+              {cancelling ? 'Cancelando…' : 'Cancelar pedido'}
             </Button>
             <span className="flex-1" />
             <Button size="lg" onClick={onViewAppointments}>
@@ -209,8 +200,13 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
         <Button size="lg" className="w-full" onClick={onViewAppointments}>
           Ver meus agendamentos
         </Button>
-        <Button variant="ghost" className="w-full" onClick={() => setConfirmingCancel(true)}>
-          Cancelar pedido
+        <Button
+          variant="ghost"
+          className="w-full"
+          disabled={cancelling}
+          onClick={() => setConfirmingCancel(true)}
+        >
+          {cancelling ? 'Cancelando…' : 'Cancelar pedido'}
         </Button>
       </footer>
 

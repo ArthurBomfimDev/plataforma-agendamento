@@ -7,9 +7,11 @@ import { BookingReviewRoute } from './booking-review-route'
 import { BookingSentRoute } from './booking-sent-route'
 import { BusinessDetailRoute } from './business-detail-route'
 import { ChooseProfessionalRoute } from './choose-professional-route'
-import { HomeScreen } from '../features/home'
-import { NotFoundScreen } from '../features/not-found'
+import { HomeRoute } from './home-route'
+import { NotFoundScreen } from '@features/not-found'
 import { ROUTES } from './consts'
+import { SignInRoute } from './sign-in-route'
+import { SignUpRoute } from './sign-up-route'
 
 /**
  * Rotas da aplicação, no modo declarativo do React Router. O `<HashRouter>` fica em `main.tsx`.
@@ -22,7 +24,7 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path={ROUTES.home} element={<HomeScreen />} />
+        <Route path={ROUTES.home} element={<HomeRoute />} />
         <Route path={ROUTES.business} element={<BusinessDetailRoute />} />
         <Route path={ROUTES.chooseProfessional} element={<ChooseProfessionalRoute />} />
         <Route path={ROUTES.availability} element={<AvailabilityRoute />} />
@@ -31,6 +33,9 @@ export const AppRoutes = () => {
         <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>
+      {/* Fora da moldura: entrar e criar conta não têm barra superior. */}
+      <Route path={ROUTES.signIn} element={<SignInRoute />} />
+      <Route path={ROUTES.signUp} element={<SignUpRoute />} />
     </Routes>
   )
 }

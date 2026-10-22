@@ -1,4 +1,4 @@
-import type { NavigationItemId } from '../components/bottom-navigation/types'
+import type { NavigationItemId } from '@components/bottom-navigation/types'
 
 export const ROUTES = {
   home: '/',
@@ -8,6 +8,8 @@ export const ROUTES = {
   bookingReview: '/businesses/:businessId/services/:serviceId/review',
   bookingSent: '/businesses/:businessId/services/:serviceId/sent',
   appointments: '/appointments',
+  signIn: '/sign-in',
+  signUp: '/sign-up',
 } as const
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
@@ -20,12 +22,14 @@ export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {
 /** Parâmetros de busca do fluxo de agendamento. `professional` ausente = "Sem preferência". */
 export const SEARCH_PARAMS = {
   professional: 'professional',
-  /** Dia escolhido, `yyyy-MM-dd`. */
-  date: 'date',
-  /** Horário de início, `HH:mm`. */
-  time: 'time',
+  /** Início do horário escolhido: instante ISO 8601, em UTC — sem ambiguidade de fuso. */
+  startsAt: 'startsAt',
+  /** Id do agendamento criado. */
+  appointment: 'appointment',
   /** Instante do envio do pedido, ISO 8601. */
   sentAt: 'sentAt',
+  /** Para onde voltar depois de entrar ou criar conta. Só caminho interno. */
+  redirect: 'redirect',
 } as const
 
 export const businessPath = (businessId: string) => `/businesses/${encodeURIComponent(businessId)}`
@@ -52,27 +56,33 @@ export const availabilityPath = (
     [SEARCH_PARAMS.professional]: professionalId,
   })
 
-type BookingSearch = { professionalId: string | null; date: string; time: string }
-
-const bookingSearch = (booking: BookingSearch) => ({
-  [SEARCH_PARAMS.professional]: booking.professionalId,
-  [SEARCH_PARAMS.date]: booking.date,
-  [SEARCH_PARAMS.time]: booking.time,
-})
+type BookingSearch = { professionalId: string; startsAt: string }
 
 export const bookingReviewPath = (businessId: string, serviceId: string, booking: BookingSearch) =>
-  withSearch(`${servicePath(businessId, serviceId)}/review`, bookingSearch(booking))
+  withSearch(`${servicePath(businessId, serviceId)}/review`, {
+    [SEARCH_PARAMS.professional]: booking.professionalId,
+    [SEARCH_PARAMS.startsAt]: booking.startsAt,
+  })
 
-/**
- * TODO: provisório enquanto não há API. Com o pedido criado no backend, a tela passa a ser
- * `/appointments/:id` e os dados vêm do agendamento, não da URL.
- */
 export const bookingSentPath = (
   businessId: string,
   serviceId: string,
-  booking: BookingSearch & { sentAt: string },
+  sent: { appointmentId: string; sentAt: string },
 ) =>
   withSearch(`${servicePath(businessId, serviceId)}/sent`, {
-    ...bookingSearch(booking),
-    [SEARCH_PARAMS.sentAt]: booking.sentAt,
+    [SEARCH_PARAMS.appointment]: sent.appointmentId,
+    [SEARCH_PARAMS.sentAt]: sent.sentAt,
   })
+
+/**
+ * Só aceita caminho interno do app ("/appointments"). Recusa "//site.com" e URL absoluta:
+ * um link montado por terceiros não pode levar o consumidor para fora depois de entrar.
+ */
+export const safeRedirect = (value: string | null) =>
+  value && value.startsWith('/') && !value.startsWith('//') ? value : null
+
+export const signInPath = (redirect?: string) =>
+  withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })
+
+export const signUpPath = (redirect?: string | null) =>
+  withSearch(ROUTES.signUp, { [SEARCH_PARAMS.redirect]: redirect ?? null })
