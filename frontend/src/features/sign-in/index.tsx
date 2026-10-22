@@ -28,7 +28,7 @@ const LINK_CLASSES =
  * Fica fora da moldura com a barra superior: a tela é a própria porta de entrada.
  */
 export const SignInScreen = (props: SignInScreenProps) => {
-  const { onSubmit, onForgotPassword, onCreateAccount } = props
+  const { onSubmit, onForgotPassword, onCreateAccount, submitting, error } = props
 
   const [role, setRole] = useState<SignInRole>('customer')
   const [email, setEmail] = useState('')
@@ -158,8 +158,13 @@ export const SignInScreen = (props: SignInScreenProps) => {
               </div>
 
               <div className="flex flex-col gap-(--space-16) lg:gap-(--space-12)">
-                <Button type="submit" size="lg" className="w-full">
-                  Entrar
+                {error && (
+                  <p role="alert" className="type-label text-(--status-rejected-fg)">
+                    {error}
+                  </p>
+                )}
+                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                  {submitting ? 'Entrando…' : 'Entrar'}
                 </Button>
                 <p className="type-label flex justify-center gap-(--space-4) text-(--text-muted)">
                   Não tem conta?

@@ -1,6 +1,6 @@
 import { Button } from '@components/button'
 import { Logotype } from '@components/logotype'
-import { MOCK_LOCATION } from './consts'
+import { DEFAULT_LOCATION } from './consts'
 import { MapPin } from 'lucide-react'
 import { SearchField } from '@components/search-field'
 import { ThemeToggle } from '@components/theme-toggle'
@@ -14,7 +14,7 @@ import type { TopBarProps } from './types'
  * Em 1920px isso alinha a barra com a coluna larga das telas.
  */
 export const TopBar = (props: TopBarProps) => {
-  const { showSearch, onHome, onAppointments, onSignIn } = props
+  const { showSearch, onHome, onAppointments, onSignIn, signedIn, onSignOut } = props
 
   return (
     <header className="hidden border-b border-(--border-subtle) bg-(--bg-surface) lg:block">
@@ -32,7 +32,7 @@ export const TopBar = (props: TopBarProps) => {
 
         <p className="type-label flex shrink-0 items-center gap-(--space-4) text-(--text-link)">
           <MapPin aria-hidden="true" className="size-4" />
-          {MOCK_LOCATION}
+          {DEFAULT_LOCATION.label}
         </p>
 
         {showSearch ? (
@@ -49,10 +49,16 @@ export const TopBar = (props: TopBarProps) => {
         <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
           Meus agendamentos
         </Button>
-        {/* TODO: logado, "Entrar" vira o avatar — depende da autenticação. */}
-        <Button className="shrink-0" onClick={onSignIn}>
-          Entrar
-        </Button>
+        {/* TODO(figma): logado, o Figma prevê o avatar com menu; por ora é só "Sair". */}
+        {signedIn ? (
+          <Button variant="secondary" className="shrink-0" onClick={onSignOut}>
+            Sair
+          </Button>
+        ) : (
+          <Button className="shrink-0" onClick={onSignIn}>
+            Entrar
+          </Button>
+        )}
       </div>
     </header>
   )

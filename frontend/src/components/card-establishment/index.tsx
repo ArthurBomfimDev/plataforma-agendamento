@@ -51,14 +51,19 @@ export const CardEstablishment = (props: CardEstablishmentProps) => {
         </div>
 
         <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted)">
-          <Star aria-hidden="true" className="size-4" />
-          <span>
-            <span className="sr-only">Nota </span>
-            {ratingFormat.format(rating)} ({reviewCount})
-          </span>
+          {rating !== undefined && reviewCount ? (
+            <>
+              <Star aria-hidden="true" className="size-4" />
+              <span>
+                <span className="sr-only">Nota </span>
+                {ratingFormat.format(rating)} ({reviewCount})
+              </span>
+            </>
+          ) : null}
           <MapPin aria-hidden="true" className="size-4" />
           <span>
-            {distanceFormat.format(distanceKm)} km · {neighborhood}
+            {distanceKm !== undefined && `${distanceFormat.format(distanceKm)} km · `}
+            {neighborhood}
           </span>
         </p>
       </CardContent>

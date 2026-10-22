@@ -1,4 +1,4 @@
-import { HOME_CATEGORIES, HOME_NEARBY_ESTABLISHMENTS } from './mock'
+import { HOME_CATEGORIES } from './mock'
 import { NAVIGATION_PATHS, businessPath } from '@router/consts'
 
 import { BottomNavigation } from '@components/bottom-navigation'
@@ -6,7 +6,7 @@ import { Button } from '@components/button'
 import { CONTENT_BOTTOM_PADDING } from '@components/bottom-navigation/conts'
 import { CardEstablishment } from '@components/card-establishment'
 import { CategoryCard } from '@components/category-card'
-import { MOCK_LOCATION } from '@components/top-bar/consts'
+import type { HomeScreenProps } from './types'
 import { MapPin } from 'lucide-react'
 import { PageContainer } from '@components/page-container'
 import { SearchField } from '@components/search-field'
@@ -15,7 +15,8 @@ import { useNavigate } from 'react-router'
 /**
  * Tela 01 · Home — busca e descoberta (Figma, 390px; desktop: 01D, 1440px).
  */
-export const HomeScreen = () => {
+export const HomeScreen = (props: HomeScreenProps) => {
+  const { locationLabel, nearby } = props
   const navigate = useNavigate()
 
   return (
@@ -26,7 +27,7 @@ export const HomeScreen = () => {
           <p className="type-caption flex items-center gap-(--space-4) text-(--text-muted) lg:hidden">
             <MapPin aria-hidden="true" className="size-4" />
             <span>Agendando em</span>
-            <span className="text-(--text-link)">{MOCK_LOCATION}</span>
+            <span className="text-(--text-link)">{locationLabel}</span>
           </p>
           <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
             O que você quer agendar?
@@ -71,16 +72,38 @@ export const HomeScreen = () => {
             <h2 id="home-nearby" className="type-heading text-(--text-strong)">
               Perto de você
             </h2>
-            <ul className="flex flex-col gap-(--space-12) md:grid md:grid-cols-2 lg:grid-cols-3 lg:gap-(--space-16)">
-              {HOME_NEARBY_ESTABLISHMENTS.map(({ id, ...establishment }) => (
-                <li key={id}>
-                  <CardEstablishment
-                    {...establishment}
-                    onClick={() => navigate(businessPath(id))}
-                  />
-                </li>
-              ))}
-            </ul>
+            {nearby.status === 'loading' && (
+              <p role="status" className="type-body text-(--text-muted)">
+                Buscando estabelecimentos…
+              </p>
+            )}
+            {nearby.status === 'error' && (
+              <div role="alert" className="flex flex-col items-start gap-(--space-8)">
+                <p className="type-body text-(--text-muted)">{nearby.message}</p>
+                {nearby.onRetry && (
+                  <Button variant="secondary" onClick={nearby.onRetry}>
+                    Tentar de novo
+                  </Button>
+                )}
+              </div>
+            )}
+            {nearby.status === 'ready' && nearby.items.length === 0 && (
+              <p className="type-body text-(--text-muted)">
+                Nenhum estabelecimento perto de {locationLabel} ainda.
+              </p>
+            )}
+            {nearby.status === 'ready' && nearby.items.length > 0 && (
+              <ul className="flex flex-col gap-(--space-12) md:grid md:grid-cols-2 lg:grid-cols-3 lg:gap-(--space-16)">
+                {nearby.items.map(({ id, ...establishment }) => (
+                  <li key={id}>
+                    <CardEstablishment
+                      {...establishment}
+                      onClick={() => navigate(businessPath(id))}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </main>
       </PageContainer>

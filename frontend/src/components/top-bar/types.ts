@@ -4,4 +4,7 @@ export type TopBarProps = {
   onHome?: () => void
   onAppointments?: () => void
   onSignIn?: () => void
+  /** Com sessão, "Entrar" vira "Sair". */
+  signedIn?: boolean
+  onSignOut?: () => void
 }

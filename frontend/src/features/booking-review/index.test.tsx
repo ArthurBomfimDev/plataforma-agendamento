@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { BookingReviewScreen } from '.'
-import { MOCK_TODAY } from '@features/availability/mock'
+import type { BookingReviewScreenProps } from './types'
+import { MOCK_BUSINESSES } from '@features/business-detail/mock'
 import { MemoryRouter } from 'react-router'
 import { renderToString } from 'react-dom/server'
 
@@ -9,15 +10,18 @@ import { renderToString } from 'react-dom/server'
 const render = (element: React.ReactElement) =>
   renderToString(<MemoryRouter>{element}</MemoryRouter>).replaceAll('<!-- -->', '')
 
-const screen = (overrides: { professionalId?: string | null; date?: Date; time?: string } = {}) =>
+const business = MOCK_BUSINESSES['estudio-duartina']!
+
+const screen = (overrides: Partial<BookingReviewScreenProps> = {}) =>
   render(
     <BookingReviewScreen
-      businessId="estudio-duartina"
-      serviceId="corte-masculino"
-      professionalId={overrides.professionalId ?? null}
-      date={overrides.date ?? new Date(2026, 8, 11)}
-      time={overrides.time ?? '09:30'}
-      today={MOCK_TODAY}
+      business={{ name: business.name, verified: true }}
+      service={business.services[0]!}
+      professionalName={null}
+      date={new Date(2026, 8, 11)}
+      time="09:30"
+      cancellationWindowHours={24}
+      {...overrides}
     />,
   )
 
@@ -35,7 +39,7 @@ describe('BookingReviewScreen', () => {
   })
 
   it('mostra o profissional escolhido', () => {
-    expect(screen({ professionalId: 'carla-nunes' })).toContain('Carla Nunes')
+    expect(screen({ professionalName: 'Carla Nunes' })).toContain('Carla Nunes')
   })
 
   it('limita a observação e liga o texto de ajuda ao campo', () => {
@@ -46,8 +50,15 @@ describe('BookingReviewScreen', () => {
     expect(html).toContain('id="booking-note-helper"')
   })
 
-  it('cai na 404 quando o horário não está livre', () => {
-    expect(screen({ time: '10:00' })).toContain('Página não encontrada')
-    expect(screen({ date: new Date(2026, 8, 6) })).toContain('Página não encontrada')
+  it('mostra a janela de cancelamento do estabelecimento', () => {
+    expect(screen({ cancellationWindowHours: 6 })).toContain('Cancelamento gratuito até 6 h antes')
+  })
+
+  it('trava o envio enquanto o pedido está indo, para não mandar duas vezes', () => {
+    const html = screen({ submitting: true })
+
+    expect(html).toContain('Enviando…')
+    expect(html).not.toContain('Enviar pedido')
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Enviando…<\/button>/)
   })
 })

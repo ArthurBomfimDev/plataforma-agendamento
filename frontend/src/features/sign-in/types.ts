@@ -12,6 +12,10 @@ export type SignInErrors = Partial<Record<'email' | 'password', string>>
 export type SignInScreenProps = {
   /** Chamado só com e-mail e senha válidos. */
   onSubmit?: (values: SignInValues) => void
+  /** Tentativa em andamento: o botão fica desabilitado. */
+  submitting?: boolean
+  /** Erro da tentativa (credencial errada, sem conexão…), já em texto para o consumidor. */
+  error?: string
   onForgotPassword?: () => void
   onCreateAccount?: () => void
 }
