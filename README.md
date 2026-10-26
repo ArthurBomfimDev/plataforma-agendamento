@@ -1,8 +1,9 @@
 # plataforma-agendamento
 
-> ⚠️ **Nome provisório.** A marca ainda não existe. O repositório será renomeado quando o nome
-> for definido — o GitHub mantém o redirecionamento. O namespace `Booking.*` do backend segue
-> a mesma regra.
+> **Marca: Vagoo** — definida em 09/10 ([`docs/design/marca-vagoo.md`](docs/design/marca-vagoo.md)).
+> O repositório (`plataforma-agendamento`) e o namespace `Booking.*` **continuam neutros** até a
+> decisão da pendência K do [`PROJECT-CONTEXT.md`](PROJECT-CONTEXT.md). Se for para renomear, o GitHub
+> mantém o redirecionamento.
 
 Marketplace SaaS de descoberta e agendamento de serviços. Dois lados: o consumidor que busca e
 agenda, o estabelecimento que gerencia agenda, catálogo e equipe. Verticais do MVP: beleza e
@@ -18,8 +19,8 @@ Sistemas, 2026. Orientadora: Prof.ª Dr.ª Cláudia Maria Bernava Aguillar.
 
 ## Stack
 
-React + TypeScript + **Vite** · C# / ASP.NET Core (**.NET 10**) · **PostgreSQL + PostGIS** ·
-monólito modular em monorepo · PWA primeiro.
+React + TypeScript + **Vite** (Bun como gerenciador de pacotes) · C# / ASP.NET Core (**.NET 10**) ·
+**PostgreSQL + PostGIS + `btree_gist`** · monólito modular em monorepo · PWA primeiro.
 
 O detalhe e a justificativa de cada escolha estão nas [ADRs](docs/decisions/).
 
@@ -27,11 +28,12 @@ O detalhe e a justificativa de cada escolha estão nas [ADRs](docs/decisions/).
 
 | Você quer | Leia |
 |---|---|
+| Ter a visão integral do projeto | [`docs/DOCUMENTO-GERAL.md`](docs/DOCUMENTO-GERAL.md) |
 | Entender o estado do projeto | [`PROJECT-CONTEXT.md`](PROJECT-CONTEXT.md) |
 | Contribuir com código | [`CLAUDE.md`](CLAUDE.md) — glossário, convenções, regras invioláveis |
 | Entender uma decisão técnica | [`docs/decisions/`](docs/decisions/) |
 | Ver o modelo de domínio | [`docs/produto/modelo-de-dominio.md`](docs/produto/modelo-de-dominio.md) |
-| Trabalhar no design | [`docs/design/`](docs/design/) e [`src/web/src/styles/`](src/web/src/styles/) |
+| Trabalhar no design | [`docs/design/`](docs/design/) e [`frontend/src/styles/`](frontend/src/styles/) |
 
 ## Configuração do clone
 
