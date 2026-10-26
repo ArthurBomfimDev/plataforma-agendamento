@@ -6,6 +6,8 @@
 > correções daquele documento já estão incorporadas abaixo. Onde algo mudou, a seção aponta a decisão
 > de origem; o documento de 22/09 continua sendo a fonte do *porquê*.
 > Substitui integralmente o modelo esboçado pelo Gemini.
+> **Conferido com o código em 2026-10-26.** O que o código acrescentou ou não implementou está marcado com
+> ⚠️ e data, no `Appointment` (§8). Para o que existe no sistema, vale o código.
 
 ---
 
@@ -219,26 +221,27 @@ Feriados nacionais são **calculados**, não consultados em API: os fixos são c
 | `WalkInName`, `WalkInPhone` | preenchidos quando `CustomerId` é nulo, ou quando o agendamento é para terceiro (§2.1 do doc de 22/09) |
 | `StartsAt`, `EndsAt` | horário de atendimento efetivo, UTC — **sem os buffers** |
 | `BufferBeforeMinutes`, `BufferAfterMinutes` | snapshot do `Service` no momento da criação |
-| `ServiceDuration` | snapshot |
-| `Price` | **snapshot** de `Money` |
+| `BlockedStartsAt`, `BlockedEndsAt` | ⚠️ **acrescentado pelo código (26/10).** Intervalo bloqueado na agenda: início − buffer antes, início + duração + buffer depois. Gravado na criação, usado pela constraint de exclusão (§8.4). Substitui a coluna gerada `blocked_range`, que não roda (ADR-017) |
+| `ServiceDuration` | snapshot. No código: `DurationMinutes` (`int`) |
+| `Price` | **snapshot** de `Money`. No código: `PriceCents` (`long`, centavos) |
 | `ServiceNameSnapshot` | |
 | `Status` | ver §8.1 |
-| `Source` | `Online` \| `Counter` (decisão 3.11) |
-| `CustomerNotes`, `BusinessNotes` | |
+| `Source` | enum `AppointmentSource`: `Online` \| `Counter` (decisão 3.11). Registra de onde veio o pedido — app ou balcão —, insumo do histórico de falta e dos relatórios |
+| `IsSensitive` | ⚠️ **acrescentado pelo código (26/10).** Gravado na criação a partir da categoria do estabelecimento. O regime da LGPD Art. 11 acompanha o agendamento mesmo que a categoria do estabelecimento mude depois |
+| `CustomerNotes` | observação do consumidor no pedido |
+| `BusinessNotes` | ⚠️ **detalhado pelo código (26/10).** Observação interna do estabelecimento, preenchida na marcação de balcão. Em 26/10 não sai em nenhuma resposta da API (`AppointmentResponse` não tem o campo) |
 | `RequestedAt`, `ConfirmedAt`, `CancelledAt`, `CompletedAt` | |
-| `CancelledBy` | `Customer` \| `Business` \| `System` |
+| `CancelledBy` | enum `CancellationParty`: `Customer` \| `Business` \| `System`. Quem cancelou — separa desistência do consumidor de cancelamento da empresa e de expiração automática |
 | `CancellationReason` | |
 | `ExpiresAt` | só enquanto `Pending` |
-| `OverflowApproved` | transbordo aceito pela empresa (§3.5) |
+| `IdempotencyKey` | ⚠️ **acrescentado pelo código (26/10).** Chave gerada pelo cliente HTTP. Duplo clique ou reenvio por rede ruim devolve o mesmo agendamento em vez de criar dois — o mesmo problema da dupla reserva, do lado de quem pede |
+| `OverflowApproved` | transbordo aceito pela empresa (§3.5). ⚠️ **não implementado** em 26/10: o `Appointment` do código não tem esse campo |
 
-**`Period` (TimeRange) saiu do modelo.** No banco, o intervalo bloqueado pela constraint de exclusão é uma **coluna gerada** (`blocked_range`, `STORED`), calculada a partir de `StartsAt`/`EndsAt` e dos buffers — nunca escrita diretamente (decisão 22/09 §1.1):
+**`Period` (TimeRange) saiu do modelo.** No banco, o intervalo bloqueado pela constraint de exclusão é gravado em duas colunas, `blocked_starts_at` e `blocked_ends_at`, preenchidas pelo domínio a partir de `StartsAt` e dos buffers do serviço, com um check que impede incoerência (`blocked_starts_at <= starts_at AND blocked_ends_at >= ends_at`).
 
-```sql
-blocked_range tstzrange GENERATED ALWAYS AS (
-  tstzrange(starts_at - make_interval(mins => buffer_before_minutes),
-            ends_at   + make_interval(mins => buffer_after_minutes), '[)')
-) STORED
-```
+> ⚠️ **Correção (26/10).** A revisão de 22/09 descrevia aqui uma **coluna gerada** `blocked_range`. Ela não
+> pode ser criada: coluna gerada exige expressão `IMMUTABLE`, e `timestamptz - interval` é `STABLE`. Ver
+> ADR-017 e a errata do §1.1 de `decisoes-localizacao-notificacao-modelo.md`.
 
 **Por que snapshot de preço, duração e nome:** o histórico não pode ser reescrito quando a empresa reajusta a tabela. Um agendamento de março feito a R$ 50 continua sendo R$ 50 no relatório, mesmo que o serviço hoje custe R$ 70. Sem isso, todo o dashboard financeiro mente retroativamente.
 
@@ -286,15 +289,18 @@ Serve de evidência para o TCC (tempo médio de resposta da empresa) e de log de
 
 ### 8.4 Prevenção de dupla reserva
 
-Restrição de exclusão no PostgreSQL, sobre `professional_id` e `blocked_range` (§8), filtrando os estados que ocupam slot:
+Restrição de exclusão no PostgreSQL, sobre `professional_id` e o intervalo bloqueado (§8), filtrando os estados que ocupam slot. Texto implementado, da migration `20261014032556_AddCoreModules`:
 
 ```sql
-ALTER TABLE scheduling.appointment ADD CONSTRAINT appointment_no_overlap
-  EXCLUDE USING gist (professional_id WITH =, blocked_range WITH &&)
-  WHERE (status IN ('Pending', 'Confirmed', 'Completed', 'NoShow'));
+ALTER TABLE scheduling.appointment
+    ADD CONSTRAINT appointment_no_overlap
+    EXCLUDE USING gist (
+        professional_id WITH =,
+        tstzrange(blocked_starts_at, blocked_ends_at, '[)') WITH &&
+    ) WHERE (status IN ('Pending', 'Confirmed', 'Completed', 'NoShow'));
 ```
 
-`btree_gist` entra na primeira migration. O banco recusa a sobreposição dentro da transação — inclusive entre canal online e balcão, que era o caso mais difícil. **Sem Redis, sem lock distribuído.** Detalhamento em ADR-005.
+A violação é traduzida para `appointment.slot_no_longer_available` → HTTP 409 com horários alternativos. `btree_gist` é habilitado nas migrations. O banco recusa a sobreposição dentro da transação — inclusive entre canal online e balcão, que era o caso mais difícil. **Sem Redis, sem lock distribuído.** Detalhamento em ADR-005.
 
 ⚠️ Os nomes dos estados aparecem no `WHERE`. Renomear no C# sem migration correspondente desliga a trava em silêncio.
 

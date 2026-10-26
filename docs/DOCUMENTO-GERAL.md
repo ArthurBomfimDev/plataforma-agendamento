@@ -3,7 +3,8 @@
 > Plataforma de descoberta e agendamento de serviços — Trabalho de Conclusão de Curso
 > FATEC Garça · Análise e Desenvolvimento de Sistemas · Defesa em dezembro de 2026
 > Autores: Arthur Bomfim e Rafael Ernandes · Orientadora: Prof.ª Dr.ª Cláudia Maria Bernava Aguillar
-> Versão de 28/09/2026 · Repositório: `github.com/ArthurBomfimDev/plataforma-agendamento`
+> Versão de 26/10/2026 (anterior: 28/09/2026) · Repositório: `github.com/ArthurBomfimDev/plataforma-agendamento`
+> Marca do produto: **Vagoo** · O repositório e o namespace `Booking.*` mantêm nome neutro (pendência K)
 
 Este documento reúne, em um só lugar, o que o sistema é, por que ele existe, como está modelado, como será construído e como será avaliado. Ele substitui a leitura dos documentos parciais para quem precisa entender o projeto inteiro.
 
@@ -225,18 +226,25 @@ Dois consumidores selecionam o mesmo horário ao mesmo tempo. Ou o consumidor ag
 
 **A solução rejeitada** foi lock distribuído em Redis. O motivo da rejeição não é custo: é que lock sem garantia no banco é otimização, não garantia. Se o Redis reiniciar, ou o tempo de expiração vencer entre a checagem e a gravação, a dupla reserva acontece mesmo assim.
 
-**A solução adotada** é uma restrição de exclusão no PostgreSQL, sobre o profissional e o intervalo bloqueado:
+**A solução adotada** é uma restrição de exclusão no PostgreSQL, sobre o profissional e o intervalo bloqueado. O intervalo bloqueado é o horário do atendimento acrescido dos intervalos de preparo antes e depois definidos no serviço; ele é gravado no próprio agendamento, em duas colunas, no momento da criação:
 
 ```sql
-blocked_range tstzrange GENERATED ALWAYS AS (
-  tstzrange(starts_at - make_interval(mins => buffer_before_minutes),
-            ends_at   + make_interval(mins => buffer_after_minutes), '[)')
-) STORED
+-- colunas gravadas pela aplicação
+blocked_starts_at timestamptz NOT NULL,   -- início − intervalo antes
+blocked_ends_at   timestamptz NOT NULL,   -- início + duração + intervalo depois
 
-ALTER TABLE scheduling.appointment ADD CONSTRAINT appointment_no_overlap
-  EXCLUDE USING gist (professional_id WITH =, blocked_range WITH &&)
-  WHERE (status IN ('Pending', 'Confirmed', 'Completed', 'NoShow'));
+CONSTRAINT ck_appointment_blocked_range
+  CHECK (blocked_starts_at <= starts_at AND blocked_ends_at >= ends_at)
+
+ALTER TABLE scheduling.appointment
+  ADD CONSTRAINT appointment_no_overlap
+  EXCLUDE USING gist (
+    professional_id WITH =,
+    tstzrange(blocked_starts_at, blocked_ends_at, '[)') WITH &&
+  ) WHERE (status IN ('Pending', 'Confirmed', 'Completed', 'NoShow'));
 ```
+
+O desenho inicial calculava o intervalo bloqueado em uma coluna gerada pelo próprio banco, a partir do início, do fim e dos intervalos de preparo. Essa forma não pode ser criada: o PostgreSQL só aceita em coluna gerada expressões **imutáveis** — que devolvem sempre o mesmo resultado para os mesmos argumentos —, e a subtração de um intervalo de tempo de um `timestamptz` é apenas **estável**, porque o resultado depende do fuso horário configurado na sessão. A versão implementada desloca o cálculo para a aplicação, que grava os dois limites; a função `tstzrange` sobre dois `timestamptz` é imutável e pode compor o índice GiST da restrição. A restrição de verificação `ck_appointment_blocked_range` impede que um limite gravado fique incoerente com o horário do atendimento, de modo que a mudança de lugar do cálculo não abre uma brecha na garantia (ADR-017).
 
 O banco recusa a sobreposição dentro da transação, inclusive entre canal online e balcão, que era o caso mais difícil. Zero infraestrutura adicional. A violação é capturada e traduzida em erro de domínio, que vira HTTP 409 com horários alternativos — nunca um erro 500.
 
@@ -312,18 +320,23 @@ Disponibilidade não entra como requisito: não é mensurável nem garantível e
 
 ### 12.1 O que existe hoje
 
+Retrato de 26/10/2026. O detalhe vivo fica no `PROJECT-CONTEXT.md` §2.
+
 | Frente | Situação |
 |---|---|
 | Definição de produto | Fechada — glossário, atores, regras, cortes |
-| Modelo de domínio | Fechado — 19 entidades, revisado e corrigido |
+| Modelo de domínio | Fechado — 19 entidades, 9 módulos, revisado e corrigido |
 | Diagramas | Classes, entidades e casos de uso, em FigJam |
-| Design | 11 conjuntos de componentes, 128 variáveis, 28 telas |
-| Repositório | Público, com CI, ADRs, esqueleto dos módulos |
-| Código de domínio | **Não iniciado** |
+| Design | Paleta R5 (marca Vagoo), modos claro e escuro, 11 conjuntos de componentes, 131 variáveis em 4 coleções, cerca de 50 telas em 8 páginas |
+| Repositório | Público, `main` protegida por 4 verificações obrigatórias, CI, ADRs |
+| Backend | Cerca de 12,7 mil linhas de C#. Sete dos nove módulos implementados: Identity, Tenancy, People, Catalog, Availability, Scheduling e Compliance. Reputation e Notifications não têm código. Três migrations, com PostGIS e `btree_gist`, e a restrição de exclusão real em `scheduling.appointment` (§8) |
+| Testes | 28 testes de arquitetura (regras da ADR-010, cada uma provada contra violações plantadas) e 81 casos de teste unitário. **Não há testes de integração**: a prova de concorrência do RNF-03 ainda não existe |
+| Frontend | O fluxo do consumidor consome a API real — início, estabelecimento, escolha de profissional, calendário, revisão, pedido enviado, meus agendamentos, entrar e criar conta. Resultados da busca e lembretes ainda usam dado provisório. **Nenhuma tela do lado do estabelecimento** |
+| Ambiente | Banco, migrations, API e frontend sobem com Docker Compose; um script popula três estabelecimentos de demonstração |
 
 ### 12.2 O recorte proposto
 
-Da data desta versão até a entrega do código são cerca de seis semanas, com duas pessoas em tempo parcial e o texto do trabalho na mesma janela. A lista completa de funcionalidades obrigatórias não cabe nesse prazo, e assumir que cabe é o erro mais caro que o projeto poderia cometer agora.
+O recorte foi proposto em 28/09, com cerca de seis semanas até a entrega do código. Em 26/10 restam cerca de duas semanas e meia até o prazo de código (segunda semana de novembro), com duas pessoas em tempo parcial e o texto do trabalho na mesma janela. A lista completa de funcionalidades obrigatórias não cabe nesse prazo, e assumir que cabe é o erro mais caro que o projeto poderia cometer agora.
 
 **Entra na entrega:**
 
@@ -348,6 +361,8 @@ O recorte preserva exatamente a parte do trabalho que sustenta a arguição téc
 - O sistema não processa pagamento, o que remove do escopo toda a cadeia de fraude financeira e conciliação.
 - A primária da identidade visual é vizinha cromática de produtos consolidados do mesmo mercado; a diferenciação depende de tipografia, forma e temperatura dos neutros.
 - Hospedagem em camada gratuita impõe latência de partida a frio, que não é otimizável dentro do orçamento.
+- **A segurança em nível de linha (RLS) do PostgreSQL não foi implementada.** O isolamento entre estabelecimentos depende só do filtro global da camada de acesso a dados (§6.3). Uma consulta escrita fora desse filtro — SQL explícito, por exemplo — não tem uma segunda barreira no banco. A RLS está prevista para depois do MVP.
+- O nome **Vagoo** é próximo de **Vagaro**, plataforma de agendamento para salões. ⚠️ não verificado: a pendência L (registrar como risco ou consultar o INPI) não tem decisão, e não houve consulta de marca. O risco afeta o uso comercial depois do TCC, não a avaliação acadêmica.
 
 ---
 
@@ -373,6 +388,6 @@ O recorte preserva exatamente a parte do trabalho que sustenta a arguição téc
 |---|---|---|
 | Aprovação do método DSR pela orientadora | Redação do capítulo de metodologia | Orientadora |
 | Consulta sobre Comitê de Ética | Coleta com participantes | Orientadora |
-| Confirmação do recorte de entrega | Planejamento das seis semanas | Orientadora e autores |
-| Nome da marca | Logotipo, identidade nominativa | Autores |
+| Confirmação do recorte de entrega | Planejamento até a entrega | Orientadora e autores |
+| Nome técnico: renomear o repositório e o namespace `Booking.*` para Vagoo, ou manter neutro e registrar (pendência K) | Consistência entre marca e código | Autores |
 | Hospedagem com PostGIS e `btree_gist` | Implantação e demonstração | Autores |
