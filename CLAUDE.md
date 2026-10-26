@@ -98,29 +98,58 @@ um profissional por vez, seletor horizontal no topo, dia como lista cronológica
 
 ## 5. Convenções de código
 
-### Organização do backend — camadas como projetos, módulos como pastas
+### Organização do backend — camadas como projetos, módulos por pasta de tipo
 
 ```
 backend/
   Booking.slnx  global.json  Directory.Build.props  Directory.Packages.props
   src/
     Core/
-      Booking.Domain/           Base/ · Module/<Contexto>/          entidades, value objects, repositórios
-      Booking.Application/      Base/ · Contracts/<Contexto>/ · Module/<Contexto>/{Commands,Queries,Converter}
-      Booking.Arguments/        Module/<Contexto>/                  contrato da API: request e response
+      Booking.Domain/
+        Entity/Base/                       BaseEntity, AggregateRoot, ITenantScoped, IAuditable
+        Entity/Module/<Contexto>/          entidades do módulo
+        Enum/Module/<Contexto>/            enums do módulo (inclui a categoria, ver ADR-015)
+        DomainService/Module/<Contexto>/   serviços de domínio (AvailabilityCalculator…)
+        Interface/Module/<Contexto>/       interfaces de repositório
+        ValueObject/                       Email, Document, GeoPoint, TimeRange
+        Event/Base/                        IDomainEvent
+        Exceptions/                        DomainException  ⚠️ plural — singular esconde System.Exception
+      Booking.Application/
+        Module/<Contexto>/{Commands,Queries,Converter}
+        Contracts/<Contexto>/              superfície pública de um módulo para outro
+        Common/{Tenancy,Persistence}/      ITenantContext, IActorContext, IUnitOfWork
+      Booking.Arguments/
+        Module/<Contexto>/                 contrato da API: request e response
     Infrastructure/
-      Booking.Infrastructure/   Persistence/Context · Module/<Contexto>/{Mapping,Repository}
+      Booking.Infrastructure/
+        Persistence/Context/               BookingDbContext
+        Persistence/Mapping/Base/          BaseMapping<T>, AuditColumns
+        Persistence/Mapping/Module/<Contexto>/  mapeamento EF Core
+        Persistence/Migrations/
+        Module/<Contexto>/                 repositórios e adaptadores
     Presentation/
-      Booking.Api/              Module/<Contexto>/                  controllers
+      Booking.Api/
+        Module/<Contexto>/                 controllers
+        Common/                            HttpTenantContext, HttpActorContext, tratamento de erro
   tests/
     Booking.ArchitectureTests/           trava a ADR-010 no CI
     Booking.ArchitectureTests.Fixtures/  ⚠️ violações plantadas de propósito — não "corrija"
-frontend/                       App React + TypeScript + Vite
+    Booking.UnitTests/                   domínio e casos de uso
+frontend/                         App React + TypeScript + Vite
 ```
 
-`<Contexto>` é um dos 8 módulos: `Identity` · `Tenancy` · `People` · `Catalog` · `Availability` ·
-`Scheduling` · `Reputation` · `Compliance`. O namespace sempre segue a forma
-`Booking.<Camada>.Module.<Contexto>` — é esse segmento que os testes de arquitetura verificam.
+`<Contexto>` é um dos **9 módulos**: `Identity` · `Tenancy` · `People` · `Catalog` · `Availability` ·
+`Scheduling` · `Reputation` · `Compliance` · `Notifications`.
+
+**O namespace de código de módulo segue a forma `Booking.<Camada>.[<Tipo>.]Module.<Contexto>`** — a
+estrutura agrupa primeiro por tipo (`Entity`, `Enum`, `Persistence.Mapping`), então o módulo vem depois.
+Quem reconhece o módulo é a regex `ArchitectureConventions.ModuleNamespacePattern`, aplicada a cada nome de
+`ArchitectureConventions.Modules`. A superfície pública de um módulo para outro fica fora de `Module`, em
+`Booking.Application.Contracts.<Contexto>`.
+
+> ⚠️ **Módulo novo entra em `ArchitectureConventions.Modules` no mesmo PR.** Nenhum teste reprova um
+> `….Module.<Nome>` fora da lista: um módulo esquecido ou digitado errado escapa da regra de fronteira com o
+> CI verde (lacuna registrada na ADR-010, decisão 1).
 
 **As 7 decisões da ADR-010, todas verificadas por `Booking.ArchitectureTests`:**
 
@@ -133,6 +162,10 @@ frontend/                       App React + TypeScript + Vite
 | 5 | Sem entidade de persistência separada; o EF mapeia o domínio em `Mapping/` | Cada forma a mais é um lugar para reescrever o snapshot |
 | 6 | Sem AutoMapper e MediatR; em `Scheduling`, `Reputation`, `Compliance`, conversão manual em `Converter/` | Mapeamento por reflexão recalcula o preço congelado sem teste perceber |
 | 7 | Sem barramento de mensagens; o Outbox na mesma transação é a fila | Não há problema que um broker resolva nesta escala |
+
+⚠️ **`Category` saiu da regra 2.** Virou enum em código (`docs/produto/decisoes-localizacao-notificacao-modelo.md`
+§4), então não é mais entidade e não usa `Base`. A lista permitida em `ArchitectureConventions.EntitiesAllowedInBase`
+é só `Service` e `WorkSchedule`.
 
 Mais: nenhuma chave estrangeira atravessa fronteira de módulo; Domain não depende de EF Core nem de
 ASP.NET; Arguments não depende do Domain.
@@ -260,6 +293,7 @@ CI verde · issue e Project atualizados · evidência registrada quando relevant
 | Estado do projeto, decisões, pendências | `PROJECT-CONTEXT.md` |
 | Decisões arquiteturais | `docs/decisions/` |
 | Modelo de domínio, regras de produto | `docs/produto/` |
+| Correções de modelo, localização, identidade, notificação (22/09) | `docs/produto/decisoes-localizacao-notificacao-modelo.md` — **ler antes de mexer em domínio, busca, cadastro ou notificação** |
 | Paleta, tipografia, tokens, componentes | `docs/design/` |
 | Método, hipóteses, evidências | `docs/tcc/` |
 | Diagramas | `docs/diagramas/` |
