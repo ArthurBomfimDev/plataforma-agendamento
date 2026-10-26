@@ -21,7 +21,7 @@ reclamação.
 **Fato.** Decisão de 22/09 (`docs/produto/decisoes-localizacao-notificacao-modelo.md` §5), ainda sem ADR.
 
 **Fato.** A API pública do Nominatim aceita 1 requisição por segundo, exige User-Agent identificando a
-aplicação e cache do lado do cliente, e proíbe autocomplete.
+aplicação e cache do lado de quem consulta, e proíbe autocomplete.
 
 **Fato, estado do código em 26/10.** `Business` tem `Location`, `LocationPrecision`, `LocationSource`,
 `GeocodedAt` e `LocationConfirmedAt`. A busca só considera quem tem `location_confirmed_at`. A porta

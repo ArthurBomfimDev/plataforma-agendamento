@@ -57,7 +57,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 | O que o plano dizia | O que o código faz | Por que é melhor | Onde registrar |
 |---|---|---|---|
 | `blocked_range` como coluna gerada | Colunas gravadas `blocked_starts_at`/`blocked_ends_at` + `tstzrange` dentro da constraint + check de coerência | A versão planejada **não roda**: coluna gerada exige `IMMUTABLE` e `timestamptz - interval` é `STABLE` | ADR-017 + errata no doc de 22/09 e no `DOCUMENTO-GERAL` |
-| — | `Appointment.IdempotencyKey` | Duplo clique ou reenvio por rede ruim não gera dois pedidos — mesmo problema da dupla reserva, do lado do cliente HTTP | Modelo de domínio + capítulo técnico |
+| — | `Appointment.IdempotencyKey` | Duplo clique ou reenvio por rede ruim não gera dois pedidos — mesmo problema da dupla reserva, do lado de quem faz a requisição | Modelo de domínio + capítulo técnico |
 | — | `Appointment.IsSensitive` gravado no agendamento | O regime LGPD acompanha o agendamento mesmo se a categoria do estabelecimento mudar depois | Modelo de domínio + capítulo de conformidade |
 | Lista de raízes de namespace (`ModuleRoots`, emenda da ADR-010) | Uma regex única, `ModuleNamespacePattern`, sobre a lista `Modules` (já com os 9, incluindo `Notifications`) | Cobre qualquer pasta de tipo nova sem manutenção da lista | Texto da emenda da ADR-010 corrigido em 26/10. ⚠️ O teste de módulo desconhecido previsto na emenda **não existe** — lacuna registrada na ADR-010 |
 | `Category` em `Base/` (ADR-010, regra 2) | `EntitiesAllowedInBase = [Service, WorkSchedule]` | `Category` virou enum | Emenda da ADR-010, mergeada em 26/10 |

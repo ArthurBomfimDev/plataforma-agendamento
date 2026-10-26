@@ -234,7 +234,7 @@ Feriados nacionais são **calculados**, não consultados em API: os fixos são c
 | `CancelledBy` | enum `CancellationParty`: `Customer` \| `Business` \| `System`. Quem cancelou — separa desistência do consumidor de cancelamento da empresa e de expiração automática |
 | `CancellationReason` | |
 | `ExpiresAt` | só enquanto `Pending` |
-| `IdempotencyKey` | ⚠️ **acrescentado pelo código (26/10).** Chave gerada pelo cliente HTTP. Duplo clique ou reenvio por rede ruim devolve o mesmo agendamento em vez de criar dois — o mesmo problema da dupla reserva, do lado de quem pede |
+| `IdempotencyKey` | ⚠️ **acrescentado pelo código (26/10).** Chave gerada pelo frontend a cada pedido. Duplo clique ou reenvio por rede ruim devolve o mesmo agendamento em vez de criar dois — o mesmo problema da dupla reserva, do lado de quem pede |
 | `OverflowApproved` | transbordo aceito pela empresa (§3.5). ⚠️ **não implementado** em 26/10: o `Appointment` do código não tem esse campo |
 
 **`Period` (TimeRange) saiu do modelo.** No banco, o intervalo bloqueado pela constraint de exclusão é gravado em duas colunas, `blocked_starts_at` e `blocked_ends_at`, preenchidas pelo domínio a partir de `StartsAt` e dos buffers do serviço, com um check que impede incoerência (`blocked_starts_at <= starts_at AND blocked_ends_at >= ends_at`).
