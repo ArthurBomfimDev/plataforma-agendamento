@@ -260,7 +260,7 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 
 | Origem | Resolução |
 |---|---|
-| Pitch: React Native + Node/NestJS + AWS | Descartado. **ADR-002 ainda não escrita** |
+| Pitch: React Native + Node/NestJS + AWS | Descartado. ADR-002 (📝 Proposto, 26/10) |
 | Pitch: Pix, split, carteira | Fora do MVP |
 | Documento mestre: Trello | GitHub Projects |
 | Gemini: 6 categorias, convênio funcional, prontuário, uptime 99,8%, Redis | Todos rejeitados |
@@ -317,15 +317,15 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | ID | Tema | Situação |
 |---|---|---|
 | 001, 003, 004, 005, 006, 007, 009, 010, 011 | — | ✅ Aceitos |
-| 002 | Revogação do pitch | ⬜ Pendente |
-| 008 | Hospedagem, PostGIS, `btree_gist` | ⬜ Pendente |
-| 012 | Idade mínima de 18 anos e agendamento para terceiro | ⬜ A escrever |
-| 013 | CPF opcional e verificação de identidade como porta | ⬜ A escrever |
-| 014 | Avaliação do profissional e perfil público dividido | ⬜ A escrever |
-| 015 | Categoria como enum (`RequiresSensitiveHandling` como chave jurídica) | ⬜ A escrever. A saída de `Category` do `Base/` já está na emenda da ADR-010 |
-| 016 | Geocodificação: porta, provedor por fase, confirmação pelo dono | ⬜ A escrever |
-| 017 | Intervalo bloqueado em colunas gravadas, não coluna gerada | ⬜ A escrever — complementa a 005 |
-| 018 | Marca Vagoo e paleta azul (revoga a proibição de azul) | ⬜ A escrever |
+| 002 | Revogação do pitch | 📝 Proposto (26/10) |
+| 008 | Hospedagem, PostGIS, `btree_gist` | 📝 Proposto (26/10) — candidatos e critérios; provedor em aberto até o spike |
+| 012 | Idade mínima de 18 anos e agendamento para terceiro | 📝 Proposto (26/10) |
+| 013 | CPF opcional e verificação de identidade como porta | 📝 Proposto (26/10) |
+| 014 | Avaliação do profissional e perfil público dividido | 📝 Proposto (26/10) |
+| 015 | Categoria como enum (`RequiresSensitiveHandling` como chave jurídica) | 📝 Proposto (26/10). A saída de `Category` do `Base/` está na emenda da ADR-010 |
+| 016 | Geocodificação: porta, provedor por fase, confirmação pelo dono | 📝 Proposto (26/10) |
+| 017 | Intervalo bloqueado em colunas gravadas, não coluna gerada | 📝 Proposto (26/10) — complementa a 005 |
+| 018 | Marca Vagoo e paleta azul (revoga a proibição de azul) | 📝 Proposto (26/10) |
 
 ---
 
