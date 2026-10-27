@@ -1,4 +1,6 @@
+using Booking.Domain.Entity.Base;
 using Booking.Domain.Entity.Module.Tenancy;
+using Booking.Domain.Enum.Module.Tenancy;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
 using Booking.Domain.ValueObject;
 using Booking.Infrastructure.Persistence.Context;
@@ -31,6 +33,13 @@ public sealed class BusinessRepository(BookingDbContext context) : IBusinessRepo
                 """)
             .AsNoTracking()
             .ToListAsync(ct);
+
+    // Ordem por id: Guid v7 cresce com o tempo, então o mais antigo na fila aparece primeiro.
+    public Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, PageRequest page, CancellationToken ct = default) =>
+        context.Set<Business>().AsNoTracking()
+            .Where(x => x.Status == status)
+            .OrderBy(x => x.Id)
+            .ToPagedAsync(page, ct);
 
     public void Add(Business business) => context.Set<Business>().Add(business);
 }

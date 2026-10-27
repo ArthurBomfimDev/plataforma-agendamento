@@ -64,3 +64,14 @@ public sealed record BusinessSearchItemResponse(
     string? District,
     string? City,
     double DistanceKm);
+
+/// <summary>Item da checklist de ativação. <c>RequiredForSubmit</c> diz se a submissão já exige o item hoje.</summary>
+public sealed record ChecklistItemResponse(string Key, bool Done, bool RequiredForSubmit);
+
+/// <summary>Detalhe para o Admin: o estabelecimento, a checklist e o registro da última decisão de verificação.</summary>
+public sealed record AdminBusinessDetailResponse(
+    BusinessDetailResponse Business,
+    IReadOnlyList<ChecklistItemResponse> Checklist,
+    Guid? VerifiedByUserId,
+    DateTimeOffset? VerifiedAt,
+    string? VerificationNote);

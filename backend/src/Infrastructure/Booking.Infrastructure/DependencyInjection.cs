@@ -114,6 +114,10 @@ public static class DependencyInjection
         services.AddScoped<IBusinessDirectory, BusinessDirectory>();
 
         services.AddScoped<CurrentBusinessLoader>();
+        services.AddScoped<ActivationChecklist>();
+        services.AddScoped<AdminBusinessCommands>();
+        services.AddScoped<ListBusinessesForAdminQuery>();
+        services.AddScoped<GetBusinessForAdminQuery>();
         services.AddScoped<RegisterBusinessCommand>();
         services.AddScoped<UpdateSchedulingPolicyCommand>();
         services.AddScoped<UpdateAddressCommand>();

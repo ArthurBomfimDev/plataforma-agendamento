@@ -28,3 +28,6 @@ public sealed record SearchBusinessesRequest(
     string? Term = null,
     int Page = 1,
     int PageSize = 20);
+
+/// <summary>Decisão do Admin sobre um estabelecimento. Na recusa, a nota é obrigatória.</summary>
+public sealed record AdminDecisionRequest(string? Note);

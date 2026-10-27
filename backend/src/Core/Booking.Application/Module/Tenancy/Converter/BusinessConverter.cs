@@ -39,6 +39,9 @@ public static class BusinessConverter
                 business.CancellationWindowHours,
                 business.TimeZone));
 
+    public static AdminBusinessDetailResponse ToAdminDetail(Business business, IReadOnlyList<ChecklistItemResponse> checklist) =>
+        new(ToDetail(business), checklist, business.VerifiedByUserId, business.VerifiedAt, business.VerificationNote);
+
     public static PublicBusinessResponse ToPublic(Business business) =>
         new(
             business.Id,
