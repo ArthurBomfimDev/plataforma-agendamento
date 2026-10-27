@@ -27,4 +27,15 @@ public static class ActorContextExtensions
     }
 
     public static bool IsOwner(this IActorContext actor) => actor.BusinessRole == OwnerRole;
+
+    /// <summary>
+    /// Segunda trava do Admin: a policy <c>PlatformAdmin</c> já barra no controller; o comando confere de novo,
+    /// para que um endpoint novo sem a policy não abra a operação por engano.
+    /// </summary>
+    public static Guid RequirePlatformAdmin(this IActorContext actor)
+    {
+        Guid userId = actor.RequireUserId();
+
+        return actor.IsPlatformAdmin ? userId : throw new DomainException("auth.forbidden");
+    }
 }
