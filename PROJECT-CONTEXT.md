@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-27 (correção da concorrência, Onda 1) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-27 (backend do painel e do Admin, Onda 2) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -37,20 +37,20 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 | Módulo | Situação |
 |---|---|
 | Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo |
-| Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` |
+| Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar |
 | People | ✅ `Customer` (com `BirthDate`), `Professional` (consentimento de perfil público) |
 | Catalog | ✅ `Service`, `ServiceProfessional` |
-| Availability | ✅ `WorkSchedule`, `ScheduleException`, `Holiday`; `AvailabilityCalculator`; feriados pela Páscoa; calendário de vários dias |
+| Availability | ✅ `WorkSchedule` (criar, **editar**, remover), `ScheduleException`, `Holiday`; `AvailabilityCalculator`; feriados pela Páscoa; calendário de vários dias; **bloqueio com agendamentos afetados**: prévia, manter ou cancelar todos, tudo ou nada |
 | Scheduling | ✅ `Appointment`, `AppointmentEvent`. Pedido, confirmar, recusar, cancelar, concluir, falta, balcão. **409 com horários alternativos** |
 | Compliance | ✅ `ConsentRecord`, `SensitiveAccessLog`. Consentimento versionado que **bloqueia**; log de acesso |
 | Reputation | ⬜ Pasta vazia — fora do recorte (§12) |
 | Notifications | ⬜ Não existe — fora do recorte (§12) |
 
-- **3 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`). PostGIS e `btree_gist` habilitados.
+- **4 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (60 métodos de teste, **81 casos executados** — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (20 casos, todos ativos: grupos A, B e C, o A8 da defesa do lock e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
-- **Não existe endpoint de Admin.** O seed aprova estabelecimento por SQL direto.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (82 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (39 casos, todos ativos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
 
@@ -291,6 +291,7 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | N | Marca: tiles do ícone de app, favicon, área de proteção | PWA instalável | Rafael |
 | O | ✅ **Corrigido em `fix/concorrencia-reserva`, aguardando revisão.** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
 | P | ✅ **Corrigido em `fix/concorrencia-reserva`, aguardando revisão.** Mesma `IdempotencyKey` simultânea devolvia 400; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
+| R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
 
 ⚠️ O estado de F, G e I não foi registrado desde setembro. Atualizar aqui quando houver resposta.
@@ -309,7 +310,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
 | 5 | Autenticação, cadastro, recuperação de senha | 🟡 Backend pronto | Telas de recuperação e confirmação de e-mail |
 
-**Prioridade:** 3 → 1 → seed de 30 com saúde → 4 → 2 → 5 → tela de 409 com alternativas → endpoint de Admin → k6 e Lighthouse.
+**Prioridade:** 3 → 1 → seed de 30 com saúde → 4 → 2 → 5 → tela de 409 com alternativas → k6 e Lighthouse. Endpoint de Admin: ✅ backend (Onda 2); tela do Admin fora do recorte.
 
 **Trabalhos futuros declarados:** avaliações, notificações, upload de fotos, PWA instalável, relatórios, painel administrativo, RLS.
 
@@ -330,6 +331,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 017 | Intervalo bloqueado em colunas gravadas, não coluna gerada | 📝 Proposto (26/10) — complementa a 005 |
 | 018 | Marca Vagoo e paleta azul (revoga a proibição de azul) | 📝 Proposto (26/10) |
 | 019 | Serialização por profissional com advisory lock na criação de agendamento | 📝 Proposto (27/10) — complementa a 005 |
+| 020 | Papel de Admin da plataforma | 📝 Proposto (27/10) — complementa a 004 |
 
 ---
 
@@ -361,7 +363,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 1. Mergear a correção de documentação (inclui a branch `docs/modelo-dominio-revisado`).
 2. PR `feat/integracao-front-back` → `main`. A integração já contém tudo da `main` (32 commits à frente, nenhum atrás).
-3. Revisar o PR da Onda 1 (`fix/concorrencia-reserva`) e aceitar a ADR-019. Depois, Onda 2 (Admin, edição de jornada, bloqueio com agendamentos afetados, busca).
+3. Revisar o PR da Onda 2 (`feat/backend-painel-admin`, com migration) e aceitar as ADRs 019 e 020. Decidir a pendência R. Depois, Onda 3 (seed de 30 e desempenho).
 4. Painel do estabelecimento mínimo para fechar a fatia 1.
 5. Seed com 30 estabelecimentos, incluindo saúde e histórico.
 6. Responder F e E com a orientadora.
