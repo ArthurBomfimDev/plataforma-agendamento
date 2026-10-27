@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-27 (testes de integração) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-27 (correção da concorrência, Onda 1) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -49,7 +49,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 - **3 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (60 métodos de teste, **81 casos executados** — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (19 casos: 16 aprovados, 1 que só registra o ambiente, **2 pulados por defeito encontrado** — A2 e C2, ver §11 pendências O e P). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (60 métodos de teste, **81 casos executados** — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (20 casos, todos ativos: grupos A, B e C, o A8 da defesa do lock e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Não existe endpoint de Admin.** O seed aprova estabelecimento por SQL direto.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -222,7 +222,7 @@ As 4 hipóteses originais são de mercado e vão para limitações. Limiares dec
 |---|---|---|---|
 | RNF-01 | Busca com slots p95 ≤ 800 ms, 30 empresas | k6 | ⬜ Sem script, seed com 3 |
 | RNF-02 | Disponibilidade p95 ≤ 200 ms | Teste cronometrado | ⬜ |
-| RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | 🟡 **Zero dupla reserva observada** contra o endpoint real (8.800 requisições concorrentes, local, 27/10). Mas sob disputa a constraint gera `40P01`/timeout → 500, e 3 de 160 rodadas ficaram sem vencedor (pendência O). Não executado no CI. `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
+| RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | ✅ **Atendido nas condições medidas** (local, 27/10, uma instância da API): zero dupla reserva contra o endpoint real; com o lock por profissional (ADR-019), 20 de 20 execuções aprovadas, sem 500 e sem rodada sem vencedor. Custo: corrida de 50 de ≈ 180 ms para ≈ 480 ms (p50). Caminho do CI executado localmente; GitHub Actions com a correção ⚠️ a confirmar no PR. `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
 | RNF-04 | Lighthouse mobile ≥ 85 perf, ≥ 95 a11y | CI | ⬜ |
 | RNF-05 | Busca → confirmação em ≤ 4 passos | Contagem | 🟡 Fluxo existe, contar |
 | RNF-06 | Argon2id, TLS, zero dado sensível em página pública | Checklist | 🟡 Argon2id feito |
@@ -289,9 +289,9 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | L | Colisão de marca: **Vagaro** (agendamento de salão) — registrar como risco ou consultar INPI | Uso comercial pós-TCC | Ambos |
 | M | Skills ainda com prefixo `agendeaki-` | Nada técnico; ruído | Arthur |
 | N | Marca: tiles do ícone de app, favicon, área de proteção | PWA instalável | Rafael |
-| **O** | **Defeito (27/10): disputa pelo mesmo horário gera `40P01` deadlock e timeout de leitura**, que viram 500; em 3 de 160 rodadas ninguém ficou com o horário livre. Nunca houve dupla reserva. Teste A2 pulado; proposta de correção no PR de testes de integração. Correção de concorrência exige revisão humana e, se mudar a estratégia, ADR | RNF-03 completo; experiência sob pico | Arthur |
-| **P** | **Defeito (27/10): mesma `IdempotencyKey` em requisições simultâneas devolve `400 appointment.duplicate_request`** (19 de 20) em vez do agendamento criado. Uma linha só no banco. Teste C2 pulado | Toque duplo e retry de rede ruim | Arthur |
-| Q | Log de acesso sensível: criar o agendamento não gera entrada; só o acesso do estabelecimento. Confirmar se é o comportamento desejado pela LGPD Art. 11 | Capítulo de LGPD | Ambos |
+| O | ✅ **Corrigido em `fix/concorrencia-reserva`, aguardando revisão.** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
+| P | ✅ **Corrigido em `fix/concorrencia-reserva`, aguardando revisão.** Mesma `IdempotencyKey` simultânea devolvia 400; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
+| Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
 
 ⚠️ O estado de F, G e I não foi registrado desde setembro. Atualizar aqui quando houver resposta.
 
@@ -305,7 +305,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 |---|---|---|---|
 | 1 | **Fatia vertical completa** | 🟡 Backend completo; front só do consumidor | Painel: onboarding, serviço, profissional, jornada, **pedidos pendentes**, **agenda do dia** |
 | 2 | Busca pública geográfica + disponibilidade | 🟡 Backend pronto | Resultados da busca ainda em mock |
-| 3 | **Prova de concorrência (RNF-03)** | 🟡 `Booking.IntegrationTests` existe; zero dupla reserva e isolamento de tenant (404) observados | Corrigir pendências O e P, reativar A2 e C2; primeira execução no CI |
+| 3 | **Prova de concorrência (RNF-03)** | ✅ Zero dupla reserva, isolamento de tenant (404) e disputa sem 500 observados; defeitos O e P corrigidos (aguardando revisão) | Confirmar no GitHub Actions; aceitar a ADR-019 |
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
 | 5 | Autenticação, cadastro, recuperação de senha | 🟡 Backend pronto | Telas de recuperação e confirmação de e-mail |
 
@@ -329,6 +329,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 016 | Geocodificação: porta, provedor por fase, confirmação pelo dono | 📝 Proposto (26/10) |
 | 017 | Intervalo bloqueado em colunas gravadas, não coluna gerada | 📝 Proposto (26/10) — complementa a 005 |
 | 018 | Marca Vagoo e paleta azul (revoga a proibição de azul) | 📝 Proposto (26/10) |
+| 019 | Serialização por profissional com advisory lock na criação de agendamento | 📝 Proposto (27/10) — complementa a 005 |
 
 ---
 
@@ -360,7 +361,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 1. Mergear a correção de documentação (inclui a branch `docs/modelo-dominio-revisado`).
 2. PR `feat/integracao-front-back` → `main`. A integração já contém tudo da `main` (32 commits à frente, nenhum atrás).
-3. Revisar o PR de `Booking.IntegrationTests` (27/10) e decidir a correção das pendências O e P.
+3. Revisar o PR da Onda 1 (`fix/concorrencia-reserva`) e aceitar a ADR-019. Depois, Onda 2 (Admin, edição de jornada, bloqueio com agendamentos afetados, busca).
 4. Painel do estabelecimento mínimo para fechar a fatia 1.
 5. Seed com 30 estabelecimentos, incluindo saúde e histórico.
 6. Responder F e E com a orientadora.

@@ -99,8 +99,8 @@ appointment"*. A exceção sobe como `InvalidOperationException` ("likely due to
   rodou junto com os outros projetos de teste; das 5 repetições seguidas só do projeto de integração, 3
   reprovaram.
 
-O A2 está marcado com `[Fact(Skip = "DEFEITO: …")]` com o corpo intacto, para o CI ficar verde e o defeito
-continuar visível. A proposta de correção está no PR, sem aplicação: correção de concorrência exige revisão
+O A2 ficou marcado com `[Fact(Skip = "DEFEITO: …")]` com o corpo intacto, para o CI ficar verde e o defeito
+continuar visível — até a correção da §6, que o reativou. A proposta de correção está no PR, sem aplicação: correção de concorrência exige revisão
 humana.
 
 ## 5. Limitações
@@ -116,11 +116,102 @@ humana.
   de chegada no mesmo microssegundo ao banco.
 - 8 execuções não sustentam afirmação estatística sobre a frequência do defeito.
 
-## 6. Como reproduzir
+## 6. Depois da correção (27/10)
+
+Os dois defeitos da §3 e §4 foram corrigidos na branch `fix/concorrencia-reserva`
+(PR da Onda 1). As seções 1 a 5 ficam como estavam: são o registro de antes.
+
+### 6.1 O que mudou
+
+| Defeito | Correção | Commit |
+|---|---|---|
+| P — mesma `IdempotencyKey` simultânea → 400 | O comando desanexa a entidade recusada e devolve o agendamento já gravado com a mesma chave | `1535428` |
+| O — `40P01` e timeout sob disputa → 500 | `pg_advisory_xact_lock` por profissional, na mesma transação do INSERT, antes dele (ADR-019). A constraint continua sendo quem recusa | `b89c143` |
+| Defesa | `40P01`/`55P03`, se aparecerem, viram `appointment.contention_try_again` (503), nunca 500 | `9893245` |
+
+### 6.2 Ambiente das medições
+
+Mesmo do §1: 2026-10-27, local, Windows 11 Pro, Docker Desktop 29.9.2, .NET 10.0.12, `postgis/postgis:17-3.5`
+(PostgreSQL 17.5, PostGIS 3.5.2) por Testcontainers, um servidor de aplicação, dia agendado 2026-10-30.
+
+| Medição | Código que rodou |
+|---|---|
+| **Antes** (5 execuções seguidas) | `1535428` (idempotência já corrigida, **sem** o lock), com A2 e C2 reativados e o A2 imprimindo o tempo de cada rodada |
+| **Depois** (20 execuções seguidas) | `b89c143` (com o lock, sem a tradução de defesa), com os mesmos testes |
+| Defesa e caminho do CI (1 execução) | `3f10af4` (tudo, incluindo A8) |
+
+### 6.3 Resultado — evidência
+
+**Antes do lock — 5 execuções:**
+
+| | Valor |
+|---|---|
+| Execuções aprovadas | **0 de 5** (A2 reprovou em todas; os outros 18 casos aprovaram) |
+| Rodadas do A2 com 0 vencedores | 3 de 100 |
+| Rodadas presas (cerca de 30 s) | 1 por execução — 30.145 a 30.169 ms |
+| Exceções não tratadas no log do servidor | 248 (168 × `40P01 deadlock detected`, 80 × `Timeout during reading attempt`) |
+| C2 | 201 × 20, 1 linha, nas 5 (o defeito P já estava corrigido) |
+
+**Depois do lock — 20 execuções seguidas:**
+
+| | Valor |
+|---|---|
+| Execuções aprovadas | **20 de 20** (19 de 19 casos em cada) |
+| A1 e A3 | 1 × 201 e 49 × 409 com `alternatives` em todas |
+| A2 | 20 vencedores, 20 linhas e 980 × 409 em todas; 0 respostas inesperadas |
+| C2 | 201 × 20, 1 `Id`, 1 linha em todas |
+| Rodadas com 0 vencedores | 0 de 400 |
+| `40P01`, `55P03`, timeout de leitura, exceção não tratada no log | **0** |
+| Tempo de cada execução do projeto | 25,1 a 28,3 s |
+
+**Latência — tempo da corrida de 50, da abertura da barreira à última resposta (ms):**
+
+| Cenário | Antes (sem lock) | Depois (com lock) |
+|---|---|---|
+| A1 — mesmo horário | 5 execuções: mín 158 · mediana 185 · máx 210 | 20 execuções: mín 461 · p50 480 · p95 523 · máx 552 |
+| A3 — inícios sobrepostos | 5 execuções: mín 188 · mediana 197 · máx 206 | 20 execuções: mín 265 · p50 315 · p95 375 · máx 377 |
+| A2 — cada rodada | 100 rodadas: p50 174 · p95 224 · máx **30.169** (5 rodadas presas); sem as presas, máx 224 | 400 rodadas: mín 401 · p50 482 · p95 545 · máx 1.227 |
+
+**Defesa (A8) e caminho do CI — `3f10af4`:**
+
+- A8: com uma transação segurando o lock do profissional e outra com `lock_timeout = '200ms'`, a segunda recebeu
+  `appointment.contention_try_again`; outro profissional gravou sem esperar. Com a tradução desligada de propósito,
+  o mesmo teste reprovou com `PostgresException` cru — a defesa já falhou uma vez, como a regra do projeto exige.
+- Caminho do CI (`ConnectionStrings__Default` apontando para um `postgis/postgis:17-3.5` avulso, sem
+  Testcontainers): `Booking.IntegrationTests` 20 de 20, `Booking.ArchitectureTests` 28 de 28,
+  `Booking.UnitTests` 81 de 81. Nenhum `booking_it_*` sobrou no servidor depois da execução.
+- No GitHub Actions, o CI do PR #13 (antes da correção, com A2 e C2 pulados) aprovou 17 de 17 casos de
+  integração pelo serviço PostgreSQL do runner.
+
+### 6.4 Interpretação
+
+- **O lock eliminou o defeito nas condições medidas.** De 5 de 5 execuções reprovadas para 20 de 20
+  aprovadas, e de 248 exceções não tratadas para zero.
+- **O lock custa latência, e o custo é a fila.** A corrida de 50 pelo mesmo horário passou de cerca de
+  180 ms para cerca de 480 ms na mediana. É o tempo de 50 transações passarem uma a uma pelo INSERT do
+  mesmo profissional. Em troca, a pior rodada caiu de 30 s (timeout) para 1,2 s.
+- **A garantia contra dupla reserva não mudou de lugar.** Continua na constraint; o A7 continua provando
+  isso. O lock não verifica sobreposição.
+- A tradução de `40P01`/`55P03` ficou como **defesa**: não apareceu nenhum dos dois depois do lock, e o A8
+  só a exercita forçando `lock_timeout`.
+
+### 6.5 Limitações que continuam
+
+- **Uma instância da API.** O lock é do banco, então por mecanismo vale para várias instâncias. Isso é
+  inferência: não foi executado com mais de uma.
+- 50 concorrentes pelo mesmo profissional. Com picos muito maiores, a fila cresce linearmente e o pool de
+  conexões passa a ser o limite — não medido.
+- Banco em contêiner local, na mesma máquina do teste; latência de rede de um banco gerenciado não medida.
+- 20 execuções não sustentam afirmação estatística sobre a ausência do defeito; sustentam que ele não
+  apareceu em 20 execuções seguidas, depois de aparecer em 5 de 5 antes.
+- ⚠️ não verificado: o CI do GitHub Actions com a correção — roda no PR da Onda 1.
+
+## 7. Como reproduzir
 
 ```bash
 # em backend/, com Docker rodando
 dotnet test tests/Booking.IntegrationTests --logger "console;verbosity=detailed"
 ```
 
-Para rodar o A2, retire o `Skip` do atributo em `Scheduling/DoubleBookingTests.cs`.
+Desde `3f10af4` o A2 e o C2 rodam sem `Skip`. Para reproduzir o "antes", rode a partir de `1535428` (sem o
+lock) e retire o `Skip` do A2.
