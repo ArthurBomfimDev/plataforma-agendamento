@@ -48,4 +48,15 @@ public sealed class AppointmentRepository(BookingDbContext context) : IAppointme
             .ToListAsync(ct);
 
     public void Add(Appointment appointment) => context.Set<Appointment>().Add(appointment);
+
+    public void Discard(Appointment appointment)
+    {
+        // Cópia: desanexar um evento o tira da coleção do agregado no meio da iteração.
+        foreach (AppointmentEvent change in appointment.History.ToList())
+        {
+            context.Entry(change).State = EntityState.Detached;
+        }
+
+        context.Entry(appointment).State = EntityState.Detached;
+    }
 }
