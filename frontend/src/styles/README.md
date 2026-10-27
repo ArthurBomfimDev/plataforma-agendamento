@@ -10,15 +10,21 @@ Estado: 4 coleções · coleção `color` com modos Light e Dark · arquitetura 
 
 ## Estado atual
 
-✅ `tokens.css` está preenchido com a **revisão 3** (marca **vagoo**), lida do Figma via MCP
+✅ `tokens.css` está preenchido com a paleta **R5** (marca **Vagoo**), lida do Figma via MCP
 em **2026-10-10**. Ação em azul `#2563EB`, neutros frios (escala slate), status em âmbar,
 verde e vermelho.
+
+> **Numeração.** O cabeçalho de `tokens.css` chama esta paleta de "revisão 3"; o documento de design
+> (`docs/design/eixo-paleta-tipografia.md`) chama de **R5**. É a mesma paleta. Vale a numeração do
+> documento de design: R5.
 
 Cobertura confirmada: `bg/*` · `text/*` · `border/*` · `action/*` (com `primary-hover`) ·
 os 7 estados de `status/<estado>/{fg,bg}` · `agenda/*` (com `blocked/hatch`) · os 4
 `marker/*` · elevação · `space` · `radius` · `type`.
 
-O **modo Dark** está no bloco `.dark` de `tokens.css`, mas nada aplica a classe ainda.
+O **modo Dark** está no bloco `.dark` de `tokens.css`. Quem liga a classe `.dark` no `<html>` é o
+`useApplyTheme` (`src/hooks/use-theme`), chamado no `App.tsx` desde 10/10: segue a preferência salva
+(claro, escuro ou do sistema) e o alternador da barra superior.
 
 Lacunas marcadas com `TODO(figma)` no arquivo, **nenhuma preenchida por aproximação**:
 `action/primary-{active,disabled}` · `space/{48,64}` · `radius/{none,xl}` · `size/avatar-sm`.
@@ -31,13 +37,12 @@ esses tokens, então as primitivas de `components/ui` seguem a mesma paleta.
 
 ## ⚠️ Duas advertências
 
-**Resíduo de revisão anterior se remove.** Revisão 1 (reprovada): `#0F6E83`, `#8C867B`,
-`#8E5426`, `#C97F4A`, neutros bege, Source Serif 4. Revisão 2 (azul-água, substituída pela
-marca): `#0C7D99`, `#0B7690`, `#7E7E7B`, `#F5FCFD`.
+**Resíduo de revisão anterior se remove.** Pela numeração do documento de design: R1 (reprovada)
+`#0F6E83`, `#8C867B`, `#8E5426`, `#C97F4A`, neutros bege, Source Serif 4; R2 a R4 (azul-água,
+substituídas pela marca) `#0B7690`, `#0C7D99`, `#4FC3DE`, `#7E7E7B`, `#141413`, `#F5FCFD`. Todos mortos.
 
-**`docs/design/eixo-paleta-tipografia.md` está desatualizado.** O arquivo no repositório
-é de 05/09 e descreve a revisão 1. Os valores aqui vieram do Figma, não dele.
-Quem for confiar naquele documento vai reintroduzir a paleta reprovada.
+**`docs/design/eixo-paleta-tipografia.md` está atualizado desde 26/10** e descreve a R5, com o histórico
+das revisões no §0. O Figma continua sendo a fonte da verdade.
 
 ## Como ressincronizar
 
