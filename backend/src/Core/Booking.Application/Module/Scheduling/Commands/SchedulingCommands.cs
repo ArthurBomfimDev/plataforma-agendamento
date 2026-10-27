@@ -76,8 +76,7 @@ public sealed class RequestAppointmentCommand(
         Guid customerId = await people.FindCustomerIdAsync(userId, ct)
             ?? throw new DomainException("customer.profile_required");
 
-        if (!string.IsNullOrWhiteSpace(r.IdempotencyKey)
-            && await appointments.FindByIdempotencyKeyAsync(customerId, r.IdempotencyKey.Trim(), ct) is Appointment existing)
+        if (await FindSameRequestAsync(customerId, r.IdempotencyKey, ct) is Appointment existing)
         {
             return AppointmentConverter.ToResponse(existing);
         }
@@ -99,7 +98,21 @@ public sealed class RequestAppointmentCommand(
         BookableService service = await catalog.GetBookableAsync(r.BusinessId, r.ServiceId, r.ProfessionalId, ct)
             ?? throw new DomainException("service.not_found");
 
-        await slots.EnsureAvailableAsync(service, r.StartsAt, ignoreLeadTime: false, ct);
+        try
+        {
+            await slots.EnsureAvailableAsync(service, r.StartsAt, ignoreLeadTime: false, ct);
+        }
+        catch (DomainException e) when (e.Code == "appointment.slot_no_longer_available")
+        {
+            // A requisição com a mesma chave pode ter gravado entre a conferência do início e esta: o horário
+            // ocupado é o do próprio pedido, e a resposta é ele, não um 409.
+            if (await FindSameRequestAsync(customerId, r.IdempotencyKey, ct) is Appointment same)
+            {
+                return AppointmentConverter.ToResponse(same);
+            }
+
+            throw;
+        }
 
         Appointment appointment = Appointment.Request(
             r.BusinessId,
@@ -128,8 +141,7 @@ public sealed class RequestAppointmentCommand(
             // Toque duplo que passou junto pela conferência acima: outra requisição com a mesma chave gravou
             // primeiro. A resposta é o agendamento dela, não um erro. A recusa pode vir do índice de
             // idempotência ou da constraint de horário — a que o banco checar primeiro.
-            if (!string.IsNullOrWhiteSpace(r.IdempotencyKey)
-                && await appointments.FindByIdempotencyKeyAsync(customerId, r.IdempotencyKey.Trim(), ct) is Appointment winner)
+            if (await FindSameRequestAsync(customerId, r.IdempotencyKey, ct) is Appointment winner)
             {
                 return AppointmentConverter.ToResponse(winner);
             }
@@ -144,6 +156,11 @@ public sealed class RequestAppointmentCommand(
 
         return AppointmentConverter.ToResponse(appointment);
     }
+
+    private async Task<Appointment?> FindSameRequestAsync(Guid customerId, string? idempotencyKey, CancellationToken ct) =>
+        string.IsNullOrWhiteSpace(idempotencyKey)
+            ? null
+            : await appointments.FindByIdempotencyKeyAsync(customerId, idempotencyKey.Trim(), ct);
 }
 
 /// <summary>Marcação de balcão: proprietário em qualquer agenda, profissional só na própria.</summary>
