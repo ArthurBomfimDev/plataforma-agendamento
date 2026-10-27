@@ -26,6 +26,7 @@ public sealed record TestService(Guid Id, int DurationMinutes);
 
 public sealed record TestBusiness(
     Guid Id,
+    string Name,
     string OwnerToken,
     IReadOnlyList<Guid> ProfessionalIds,
     IReadOnlyList<Guid> WorkScheduleIds,
@@ -94,13 +95,14 @@ public sealed class TestWorld(IntegrationFixture fixture)
 
     // --- Estabelecimento ---
 
-    public async Task<TestBusiness> NewBusinessAsync(int professionals, ServiceSpec[] services, string category = "Beleza")
+    public async Task<TestBusiness> NewBusinessAsync(int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true)
     {
         TestUser owner = await NewUserAsync("Dono de teste");
+        string name = $"Estabelecimento {Guid.NewGuid():N}"[..40];
 
         BusinessResponse business = await SendOkAsync<BusinessResponse>(
             HttpMethod.Post, "/api/businesses",
-            new RegisterBusinessRequest($"Estabelecimento {Guid.NewGuid():N}"[..40], Cnpj.Random(), category), owner.Token);
+            new RegisterBusinessRequest(name, Cnpj.Random(), category), owner.Token);
 
         // O token precisa carregar o estabelecimento ativo para as rotas `businesses/current` (ADR-004).
         ContextTokenResponse context = await SendOkAsync<ContextTokenResponse>(
@@ -155,20 +157,32 @@ public sealed class TestWorld(IntegrationFixture fixture)
         }
 
         await SendOkAsync(HttpMethod.Post, "/api/businesses/current/submit", null, token);
-        await ApproveAsync(business.Id);
 
-        return new TestBusiness(business.Id, token, professionalIds, scheduleIds, createdServices);
+        if (approve)
+        {
+            TestUser admin = await NewAdminAsync();
+            await SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/approve", new AdminDecisionRequest("Aprovado no teste"), admin.Token);
+        }
+
+        return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices);
     }
 
-    /// <summary>Aprovar (PendingReview → Active) é papel do Admin, que ainda não tem endpoint — como no seed-demo.</summary>
-    private async Task ApproveAsync(Guid businessId)
+    /// <summary>
+    /// Admin da plataforma (ADR-020). O papel nunca é concedido por endpoint: aqui, pelo domínio direto no banco,
+    /// como faria o seed.
+    /// </summary>
+    public async Task<TestUser> NewAdminAsync()
     {
         await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
         BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
 
-        Business business = await db.Set<Business>().SingleAsync(b => b.Id == businessId);
-        business.Approve();
+        User user = User.Create(Email.Of($"it-admin-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, "Admin de teste");
+        user.GrantPlatformAdmin();
+        db.Add(user);
         await db.SaveChangesAsync();
+
+        return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value);
     }
 
     // --- Agendamento ---
