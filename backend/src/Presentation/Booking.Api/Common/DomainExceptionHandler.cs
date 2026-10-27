@@ -46,6 +46,7 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
         "user.email_already_registered" or "business.document_already_registered"
             or "appointment.slot_no_longer_available" or "customer.already_registered"
             or "work_schedule.overlaps" => StatusCodes.Status409Conflict,
+        "appointment.contention_try_again" => StatusCodes.Status503ServiceUnavailable,
         _ when code.EndsWith(".not_found", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
         _ when code.Contains(".cannot_", StringComparison.Ordinal) => StatusCodes.Status409Conflict,
         _ => StatusCodes.Status400BadRequest,

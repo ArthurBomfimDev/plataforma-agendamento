@@ -54,7 +54,7 @@ public sealed class DoubleBookingTests(IntegrationFixture fixture, ITestOutputHe
         Assert.Equal(1, await _world.CountOccupyingAsync(professional, startsAt, startsAt.AddMinutes(60)));
     }
 
-    [Fact(Skip = "DEFEITO: sob disputa, a checagem da constraint de exclusão gera 40P01 (deadlock) e timeout, que viram 500; há rodada sem vencedor. Ver PR #13")]
+    [Fact]
     public async Task A2_twenty_rounds_of_fifty_never_have_zero_or_two_winners()
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
@@ -64,6 +64,7 @@ public sealed class DoubleBookingTests(IntegrationFixture fixture, ITestOutputHe
 
         var winnersPerRound = new List<int>();
         var rowsPerRound = new List<long>();
+        var raceMilliseconds = new List<double>();
         int totalConflicts = 0;
         var unexpected = new List<string>();
 
@@ -76,6 +77,7 @@ public sealed class DoubleBookingTests(IntegrationFixture fixture, ITestOutputHe
 
             winnersPerRound.Add(race.Created);
             rowsPerRound.Add(await _world.CountOccupyingAsync(professional, startsAt, startsAt.AddMinutes(30)));
+            raceMilliseconds.Add(race.Elapsed.TotalMilliseconds);
             totalConflicts += race.SlotTaken;
             unexpected.AddRange(race.Unexpected.Select(u => $"rodada {round + 1}: {u}"));
         }
@@ -84,6 +86,7 @@ public sealed class DoubleBookingTests(IntegrationFixture fixture, ITestOutputHe
             $"A2: {_rounds} rodadas × {_concurrent} = {_rounds * _concurrent} requisições; " +
             $"vencedores por rodada = [{string.Join(", ", winnersPerRound)}]; " +
             $"linhas por rodada = [{string.Join(", ", rowsPerRound)}]; 409 = {totalConflicts}; inesperadas = {unexpected.Count}");
+        output.WriteLine($"A2 tempo da corrida por rodada (ms): [{string.Join(", ", raceMilliseconds.Select(ms => ms.ToString("F0")))}]");
 
         foreach (string kind in unexpected.Select(u => u.Length > 600 ? u[..600] : u).Distinct().Take(5))
         {
@@ -228,6 +231,51 @@ public sealed class DoubleBookingTests(IntegrationFixture fixture, ITestOutputHe
         {
             await fixture.Server.DropDatabaseAsync(withoutConstraintDb);
         }
+    }
+
+    /// <summary>
+    /// ADR-019: a gravação de um profissional espera na fila dele. Com uma transação segurando o lock e a outra com
+    /// <c>lock_timeout</c> curto, a segunda recebe 55P03 — e a defesa a traduz em erro de domínio, nunca em 500.
+    /// Também mostra que o lock é por profissional: outro profissional grava sem esperar.
+    /// </summary>
+    [Fact]
+    public async Task A8_lock_contention_becomes_a_domain_error_and_is_per_professional()
+    {
+        Guid businessId = Guid.CreateVersion7();
+        Guid professionalId = Guid.CreateVersion7();
+        var snapshot = new ServiceSnapshot(Guid.CreateVersion7(), "Serviço de controle", 60, 0, 0, 5000);
+        var actor = new SchedulingActor(Guid.CreateVersion7(), "Owner");
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        await using var holder = new DirectDbContext(fixture.ConnectionString);
+        await using var holding = await holder.Db.Database.BeginTransactionAsync();
+        holder.Db.Add(Appointment.AtCounter(businessId, professionalId, snapshot, TestCalendar.At(8), false, "Segura o lock", null, null, actor, now));
+        await holder.Db.SaveChangesAsync();
+
+        // Mesmo profissional, outro horário: espera o lock e desiste em 200 ms.
+        await using var waiter = new DirectDbContext(fixture.ConnectionString);
+        await using (var waiting = await waiter.Db.Database.BeginTransactionAsync())
+        {
+            await waiter.Db.Database.ExecuteSqlRawAsync("SET LOCAL lock_timeout = '200ms'");
+            waiter.Db.Add(Appointment.AtCounter(businessId, professionalId, snapshot, TestCalendar.At(14), false, "Espera", null, null, actor, now));
+
+            DomainException refused = await Assert.ThrowsAsync<DomainException>(() => waiter.Db.SaveChangesAsync());
+            Assert.Equal("appointment.contention_try_again", refused.Code);
+        }
+
+        // Outro profissional, enquanto o primeiro lock continua seguro: grava sem esperar.
+        await using (var other = new DirectDbContext(fixture.ConnectionString))
+        {
+            await using var free = await other.Db.Database.BeginTransactionAsync();
+            await other.Db.Database.ExecuteSqlRawAsync("SET LOCAL lock_timeout = '200ms'");
+            other.Db.Add(Appointment.AtCounter(businessId, Guid.CreateVersion7(), snapshot, TestCalendar.At(8), false, "Outro", null, null, actor, now));
+            await other.Db.SaveChangesAsync();
+            await free.CommitAsync();
+        }
+
+        await holding.CommitAsync();
+        Assert.Equal(1, await _world.CountAsync(
+            "SELECT count(*) FROM scheduling.appointment WHERE professional_id = @p", ("p", professionalId)));
     }
 
     private static async Task<(bool SecondSaved, PostgresException? Error, DomainException? Domain, long Rows)> WriteTwoOverlappingAsync(string connectionString)

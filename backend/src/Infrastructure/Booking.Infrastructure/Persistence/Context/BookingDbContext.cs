@@ -2,6 +2,7 @@ using System.Reflection;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Domain.Entity.Base;
+using Booking.Domain.Entity.Module.Scheduling;
 using Booking.Domain.Exceptions;
 using Booking.Infrastructure.Persistence.Mapping.Base;
 using Booking.Infrastructure.Persistence.Mapping.Module.Scheduling;
@@ -33,12 +34,31 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         StampAuditColumns();
+        IReadOnlyList<long> slotLocks = SlotLockKeys();
 
         try
         {
-            return base.SaveChanges(acceptAllChangesOnSuccess);
+            if (slotLocks.Count == 0)
+            {
+                return base.SaveChanges(acceptAllChangesOnSuccess);
+            }
+
+            using var transaction = Database.CurrentTransaction is null ? Database.BeginTransaction() : null;
+
+            foreach (long key in slotLocks)
+            {
+                Database.ExecuteSql($"SELECT pg_advisory_xact_lock({key})");
+            }
+
+            int written = base.SaveChanges(acceptAllChangesOnSuccess);
+            transaction?.Commit();
+            return written;
         }
         catch (DbUpdateException e) when (Translate(e) is DomainException domain)
+        {
+            throw domain;
+        }
+        catch (Exception e) when (TranslateContention(e) is DomainException domain)
         {
             throw domain;
         }
@@ -47,15 +67,84 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         StampAuditColumns();
+        IReadOnlyList<long> slotLocks = SlotLockKeys();
 
         try
         {
-            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            if (slotLocks.Count == 0)
+            {
+                return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            }
+
+            await using var transaction = Database.CurrentTransaction is null
+                ? await Database.BeginTransactionAsync(cancellationToken)
+                : null;
+
+            foreach (long key in slotLocks)
+            {
+                await Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock({key})", cancellationToken);
+            }
+
+            int written = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            return written;
         }
         catch (DbUpdateException e) when (Translate(e) is DomainException domain)
         {
             throw domain;
         }
+        catch (Exception e) when (TranslateContention(e) is DomainException domain)
+        {
+            throw domain;
+        }
+    }
+
+    /// <summary>
+    /// Defesa, não correção (ADR-019): com o lock por profissional, nenhum 40P01 nem 55P03 apareceu em 20 execuções
+    /// do teste de concorrência. Se aparecer, é disputa transitória — o horário pode estar livre, então não é
+    /// "horário ocupado"; vira 503 com código próprio, e quem fez o pedido pode tentar de novo. Nunca 500.
+    /// </summary>
+    /// <remarks>O Npgsql pode embrulhar a falha em <c>InvalidOperationException</c> ("transient failure"): procura na cadeia toda.</remarks>
+    private static DomainException? TranslateContention(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is PostgresException { SqlState: PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.LockNotAvailable })
+            {
+                return new DomainException("appointment.contention_try_again");
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// ADR-019: quem grava agendamento que ocupa horário entra na fila do profissional antes do INSERT. O lock é da
+    /// transação (<c>pg_advisory_xact_lock</c>) e sai no commit ou no rollback. Ele só ordena a fila — quem recusa a
+    /// sobreposição continua sendo <c>appointment_no_overlap</c> (ADR-005). Sem ele, inserções conflitantes
+    /// simultâneas esperavam umas pelas outras dentro da checagem da constraint e o PostgreSQL abortava com 40P01.
+    /// </summary>
+    /// <remarks>Mais de um profissional na mesma gravação: chaves em ordem crescente, para a fila não criar deadlock próprio.</remarks>
+    private List<long> SlotLockKeys() =>
+        [
+            .. ChangeTracker.Entries<Appointment>()
+                .Where(e => e.State == EntityState.Added && Appointment.OccupiesSlot(e.Entity.Status))
+                .Select(e => SlotLockKey(e.Entity.ProfessionalId))
+                .Distinct()
+                .Order(),
+        ];
+
+    /// <summary>Chave estável de 64 bits por profissional: as duas metades do Guid combinadas.</summary>
+    private static long SlotLockKey(Guid professionalId)
+    {
+        Span<byte> bytes = stackalloc byte[16];
+        professionalId.TryWriteBytes(bytes);
+        return BitConverter.ToInt64(bytes[..8]) ^ BitConverter.ToInt64(bytes[8..]);
     }
 
     /// <summary>

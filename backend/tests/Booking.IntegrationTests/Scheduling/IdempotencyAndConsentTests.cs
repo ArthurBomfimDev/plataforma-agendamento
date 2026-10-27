@@ -27,7 +27,7 @@ public sealed class IdempotencyAndConsentTests(IntegrationFixture fixture, ITest
         Assert.Equal(1, await RowsWithKeyAsync(customer, key));
     }
 
-    [Fact(Skip = "DEFEITO: chave de idempotência repetida ao mesmo tempo devolve 400 appointment.duplicate_request em vez do agendamento. Ver PR #13")]
+    [Fact]
     public async Task C2_same_idempotency_key_twenty_times_at_once_returns_the_same_appointment()
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);

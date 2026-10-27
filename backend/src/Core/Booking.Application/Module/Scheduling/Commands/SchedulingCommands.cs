@@ -121,8 +121,24 @@ public sealed class RequestAppointmentCommand(
         {
             await unitOfWork.SaveChangesAsync(ct);
         }
-        catch (DomainException e) when (e.Code == "appointment.slot_no_longer_available")
+        catch (DomainException e) when (e.Code is "appointment.slot_no_longer_available" or "appointment.duplicate_request")
         {
+            appointments.Discard(appointment);
+
+            // Toque duplo que passou junto pela conferência acima: outra requisição com a mesma chave gravou
+            // primeiro. A resposta é o agendamento dela, não um erro. A recusa pode vir do índice de
+            // idempotência ou da constraint de horário — a que o banco checar primeiro.
+            if (!string.IsNullOrWhiteSpace(r.IdempotencyKey)
+                && await appointments.FindByIdempotencyKeyAsync(customerId, r.IdempotencyKey.Trim(), ct) is Appointment winner)
+            {
+                return AppointmentConverter.ToResponse(winner);
+            }
+
+            if (e.Code == "appointment.duplicate_request")
+            {
+                throw;
+            }
+
             throw await slots.ConflictAsync(service, r.StartsAt, ignoreLeadTime: false, ct);
         }
 

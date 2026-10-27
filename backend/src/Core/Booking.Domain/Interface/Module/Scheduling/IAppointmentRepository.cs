@@ -24,4 +24,7 @@ public interface IAppointmentRepository
     Task<IReadOnlyList<Appointment>> ListExpiredPendingAsync(DateTimeOffset now, int limit, CancellationToken ct = default);
 
     void Add(Appointment appointment);
+
+    /// <summary>Esquece um agendamento ainda não gravado (e o histórico dele) — usado quando a gravação foi recusada.</summary>
+    void Discard(Appointment appointment);
 }
