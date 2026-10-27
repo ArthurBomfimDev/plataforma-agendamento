@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-27 (backend do painel e do Admin, Onda 2) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-27 (seed de 30 e desempenho, Onda 3) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -220,8 +220,8 @@ As 4 hipóteses originais são de mercado e vão para limitações. Limiares dec
 
 | ID | Meta | Medição | Situação |
 |---|---|---|---|
-| RNF-01 | Busca com slots p95 ≤ 800 ms, 30 empresas | k6 | ⬜ Sem script, seed com 3 |
-| RNF-02 | Disponibilidade p95 ≤ 200 ms | Teste cronometrado | ⬜ |
+| RNF-01 | Busca com slots p95 ≤ 800 ms, 30 empresas | k6 | ✅ **292 ms no p95** (busca + horários da 1ª página, 10 VUs, local, 27/10). Tela de resultados ainda em mock: o cenário mede o que ela vai precisar. `docs/tcc/evidencias/rnf-01-busca.md` |
+| RNF-02 | Disponibilidade p95 ≤ 200 ms | Teste cronometrado | ✅ **dia 12 ms, calendário de 14 dias 58 ms no p95** (profissional mais ocupado do seed, 10 VUs, local, 27/10). `docs/tcc/evidencias/rnf-02-disponibilidade.md` |
 | RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | ✅ **Atendido nas condições medidas** (local, 27/10, uma instância da API): zero dupla reserva contra o endpoint real; com o lock por profissional (ADR-019), 20 de 20 execuções aprovadas, sem 500 e sem rodada sem vencedor. Custo: corrida de 50 de ≈ 180 ms para ≈ 480 ms (p50). Caminho do CI executado localmente e no GitHub Actions (PR #14: integração 20/20). `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
 | RNF-04 | Lighthouse mobile ≥ 85 perf, ≥ 95 a11y | CI | ⬜ |
 | RNF-05 | Busca → confirmação em ≤ 4 passos | Contagem | 🟡 Fluxo existe, contar |
@@ -310,7 +310,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
 | 5 | Autenticação, cadastro, recuperação de senha | 🟡 Backend pronto | Telas de recuperação e confirmação de e-mail |
 
-**Prioridade:** 3 → 1 → seed de 30 com saúde → 4 → 2 → 5 → tela de 409 com alternativas → k6 e Lighthouse. Endpoint de Admin: ✅ backend (Onda 2); tela do Admin fora do recorte.
+**Prioridade:** 3 → 1 → 4 → 2 → 5 → tela de 409 com alternativas → Lighthouse. Seed de 30 com saúde e histórico: ✅ (Onda 3). k6: ✅ RNF-01 e RNF-02. Endpoint de Admin: ✅ backend (Onda 2); tela do Admin fora do recorte.
 
 **Trabalhos futuros declarados:** avaliações, notificações, upload de fotos, PWA instalável, relatórios, painel administrativo, RLS.
 
@@ -363,7 +363,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 1. Mergear a correção de documentação (inclui a branch `docs/modelo-dominio-revisado`).
 2. PR `feat/integracao-front-back` → `main`. A integração já contém tudo da `main` (32 commits à frente, nenhum atrás).
-3. Revisar o PR da Onda 2 (`feat/backend-painel-admin`, com migration) e aceitar as ADRs 019 e 020. Decidir a pendência R. Depois, Onda 3 (seed de 30 e desempenho).
+3. Revisar o PR da Onda 3 (`feat/seed-e-desempenho`). Aceitar as ADRs 019 e 020; decidir a pendência R. Depois, Onda 4 (segurança, contrato API × frontend, PR para a `main`).
 4. Painel do estabelecimento mínimo para fechar a fatia 1.
-5. Seed com 30 estabelecimentos, incluindo saúde e histórico.
+5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
 6. Responder F e E com a orientadora.
