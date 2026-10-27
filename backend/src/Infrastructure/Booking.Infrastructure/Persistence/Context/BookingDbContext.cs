@@ -58,6 +58,10 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
         {
             throw domain;
         }
+        catch (Exception e) when (TranslateContention(e) is DomainException domain)
+        {
+            throw domain;
+        }
     }
 
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
@@ -94,6 +98,29 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
         {
             throw domain;
         }
+        catch (Exception e) when (TranslateContention(e) is DomainException domain)
+        {
+            throw domain;
+        }
+    }
+
+    /// <summary>
+    /// Defesa, não correção (ADR-019): com o lock por profissional, nenhum 40P01 nem 55P03 apareceu em 20 execuções
+    /// do teste de concorrência. Se aparecer, é disputa transitória — o horário pode estar livre, então não é
+    /// "horário ocupado"; vira 503 com código próprio, e quem fez o pedido pode tentar de novo. Nunca 500.
+    /// </summary>
+    /// <remarks>O Npgsql pode embrulhar a falha em <c>InvalidOperationException</c> ("transient failure"): procura na cadeia toda.</remarks>
+    private static DomainException? TranslateContention(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is PostgresException { SqlState: PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.LockNotAvailable })
+            {
+                return new DomainException("appointment.contention_try_again");
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
