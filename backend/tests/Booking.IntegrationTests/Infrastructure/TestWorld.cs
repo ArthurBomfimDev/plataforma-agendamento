@@ -32,8 +32,22 @@ public sealed record TestBusiness(
     IReadOnlyList<Guid> WorkScheduleIds,
     IReadOnlyList<TestService> Services);
 
-/// <summary>Serviço a criar: duração e buffers. O passo de grade é sempre 15 min.</summary>
-public sealed record ServiceSpec(int DurationMinutes, int BufferBeforeMinutes = 0, int BufferAfterMinutes = 0);
+/// <summary>Serviço a criar: duração, buffers, preço e nome. O passo de grade é sempre 15 min.</summary>
+public sealed record ServiceSpec(
+    int DurationMinutes, int BufferBeforeMinutes = 0, int BufferAfterMinutes = 0, long PriceCents = 5000, string? Name = null);
+
+/// <summary>Ponto do estabelecimento. O padrão é Garça-SP; a busca usa pontos próprios para não ver outros testes.</summary>
+public sealed record TestLocation(double Latitude, double Longitude)
+{
+    public static readonly TestLocation Garca = new(-22.2125, -49.6564);
+
+    /// <summary>Um ponto em lugar nenhum perto dos outros testes: cada teste de busca pega o seu.</summary>
+    public static TestLocation Isolated() =>
+        new(-10 - Random.Shared.NextDouble() * 5, -40 - Random.Shared.NextDouble() * 5);
+
+    /// <summary>A <paramref name="meters"/> metros ao norte (1° de latitude ≈ 111 km).</summary>
+    public TestLocation North(double meters) => this with { Latitude = Latitude + meters / 111_000 };
+}
 
 /// <summary>
 /// Monta os dados de cada teste com ids novos — nada é compartilhado entre testes, nada é truncado.
@@ -95,7 +109,8 @@ public sealed class TestWorld(IntegrationFixture fixture)
 
     // --- Estabelecimento ---
 
-    public async Task<TestBusiness> NewBusinessAsync(int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true)
+    public async Task<TestBusiness> NewBusinessAsync(
+        int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true, TestLocation? location = null)
     {
         TestUser owner = await NewUserAsync("Dono de teste");
         string name = $"Estabelecimento {Guid.NewGuid():N}"[..40];
@@ -112,7 +127,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/address",
             new UpdateAddressRequest("Rua de Teste", "100", "Centro", "Garça", "SP", "17400000"), token);
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/location",
-            new ConfirmLocationRequest(-22.2125, -49.6564, "Rooftop", "integration-test"), token);
+            new ConfirmLocationRequest((location ?? TestLocation.Garca).Latitude, (location ?? TestLocation.Garca).Longitude, "Rooftop", "integration-test"), token);
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/scheduling-policy",
             new UpdateSchedulingPolicyRequest(
                 AutoConfirm: false, PendingExpirationHours: 12, MinLeadTimeHours: 2, BookingHorizonDays: 60,
@@ -145,8 +160,8 @@ public sealed class TestWorld(IntegrationFixture fixture)
             ServiceResponse service = await SendOkAsync<ServiceResponse>(
                 HttpMethod.Post, "/api/businesses/current/services",
                 new SaveServiceRequest(
-                    $"Serviço {spec.DurationMinutes} min", null, spec.DurationMinutes, spec.BufferBeforeMinutes,
-                    spec.BufferAfterMinutes, SlotStepMinutes: 15, PriceCents: 5000, SuppliesNote: null), token);
+                    spec.Name ?? $"Serviço {spec.DurationMinutes} min", null, spec.DurationMinutes, spec.BufferBeforeMinutes,
+                    spec.BufferAfterMinutes, SlotStepMinutes: 15, PriceCents: spec.PriceCents, SuppliesNote: null), token);
             createdServices.Add(new TestService(service.Id, spec.DurationMinutes));
 
             foreach (Guid professionalId in professionalIds)

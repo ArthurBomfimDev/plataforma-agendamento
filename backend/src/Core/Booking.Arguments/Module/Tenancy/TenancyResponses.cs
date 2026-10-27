@@ -56,6 +56,11 @@ public sealed record PublicBusinessResponse(
     bool AutoConfirm,
     string TimeZone);
 
+/// <summary>
+/// Um resultado da busca. O serviço em destaque é o que casa com o termo (ou o mais barato), com o preço "a partir
+/// de" entre os profissionais. Nulo só se o estabelecimento não tiver serviço agendável. Horários livres não vêm
+/// aqui: a tela consulta a disponibilidade de cada estabelecimento da página.
+/// </summary>
 public sealed record BusinessSearchItemResponse(
     Guid Id,
     string Name,
@@ -63,7 +68,11 @@ public sealed record BusinessSearchItemResponse(
     bool Verified,
     string? District,
     string? City,
-    double DistanceKm);
+    double DistanceKm,
+    Guid? ServiceId = null,
+    string? ServiceName = null,
+    int? DurationMinutes = null,
+    long? FromPriceCents = null);
 
 /// <summary>Item da checklist de ativação. <c>RequiredForSubmit</c> diz se a submissão já exige o item hoje.</summary>
 public sealed record ChecklistItemResponse(string Key, bool Done, bool RequiredForSubmit);

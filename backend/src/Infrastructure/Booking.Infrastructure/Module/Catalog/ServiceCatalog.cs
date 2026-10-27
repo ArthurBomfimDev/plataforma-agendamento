@@ -39,6 +39,46 @@ public sealed class ServiceCatalog(BookingDbContext context) : IServiceCatalog
             .Where(s => s.IsActive)
             .AnyAsync(s => context.OfBusiness<ServiceProfessional>(businessId).Any(l => l.ServiceId == s.Id), ct);
 
+    public async Task<IReadOnlyDictionary<Guid, ServiceHighlight>> GetHighlightsAsync(
+        IReadOnlyCollection<Guid> businessIds, string? term, CancellationToken ct = default)
+    {
+        if (businessIds.Count == 0)
+        {
+            return new Dictionary<Guid, ServiceHighlight>();
+        }
+
+        // Entre estabelecimentos por natureza, como FilterBusinessesOfferingAsync: filtra pela lista recebida, que já
+        // passou pelo filtro geográfico e só tem estabelecimentos ativos.
+        List<Service> services = await context.AcrossTenants<Service>().AsNoTracking()
+            .Where(s => businessIds.Contains(s.BusinessId) && s.IsActive)
+            .ToListAsync(ct);
+
+        List<Guid> serviceIds = [.. services.Select(s => s.Id)];
+        ILookup<Guid, ServiceProfessional> links = (await context.AcrossTenants<ServiceProfessional>().AsNoTracking()
+                .Where(l => serviceIds.Contains(l.ServiceId))
+                .ToListAsync(ct))
+            .ToLookup(l => l.ServiceId);
+
+        // Cada serviço com profissional habilitado, pelo preço do profissional mais barato.
+        var offers = services
+            .Where(s => links[s.Id].Any())
+            .Select(s =>
+            {
+                ServiceProfessional cheapest = links[s.Id].MinBy(l => l.EffectivePriceCents(s))!;
+                return new ServiceHighlight(s.BusinessId, s.Id, s.Name, cheapest.EffectiveDurationMinutes(s), cheapest.EffectivePriceCents(s));
+            })
+            .ToList();
+
+        string? wanted = string.IsNullOrWhiteSpace(term) ? null : term.Trim();
+
+        return offers
+            .GroupBy(o => o.BusinessId)
+            .ToDictionary(
+                g => g.Key,
+                g => (wanted is null ? null : g.Where(o => o.Name.Contains(wanted, StringComparison.OrdinalIgnoreCase)).MinBy(o => o.FromPriceCents))
+                    ?? g.MinBy(o => o.FromPriceCents)!);
+    }
+
     public async Task<IReadOnlySet<Guid>> FilterBusinessesOfferingAsync(
         IReadOnlyCollection<Guid> businessIds, string term, CancellationToken ct = default)
     {
