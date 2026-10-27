@@ -320,7 +320,7 @@ Disponibilidade não entra como requisito: não é mensurável nem garantível e
 
 ### 12.1 O que existe hoje
 
-Retrato de 26/10/2026. O detalhe vivo fica no `PROJECT-CONTEXT.md` §2.
+Retrato de 27/10/2026. O detalhe vivo fica no `PROJECT-CONTEXT.md` §2.
 
 | Frente | Situação |
 |---|---|
@@ -329,10 +329,10 @@ Retrato de 26/10/2026. O detalhe vivo fica no `PROJECT-CONTEXT.md` §2.
 | Diagramas | Classes, entidades e casos de uso, em FigJam |
 | Design | Paleta R5 (marca Vagoo), modos claro e escuro, 11 conjuntos de componentes, 131 variáveis em 4 coleções, cerca de 50 telas em 8 páginas |
 | Repositório | Público, `main` protegida por 4 verificações obrigatórias, CI, ADRs |
-| Backend | Cerca de 12,7 mil linhas de C#. Sete dos nove módulos implementados: Identity, Tenancy, People, Catalog, Availability, Scheduling e Compliance. Reputation e Notifications não têm código. Três migrations, com PostGIS e `btree_gist`, e a restrição de exclusão real em `scheduling.appointment` (§8) |
-| Testes | 28 testes de arquitetura (regras da ADR-010, cada uma provada contra violações plantadas) e 81 casos de teste unitário. **Não há testes de integração**: a prova de concorrência do RNF-03 ainda não existe |
+| Backend | Cerca de 12,7 mil linhas de C#. Sete dos nove módulos implementados: Identity, Tenancy, People, Catalog, Availability, Scheduling e Compliance. Reputation e Notifications não têm código. Quatro migrations, com PostGIS e `btree_gist`, e a restrição de exclusão real em `scheduling.appointment` (§8), com a fila por profissional da ADR-019. Admin da plataforma (aprovar, recusar, suspender), edição de jornada, bloqueio com agendamentos afetados e busca com preço e categoria |
+| Testes | 28 testes de arquitetura (regras da ADR-010, cada uma provada contra violações plantadas), 82 casos de teste unitário e 43 de integração contra a API real e o PostgreSQL com PostGIS: concorrência (RNF-03), isolamento entre estabelecimentos, idempotência, consentimento, Admin, jornada, bloqueio, busca, migration e segurança. Evidências executadas em `docs/tcc/evidencias/`: RNF-01 (p95 de 292 ms), RNF-02 (p95 de 12 e 58 ms), RNF-03 (zero dupla reserva; 20 de 20 execuções sem falha depois da ADR-019), RNF-06 (checklist) e isolamento |
 | Frontend | O fluxo do consumidor consome a API real — início, estabelecimento, escolha de profissional, calendário, revisão, pedido enviado, meus agendamentos, entrar e criar conta. Resultados da busca e lembretes ainda usam dado provisório. **Nenhuma tela do lado do estabelecimento** |
-| Ambiente | Banco, migrations, API e frontend sobem com Docker Compose; um script popula três estabelecimentos de demonstração |
+| Ambiente | Banco, migrations, API e frontend sobem com Docker Compose; um script popula 30 estabelecimentos fictícios em Garça-SP (4 de Saúde), com 60 dias de histórico e agenda futura |
 
 ### 12.2 O recorte proposto
 
@@ -361,7 +361,7 @@ O recorte preserva exatamente a parte do trabalho que sustenta a arguição téc
 - O sistema não processa pagamento, o que remove do escopo toda a cadeia de fraude financeira e conciliação.
 - A primária da identidade visual é vizinha cromática de produtos consolidados do mesmo mercado; a diferenciação depende de tipografia, forma e temperatura dos neutros.
 - Hospedagem em camada gratuita impõe latência de partida a frio, que não é otimizável dentro do orçamento.
-- **A segurança em nível de linha (RLS) do PostgreSQL não foi implementada.** O isolamento entre estabelecimentos depende só do filtro global da camada de acesso a dados (§6.3). Uma consulta escrita fora desse filtro — SQL explícito, por exemplo — não tem uma segunda barreira no banco. A RLS está prevista para depois do MVP.
+- As medições de desempenho (RNF-01 e RNF-02) foram feitas numa máquina só, com o gerador de carga, a API e o banco em contêiner disputando a mesma CPU, e uma execução por cenário. Não dizem nada sobre a hospedagem real. A prova de concorrência (RNF-03) roda com uma instância da API; a fila por profissional está no banco, então vale para várias por mecanismo, mas isso não foi executado. O isolamento entre estabelecimentos depende só do filtro global da camada de acesso a dados (§6.3). Uma consulta escrita fora desse filtro — SQL explícito, por exemplo — não tem uma segunda barreira no banco. A RLS está prevista para depois do MVP.
 - O nome **Vagoo** é próximo de **Vagaro**, plataforma de agendamento para salões. ⚠️ não verificado: a pendência L (registrar como risco ou consultar o INPI) não tem decisão, e não houve consulta de marca. O risco afeta o uso comercial depois do TCC, não a avaliação acadêmica.
 
 ---
