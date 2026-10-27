@@ -10,6 +10,14 @@ public sealed record AddWorkScheduleRequest(
     DateOnly? EffectiveTo);
 
 /// <summary><c>Kind</c>: DayOff, Vacation, Block ou ExtraShift. Sem profissional, vale para o estabelecimento inteiro.</summary>
+/// <summary>O profissional não muda na edição: jornada de outra pessoa é outra linha.</summary>
+public sealed record UpdateWorkScheduleRequest(
+    DayOfWeek DayOfWeek,
+    TimeOnly StartTime,
+    TimeOnly EndTime,
+    DateOnly EffectiveFrom,
+    DateOnly? EffectiveTo);
+
 public sealed record AddScheduleExceptionRequest(
     Guid? ProfessionalId,
     string Kind,

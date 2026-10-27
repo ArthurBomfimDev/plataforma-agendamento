@@ -44,6 +44,33 @@ public sealed class AddWorkScheduleCommand(
     }
 }
 
+/// <summary>
+/// Edição da jornada, com a mesma invariante da criação (<c>work_schedule.overlaps</c>). Não mexe em agendamento
+/// já marcado: um pedido que fique fora da jornada nova continua de pé, como no bloqueio com "manter".
+/// </summary>
+public sealed class UpdateWorkScheduleCommand(IWorkScheduleRepository schedules, IActorContext actor, IUnitOfWork unitOfWork)
+{
+    public async Task<WorkScheduleResponse> ExecuteAsync(Guid scheduleId, UpdateWorkScheduleRequest r, CancellationToken ct = default)
+    {
+        Guid businessId = actor.RequireOwner();
+
+        // Filtro de tenant: jornada de outro estabelecimento não existe para este dono (404).
+        WorkSchedule schedule = await schedules.GetByIdAsync(scheduleId, ct) ?? throw new DomainException("work_schedule.not_found");
+
+        schedule.Update(r.DayOfWeek, r.StartTime, r.EndTime, r.EffectiveFrom, r.EffectiveTo);
+
+        IReadOnlyList<WorkSchedule> others = await schedules.ListOfProfessionalAsync(businessId, schedule.ProfessionalId, ct);
+
+        if (others.Any(schedule.ConflictsWith))
+        {
+            throw new DomainException("work_schedule.overlaps");
+        }
+
+        await unitOfWork.SaveChangesAsync(ct);
+        return AvailabilityConverter.ToResponse(schedule);
+    }
+}
+
 public sealed class RemoveWorkScheduleCommand(IWorkScheduleRepository schedules, IActorContext actor, IUnitOfWork unitOfWork)
 {
     public async Task ExecuteAsync(Guid scheduleId, CancellationToken ct = default)

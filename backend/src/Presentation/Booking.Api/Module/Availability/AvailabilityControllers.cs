@@ -23,6 +23,14 @@ public sealed class WorkSchedulesController : ControllerBase
     public async Task<IActionResult> Add(AddWorkScheduleRequest request, [FromServices] AddWorkScheduleCommand command, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await command.ExecuteAsync(request, ct));
 
+    /// <summary>409 <c>work_schedule.overlaps</c> se a nova faixa cruzar outra linha do mesmo profissional.</summary>
+    [HttpPut("{scheduleId:guid}")]
+    [ProducesResponseType<WorkScheduleResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Update(
+        Guid scheduleId, UpdateWorkScheduleRequest request, [FromServices] UpdateWorkScheduleCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(scheduleId, request, ct));
+
     [HttpDelete("{scheduleId:guid}")]
     public async Task<IActionResult> Remove(Guid scheduleId, [FromServices] RemoveWorkScheduleCommand command, CancellationToken ct)
     {

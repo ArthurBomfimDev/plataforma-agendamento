@@ -164,6 +164,7 @@ public static class DependencyInjection
         services.AddScoped<IAvailabilityService, AvailabilityService>();
 
         services.AddScoped<AddWorkScheduleCommand>();
+        services.AddScoped<UpdateWorkScheduleCommand>();
         services.AddScoped<RemoveWorkScheduleCommand>();
         services.AddScoped<AddScheduleExceptionCommand>();
         services.AddScoped<RemoveScheduleExceptionCommand>();
