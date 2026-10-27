@@ -222,7 +222,7 @@ As 4 hipóteses originais são de mercado e vão para limitações. Limiares dec
 |---|---|---|---|
 | RNF-01 | Busca com slots p95 ≤ 800 ms, 30 empresas | k6 | ⬜ Sem script, seed com 3 |
 | RNF-02 | Disponibilidade p95 ≤ 200 ms | Teste cronometrado | ⬜ |
-| RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | ✅ **Atendido nas condições medidas** (local, 27/10, uma instância da API): zero dupla reserva contra o endpoint real; com o lock por profissional (ADR-019), 20 de 20 execuções aprovadas, sem 500 e sem rodada sem vencedor. Custo: corrida de 50 de ≈ 180 ms para ≈ 480 ms (p50). Caminho do CI executado localmente; GitHub Actions com a correção ⚠️ a confirmar no PR. `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
+| RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | ✅ **Atendido nas condições medidas** (local, 27/10, uma instância da API): zero dupla reserva contra o endpoint real; com o lock por profissional (ADR-019), 20 de 20 execuções aprovadas, sem 500 e sem rodada sem vencedor. Custo: corrida de 50 de ≈ 180 ms para ≈ 480 ms (p50). Caminho do CI executado localmente e no GitHub Actions (PR #14: integração 20/20). `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
 | RNF-04 | Lighthouse mobile ≥ 85 perf, ≥ 95 a11y | CI | ⬜ |
 | RNF-05 | Busca → confirmação em ≤ 4 passos | Contagem | 🟡 Fluxo existe, contar |
 | RNF-06 | Argon2id, TLS, zero dado sensível em página pública | Checklist | 🟡 Argon2id feito |
@@ -305,7 +305,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 |---|---|---|---|
 | 1 | **Fatia vertical completa** | 🟡 Backend completo; front só do consumidor | Painel: onboarding, serviço, profissional, jornada, **pedidos pendentes**, **agenda do dia** |
 | 2 | Busca pública geográfica + disponibilidade | 🟡 Backend pronto | Resultados da busca ainda em mock |
-| 3 | **Prova de concorrência (RNF-03)** | ✅ Zero dupla reserva, isolamento de tenant (404) e disputa sem 500 observados; defeitos O e P corrigidos (aguardando revisão) | Confirmar no GitHub Actions; aceitar a ADR-019 |
+| 3 | **Prova de concorrência (RNF-03)** | ✅ Zero dupla reserva, isolamento de tenant (404) e disputa sem 500 observados; defeitos O e P corrigidos (aguardando revisão) | Aceitar a ADR-019 |
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
 | 5 | Autenticação, cadastro, recuperação de senha | 🟡 Backend pronto | Telas de recuperação e confirmação de e-mail |
 

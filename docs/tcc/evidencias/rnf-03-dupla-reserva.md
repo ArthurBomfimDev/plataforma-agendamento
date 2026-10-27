@@ -204,7 +204,7 @@ Mesmo do §1: 2026-10-27, local, Windows 11 Pro, Docker Desktop 29.9.2, .NET 10.
 - Banco em contêiner local, na mesma máquina do teste; latência de rede de um banco gerenciado não medida.
 - 20 execuções não sustentam afirmação estatística sobre a ausência do defeito; sustentam que ele não
   apareceu em 20 execuções seguidas, depois de aparecer em 5 de 5 antes.
-- ⚠️ não verificado: o CI do GitHub Actions com a correção — roda no PR da Onda 1.
+- No GitHub Actions, o CI do PR #14 (commit `31cee96`, com a correção) aprovou `Booking.IntegrationTests` 20 de 20, `Booking.ArchitectureTests` 28 de 28 e `Booking.UnitTests` 81 de 81, pelo serviço PostgreSQL do runner. Uma execução: não repete a medição de 20 vezes.
 
 ## 7. Como reproduzir
 
