@@ -57,6 +57,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [017](0017-intervalo-bloqueado-em-colunas-gravadas.md) | Intervalo bloqueado em colunas gravadas, não coluna gerada — complementa a 005 | 📝 Proposto | 2026-10-26 |
 | [018](0018-marca-vagoo-e-paleta-azul.md) | Marca Vagoo e paleta azul — revoga a proibição de azul | 📝 Proposto | 2026-10-26 |
 | [019](0019-serializacao-por-profissional-advisory-lock.md) | Serialização por profissional com advisory lock na criação de agendamento — complementa a 005 | 📝 Proposto | 2026-10-27 |
+| [020](0020-papel-de-admin-da-plataforma.md) | Papel de Admin da plataforma — complementa a 004 | 📝 Proposto | 2026-10-27 |
 
 ### Notas sobre a fila
 

@@ -21,6 +21,7 @@ public sealed class UserMapping : BaseMapping<User>
         builder.Property(x => x.FullName).HasMaxLength(150).IsRequired();
         builder.Property(x => x.EmailConfirmedAt);
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(x => x.IsPlatformAdmin).IsRequired();
 
         builder.HasIndex(x => x.Email).IsUnique();
     }

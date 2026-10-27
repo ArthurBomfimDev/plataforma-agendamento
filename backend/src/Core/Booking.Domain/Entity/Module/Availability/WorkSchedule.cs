@@ -24,15 +24,7 @@ public sealed class WorkSchedule : BaseEntity, IAuditable, ITenantScoped
     public static WorkSchedule Create(
         Guid businessId, Guid professionalId, DayOfWeek dayOfWeek, TimeOnly start, TimeOnly end, DateOnly effectiveFrom, DateOnly? effectiveTo)
     {
-        if (end <= start)
-        {
-            throw new DomainException("work_schedule.end_before_start");
-        }
-
-        if (effectiveTo is DateOnly to && to < effectiveFrom)
-        {
-            throw new DomainException("work_schedule.effective_range_invalid");
-        }
+        Validate(start, end, effectiveFrom, effectiveTo);
 
         return new WorkSchedule
         {
@@ -44,6 +36,34 @@ public sealed class WorkSchedule : BaseEntity, IAuditable, ITenantScoped
             EffectiveFrom = effectiveFrom,
             EffectiveTo = effectiveTo,
         };
+    }
+
+    /// <summary>
+    /// Muda dia, horário e vigência. O profissional não muda: jornada de outra pessoa é outra linha. A sobreposição
+    /// com as outras linhas do profissional é conferida por quem chama, como na criação.
+    /// </summary>
+    public void Update(DayOfWeek dayOfWeek, TimeOnly start, TimeOnly end, DateOnly effectiveFrom, DateOnly? effectiveTo)
+    {
+        Validate(start, end, effectiveFrom, effectiveTo);
+
+        DayOfWeek = dayOfWeek;
+        StartTime = start;
+        EndTime = end;
+        EffectiveFrom = effectiveFrom;
+        EffectiveTo = effectiveTo;
+    }
+
+    private static void Validate(TimeOnly start, TimeOnly end, DateOnly effectiveFrom, DateOnly? effectiveTo)
+    {
+        if (end <= start)
+        {
+            throw new DomainException("work_schedule.end_before_start");
+        }
+
+        if (effectiveTo is DateOnly to && to < effectiveFrom)
+        {
+            throw new DomainException("work_schedule.effective_range_invalid");
+        }
     }
 
     public bool AppliesOn(DateOnly date) =>

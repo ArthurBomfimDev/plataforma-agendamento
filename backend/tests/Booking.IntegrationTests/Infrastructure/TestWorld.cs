@@ -26,13 +26,28 @@ public sealed record TestService(Guid Id, int DurationMinutes);
 
 public sealed record TestBusiness(
     Guid Id,
+    string Name,
     string OwnerToken,
     IReadOnlyList<Guid> ProfessionalIds,
     IReadOnlyList<Guid> WorkScheduleIds,
     IReadOnlyList<TestService> Services);
 
-/// <summary>Serviço a criar: duração e buffers. O passo de grade é sempre 15 min.</summary>
-public sealed record ServiceSpec(int DurationMinutes, int BufferBeforeMinutes = 0, int BufferAfterMinutes = 0);
+/// <summary>Serviço a criar: duração, buffers, preço e nome. O passo de grade é sempre 15 min.</summary>
+public sealed record ServiceSpec(
+    int DurationMinutes, int BufferBeforeMinutes = 0, int BufferAfterMinutes = 0, long PriceCents = 5000, string? Name = null);
+
+/// <summary>Ponto do estabelecimento. O padrão é Garça-SP; a busca usa pontos próprios para não ver outros testes.</summary>
+public sealed record TestLocation(double Latitude, double Longitude)
+{
+    public static readonly TestLocation Garca = new(-22.2125, -49.6564);
+
+    /// <summary>Um ponto em lugar nenhum perto dos outros testes: cada teste de busca pega o seu.</summary>
+    public static TestLocation Isolated() =>
+        new(-10 - Random.Shared.NextDouble() * 5, -40 - Random.Shared.NextDouble() * 5);
+
+    /// <summary>A <paramref name="meters"/> metros ao norte (1° de latitude ≈ 111 km).</summary>
+    public TestLocation North(double meters) => this with { Latitude = Latitude + meters / 111_000 };
+}
 
 /// <summary>
 /// Monta os dados de cada teste com ids novos — nada é compartilhado entre testes, nada é truncado.
@@ -94,13 +109,15 @@ public sealed class TestWorld(IntegrationFixture fixture)
 
     // --- Estabelecimento ---
 
-    public async Task<TestBusiness> NewBusinessAsync(int professionals, ServiceSpec[] services, string category = "Beleza")
+    public async Task<TestBusiness> NewBusinessAsync(
+        int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true, TestLocation? location = null)
     {
         TestUser owner = await NewUserAsync("Dono de teste");
+        string name = $"Estabelecimento {Guid.NewGuid():N}"[..40];
 
         BusinessResponse business = await SendOkAsync<BusinessResponse>(
             HttpMethod.Post, "/api/businesses",
-            new RegisterBusinessRequest($"Estabelecimento {Guid.NewGuid():N}"[..40], Cnpj.Random(), category), owner.Token);
+            new RegisterBusinessRequest(name, Cnpj.Random(), category), owner.Token);
 
         // O token precisa carregar o estabelecimento ativo para as rotas `businesses/current` (ADR-004).
         ContextTokenResponse context = await SendOkAsync<ContextTokenResponse>(
@@ -110,7 +127,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/address",
             new UpdateAddressRequest("Rua de Teste", "100", "Centro", "Garça", "SP", "17400000"), token);
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/location",
-            new ConfirmLocationRequest(-22.2125, -49.6564, "Rooftop", "integration-test"), token);
+            new ConfirmLocationRequest((location ?? TestLocation.Garca).Latitude, (location ?? TestLocation.Garca).Longitude, "Rooftop", "integration-test"), token);
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/scheduling-policy",
             new UpdateSchedulingPolicyRequest(
                 AutoConfirm: false, PendingExpirationHours: 12, MinLeadTimeHours: 2, BookingHorizonDays: 60,
@@ -143,8 +160,8 @@ public sealed class TestWorld(IntegrationFixture fixture)
             ServiceResponse service = await SendOkAsync<ServiceResponse>(
                 HttpMethod.Post, "/api/businesses/current/services",
                 new SaveServiceRequest(
-                    $"Serviço {spec.DurationMinutes} min", null, spec.DurationMinutes, spec.BufferBeforeMinutes,
-                    spec.BufferAfterMinutes, SlotStepMinutes: 15, PriceCents: 5000, SuppliesNote: null), token);
+                    spec.Name ?? $"Serviço {spec.DurationMinutes} min", null, spec.DurationMinutes, spec.BufferBeforeMinutes,
+                    spec.BufferAfterMinutes, SlotStepMinutes: 15, PriceCents: spec.PriceCents, SuppliesNote: null), token);
             createdServices.Add(new TestService(service.Id, spec.DurationMinutes));
 
             foreach (Guid professionalId in professionalIds)
@@ -155,20 +172,32 @@ public sealed class TestWorld(IntegrationFixture fixture)
         }
 
         await SendOkAsync(HttpMethod.Post, "/api/businesses/current/submit", null, token);
-        await ApproveAsync(business.Id);
 
-        return new TestBusiness(business.Id, token, professionalIds, scheduleIds, createdServices);
+        if (approve)
+        {
+            TestUser admin = await NewAdminAsync();
+            await SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/approve", new AdminDecisionRequest("Aprovado no teste"), admin.Token);
+        }
+
+        return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices);
     }
 
-    /// <summary>Aprovar (PendingReview → Active) é papel do Admin, que ainda não tem endpoint — como no seed-demo.</summary>
-    private async Task ApproveAsync(Guid businessId)
+    /// <summary>
+    /// Admin da plataforma (ADR-020). O papel nunca é concedido por endpoint: aqui, pelo domínio direto no banco,
+    /// como faria o seed.
+    /// </summary>
+    public async Task<TestUser> NewAdminAsync()
     {
         await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
         BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
 
-        Business business = await db.Set<Business>().SingleAsync(b => b.Id == businessId);
-        business.Approve();
+        User user = User.Create(Email.Of($"it-admin-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, "Admin de teste");
+        user.GrantPlatformAdmin();
+        db.Add(user);
         await db.SaveChangesAsync();
+
+        return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value);
     }
 
     // --- Agendamento ---

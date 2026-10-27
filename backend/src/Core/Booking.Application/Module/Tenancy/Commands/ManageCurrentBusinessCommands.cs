@@ -89,38 +89,13 @@ public sealed class ConfirmLocationCommand(CurrentBusinessLoader loader, IUnitOf
 }
 
 /// <summary>Envia para análise depois de conferir a checklist de ativação nos outros módulos.</summary>
-public sealed class SubmitBusinessCommand(
-    CurrentBusinessLoader loader,
-    IServiceCatalog catalog,
-    IPeopleDirectory people,
-    IAvailabilityService availability,
-    IUnitOfWork unitOfWork)
+public sealed class SubmitBusinessCommand(CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(CancellationToken ct = default)
     {
         Business business = await loader.LoadForOwnerAsync(ct);
 
-        List<string> missing = [];
-
-        if (business.LocationConfirmedAt is null)
-        {
-            missing.Add("location_confirmed");
-        }
-
-        if (await people.CountActiveProfessionalsAsync(business.Id, ct) == 0)
-        {
-            missing.Add("professional");
-        }
-
-        if (!await catalog.HasBookableServiceAsync(business.Id, ct))
-        {
-            missing.Add("service_with_professional");
-        }
-
-        if (!await availability.HasWorkScheduleAsync(business.Id, ct))
-        {
-            missing.Add("work_schedule");
-        }
+        IReadOnlyList<string> missing = await checklist.MissingForSubmitAsync(business, ct);
 
         if (missing.Count > 0)
         {

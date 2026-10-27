@@ -206,6 +206,21 @@ Mesmo do §1: 2026-10-27, local, Windows 11 Pro, Docker Desktop 29.9.2, .NET 10.
   apareceu em 20 execuções seguidas, depois de aparecer em 5 de 5 antes.
 - No GitHub Actions, o CI do PR #14 (commit `31cee96`, com a correção) aprovou `Booking.IntegrationTests` 20 de 20, `Booking.ArchitectureTests` 28 de 28 e `Booking.UnitTests` 81 de 81, pelo serviço PostgreSQL do runner. Uma execução: não repete a medição de 20 vezes.
 
+### 6.6 Janela que a correção P deixou aberta (encontrada em 27/10, na Onda 2)
+
+**Evidência.** Numa execução da suíte inteira da Onda 2, o C2 reprovou com 409 × 19 e 201 × 1, depois de
+ter aprovado nas 20 execuções da §6.3. O comando confere a chave, depois a disponibilidade (`SlotGuard`) e
+só então grava; a correção de `1535428` tratou só a recusa na gravação. Se a requisição vencedora grava
+entre a conferência da chave e o `SlotGuard`, as outras eram recusadas ali.
+
+**Correção** (`8761048`): o `SlotGuard` recusando, o comando procura a mesma chave antes de responder 409.
+Depois dela, `Booking.IntegrationTests` (39 casos) aprovou em 10 de 10 execuções seguidas, com o C2 em
+201 × 20 e 1 linha em todas.
+
+**Interpretação.** A janela depende da ordem de chegada das requisições e não é provocável de forma
+determinística sem mudar o código de produção; 20 execuções aprovadas não a revelaram. A prova da
+correção é repetição, com o mesmo limite estatístico da §6.5.
+
 ## 7. Como reproduzir
 
 ```bash

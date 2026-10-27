@@ -27,6 +27,22 @@ public sealed class AppointmentRepository(BookingDbContext context) : IAppointme
             .OrderBy(x => x.StartsAt)
             .ToPagedAsync(page, ct);
 
+    public Task<PagedResult<Appointment>> ListActiveInRangeAsync(
+        Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc, PageRequest page, CancellationToken ct = default) =>
+        ActiveInRange(professionalId, fromUtc, toUtc).AsNoTracking().ToPagedAsync(page, ct);
+
+    public async Task<IReadOnlyList<Appointment>> ListActiveInRangeForUpdateAsync(
+        Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc, int limit, CancellationToken ct = default) =>
+        await ActiveInRange(professionalId, fromUtc, toUtc).Take(limit).ToListAsync(ct);
+
+    // Filtro de tenant ligado: só o estabelecimento do token.
+    private IQueryable<Appointment> ActiveInRange(Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc) =>
+        context.Set<Appointment>()
+            .Where(x => x.Status == AppointmentStatus.Pending || x.Status == AppointmentStatus.Confirmed)
+            .Where(x => x.StartsAt < toUtc && x.EndsAt > fromUtc)
+            .Where(x => professionalId == null || x.ProfessionalId == professionalId)
+            .OrderBy(x => x.StartsAt);
+
     public Task<PagedResult<Appointment>> ListPendingAsync(Guid? professionalId, PageRequest page, CancellationToken ct = default) =>
         context.Set<Appointment>().AsNoTracking()
             .Where(x => x.Status == AppointmentStatus.Pending)

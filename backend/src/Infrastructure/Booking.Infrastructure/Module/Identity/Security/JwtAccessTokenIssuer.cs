@@ -36,6 +36,12 @@ public sealed class JwtAccessTokenIssuer(IOptions<JwtOptions> options) : IAccess
             claims.Add(new Claim(TenantClaims.ActiveContext, context.Role));
         }
 
+        // O papel de plataforma vem do banco a cada emissão: revogar no banco vale a partir do próximo token.
+        if (user.IsPlatformAdmin)
+        {
+            claims.Add(new Claim(PlatformClaims.Role, PlatformClaims.AdminRole));
+        }
+
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _options.Issuer,

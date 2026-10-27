@@ -45,6 +45,22 @@ public sealed class AvailabilityDomainTests
     }
 
     [Fact]
+    public void Editing_a_schedule_keeps_the_creation_rules_and_its_identity()
+    {
+        WorkSchedule morning = Schedule(new(9, 0), new(12, 0));
+        Guid id = morning.Id;
+
+        morning.Update(DayOfWeek.Monday, new(8, 0), new(13, 0), new(2026, 1, 1), null);
+
+        Assert.Equal(id, morning.Id);
+        Assert.True(morning.ConflictsWith(Schedule(new(12, 30), new(14, 0))));
+        Assert.Equal("work_schedule.end_before_start",
+            Assert.Throws<DomainException>(() => morning.Update(DayOfWeek.Monday, new(13, 0), new(8, 0), new(2026, 1, 1), null)).Code);
+        Assert.Equal("work_schedule.effective_range_invalid",
+            Assert.Throws<DomainException>(() => morning.Update(DayOfWeek.Monday, new(8, 0), new(9, 0), new(2026, 6, 1), new(2026, 1, 1))).Code);
+    }
+
+    [Fact]
     public void Schedules_with_disjoint_validity_do_not_conflict()
     {
         WorkSchedule until = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(9, 0), new(12, 0), new(2026, 1, 1), new(2026, 6, 30));

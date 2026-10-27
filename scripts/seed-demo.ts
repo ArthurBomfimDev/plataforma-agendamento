@@ -2,8 +2,9 @@
  * Popula o ambiente local com dados de DEMONSTRAÇÃO — estabelecimentos fictícios, não dado real.
  *
  * Usa a própria API para tudo (cadastro, estabelecimento, profissionais, serviços, jornada), então
- * passa pelas mesmas regras que o app. A única exceção é a aprovação do estabelecimento, que é papel
- * do Admin e ainda não tem endpoint: é feita por SQL direto no container do banco.
+ * passa pelas mesmas regras que o app — inclusive a aprovação, feita pelo Admin de demonstração em
+ * `api/admin/businesses`. A única escrita direta é conceder o papel de Admin, por SQL no container do
+ * banco: por decisão (ADR-020), esse papel nunca é concedido por endpoint.
  *
  * Uso (com `docker compose up` rodando):   bun scripts/seed-demo.ts
  * Idempotente: se as contas de demonstração já existem, não cria nada de novo.
@@ -133,6 +134,9 @@ const BUSINESSES: DemoBusiness[] = [
 ]
 
 const CUSTOMER = { fullName: 'Ana Consumidora', email: 'consumidor@exemplo.com', birthDate: '1995-05-10' }
+
+/** Admin da plataforma de demonstração — credencial de teste do ambiente local, como as outras. */
+const ADMIN = { fullName: 'Admin de Demonstração', email: 'admin@exemplo.com' }
 
 /** Seg a sex 09:00–18:00, sáb 09:00–13:00. `DayOfWeek` do .NET: 0 = domingo. */
 const WEEK: { day: number; start: string; end: string }[] = [
@@ -264,17 +268,41 @@ async function seedCustomer() {
   console.log('  criado com perfil de consumidor')
 }
 
-/** Aprovação = papel do Admin, sem endpoint ainda. Só no banco local do Docker. */
-function approvePendingBusinesses() {
-  const sql = `UPDATE tenancy.business SET status = 'Active', verification_level = 'Verified' WHERE status = 'PendingReview';`
+/**
+ * O papel de Admin da plataforma nunca é concedido por endpoint (ADR-020): só por SQL no banco. Esta é a única
+ * escrita direta do seed, e só no banco local do Docker.
+ */
+function grantPlatformAdmin(email: string) {
+  const sql = `UPDATE identity."user" SET is_platform_admin = true WHERE email = '${email}';`
   const result = Bun.spawnSync(
-    ['docker', 'compose', 'exec', '-T', 'db', 'sh', '-c', `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "${sql}"`],
+    ['docker', 'compose', 'exec', '-T', 'db', 'sh', '-c', `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "${sql.replace(/"/g, '\\"')}"`],
     { stdout: 'pipe', stderr: 'pipe' },
   )
   if (result.exitCode !== 0) {
-    throw new Error(`Falha ao aprovar no banco: ${result.stderr.toString()}`)
+    throw new Error(`Falha ao conceder o papel de Admin: ${result.stderr.toString()}`)
   }
-  console.log(`• Aprovação no banco: ${result.stdout.toString().trim()}`)
+}
+
+/** O Admin de demonstração aprova pela API tudo o que estiver em análise. */
+async function approvePendingBusinesses() {
+  console.log(`• Admin ${ADMIN.email}`)
+  await registerAndLogin(ADMIN.fullName, ADMIN.email)
+  grantPlatformAdmin(ADMIN.email)
+
+  // O token só carrega o papel depois de concedido: entra de novo.
+  const { accessToken } = await call<{ accessToken: string }>('POST', '/api/auth/login', { email: ADMIN.email, password: DEMO_PASSWORD })
+
+  const pending = await call<{ items: { id: string; name: string }[] }>(
+    'GET',
+    '/api/admin/businesses?status=PendingReview&pageSize=100',
+    undefined,
+    accessToken,
+  )
+  for (const business of pending.items) {
+    await call('POST', `/api/admin/businesses/${business.id}/approve`, { note: 'Aprovado pelo seed de demonstração' }, accessToken)
+    console.log(`  aprovado: ${business.name}`)
+  }
+  if (pending.items.length === 0) console.log('  nada em análise')
 }
 
 async function main() {
@@ -287,11 +315,12 @@ async function main() {
     await seedBusiness(business)
   }
   await seedCustomer()
-  approvePendingBusinesses()
+  await approvePendingBusinesses()
 
   console.log(`\nPronto. Contas de demonstração (senha: ${DEMO_PASSWORD}):`)
   console.log(`  consumidor   ${CUSTOMER.email}`)
   for (const { owner, name } of BUSINESSES) console.log(`  dono         ${owner.email}  (${name})`)
+  console.log(`  admin        ${ADMIN.email}`)
 }
 
 main().catch((error) => {

@@ -21,7 +21,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearer>();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder().AddBookingPolicies();
 
 // Freio de força bruta nas rotas de autenticação: 10 requisições por minuto por IP.
 builder.Services.AddRateLimiter(limiter =>

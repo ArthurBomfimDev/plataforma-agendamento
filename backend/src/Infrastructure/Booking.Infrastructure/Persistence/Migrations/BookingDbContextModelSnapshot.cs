@@ -455,6 +455,10 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(150)")
                         .HasColumnName("full_name");
 
+                    b.Property<bool>("IsPlatformAdmin")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_platform_admin");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)

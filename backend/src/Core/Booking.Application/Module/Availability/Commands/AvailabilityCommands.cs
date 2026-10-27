@@ -1,6 +1,7 @@
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.People;
+using Booking.Application.Contracts.Scheduling;
 using Booking.Application.Module.Availability.Converter;
 using Booking.Arguments.Module.Availability;
 using Booking.Domain.Entity.Base;
@@ -44,6 +45,33 @@ public sealed class AddWorkScheduleCommand(
     }
 }
 
+/// <summary>
+/// Edição da jornada, com a mesma invariante da criação (<c>work_schedule.overlaps</c>). Não mexe em agendamento
+/// já marcado: um pedido que fique fora da jornada nova continua de pé, como no bloqueio com "manter".
+/// </summary>
+public sealed class UpdateWorkScheduleCommand(IWorkScheduleRepository schedules, IActorContext actor, IUnitOfWork unitOfWork)
+{
+    public async Task<WorkScheduleResponse> ExecuteAsync(Guid scheduleId, UpdateWorkScheduleRequest r, CancellationToken ct = default)
+    {
+        Guid businessId = actor.RequireOwner();
+
+        // Filtro de tenant: jornada de outro estabelecimento não existe para este dono (404).
+        WorkSchedule schedule = await schedules.GetByIdAsync(scheduleId, ct) ?? throw new DomainException("work_schedule.not_found");
+
+        schedule.Update(r.DayOfWeek, r.StartTime, r.EndTime, r.EffectiveFrom, r.EffectiveTo);
+
+        IReadOnlyList<WorkSchedule> others = await schedules.ListOfProfessionalAsync(businessId, schedule.ProfessionalId, ct);
+
+        if (others.Any(schedule.ConflictsWith))
+        {
+            throw new DomainException("work_schedule.overlaps");
+        }
+
+        await unitOfWork.SaveChangesAsync(ct);
+        return AvailabilityConverter.ToResponse(schedule);
+    }
+}
+
 public sealed class RemoveWorkScheduleCommand(IWorkScheduleRepository schedules, IActorContext actor, IUnitOfWork unitOfWork)
 {
     public async Task ExecuteAsync(Guid scheduleId, CancellationToken ct = default)
@@ -58,12 +86,18 @@ public sealed class RemoveWorkScheduleCommand(IWorkScheduleRepository schedules,
 }
 
 /// <summary>
-/// Bloqueio não cancela o que já está marcado: a tela mostra os agendamentos afetados e o dono decide
-/// (padrão "manter os existentes"). Aqui só se registra o bloqueio para novos pedidos.
+/// Bloqueio de período. Quando há agendamentos dentro dele, o dono escolhe (PROJECT-CONTEXT §5): manter os
+/// existentes (padrão) ou cancelar todos. "Voltar e ajustar" é a tela não enviar — ela consulta a prévia antes.
+/// Com "cancelar todos", o bloqueio e os cancelamentos são gravados no mesmo <c>SaveChanges</c>: tudo ou nada.
 /// </summary>
+/// <remarks>
+/// Não há aviso ao consumidor: o módulo de notificações está fora do recorte. O cancelamento aparece em
+/// "Meus agendamentos" pelo estado e pelo motivo.
+/// </remarks>
 public sealed class AddScheduleExceptionCommand(
     IScheduleExceptionRepository exceptions,
     IPeopleDirectory people,
+    IAffectedAppointments affected,
     IActorContext actor,
     IUnitOfWork unitOfWork)
 {
@@ -76,18 +110,43 @@ public sealed class AddScheduleExceptionCommand(
             throw new DomainException("schedule_exception.kind_invalid");
         }
 
+        bool cancelAll = ParseChoice(r.ExistingAppointments);
+
+        if (cancelAll && kind == ScheduleExceptionKind.ExtraShift)
+        {
+            // Turno extra soma horário: não há agendamento para tirar do caminho.
+            throw new DomainException("schedule_exception.cancel_requires_block");
+        }
+
+        if (cancelAll && string.IsNullOrWhiteSpace(r.CancellationReason))
+        {
+            throw new DomainException("schedule_exception.cancellation_reason_required");
+        }
+
         if (r.ProfessionalId is Guid professionalId && await people.GetProfessionalAsync(businessId, professionalId, ct) is null)
         {
             throw new DomainException("professional.not_found");
         }
 
         ScheduleException exception = ScheduleException.Create(businessId, r.ProfessionalId, kind, TimeRange.Of(r.StartsAt, r.EndsAt), r.Reason);
-
         exceptions.Add(exception);
+
+        int cancelled = cancelAll
+            ? await affected.StageCancellationAsync(r.ProfessionalId, exception.StartsAt, exception.EndsAt, r.CancellationReason!.Trim(), ct)
+            : 0;
+
         await unitOfWork.SaveChangesAsync(ct);
 
-        return AvailabilityConverter.ToResponse(exception);
+        return AvailabilityConverter.ToResponse(exception) with { CancelledAppointments = cancelled };
     }
+
+    private static bool ParseChoice(string? choice) => choice?.Trim() switch
+    {
+        null or "" => false,
+        _ when choice.Trim().Equals("Keep", StringComparison.OrdinalIgnoreCase) => false,
+        _ when choice.Trim().Equals("CancelAll", StringComparison.OrdinalIgnoreCase) => true,
+        _ => throw new DomainException("schedule_exception.existing_appointments_invalid"),
+    };
 }
 
 public sealed class RemoveScheduleExceptionCommand(IScheduleExceptionRepository exceptions, IActorContext actor, IUnitOfWork unitOfWork)

@@ -9,4 +9,7 @@ public interface IActorContext
 
     /// <summary><c>Owner</c> ou <c>Professional</c>; nulo quando o token não tem contexto de estabelecimento.</summary>
     string? BusinessRole { get; }
+
+    /// <summary>Admin da plataforma (ADR-020), pela claim <see cref="PlatformClaims.Role"/> do token.</summary>
+    bool IsPlatformAdmin { get; }
 }
