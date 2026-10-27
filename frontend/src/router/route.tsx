@@ -9,6 +9,7 @@ import { BusinessDetailRoute } from './business-detail-route'
 import { ChooseProfessionalRoute } from './choose-professional-route'
 import { HomeScreen } from '@features/home'
 import { NotFoundScreen } from '@features/not-found'
+import { PanelAgendaRoute } from './panel-agenda-route'
 import { ROUTES } from './consts'
 import { SignInRoute } from './sign-in-route'
 
@@ -34,6 +35,8 @@ export const AppRoutes = () => {
       </Route>
       {/* Fora da moldura: a tela de entrar não tem barra superior. */}
       <Route path={ROUTES.signIn} element={<SignInRoute />} />
+      {/* O painel tem a própria navegação: lateral no desktop, inferior no celular. */}
+      <Route path={ROUTES.panel} element={<PanelAgendaRoute />} />
     </Routes>
   )
 }

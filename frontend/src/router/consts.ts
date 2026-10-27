@@ -9,6 +9,8 @@ export const ROUTES = {
   bookingSent: '/businesses/:businessId/services/:serviceId/sent',
   appointments: '/appointments',
   signIn: '/sign-in',
+  /** Painel do estabelecimento: agenda do dia (tela 09). */
+  panel: '/panel',
 } as const
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */

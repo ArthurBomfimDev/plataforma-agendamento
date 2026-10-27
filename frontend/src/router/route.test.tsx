@@ -72,6 +72,13 @@ describe('AppRoutes', () => {
     expect(renderAt('/appointments')).toContain('Meus agendamentos')
   })
 
+  it('abre a agenda do dia do painel em /panel', () => {
+    const html = renderAt('/panel')
+
+    expect(html).toContain('Agenda de hoje')
+    expect(html).toContain('Painel do estabelecimento')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })
