@@ -56,6 +56,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [016](0016-geocodificacao-porta-e-confirmacao.md) | Geocodificação: porta, provedor por fase e confirmação pelo dono | 📝 Proposto | 2026-10-26 |
 | [017](0017-intervalo-bloqueado-em-colunas-gravadas.md) | Intervalo bloqueado em colunas gravadas, não coluna gerada — complementa a 005 | 📝 Proposto | 2026-10-26 |
 | [018](0018-marca-vagoo-e-paleta-azul.md) | Marca Vagoo e paleta azul — revoga a proibição de azul | 📝 Proposto | 2026-10-26 |
+| [019](0019-serializacao-por-profissional-advisory-lock.md) | Serialização por profissional com advisory lock na criação de agendamento — complementa a 005 | 📝 Proposto | 2026-10-27 |
 
 ### Notas sobre a fila
 
@@ -77,5 +78,8 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
   (`docs/produto/decisoes-localizacao-notificacao-modelo.md`); a 017 registra o que a migration
   `AddCoreModules` fez no lugar da coluna gerada; a 018, a marca de 09/10. Entram como `Proposto`: quem
   aceita é humano.
+- **005 e 019 são par.** A 005 põe a garantia contra dupla reserva na constraint de exclusão; a 019 ordena
+  a fila por profissional com `pg_advisory_xact_lock`, porque o teste de integração mostrou deadlock (`40P01`)
+  na checagem da constraint sob disputa. A constraint continua sendo quem recusa a sobreposição.
 - **009 tem peso acadêmico próprio**: paridade mobile como decisão de inclusão digital entra
   no capítulo de justificativa, não só no de arquitetura.
