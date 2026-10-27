@@ -18,12 +18,29 @@ public sealed record UpdateWorkScheduleRequest(
     DateOnly EffectiveFrom,
     DateOnly? EffectiveTo);
 
+/// <summary>
+/// <c>ExistingAppointments</c>: <c>Keep</c> (padrão) mantém os agendamentos que caem no período; <c>CancelAll</c>
+/// cancela todos, com <c>CancellationReason</c> obrigatório, na mesma transação do bloqueio. "Voltar e ajustar"
+/// é não enviar: a tela usa a prévia (<c>affected-appointments</c>) antes de decidir.
+/// </summary>
 public sealed record AddScheduleExceptionRequest(
     Guid? ProfessionalId,
     string Kind,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
-    string? Reason);
+    string? Reason,
+    string? ExistingAppointments = null,
+    string? CancellationReason = null);
+
+/// <summary>Agendamento que cai no período de um bloqueio — a prévia que a tela mostra antes da escolha.</summary>
+public sealed record AffectedAppointmentResponse(
+    Guid Id,
+    Guid ProfessionalId,
+    string ServiceName,
+    DateTimeOffset StartsAt,
+    DateTimeOffset EndsAt,
+    string Status,
+    string? AttendeeName);
 
 public sealed record WorkScheduleResponse(
     Guid Id,
@@ -34,13 +51,15 @@ public sealed record WorkScheduleResponse(
     DateOnly EffectiveFrom,
     DateOnly? EffectiveTo);
 
+/// <summary><c>CancelledAppointments</c>: quantos agendamentos o bloqueio cancelou ou recusou (0 com <c>Keep</c>).</summary>
 public sealed record ScheduleExceptionResponse(
     Guid Id,
     Guid? ProfessionalId,
     string Kind,
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
-    string? Reason);
+    string? Reason,
+    int CancelledAppointments = 0);
 
 /// <summary>Horários livres de um dia. <c>Holiday</c> preenchido quando a data é feriado nacional, mesmo que haja horário.</summary>
 public sealed record AvailableSlotsResponse(

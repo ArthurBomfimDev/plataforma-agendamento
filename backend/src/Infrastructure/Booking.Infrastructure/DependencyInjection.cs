@@ -19,6 +19,7 @@ using Booking.Application.Module.Identity.Queries;
 using Booking.Application.Module.People.Commands;
 using Booking.Application.Module.People.Queries;
 using Booking.Application.Module.Scheduling.Commands;
+using Booking.Application.Module.Scheduling.Integration;
 using Booking.Application.Module.Scheduling.Queries;
 using Booking.Application.Module.Tenancy.Commands;
 using Booking.Application.Module.Tenancy.Queries;
@@ -170,6 +171,7 @@ public static class DependencyInjection
         services.AddScoped<RemoveScheduleExceptionCommand>();
         services.AddScoped<ListWorkSchedulesQuery>();
         services.AddScoped<ListScheduleExceptionsQuery>();
+        services.AddScoped<PreviewAffectedAppointmentsQuery>();
         services.AddScoped<GetAvailableSlotsQuery>();
         services.AddScoped<GetAvailabilityCalendarQuery>();
     }
@@ -178,6 +180,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IAgendaOccupancy, AgendaOccupancy>();
+        services.AddScoped<IAffectedAppointments, AffectedAppointmentsService>();
 
         services.AddScoped<AppointmentAccess>();
         services.AddScoped<SlotGuard>();

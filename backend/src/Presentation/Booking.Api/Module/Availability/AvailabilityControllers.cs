@@ -50,6 +50,23 @@ public sealed class ScheduleExceptionsController : ControllerBase
         [FromServices] ListScheduleExceptionsQuery query, CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) =>
         Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
 
+    /// <summary>Prévia do bloqueio: agendamentos pendentes e confirmados que cairiam no período. Não grava nada.</summary>
+    [HttpGet("affected-appointments")]
+    [ProducesResponseType<PagedResult<AffectedAppointmentResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AffectedAppointments(
+        [FromQuery] DateTimeOffset startsAt,
+        [FromQuery] DateTimeOffset endsAt,
+        [FromServices] PreviewAffectedAppointmentsQuery query,
+        CancellationToken ct,
+        [FromQuery] Guid? professionalId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await query.ExecuteAsync(professionalId, startsAt, endsAt, new PageRequest(page, pageSize), ct));
+
+    /// <summary>
+    /// <c>existingAppointments</c>: <c>Keep</c> (padrão) ou <c>CancelAll</c> (com <c>cancellationReason</c>). Com
+    /// <c>CancelAll</c>, o bloqueio e os cancelamentos são gravados juntos.
+    /// </summary>
     [HttpPost]
     [ProducesResponseType<ScheduleExceptionResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Add(
