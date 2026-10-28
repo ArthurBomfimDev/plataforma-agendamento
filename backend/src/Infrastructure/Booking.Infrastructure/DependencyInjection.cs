@@ -99,7 +99,10 @@ public static class DependencyInjection
             .Validate(o => o.AccessTokenMinutes is > 0 and <= 60, "Jwt:AccessTokenMinutes deve ficar entre 1 e 60.")
             .ValidateOnStart();
 
-        services.AddSingleton(new IdentityPolicy());
+        services.AddSingleton(new IdentityPolicy
+        {
+            RequireEmailConfirmation = configuration.GetValue("Identity:RequireEmailConfirmation", defaultValue: true),
+        });
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
@@ -115,6 +118,7 @@ public static class DependencyInjection
         services.AddScoped<RefreshSessionCommand>();
         services.AddScoped<LogoutCommand>();
         services.AddScoped<ConfirmEmailCommand>();
+        services.AddScoped<ResendConfirmationCommand>();
         services.AddScoped<ForgotPasswordCommand>();
         services.AddScoped<ResetPasswordCommand>();
         services.AddScoped<SwitchContextCommand>();
