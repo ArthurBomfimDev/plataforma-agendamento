@@ -1,7 +1,9 @@
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
+using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.Scheduling;
 using Booking.Application.Module.Scheduling.Commands;
+using Booking.Application.Module.Scheduling.Converter;
 using Booking.Domain.Entity.Base;
 using Booking.Domain.Entity.Module.Scheduling;
 using Booking.Domain.Enum.Module.Scheduling;
@@ -17,6 +19,7 @@ namespace Booking.Application.Module.Scheduling.Integration;
 public sealed class AffectedAppointmentsService(
     IAppointmentRepository appointments,
     AppointmentAccess access,
+    IAppointmentNotifier notifier,
     IActorContext actor,
     IUnitOfWork unitOfWork,
     TimeProvider clock) : IAffectedAppointments
@@ -66,16 +69,22 @@ public sealed class AffectedAppointmentsService(
         {
             // O estabelecimento cancela o que confirmou e recusa o que ainda estava pendente: são as transições
             // que a máquina de estados permite a ele. As duas liberam o horário.
+            AppointmentChange change;
             if (appointment.Status == AppointmentStatus.Confirmed)
             {
                 appointment.CancelByBusiness(by, now, reason);
+                change = AppointmentChange.CancelledByBusiness;
             }
             else
             {
                 appointment.Reject(by, now, reason);
+                change = AppointmentChange.Rejected;
             }
 
             access.LogIfSensitive(appointment, "cancel_by_block");
+
+            // Na outbox, no mesmo SaveChanges do bloqueio: tudo ou nada vale também para o aviso.
+            await notifier.NotifyAsync(AppointmentConverter.ToFacts(appointment), change, ct);
         }
 
         return affected.Count;

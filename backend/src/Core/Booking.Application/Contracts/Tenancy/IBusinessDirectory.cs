@@ -14,9 +14,30 @@ public sealed record BusinessSchedulingInfo(
     int BookingHorizonDays,
     int CancellationWindowHours);
 
+/// <summary>
+/// O que um aviso ao consumidor mostra do estabelecimento. Ponto só quando confirmado pelo dono (ADR-016): sem ele,
+/// o e-mail não traz link de mapa.
+/// </summary>
+public sealed record BusinessContactInfo(
+    Guid BusinessId,
+    string Name,
+    string? AddressLine,
+    double? Latitude,
+    double? Longitude,
+    string TimeZone,
+    bool RequiresSensitiveHandling);
+
 /// <summary>Superfície pública do módulo Tenancy.</summary>
 public interface IBusinessDirectory
 {
+    Task<BusinessContactInfo?> GetContactInfoAsync(Guid businessId, CancellationToken ct = default);
+
+    /// <summary>Contas com vínculo ativo de dono no estabelecimento.</summary>
+    Task<IReadOnlyList<Guid>> ListActiveOwnerUserIdsAsync(Guid businessId, CancellationToken ct = default);
+
+    /// <summary>Conta por trás de um vínculo ativo, ou nulo se o vínculo não existe ou não está ativo.</summary>
+    Task<Guid?> FindActiveMembershipUserIdAsync(Guid businessId, Guid membershipId, CancellationToken ct = default);
+
     /// <summary>Vínculo ativo do usuário com o estabelecimento, sem depender do tenant do token.</summary>
     Task<BusinessMembershipInfo?> FindActiveMembershipAsync(Guid businessId, Guid userId, CancellationToken ct = default);
 

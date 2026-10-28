@@ -3,6 +3,7 @@ using Booking.Application.Contracts.Availability;
 using Booking.Application.Contracts.Catalog;
 using Booking.Application.Contracts.Compliance;
 using Booking.Application.Contracts.Identity;
+using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.People;
 using Booking.Application.Contracts.Scheduling;
 using Booking.Application.Contracts.Tenancy;
@@ -16,6 +17,9 @@ using Booking.Application.Module.Compliance.Integration;
 using Booking.Application.Module.Compliance.Queries;
 using Booking.Application.Module.Identity.Commands;
 using Booking.Application.Module.Identity.Queries;
+using Booking.Application.Module.Notifications.Commands;
+using Booking.Application.Module.Notifications.Email;
+using Booking.Application.Module.Notifications.Integration;
 using Booking.Application.Module.People.Commands;
 using Booking.Application.Module.People.Queries;
 using Booking.Application.Module.Scheduling.Commands;
@@ -27,6 +31,7 @@ using Booking.Domain.Interface.Repository.Module.Availability;
 using Booking.Domain.Interface.Repository.Module.Catalog;
 using Booking.Domain.Interface.Repository.Module.Compliance;
 using Booking.Domain.Interface.Repository.Module.Identity;
+using Booking.Domain.Interface.Repository.Module.Notifications;
 using Booking.Domain.Interface.Repository.Module.People;
 using Booking.Domain.Interface.Repository.Module.Scheduling;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
@@ -37,6 +42,8 @@ using Booking.Infrastructure.Module.Compliance.Repository;
 using Booking.Infrastructure.Module.Identity;
 using Booking.Infrastructure.Module.Identity.Repository;
 using Booking.Infrastructure.Module.Identity.Security;
+using Booking.Infrastructure.Module.Notifications;
+using Booking.Infrastructure.Module.Notifications.Repository;
 using Booking.Infrastructure.Module.People;
 using Booking.Infrastructure.Module.People.Repository;
 using Booking.Infrastructure.Module.Scheduling;
@@ -47,14 +54,15 @@ using Booking.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Booking.Infrastructure;
 
 public static class DependencyInjection
 {
     /// <param name="isDevelopment">
-    /// Só o que muda por ambiente dentro da infraestrutura. O padrão é o lado seguro: fora de Development, nenhum token
-    /// de e-mail vai para o log.
+    /// Só o que muda por ambiente dentro da infraestrutura: em Development, sem SMTP configurado, o e-mail vai para o
+    /// Mailpit local. Fora dele, sem SMTP a API não sobe (ADR-021). O padrão é o lado exigente.
     /// </param>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, bool isDevelopment = false)
     {
@@ -69,18 +77,19 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<BookingDbContext>());
         services.AddSingleton(TimeProvider.System);
 
-        services.AddIdentityModule(configuration, isDevelopment);
+        services.AddIdentityModule(configuration);
         services.AddTenancyModule();
         services.AddPeopleModule();
         services.AddCatalogModule();
         services.AddAvailabilityModule();
         services.AddSchedulingModule();
         services.AddComplianceModule();
+        services.AddNotificationsModule(configuration, isDevelopment);
 
         return services;
     }
 
-    private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
+    private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
@@ -94,8 +103,6 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
-        services.AddSingleton(new IdentityMailerSettings(LogRawTokens: isDevelopment));
-        services.AddSingleton<IIdentityMailer, LoggingIdentityMailer>();
         services.AddScoped<IUserDirectory, UserDirectory>();
 
         services.AddScoped<IUserRepository, UserRepository>();
@@ -211,5 +218,60 @@ public static class DependencyInjection
         services.AddScoped<RevokeConsentCommand>();
         services.AddScoped<ListMyConsentsQuery>();
         services.AddSingleton<GetConsentVersionsQuery>();
+    }
+
+    /// <summary>
+    /// E-mail por outbox (ADR-021). Sem SMTP configurado, a API não sobe fora de Development: nunca cai em silêncio para
+    /// "só log" em produção. Em Development, o padrão é o Mailpit local (SMTP na 1025, sem TLS).
+    /// </summary>
+    private static void AddNotificationsModule(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
+    {
+        services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName))
+            .PostConfigure(o =>
+            {
+                if (isDevelopment)
+                {
+                    o.Smtp.Host ??= "localhost";
+                    o.From ??= "nao-responda@example.com";
+                    o.Smtp.Port = o.Smtp.Port == 0 ? 1025 : o.Smtp.Port;
+                }
+                else
+                {
+                    o.Smtp.Port = o.Smtp.Port == 0 ? 587 : o.Smtp.Port;
+                }
+            })
+            .Validate(o => !string.IsNullOrWhiteSpace(o.Smtp.Host), "Email:Smtp:Host não configurado: sem SMTP a API não sobe fora de Development.")
+            .Validate(o => !string.IsNullOrWhiteSpace(o.From) && o.From.Contains('@'), "Email:From não configurado ou inválido.")
+            .ValidateOnStart();
+
+        services.AddOptions<AppOptions>()
+            .Bind(configuration.GetSection(AppOptions.SectionName))
+            .PostConfigure(o =>
+            {
+                if (isDevelopment)
+                {
+                    o.PublicBaseUrl ??= "http://localhost:8080";
+                }
+
+                o.BrandName = string.IsNullOrWhiteSpace(o.BrandName) ? AppOptions.DefaultBrandName : o.BrandName.Trim();
+            })
+            .Validate(
+                o => Uri.TryCreate(o.PublicBaseUrl, UriKind.Absolute, out Uri? uri) && uri.Scheme is "http" or "https",
+                "App:PublicBaseUrl não configurado: os links dos e-mails precisam do endereço público do frontend.")
+            .ValidateOnStart();
+
+        services.AddSingleton(sp =>
+        {
+            AppOptions app = sp.GetRequiredService<IOptions<AppOptions>>().Value;
+            return new NotificationSettings(app.BrandName, app.PublicBaseUrl!);
+        });
+
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.AddScoped<IIdentityMailer, IdentityMailer>();
+        services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
+        services.AddScoped<DispatchOutboxCommand>();
     }
 }
