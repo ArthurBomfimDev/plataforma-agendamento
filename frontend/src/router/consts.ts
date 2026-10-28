@@ -1,3 +1,11 @@
+import {
+  DEFAULT_RADIUS_KM,
+  EMPTY_SEARCH,
+  SEARCH_CATEGORIES,
+  SEARCH_RADII,
+  type SearchFilters,
+} from '@lib/api/search'
+
 import type { NavigationItemId } from '@components/bottom-navigation/types'
 
 export const ROUTES = {
@@ -8,6 +16,8 @@ export const ROUTES = {
   bookingReview: '/businesses/:businessId/services/:serviceId/review',
   bookingSent: '/businesses/:businessId/services/:serviceId/sent',
   appointments: '/appointments',
+  /** Resultados da busca. Os filtros vão na URL (`?term=&category=&maxPrice=&sort=&radius=`). */
+  search: '/search',
   signIn: '/sign-in',
   signUp: '/sign-up',
   /** "Confira seu e-mail", depois do cadastro. O endereço vai no estado da navegação, nunca na URL. */
@@ -97,6 +107,36 @@ export const signInPath = (redirect?: string) =>
 
 export const signUpPath = (redirect?: string | null) =>
   withSearch(ROUTES.signUp, { [SEARCH_PARAMS.redirect]: redirect ?? null })
+
+export const searchPath = (filters: Partial<SearchFilters>) => {
+  const { term, category, maxPriceCents, sortBy, radiusKm } = { ...EMPTY_SEARCH, ...filters }
+  return withSearch(ROUTES.search, {
+    term: term?.trim() || null,
+    category,
+    maxPrice: maxPriceCents === null ? null : String(maxPriceCents),
+    sort: sortBy === 'distance' ? null : sortBy,
+    radius: radiusKm === DEFAULT_RADIUS_KM ? null : String(radiusKm),
+  })
+}
+
+/**
+ * Lê os filtros da URL. Valor que não existe no backend (link editado à mão) é ignorado, em vez de virar
+ * erro 400 na tela.
+ */
+export const readSearchFilters = (params: URLSearchParams): SearchFilters => {
+  const category = params.get('category')
+  const maxPrice = Number(params.get('maxPrice'))
+  const radius = Number(params.get('radius'))
+  const term = params.get('term')?.trim()
+
+  return {
+    term: term ? term.slice(0, 100) : null,
+    category: SEARCH_CATEGORIES.find((c) => c === category) ?? null,
+    maxPriceCents: Number.isInteger(maxPrice) && maxPrice > 0 ? maxPrice : null,
+    sortBy: params.get('sort') === 'price' ? 'price' : 'distance',
+    radiusKm: SEARCH_RADII.find((r) => r === radius) ?? DEFAULT_RADIUS_KM,
+  }
+}
 
 export const checkEmailPath = (redirect?: string | null) =>
   withSearch(ROUTES.checkEmail, { [SEARCH_PARAMS.redirect]: redirect ?? null })

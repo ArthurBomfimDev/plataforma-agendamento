@@ -11,4 +11,6 @@ export type TopBarProps = {
   locationLabel?: string | null
   /** Abre o seletor de localização. */
   onChooseLocation?: () => void
+  /** Envio da busca da barra, com o termo já sem espaços nas pontas. */
+  onSearch?: (term: string) => void
 }

@@ -69,6 +69,13 @@ describe('AppRoutes', () => {
     expect(renderAt('/redefinir-senha')).toContain('Link inválido')
   })
 
+  it('abre os resultados da busca com o filtro da URL', () => {
+    const html = renderAt('/search?category=Beleza')
+
+    expect(html).toContain('Resultados da busca')
+    expect(html).toContain('Remover filtro Beleza')
+  })
+
   it('abre esqueci minha senha', () => {
     expect(renderAt('/forgot-password')).toContain('Esqueci minha senha')
   })

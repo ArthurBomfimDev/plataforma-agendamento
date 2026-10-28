@@ -16,7 +16,9 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
     distanceKm,
     imageUrl,
     availability,
+    priceFrom,
     onSelectSlot,
+    onOpen,
     className,
   } = props
 
@@ -26,6 +28,8 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
     <Card
       className={cn(
         'gap-0 rounded-lg border border-(--border-subtle) bg-(--bg-surface) shadow-(--elevation-card) ring-0 [--card-spacing:var(--space-16)]',
+        onOpen &&
+          'relative cursor-pointer has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-(--border-focus)',
         className,
       )}
     >
@@ -42,17 +46,30 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
           )}
 
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
-            <h2 className="type-body truncate text-(--text-strong)">{name}</h2>
+            <h2 className="type-body truncate text-(--text-strong)">
+              {onOpen ? (
+                <button
+                  type="button"
+                  onClick={onOpen}
+                  className="text-left outline-none after:absolute after:inset-0 after:content-['']"
+                >
+                  {name}
+                </button>
+              ) : (
+                name
+              )}
+            </h2>
             <p className="type-caption truncate text-(--text-muted)">
               {serviceName} · {durationMinutes} min
             </p>
             <p className="type-caption tabular truncate text-(--text-body)">
+              {priceFrom && 'a partir de '}
               {price.format(priceCents / 100)} · {distanceFormat.format(distanceKm)} km
             </p>
           </div>
         </div>
 
-        {availability ? (
+        {availability === undefined ? null : availability ? (
           <>
             <p className="type-caption flex items-center gap-(--space-8) text-(--text-muted)">
               <Clock aria-hidden="true" className="size-4 shrink-0" />

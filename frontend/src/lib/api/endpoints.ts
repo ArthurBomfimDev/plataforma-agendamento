@@ -62,8 +62,15 @@ export const customersApi = {
 }
 
 export const businessesApi = {
-  search: (params: { latitude: number; longitude: number; radiusKm?: number; term?: string }) =>
-    api<PagedResult<BusinessSearchItemResponse>>(`/api/businesses/search?${query(params)}`),
+  search: (params: {
+    latitude: number
+    longitude: number
+    radiusKm?: number
+    term?: string
+    category?: string
+    maxPriceCents?: number
+    sortBy?: string
+  }) => api<PagedResult<BusinessSearchItemResponse>>(`/api/businesses/search?${query(params)}`),
   get: (businessId: string) => api<PublicBusinessResponse>(`/api/businesses/${enc(businessId)}`),
   services: (businessId: string) =>
     api<PagedResult<PublicServiceResponse>>(

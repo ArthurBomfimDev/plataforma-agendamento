@@ -1,5 +1,6 @@
-import { HOME_CATEGORIES } from './mock'
-import { NAVIGATION_PATHS, businessPath } from '@router/consts'
+import { NAVIGATION_PATHS, businessPath, searchPath } from '@router/consts'
+
+import { HOME_CATEGORIES } from './consts'
 
 import { BottomNavigation } from '@components/bottom-navigation'
 import { Button } from '@components/button'
@@ -9,9 +10,11 @@ import { CategoryCard } from '@components/category-card'
 import type { HomeScreenProps } from './types'
 import { MapPin } from 'lucide-react'
 import { PageContainer } from '@components/page-container'
+import { SearchButton } from '@components/search-button'
 import { SearchField } from '@components/search-field'
 import { locationReference } from '@components/top-bar/consts'
 import { useNavigate } from 'react-router'
+import { useState } from 'react'
 
 /**
  * Tela 01 · Home — busca e descoberta (Figma, 390px; desktop: 01D, 1440px).
@@ -19,6 +22,7 @@ import { useNavigate } from 'react-router'
 export const HomeScreen = (props: HomeScreenProps) => {
   const { locationLabel, nearby, onChooseLocation } = props
   const navigate = useNavigate()
+  const [term, setTerm] = useState('')
 
   return (
     <div className="min-h-dvh bg-(--bg-page)">
@@ -42,14 +46,32 @@ export const HomeScreen = (props: HomeScreenProps) => {
             Escolha o serviço, veja o horário livre e envie o pedido. O estabelecimento confirma.
           </p>
           {/* TODO(figma): a sombra da busca no desktop não tem token; o valor é o do Figma. */}
-          <SearchField
-            label="Buscar"
-            placeholder="Buscar serviço, local ou profissional"
-            className="lg:w-full lg:max-w-180 lg:rounded-(--radius-full) lg:bg-(--bg-surface) lg:py-(--space-8) lg:pr-(--space-8) lg:pl-(--space-20) lg:shadow-[0_2px_8px_0_#1c1a170f]"
-            inputClassName="lg:text-(length:--size-body-lg)! lg:leading-(--line-height-body-lg)!"
-            // TODO: a busca ainda não tem rota; o botão não faz nada.
-            action={<Button className="hidden shrink-0 lg:inline-flex">Buscar</Button>}
-          />
+          {/* A busca só roda no envio (Enter no celular, "Buscar" no desktop). */}
+          <form
+            role="search"
+            className="lg:flex lg:w-full lg:justify-center"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (term.trim()) navigate(searchPath({ term }))
+            }}
+          >
+            <SearchField
+              label="Buscar"
+              name="term"
+              enterKeyHint="search"
+              placeholder="Buscar serviço ou estabelecimento"
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              className="lg:w-full lg:max-w-180 lg:rounded-(--radius-full) lg:bg-(--bg-surface) lg:py-(--space-4) lg:pr-(--space-4) lg:pl-(--space-20) lg:shadow-[0_2px_8px_0_#1c1a170f]"
+              inputClassName="lg:text-(length:--size-body-lg)! lg:leading-(--line-height-body-lg)!"
+              action={
+                <SearchButton
+                  disabled={!term.trim()}
+                  className="hidden rounded-(--radius-full) lg:inline-flex"
+                />
+              }
+            />
+          </form>
         </header>
 
         <main
@@ -62,10 +84,14 @@ export const HomeScreen = (props: HomeScreenProps) => {
             <h2 id="home-categories" className="type-heading text-(--text-strong)">
               Categorias
             </h2>
-            <ul className="grid grid-cols-2 gap-(--space-12) md:grid-cols-4">
-              {HOME_CATEGORIES.map(({ id, label, icon }) => (
+            <ul className="grid grid-cols-2 gap-(--space-12) md:grid-cols-3 lg:grid-cols-6">
+              {HOME_CATEGORIES.map(({ id, label, icon, search }) => (
                 <li key={id}>
-                  <CategoryCard label={label} icon={icon} />
+                  <CategoryCard
+                    label={label}
+                    icon={icon}
+                    onClick={() => navigate(searchPath(search))}
+                  />
                 </li>
               ))}
             </ul>

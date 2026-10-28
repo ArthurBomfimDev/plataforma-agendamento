@@ -16,6 +16,7 @@ import { CheckEmailRoute } from './check-email-route'
 import { ConfirmEmailRoute } from './confirm-email-route'
 import { ForgotPasswordRoute } from './forgot-password-route'
 import { ResetPasswordRoute } from './reset-password-route'
+import { SearchRoute } from './search-route'
 
 /**
  * Rotas da aplicação, no modo declarativo do React Router. O `<HashRouter>` fica em `main.tsx`.
@@ -35,6 +36,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.bookingReview} element={<BookingReviewRoute />} />
         <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
         <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
+        <Route path={ROUTES.search} element={<SearchRoute />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>
       {/* Fora da moldura: entrar e criar conta não têm barra superior. */}

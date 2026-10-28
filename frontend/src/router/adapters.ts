@@ -14,6 +14,7 @@ import type { BusinessProfessional } from '@features/choose-professional/types'
 import type { CustomerAppointment } from '@features/appointments/types'
 import type { DaySlots } from '@features/availability/types'
 import type { HomeEstablishment } from '@features/home/types'
+import type { SearchResult } from '@features/search-results/types'
 
 /**
  * Conversão da resposta da API para o tipo que cada tela recebe. As telas não conhecem a API:
@@ -30,6 +31,22 @@ export const toHomeEstablishment = (item: BusinessSearchItemResponse): HomeEstab
   neighborhood: item.district ?? item.city ?? '',
   verified: item.verified,
   // TODO: nota e avaliações dependem do módulo Reputation, ainda sem endpoint público.
+})
+
+export const toSearchResult = (item: BusinessSearchItemResponse): SearchResult => ({
+  id: item.id,
+  name: item.name,
+  distanceKm: item.distanceKm,
+  neighborhood: item.district ?? item.city ?? '',
+  verified: item.verified,
+  service:
+    item.serviceName !== null && item.durationMinutes !== null && item.fromPriceCents !== null
+      ? {
+          name: item.serviceName,
+          durationMinutes: item.durationMinutes,
+          fromPriceCents: item.fromPriceCents,
+        }
+      : null,
 })
 
 export const toBusinessDetail = (

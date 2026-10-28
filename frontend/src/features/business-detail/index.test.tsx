@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 import { BusinessDetailScreen } from '.'
-import { HOME_NEARBY_ESTABLISHMENTS } from '@features/home/mock'
+import type { HomeEstablishment } from '@features/home/types'
 import { HomeScreen } from '@features/home'
 import { MOCK_BUSINESSES } from './mock'
 import { MemoryRouter } from 'react-router'
 import { renderToString } from 'react-dom/server'
+
+// O mock da Home saiu na Onda 6C; o teste traz os próprios estabelecimentos.
+const HOME_NEARBY_ESTABLISHMENTS: HomeEstablishment[] = [
+  { id: 'estudio-duartina', name: 'Estúdio Duartina', distanceKm: 1.2, neighborhood: 'Centro' },
+  { id: 'barbearia-norte', name: 'Barbearia Norte', distanceKm: 2.6, neighborhood: 'Jardim' },
+]
 
 // O React separa trechos de texto com `<!-- -->` no HTML do servidor; tiramos para comparar o texto.
 const render = (element: React.ReactElement) =>

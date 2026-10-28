@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A e 6B (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B e 6C (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -27,7 +27,7 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `GET /api/geo/reverse?lat=&lng=` (novo na 6B) | `geoApi.reverse` | ✅ |
 | `GET /api/users/me` | `authApi.me` | ✅ |
 | `GET/POST /api/customers/me` | `customersApi.me`/`register` | ✅ |
-| `GET /api/businesses/search` | `businessesApi.search` | ➕ campos e parâmetros novos (§2.3) |
+| `GET /api/businesses/search` | `businessesApi.search` | ✅ desde a 6C (§2.3, §4.4) |
 | `GET /api/businesses/{id}` | `businessesApi.get` | ✅ |
 | `GET /api/businesses/{id}/services` | `businessesApi.services` | ✅ |
 | `GET /api/businesses/{id}/professionals` | `businessesApi.professionals` | ✅ |
@@ -72,14 +72,12 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | Campo | API | TS | Situação |
 |---|---|---|---|
 | `id`, `name`, `category`, `verified`, `district`, `city`, `distanceKm` | iguais | iguais | ✅ |
-| `serviceId` | `Guid?` | — | ➕ desde a Onda 2 |
-| `serviceName` | `string?` | — | ➕ — o card mostra |
-| `durationMinutes` | `int?` | — | ➕ — o card mostra |
-| `fromPriceCents` | `long?` | — | ➕ — o card mostra ("a partir de") |
-| Parâmetros `category`, `maxPriceCents`, `sortBy` (`distance`\|`price`), `page`, `pageSize` | existem | `search` só manda `latitude`, `longitude`, `radiusKm`, `term` | ➕ |
+| `serviceId`, `serviceName`, `durationMinutes`, `fromPriceCents` | nuláveis | `string \| null`, `number \| null` | ✅ desde a 6C — o card mostra ("a partir de") |
+| Parâmetros `category`, `maxPriceCents`, `sortBy` (`distance`\|`price`), `radiusKm`, `term` | existem | todos enviados desde a 6C | ✅ |
+| `page`, `pageSize` | existem | não enviados (primeira página, 20) | ⚠️ sem "carregar mais" |
 
-Na tela de resultados (`features/search-results`, ainda em mock) continuam sem API: foto, horários no próprio
-resultado (é uma consulta de disponibilidade por estabelecimento), filtro "Disponível hoje" e filtro de avaliação.
+Sem API na tela de resultados: foto, horários no próprio resultado (é uma consulta de disponibilidade por
+estabelecimento) e os filtros "Disponível hoje" e "★ 4,5+" — saíram da tela na 6C (§4.4).
 
 ### 2.4 Scheduling
 
@@ -186,9 +184,26 @@ Rotas públicas, limite de 30 por minuto por IP (`geo`), cache no servidor. ADR-
 - **Painel (Rafael):** a confirmação do ponto pelo dono (`PUT /api/businesses/current/location`, `ConfirmLocationRequest`)
   ainda não tem tela; quando houver, o palpite pode vir de `/api/geo/search` com o endereço do estabelecimento.
 
+## 4.4 Busca e categorias (Onda 6C, 28/10)
+
+- **Rota `#/search?term=&category=&maxPrice=&sort=&radius=`** (`router/search-route.tsx`). Os filtros moram na
+  URL; valor que o backend não aceita (link editado à mão) é ignorado em vez de virar 400. A localização não vai na URL.
+- **Tiles da Home** (`features/home/consts.ts`, o `mock.ts` saiu): Beleza e Saúde mandam `category=Beleza|Saude`;
+  Cabelo, Barbearia, Unhas e Sobrancelha mandam `term` (`corte`, `barba`, `unha`, `sobrancelha`, conferidos contra os
+  serviços do seed).
+- **Filtros na tela:** categoria e termo como chips removíveis; "Até 5 km" (`radiusKm` 5 ou 20); "Até R$ 50/100/200"
+  (`maxPriceCents`); ordenar por "Mais perto" ou "Menor preço" (`sortBy`).
+- **Trabalho futuro (sem backend):** "Disponível hoje" (exigiria disponibilidade por resultado na busca) e "★ 4,5+"
+  (módulo Reputation fora do recorte). Também: paginação ("carregar mais") e horários no card.
+- **Botão "Buscar":** `components/search-button` — `Button` primário do sistema, `type="submit"` dentro de
+  `<form role="search">`, alvo de 44 px, foco visível, desligado com o campo vazio e `aria-busy` durante a busca.
+  Usado na Home (desktop), na barra superior e nos resultados.
+- `SearchResultCard`: `availability` ausente não afirma mais "sem horário" (a busca não calcula horários); ganhou
+  `priceFrom` e `onOpen` (o card inteiro abre o estabelecimento).
+
 ## 5. Resumo para fechar o lado do frontend
 
-1. Tipar os campos novos da busca e o `ContextTokenResponse`.
+1. Tipar o `ContextTokenResponse` (os campos da busca foram tipados na 6C).
 2. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
 3. Traduzir `appointment.contention_try_again` (503: "tente de novo").
 4. Para a agenda: as rotas `businesses/current/*` já existem, com `customerName`, `requestedAt` e o filtro de

@@ -14,8 +14,15 @@ export type SearchResultCardProps = {
   distanceKm: number
   /** Sem foto, o card mostra o bloco neutro do wireframe. */
   imageUrl?: string
-  /** `null` quando não há horário livre na janela de busca. */
-  availability: SearchResultAvailability | null
+  /**
+   * `null` quando não há horário livre na janela de busca. Ausente (`undefined`) quando a tela não calculou
+   * horários — a busca não calcula —, e o card não diz nada sobre eles.
+   */
+  availability?: SearchResultAvailability | null
+  /** O preço é o menor dos profissionais: o card escreve "a partir de". */
+  priceFrom?: boolean
   onSelectSlot?: (slot: string) => void
+  /** Abre o estabelecimento. A área de toque é o card inteiro, sem aninhar bloco em botão. */
+  onOpen?: () => void
   className?: string
 }

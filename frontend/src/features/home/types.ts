@@ -1,11 +1,14 @@
 import type { LucideIcon } from 'lucide-react'
 
 import type { CardEstablishmentProps } from '@components/card-establishment/types'
+import type { SearchFilters } from '@lib/api/search'
 
 export type HomeCategory = {
   id: string
   label: string
   icon: LucideIcon
+  /** A busca que o tile abre: categoria do backend ou termo. */
+  search: Partial<SearchFilters>
 }
 
 export type HomeEstablishment = CardEstablishmentProps & {
