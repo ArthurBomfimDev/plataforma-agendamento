@@ -82,7 +82,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         var created = new List<(User User, Customer Customer)>();
         for (int i = 0; i < count; i++)
         {
-            User user = User.Create(Email.Of($"it-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, $"Consumidor de teste {i + 1}");
+            User user = ConfirmedUser("it", $"Consumidor de teste {i + 1}", now);
             Customer customer = Customer.Create(user.Id, new DateOnly(1990, 1, 1), null, today);
             db.Add(user);
             db.Add(customer);
@@ -104,7 +104,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        User user = User.Create(Email.Of($"it-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, fullName);
+        User user = ConfirmedUser("it", fullName, now);
         Customer customer = Customer.Create(user.Id, new DateOnly(1990, 1, 1), socialName, DateOnly.FromDateTime(now.UtcDateTime));
         db.Add(user);
         db.Add(customer);
@@ -125,7 +125,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        User user = User.Create(Email.Of($"it-staff-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, "Funcionário de teste");
+        User user = ConfirmedUser("it-staff", "Funcionário de teste", now);
         BusinessMembership membership = BusinessMembership.Invite(business.Id, user.Id, BusinessMembershipRole.Professional);
         membership.Accept(now);
         db.Add(user);
@@ -146,11 +146,21 @@ public sealed class TestWorld(IntegrationFixture fixture)
         BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
 
-        User user = User.Create(Email.Of($"it-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, fullName);
+        User user = ConfirmedUser("it", fullName, DateTimeOffset.UtcNow);
         db.Add(user);
         await db.SaveChangesAsync();
 
         return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value, user.Email.Address);
+    }
+
+    /// <summary>
+    /// Conta com o e-mail já confirmado: o login e o refresh exigem confirmação desde a Onda 6A. O caminho sem confirmação tem testes próprios (<c>EmailConfirmationTests</c>).
+    /// </summary>
+    private User ConfirmedUser(string prefix, string fullName, DateTimeOffset now)
+    {
+        User user = User.Create(Email.Of($"{prefix}-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, fullName);
+        user.ConfirmEmail(now);
+        return user;
     }
 
     // --- E-mail ---
@@ -258,7 +268,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
 
-        User user = User.Create(Email.Of($"it-admin-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, "Admin de teste");
+        User user = ConfirmedUser("it-admin", "Admin de teste", DateTimeOffset.UtcNow);
         user.GrantPlatformAdmin();
         db.Add(user);
         await db.SaveChangesAsync();

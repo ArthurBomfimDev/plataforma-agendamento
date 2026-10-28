@@ -19,8 +19,13 @@ namespace Booking.IntegrationTests.Infrastructure;
 /// Falso só no teste que prova que a API não sobe sem SMTP fora de Development. Nos demais, um SMTP fictício
 /// (<c>smtp.invalid</c>) satisfaz a validação e o envio vai para o <see cref="FakeEmailSender"/>.
 /// </param>
+/// <param name="settings">Configuração extra desta instância, por exemplo <c>Identity:RequireEmailConfirmation</c>.</param>
 public sealed class BookingApiFactory(
-    string connectionString, string environment = "Testing", LogCapture? logs = null, bool configureEmail = true)
+    string connectionString,
+    string environment = "Testing",
+    LogCapture? logs = null,
+    bool configureEmail = true,
+    IReadOnlyDictionary<string, string>? settings = null)
     : WebApplicationFactory<Program>
 {
     // Chave de assinatura gerada a cada execução: valor de teste, nunca gravado em arquivo.
@@ -46,6 +51,11 @@ public sealed class BookingApiFactory(
             builder.UseSetting("Email:From", "nao-responda@exemplo.test");
             builder.UseSetting("Email:FromName", "Vagoo de teste");
             builder.UseSetting("App:PublicBaseUrl", "http://app.exemplo.test");
+        }
+
+        foreach ((string key, string value) in settings ?? new Dictionary<string, string>())
+        {
+            builder.UseSetting(key, value);
         }
 
         // Cada 409 da corrida é um INSERT recusado pela constraint, que o EF registra como erro: 980 por execução

@@ -33,6 +33,26 @@ describe('SignInScreen', () => {
   it('o texto de ajuda fica ligado ao campo por aria-describedby', () => {
     expect(html()).toContain('aria-describedby="sign-in-email-helper"')
   })
+
+  it('a senha tem o botão de mostrar', () => {
+    expect(html()).toMatch(/aria-label="Mostrar senha" aria-pressed="false"/)
+  })
+
+  it('conta sem e-mail confirmado: mensagem e botão de reenvio', () => {
+    const page = renderToString(
+      <SignInScreen
+        unconfirmed
+        error="Confirme seu e-mail para entrar. Enviamos o link quando você criou a conta."
+      />,
+    ).replaceAll('<!-- -->', '')
+
+    expect(page).toMatch(/role="alert"[^>]*>Confirme seu e-mail para entrar/)
+    expect(page).toContain('Reenviar e-mail de confirmação')
+  })
+
+  it('sem esse erro, não oferece reenvio', () => {
+    expect(html()).not.toContain('Reenviar e-mail de confirmação')
+  })
 })
 
 describe('validateSignIn', () => {

@@ -15,7 +15,8 @@
  *                                         não passa pela API (antecedência mínima, horizonte). Roda as duas
  *                                         etapas, nesta ordem.
  *
- * Escrita direta no banco, além do histórico: só conceder o papel de Admin (ADR-020 — nunca por endpoint).
+ * Escrita direta no banco, além do histórico: conceder o papel de Admin (ADR-020 — nunca por endpoint) e
+ * confirmar o e-mail das contas de demonstração (Onda 6A — `example.com` não recebe e-mail).
  *
  * Idempotente e reexecutável: conta que já existe é pulada, CNPJ já cadastrado é pulado, e o histórico só
  * é gravado uma vez (marcador em `customer_notes`). Com `docker compose up` rodando.
@@ -382,6 +383,7 @@ async function registerAndLogin(fullName: string, email: string): Promise<string
     if (error instanceof ApiCallError && error.code === 'user.email_already_registered') return null
     throw error
   }
+  confirmEmail(email)
   const auth = await call<{ accessToken: string }>('POST', '/api/auth/login', { email, password: DEMO_PASSWORD })
   return auth.accessToken
 }
@@ -535,6 +537,14 @@ const sqlText = (value: string | null | undefined) => (value == null ? 'NULL' : 
  */
 function grantPlatformAdmin(email: string) {
   psql(`UPDATE identity."user" SET is_platform_admin = true WHERE email = ${sqlText(email)};`)
+}
+
+/**
+ * O login exige e-mail confirmado (Onda 6A). As contas de demonstração usam domínio `example.com`, que não recebe
+ * e-mail: o seed confirma por SQL, como faz com o Admin, e só no banco local do Docker.
+ */
+function confirmEmail(email: string) {
+  psql(`UPDATE identity."user" SET email_confirmed_at = now() WHERE email = ${sqlText(email)} AND email_confirmed_at IS NULL;`)
 }
 
 /** O Admin de demonstração aprova pela API tudo o que estiver em análise. */

@@ -12,6 +12,8 @@ public sealed record ConfirmEmailRequest(string Token);
 
 public sealed record ForgotPasswordRequest(string Email);
 
+public sealed record ResendConfirmationRequest(string Email);
+
 public sealed record ResetPasswordRequest(string Token, string NewPassword);
 
 /// <summary>Estabelecimento a ativar; nulo volta ao contexto de consumidor.</summary>

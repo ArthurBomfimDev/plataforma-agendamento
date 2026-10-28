@@ -50,6 +50,12 @@ public sealed class RefreshSessionCommand(
             throw new DomainException("auth.invalid_refresh_token");
         }
 
+        // Sessão aberta antes de a regra valer (ou com ela desligada) não sobrevive a ela ligada.
+        if (policy.RequireEmailConfirmation && user.EmailConfirmedAt is null)
+        {
+            throw new DomainException("identity.email_not_confirmed");
+        }
+
         GeneratedToken next = tokens.Generate();
         current.Revoke(now, next.Hash);
         refreshTokens.Add(RefreshToken.Issue(user.Id, next.Hash, now + policy.RefreshTokenLifetime));

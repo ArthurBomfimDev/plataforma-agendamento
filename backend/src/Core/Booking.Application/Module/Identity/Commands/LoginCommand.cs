@@ -14,7 +14,8 @@ public sealed class LoginCommand(
     IPasswordHasher hasher,
     SessionIssuer sessions,
     IUnitOfWork unitOfWork,
-    TimeProvider clock)
+    TimeProvider clock,
+    IdentityPolicy policy)
 {
     public async Task<AuthResponse> ExecuteAsync(LoginRequest request, CancellationToken ct = default)
     {
@@ -46,6 +47,12 @@ public sealed class LoginCommand(
         if (user.Status != UserStatus.Active)
         {
             throw new DomainException("auth.account_not_active");
+        }
+
+        // Também só depois da senha correta: o 403 não serve para descobrir quais e-mails têm conta.
+        if (policy.RequireEmailConfirmation && user.EmailConfirmedAt is null)
+        {
+            throw new DomainException("identity.email_not_confirmed");
         }
 
         AuthResponse response = sessions.Open(user, clock.GetUtcNow());

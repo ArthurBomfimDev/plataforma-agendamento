@@ -34,6 +34,16 @@ export const authApi = {
     }),
   logout: (refreshToken: string) =>
     api<void>('/api/auth/logout', { method: 'POST', body: { refreshToken } }),
+  confirmEmail: (token: string) =>
+    api<void>('/api/auth/confirm-email', { method: 'POST', body: { token } }),
+  /** Sempre 202, exista a conta ou não. */
+  resendConfirmation: (email: string) =>
+    api<void>('/api/auth/resend-confirmation', { method: 'POST', body: { email } }),
+  /** Sempre 202, exista a conta ou não. */
+  forgotPassword: (email: string) =>
+    api<void>('/api/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (token: string, newPassword: string) =>
+    api<void>('/api/auth/reset-password', { method: 'POST', body: { token, newPassword } }),
   me: () => api<UserResponse>('/api/users/me', { auth: true }),
 }
 

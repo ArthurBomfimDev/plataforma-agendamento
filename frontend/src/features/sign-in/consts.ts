@@ -19,6 +19,11 @@ export const PASSWORD_MIN_LENGTH = 8
 /** Algo antes e depois do `@` e um ponto no domínio. A validação real é o e-mail chegar. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export const isValidEmail = (email: string) => EMAIL_PATTERN.test(email.trim())
+
+/** Mesmos limites do backend (`IdentityPolicy`). */
+export const PASSWORD_MAX_LENGTH = 128
+
 /** Valida no envio. Não diz se a conta existe — isso é da API, e só depois da tentativa. */
 export const validateSignIn = (values: SignInValues): SignInErrors => {
   const errors: SignInErrors = {}

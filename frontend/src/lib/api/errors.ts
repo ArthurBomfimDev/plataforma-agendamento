@@ -18,6 +18,9 @@ export class ApiError extends Error {
 const MESSAGES: Record<string, string> = {
   'auth.invalid_credentials': 'E-mail ou senha incorretos.',
   'auth.account_not_active': 'Esta conta não está ativa.',
+  'identity.email_not_confirmed':
+    'Confirme seu e-mail para entrar. Enviamos o link quando você criou a conta.',
+  'user_token.invalid': 'Este link expirou ou já foi usado.',
   'auth.unauthenticated': 'Entre na sua conta para continuar.',
   'user.email_already_registered': 'Já existe uma conta com este e-mail.',
   'user.password_invalid_length': 'A senha precisa ter entre 8 e 128 caracteres.',

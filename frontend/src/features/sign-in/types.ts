@@ -18,4 +18,9 @@ export type SignInScreenProps = {
   error?: string
   onForgotPassword?: () => void
   onCreateAccount?: () => void
+  /** A senha estava certa, mas o e-mail ainda não foi confirmado: mostra o botão de reenvio. */
+  unconfirmed?: boolean
+  /** Reenvia a confirmação para o e-mail digitado. */
+  onResendConfirmation?: (email: string) => void
+  resending?: boolean
 }

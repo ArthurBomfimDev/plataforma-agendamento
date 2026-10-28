@@ -5,6 +5,7 @@ import { Button } from '@components/button'
 import { HeroPanel } from '@features/sign-in/components/hero-panel'
 import { Logotype } from '@components/logotype'
 import { PASSWORD_MIN_LENGTH } from '@features/sign-in/consts'
+import { PasswordField } from '@components/password-field'
 import { TextField } from '@components/text-field'
 import { ThemeToggle } from '@components/theme-toggle'
 import { format } from 'date-fns'
@@ -13,7 +14,13 @@ import { validateSignUp } from './consts'
 const LINK_CLASSES =
   'type-label -my-(--space-12) py-(--space-12) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)'
 
-const FIELD_ORDER: (keyof SignUpValues)[] = ['fullName', 'email', 'password', 'birthDate']
+const FIELD_ORDER: (keyof SignUpValues)[] = [
+  'fullName',
+  'email',
+  'password',
+  'passwordConfirmation',
+  'birthDate',
+]
 
 /**
  * Criar conta de consumidor (Figma, A02 — ainda sem frame; o layout segue o A01/A03 de Entrar).
@@ -27,6 +34,7 @@ export const SignUpScreen = (props: SignUpScreenProps) => {
     fullName: '',
     email: '',
     password: '',
+    passwordConfirmation: '',
     birthDate: '',
   })
   const [errors, setErrors] = useState<SignUpErrors>({})
@@ -98,13 +106,18 @@ export const SignUpScreen = (props: SignUpScreenProps) => {
                 placeholder="voce@exemplo.com"
                 helper="Usamos para confirmar e avisar sobre o pedido."
               />
-              <TextField
+              <PasswordField
                 {...field('password')}
                 id="sign-up-password"
                 label="Senha"
-                type="password"
                 autoComplete="new-password"
                 helper={`Mínimo ${PASSWORD_MIN_LENGTH} caracteres.`}
+              />
+              <PasswordField
+                {...field('passwordConfirmation')}
+                id="sign-up-password-confirmation"
+                label="Confirme a senha"
+                autoComplete="new-password"
               />
               <TextField
                 {...field('birthDate')}
