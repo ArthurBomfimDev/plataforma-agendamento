@@ -10,25 +10,31 @@ import type { HomeScreenProps } from './types'
 import { MapPin } from 'lucide-react'
 import { PageContainer } from '@components/page-container'
 import { SearchField } from '@components/search-field'
+import { locationReference } from '@components/top-bar/consts'
 import { useNavigate } from 'react-router'
 
 /**
  * Tela 01 · Home — busca e descoberta (Figma, 390px; desktop: 01D, 1440px).
  */
 export const HomeScreen = (props: HomeScreenProps) => {
-  const { locationLabel, nearby } = props
+  const { locationLabel, nearby, onChooseLocation } = props
   const navigate = useNavigate()
 
   return (
     <div className="min-h-dvh bg-(--bg-page)">
       <PageContainer>
         <header className="flex flex-col gap-(--space-12) bg-(--bg-surface) p-(--space-16) pt-[calc(var(--space-16)+env(safe-area-inset-top))] md:bg-transparent lg:items-center lg:gap-(--space-16) lg:px-0 lg:pt-(--space-40) lg:pb-0 lg:text-center">
-          {/* No desktop a cidade fica na barra superior. */}
-          <p className="type-caption flex items-center gap-(--space-4) text-(--text-muted) lg:hidden">
-            <MapPin aria-hidden="true" className="size-4" />
-            <span>Agendando em</span>
-            <span className="text-(--text-link)">{locationLabel}</span>
-          </p>
+          {/* No desktop a referência fica na barra superior. Sempre clicável para trocar. */}
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={onChooseLocation}
+            className="type-caption -my-(--space-12) flex min-h-(--size-touch-min) items-center gap-(--space-4) self-start rounded-md text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus) lg:hidden"
+          >
+            <MapPin aria-hidden="true" className="size-4 shrink-0" />
+            <span>{locationReference(locationLabel)}</span>
+            {locationLabel && <span className="sr-only">, trocar localização</span>}
+          </button>
           <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
             O que você quer agendar?
           </h1>
@@ -72,6 +78,17 @@ export const HomeScreen = (props: HomeScreenProps) => {
             <h2 id="home-nearby" className="type-heading text-(--text-strong)">
               Perto de você
             </h2>
+            {nearby.status === 'no-location' && (
+              <div className="flex flex-col items-start gap-(--space-12)">
+                <p className="type-body text-(--text-muted)">
+                  Escolha onde você quer agendar para ver os estabelecimentos perto.
+                </p>
+                <Button onClick={onChooseLocation} aria-haspopup="dialog">
+                  <MapPin aria-hidden="true" className="size-4" />
+                  Escolher localização
+                </Button>
+              </div>
+            )}
             {nearby.status === 'loading' && (
               <p role="status" className="type-body text-(--text-muted)">
                 Buscando estabelecimentos…

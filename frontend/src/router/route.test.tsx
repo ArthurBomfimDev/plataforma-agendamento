@@ -18,11 +18,13 @@ const renderAt = (path: string) =>
   ).replaceAll('<!-- -->', '')
 
 describe('AppRoutes', () => {
-  it('abre a Home em / e busca os estabelecimentos perto', () => {
+  it('abre a Home em / e, sem localização escolhida, pede uma em vez de usar cidade fixa', () => {
     const html = renderAt('/')
 
     expect(html).toContain('O que você quer agendar?')
-    expect(html).toContain('Buscando estabelecimentos…')
+    expect(html).toContain('Escolha onde você quer agendar')
+    expect(html).toContain('Escolher localização')
+    expect(html).not.toContain('Buscando estabelecimentos…')
   })
 
   it('carrega o estabelecimento em /businesses/:businessId', () => {

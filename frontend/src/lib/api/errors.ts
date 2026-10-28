@@ -31,6 +31,12 @@ const MESSAGES: Record<string, string> = {
   'business.not_found': 'Estabelecimento não encontrado.',
   'service.not_found': 'Serviço não encontrado.',
   'appointment.not_found': 'Agendamento não encontrado.',
+  'geo.postal_code_invalid': 'Informe um CEP com 8 dígitos.',
+  'postal_code.not_found': 'Não encontramos esse CEP.',
+  'geo.query_invalid': 'Digite pelo menos 3 letras.',
+  'place.not_found': 'Não reconhecemos esse lugar.',
+  'geo.provider_unavailable':
+    'A busca de endereço está fora do ar agora. Tente de novo em instantes ou escolha outro jeito.',
 }
 
 /** Mensagem pronta para toast ou formulário. */

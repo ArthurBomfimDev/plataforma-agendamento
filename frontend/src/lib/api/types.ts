@@ -160,3 +160,27 @@ export type RequestAppointmentRequest = {
   /** Gerada aqui; repetir o envio devolve o mesmo agendamento em vez de criar dois. */
   idempotencyKey: string
 }
+
+// --- Localização (Onda 6B, `api/geo`) ---
+
+export type LocationPrecision = 'Rooftop' | 'Street' | 'Locality' | 'City'
+
+/** `GET /api/geo/postal-code/{cep}`. Logradouro e bairro faltam no CEP geral de cidade pequena. */
+export type PostalCodeResponse = {
+  postalCode: string
+  street: string | null
+  district: string | null
+  city: string
+  state: string
+}
+
+/** Um resultado de `GET /api/geo/search?q=` (até 5). */
+export type GeoPlaceResponse = {
+  label: string
+  latitude: number
+  longitude: number
+  precision: LocationPrecision
+}
+
+/** `GET /api/geo/reverse?lat=&lng=`. */
+export type ReverseGeocodeResponse = { label: string }
