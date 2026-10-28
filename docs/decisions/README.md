@@ -45,7 +45,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [005](0005-dupla-reserva-constraint-exclusao.md) | Prevenção de dupla reserva por constraint de exclusão | ✅ Aceito | 2026-09-09 |
 | [006](0006-slot-calculado-nao-persistido.md) | Slot calculado, não persistido | ✅ Aceito | 2026-09-09 |
 | [007](0007-monolito-modular-fronteiras.md) | Monólito modular com fronteira de módulo verificada pelo build | ✅ Aceito · reescrita antes do merge | 2026-09-16 |
-| [008](0008-hospedagem-postgis-btree-gist.md) | Hospedagem com PostGIS e `btree_gist` | 📝 Proposto — decisão em aberto, depende do spike | 2026-10-26 |
+| [008](0008-hospedagem-postgis-btree-gist.md) | Hospedagem com PostGIS e `btree_gist` | 📝 Proposto — Compose como unidade de implantação (27/10); provedor em aberto | 2026-10-26 |
 | [009](0009-paridade-mobile-do-painel.md) | Paridade mobile do painel como decisão de inclusão | ✅ Aceito | 2026-09-09 |
 | [010](0010-organizacao-do-backend.md) | Organização do backend: camadas físicas, módulos por namespace e regras verificadas no CI | ✅ Aceito · emendada em 2026-10-01 | 2026-09-16 |
 | [011](0011-bun-como-gerenciador-de-pacotes.md) | Bun como gerenciador de pacotes do frontend; Vite permanece o bundler | ✅ Aceito | 2026-09-17 |
