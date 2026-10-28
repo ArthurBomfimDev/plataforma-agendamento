@@ -3,14 +3,16 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 
 import { clearPendingProfile, readPendingProfile, savePendingProfile } from './pending-profile'
 
+import { EMPTY_SEARCH, type SearchFilters } from './search'
+
 import { ApiError } from './errors'
 import type { RequestAppointmentRequest } from './types'
 import { useSessionStore } from '@lib/zustand/session'
 
 /** Chaves do cache. Invalidar por prefixo: `['appointments']` derruba todas as listas. */
 export const queryKeys = {
-  search: (latitude: number, longitude: number, term?: string) =>
-    ['businesses', 'search', latitude, longitude, term ?? ''] as const,
+  search: (latitude: number, longitude: number, filters: Partial<SearchFilters>) =>
+    ['businesses', 'search', latitude, longitude, { ...EMPTY_SEARCH, ...filters }] as const,
   business: (businessId: string) => ['businesses', businessId] as const,
   services: (businessId: string) => ['businesses', businessId, 'services'] as const,
   professionals: (businessId: string) => ['businesses', businessId, 'professionals'] as const,
@@ -27,21 +29,27 @@ export const queryKeys = {
   me: ['me'] as const,
 }
 
+/** Busca perto da referência, com os filtros que o backend suporta. Sem referência, não busca. */
 export const useSearchBusinesses = (
   location: { latitude: number; longitude: number } | null,
-  term?: string,
-) =>
-  useQuery({
-    queryKey: queryKeys.search(location?.latitude ?? 0, location?.longitude ?? 0, term),
+  filters: Partial<SearchFilters> = {},
+) => {
+  const { term, category, maxPriceCents, sortBy, radiusKm } = { ...EMPTY_SEARCH, ...filters }
+  return useQuery({
+    queryKey: queryKeys.search(location?.latitude ?? 0, location?.longitude ?? 0, filters),
     queryFn: () =>
       businessesApi.search({
         latitude: location!.latitude,
         longitude: location!.longitude,
-        radiusKm: 20,
-        term,
+        radiusKm,
+        term: term ?? undefined,
+        category: category ?? undefined,
+        maxPriceCents: maxPriceCents ?? undefined,
+        sortBy: sortBy === 'distance' ? undefined : sortBy,
       }),
     enabled: location !== null,
   })
+}
 
 export const useBusiness = (businessId: string) =>
   useQuery({

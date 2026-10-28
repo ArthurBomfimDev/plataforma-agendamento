@@ -63,6 +63,12 @@ export type BusinessSearchItemResponse = {
   district: string | null
   city: string | null
   distanceKm: number
+  /** Serviço em destaque: o que casa com o termo, ou o mais barato. Nulos sem serviço ativo. */
+  serviceId: string | null
+  serviceName: string | null
+  durationMinutes: number | null
+  /** "A partir de", em centavos. */
+  fromPriceCents: number | null
 }
 
 // ---------- Catalog ----------

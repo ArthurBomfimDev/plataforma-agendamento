@@ -1,7 +1,7 @@
 import { Outlet, useMatch, useNavigate } from 'react-router'
 
 import { LocationPicker } from '@components/location-picker'
-import { ROUTES } from './consts'
+import { ROUTES, searchPath } from './consts'
 import { TopBar } from '@components/top-bar'
 import { toast } from '@lib/toast'
 import { useLocationStore } from '@lib/zustand/location'
@@ -12,6 +12,8 @@ import { useSignOut } from '@lib/api/queries'
 export const AppLayout = () => {
   const navigate = useNavigate()
   const isHome = useMatch(ROUTES.home) !== null
+  // Home e resultados têm a busca no próprio cabeçalho: na barra, ela seria repetida.
+  const isSearch = useMatch(ROUTES.search) !== null
   const signedIn = useSessionStore((state) => state.session !== null)
   const signOut = useSignOut()
   const locationLabel = useLocationStore((state) => state.location?.label ?? null)
@@ -20,7 +22,8 @@ export const AppLayout = () => {
   return (
     <>
       <TopBar
-        showSearch={!isHome}
+        showSearch={!isHome && !isSearch}
+        onSearch={(term) => navigate(searchPath({ term }))}
         signedIn={signedIn}
         locationLabel={locationLabel}
         onChooseLocation={openPicker}

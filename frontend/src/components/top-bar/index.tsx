@@ -2,7 +2,9 @@ import { Button } from '@components/button'
 import { Logotype } from '@components/logotype'
 import { MapPin } from 'lucide-react'
 import { locationReference } from './consts'
+import { SearchButton } from '@components/search-button'
 import { SearchField } from '@components/search-field'
+import { useState } from 'react'
 import { ThemeToggle } from '@components/theme-toggle'
 import type { TopBarProps } from './types'
 
@@ -23,7 +25,9 @@ export const TopBar = (props: TopBarProps) => {
     onSignOut,
     locationLabel,
     onChooseLocation,
+    onSearch,
   } = props
+  const [term, setTerm] = useState('')
 
   return (
     <header className="hidden border-b border-(--border-subtle) bg-(--bg-surface) lg:block">
@@ -51,11 +55,25 @@ export const TopBar = (props: TopBarProps) => {
         </button>
 
         {showSearch ? (
-          <SearchField
-            label="Buscar"
-            placeholder="Buscar serviço, local ou profissional"
-            className="min-w-0 flex-1 rounded-(--radius-full) py-(--space-8)"
-          />
+          <form
+            role="search"
+            className="min-w-0 flex-1"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (term.trim()) onSearch?.(term.trim())
+            }}
+          >
+            <SearchField
+              label="Buscar"
+              name="term"
+              enterKeyHint="search"
+              placeholder="Buscar serviço ou estabelecimento"
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              className="rounded-(--radius-full) py-(--space-4) pr-(--space-4)"
+              action={<SearchButton disabled={!term.trim()} className="rounded-(--radius-full)" />}
+            />
+          </form>
         ) : (
           <div className="flex-1" />
         )}
