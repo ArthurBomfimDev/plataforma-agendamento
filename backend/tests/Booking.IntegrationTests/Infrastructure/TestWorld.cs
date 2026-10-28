@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Booking.Application.Contracts.Identity;
+using Booking.Application.Module.Notifications.Commands;
 using Booking.Arguments.Module.Availability;
 using Booking.Arguments.Module.Catalog;
 using Booking.Arguments.Module.Identity;
@@ -21,7 +22,7 @@ using Npgsql;
 
 namespace Booking.IntegrationTests.Infrastructure;
 
-public sealed record TestUser(Guid UserId, Guid? CustomerId, string Token);
+public sealed record TestUser(Guid UserId, Guid? CustomerId, string Token, string Email = "");
 
 public sealed record TestService(Guid Id, int DurationMinutes);
 
@@ -31,7 +32,8 @@ public sealed record TestBusiness(
     string OwnerToken,
     IReadOnlyList<Guid> ProfessionalIds,
     IReadOnlyList<Guid> WorkScheduleIds,
-    IReadOnlyList<TestService> Services);
+    IReadOnlyList<TestService> Services,
+    string OwnerEmail = "");
 
 /// <summary>Serviço a criar: duração, buffers, preço e nome. O passo de grade é sempre 15 min.</summary>
 public sealed record ServiceSpec(
@@ -89,7 +91,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
 
         await db.SaveChangesAsync();
 
-        return [.. created.Select(c => new TestUser(c.User.Id, c.Customer.Id, tokens.Issue(c.User, now).Value))];
+        return [.. created.Select(c => new TestUser(c.User.Id, c.Customer.Id, tokens.Issue(c.User, now).Value, c.User.Email.Address))];
     }
 
     public async Task<TestUser> NewCustomerAsync() => (await NewCustomersAsync(1))[0];
@@ -108,7 +110,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         db.Add(customer);
         await db.SaveChangesAsync();
 
-        return new TestUser(user.Id, customer.Id, tokens.Issue(user, now).Value);
+        return new TestUser(user.Id, customer.Id, tokens.Issue(user, now).Value, user.Email.Address);
     }
 
     /// <summary>
@@ -134,7 +136,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         professional.LinkMembership(membership.Id);
         await db.SaveChangesAsync();
 
-        return new TestUser(user.Id, null, tokens.Issue(user, now, new BusinessContext(business.Id, "Professional")).Value);
+        return new TestUser(user.Id, null, tokens.Issue(user, now, new BusinessContext(business.Id, "Professional")).Value, user.Email.Address);
     }
 
     /// <summary>Usuário sem perfil de consumidor: o dono, antes de criar o estabelecimento.</summary>
@@ -148,7 +150,27 @@ public sealed class TestWorld(IntegrationFixture fixture)
         db.Add(user);
         await db.SaveChangesAsync();
 
-        return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value);
+        return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value, user.Email.Address);
+    }
+
+    // --- E-mail ---
+
+    /// <summary>O que a API desta execução teria enviado por e-mail.</summary>
+    public FakeEmailSender Emails => fixture.Factory.Emails;
+
+    /// <summary>Uma rodada do worker da outbox, quando o teste quer — o worker de verdade está desligado nos testes.</summary>
+    public async Task<DispatchResult> DispatchOutboxAsync()
+    {
+        await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<DispatchOutboxCommand>().ExecuteAsync();
+    }
+
+    /// <summary>Despacha até a outbox esvaziar do que já venceu.</summary>
+    public async Task DispatchAllAsync()
+    {
+        while ((await DispatchOutboxAsync()).Claimed > 0)
+        {
+        }
     }
 
     // --- Estabelecimento ---
@@ -223,7 +245,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
             await SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/approve", new AdminDecisionRequest("Aprovado no teste"), admin.Token);
         }
 
-        return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices);
+        return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices, owner.Email);
     }
 
     /// <summary>
@@ -241,7 +263,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         db.Add(user);
         await db.SaveChangesAsync();
 
-        return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value);
+        return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value, user.Email.Address);
     }
 
     // --- Agendamento ---

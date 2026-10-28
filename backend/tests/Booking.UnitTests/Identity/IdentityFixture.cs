@@ -144,13 +144,13 @@ public sealed class RecordingMailer : IIdentityMailer
     public List<(string Email, string Token)> Confirmations { get; } = [];
     public List<(string Email, string Token)> Resets { get; } = [];
 
-    public Task SendEmailConfirmationAsync(string email, string rawToken, CancellationToken ct = default)
+    public Task QueueEmailConfirmationAsync(string email, string fullName, string rawToken, CancellationToken ct = default)
     {
         Confirmations.Add((email, rawToken));
         return Task.CompletedTask;
     }
 
-    public Task SendPasswordResetAsync(string email, string rawToken, CancellationToken ct = default)
+    public Task QueuePasswordResetAsync(string email, string fullName, string rawToken, CancellationToken ct = default)
     {
         Resets.Add((email, rawToken));
         return Task.CompletedTask;
