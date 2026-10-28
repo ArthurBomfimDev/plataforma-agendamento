@@ -23,6 +23,10 @@ public sealed record CounterAppointmentRequest(
 
 public sealed record ReasonRequest(string? Reason);
 
+/// <summary>
+/// <c>CustomerName</c>: só nas rotas do estabelecimento (agenda, pendentes, transições, balcão) — nome social do
+/// consumidor, senão o do cadastro; no balcão, o nome informado. Nulo nas rotas do consumidor.
+/// </summary>
 public sealed record AppointmentResponse(
     Guid Id,
     Guid BusinessId,
@@ -39,4 +43,6 @@ public sealed record AppointmentResponse(
     string? AttendeeName,
     string? CustomerNotes,
     string? CancellationReason,
-    string? CancelledBy);
+    string? CancelledBy,
+    DateTimeOffset RequestedAt,
+    string? CustomerName = null);

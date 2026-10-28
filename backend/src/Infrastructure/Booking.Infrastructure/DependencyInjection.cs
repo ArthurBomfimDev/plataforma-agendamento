@@ -96,6 +96,7 @@ public static class DependencyInjection
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddSingleton(new IdentityMailerSettings(LogRawTokens: isDevelopment));
         services.AddSingleton<IIdentityMailer, LoggingIdentityMailer>();
+        services.AddScoped<IUserDirectory, UserDirectory>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -188,6 +189,7 @@ public static class DependencyInjection
         services.AddScoped<IAffectedAppointments, AffectedAppointmentsService>();
 
         services.AddScoped<AppointmentAccess>();
+        services.AddScoped<CustomerNameResolver>();
         services.AddScoped<SlotGuard>();
         services.AddScoped<RequestAppointmentCommand>();
         services.AddScoped<CreateCounterAppointmentCommand>();

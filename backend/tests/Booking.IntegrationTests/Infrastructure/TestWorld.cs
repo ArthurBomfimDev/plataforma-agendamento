@@ -12,6 +12,7 @@ using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Module.Identity;
 using Booking.Domain.Entity.Module.People;
 using Booking.Domain.Entity.Module.Tenancy;
+using Booking.Domain.Enum.Module.Tenancy;
 using Booking.Domain.ValueObject;
 using Booking.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -92,6 +93,49 @@ public sealed class TestWorld(IntegrationFixture fixture)
     }
 
     public async Task<TestUser> NewCustomerAsync() => (await NewCustomersAsync(1))[0];
+
+    /// <summary>Consumidor com nome de cadastro e nome social escolhidos — para conferir qual dos dois aparece.</summary>
+    public async Task<TestUser> NewCustomerAsync(string fullName, string? socialName)
+    {
+        await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
+        BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        User user = User.Create(Email.Of($"it-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, fullName);
+        Customer customer = Customer.Create(user.Id, new DateOnly(1990, 1, 1), socialName, DateOnly.FromDateTime(now.UtcDateTime));
+        db.Add(user);
+        db.Add(customer);
+        await db.SaveChangesAsync();
+
+        return new TestUser(user.Id, customer.Id, tokens.Issue(user, now).Value);
+    }
+
+    /// <summary>
+    /// Funcionário com login, vinculado ao profissional de índice <paramref name="professionalIndex"/> do estabelecimento,
+    /// e o token já no contexto <c>Professional</c>. Montado pelo domínio (<c>Invite</c> + <c>Accept</c> +
+    /// <c>LinkMembership</c>), sem o fluxo de convite.
+    /// </summary>
+    public async Task<TestUser> NewStaffAsync(TestBusiness business, int professionalIndex)
+    {
+        await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
+        BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        User user = User.Create(Email.Of($"it-staff-{Guid.NewGuid():N}@exemplo.test"), fixture.PasswordHash, "Funcionário de teste");
+        BusinessMembership membership = BusinessMembership.Invite(business.Id, user.Id, BusinessMembershipRole.Professional);
+        membership.Accept(now);
+        db.Add(user);
+        db.Add(membership);
+
+        Guid professionalId = business.ProfessionalIds[professionalIndex];
+        Professional professional = await db.Set<Professional>().IgnoreQueryFilters().SingleAsync(p => p.Id == professionalId);
+        professional.LinkMembership(membership.Id);
+        await db.SaveChangesAsync();
+
+        return new TestUser(user.Id, null, tokens.Issue(user, now, new BusinessContext(business.Id, "Professional")).Value);
+    }
 
     /// <summary>Usuário sem perfil de consumidor: o dono, antes de criar o estabelecimento.</summary>
     public async Task<TestUser> NewUserAsync(string fullName)

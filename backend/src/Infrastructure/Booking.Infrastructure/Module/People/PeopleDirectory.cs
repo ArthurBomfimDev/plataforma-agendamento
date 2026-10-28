@@ -24,4 +24,12 @@ public sealed class PeopleDirectory(BookingDbContext context) : IPeopleDirectory
 
     public Task<Guid?> FindCustomerIdAsync(Guid userId, CancellationToken ct = default) =>
         context.Set<Customer>().Where(x => x.UserId == userId).Select(x => (Guid?)x.Id).FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<CustomerIdentity>> GetCustomersAsync(IReadOnlyCollection<Guid> customerIds, CancellationToken ct = default) =>
+        customerIds.Count == 0
+            ? []
+            : await context.Set<Customer>().AsNoTracking()
+                .Where(x => customerIds.Contains(x.Id))
+                .Select(x => new CustomerIdentity(x.Id, x.UserId, x.SocialName))
+                .ToListAsync(ct);
 }
