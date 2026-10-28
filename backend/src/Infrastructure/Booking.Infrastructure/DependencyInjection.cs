@@ -52,7 +52,11 @@ namespace Booking.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    /// <param name="isDevelopment">
+    /// Só o que muda por ambiente dentro da infraestrutura. O padrão é o lado seguro: fora de Development, nenhum token
+    /// de e-mail vai para o log.
+    /// </param>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, bool isDevelopment = false)
     {
         string connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException(
@@ -65,7 +69,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<BookingDbContext>());
         services.AddSingleton(TimeProvider.System);
 
-        services.AddIdentityModule(configuration);
+        services.AddIdentityModule(configuration, isDevelopment);
         services.AddTenancyModule();
         services.AddPeopleModule();
         services.AddCatalogModule();
@@ -76,7 +80,7 @@ public static class DependencyInjection
         return services;
     }
 
-    private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
+    private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
     {
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
@@ -90,6 +94,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
+        services.AddSingleton(new IdentityMailerSettings(LogRawTokens: isDevelopment));
         services.AddSingleton<IIdentityMailer, LoggingIdentityMailer>();
 
         services.AddScoped<IUserRepository, UserRepository>();
