@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-28 (Onda 5B — e-mail transacional) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-28 (Onda 6A — conta com e-mail obrigatório) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -36,7 +36,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 
 | Módulo | Situação |
 |---|---|
-| Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo |
+| Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo. **Desde a 6A:** login e refresh exigem e-mail confirmado (`403 identity.email_not_confirmed`, `Identity__RequireEmailConfirmation`), reenvio sem enumeração (`resend-confirmation`, 1 por minuto por conta); contas anteriores confirmadas pela migration `ConfirmExistingAccounts`. Frontend: mostrar senha, "Confira seu e-mail", confirmar e-mail, esqueci e redefinir senha |
 | Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar |
 | People | ✅ `Customer` (com `BirthDate`), `Professional` (consentimento de perfil público) |
 | Catalog | ✅ `Service`, `ServiceProfessional` |
@@ -46,10 +46,10 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 | Reputation | ⬜ Pasta vazia — fora do recorte (§12) |
 | Notifications | 🟡 **E-mail (Onda 5B, ADR-021):** outbox na mesma transação (`notifications.outbox`), worker com nova tentativa e recuo, SMTP genérico (MailKit), Mailpit no Compose. E-mails de conta (confirmação, redefinição) e de agendamento (pedido novo, confirmado com `.ics`, recusado, cancelado, expirado). Lembretes, in-app e `.ics` de cancelamento na 5C |
 
-- **5 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`, `AddOutbox`). PostGIS e `btree_gist` habilitados.
+- **6 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`, `AddOutbox`, `ConfirmExistingAccounts` — esta só de dado). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (87 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (64 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes e e-mail M1–M13 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (96 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (70 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes, e-mail M1–M13 e confirmação obrigatória N1–N5 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -291,7 +291,7 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | N | Marca: tiles do ícone de app, favicon, área de proteção | PWA instalável | Rafael |
 | O | ✅ **Corrigido e mergeado (#14, 27/10).** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
 | P | ✅ **Corrigido e mergeado (#14 e, a janela restante, #15).** Mesma `IdempotencyKey` simultânea devolvia 400/409; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
-| S | Lacunas de segurança do RNF-06. **Corrigidas na 5A e na 5B:** token de e-mail fora do log em todo ambiente (o `LoggingIdentityMailer` saiu; o token só existe no link do e-mail, e a linha da outbox é limpa depois da entrega); `TenantContextExtensions` morto removido. **Abertas:** cadastro revela e-mail existente (409); sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
+| S | Lacunas de segurança do RNF-06. **Corrigidas na 5A e na 5B:** token de e-mail fora do log em todo ambiente (o `LoggingIdentityMailer` saiu; o token só existe no link do e-mail, e a linha da outbox é limpa depois da entrega); `TenantContextExtensions` morto removido. **Abertas:** cadastro revela e-mail existente (409 — a S2, resposta neutra com aviso ao dono, ficou fora da 6A: o aviso precisa de limite por conta para não virar bombardeio de e-mail); sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
 | T | Agenda do dia (branch `dashboard`). **Feito na 5A:** `customerName` (nome social, senão o do cadastro; no balcão, o informado) e `requestedAt` nas rotas do estabelecimento; filtro de pendentes por profissional. **Falta:** indicadores do dia e remarcação. Ver `contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
 | U | Lembretes prometidos na tela "Pedido enviado". **Decidido (27/10): implementar.** E-mail de andamento do pedido feito na 5B; **lembretes (`ReminderOffsetsHours`, padrão 24 h e 1 h) e in-app na 5C**. A tela ainda usa `MOCK_REMINDER_HOURS = [24, 3]` | Coerência da demonstração | Arthur + Rafael |
 | R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |

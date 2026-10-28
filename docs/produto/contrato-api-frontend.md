@@ -1,9 +1,9 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado na Onda 5A. **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B e 6A (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
-> (`f09b048`). Só relatório: nenhum arquivo do frontend foi alterado.
+> (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
 >
 > O JSON da API vem em camelCase. Os tipos do frontend são escritos à mão (há um `TODO` em `types.ts` para gerar
 > do OpenAPI em `/openapi/v1.json`).
@@ -18,6 +18,10 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `POST /api/auth/register` | `authApi.register` | ✅ |
 | `POST /api/auth/refresh` | `client.ts` (renovação deduplicada) | ✅ |
 | `POST /api/auth/logout` | `authApi.logout` | ✅ |
+| `POST /api/auth/confirm-email` | `authApi.confirmEmail` | ✅ desde a 6A |
+| `POST /api/auth/resend-confirmation` (novo na 6A) | `authApi.resendConfirmation` | ✅ |
+| `POST /api/auth/forgot-password` | `authApi.forgotPassword` | ✅ desde a 6A |
+| `POST /api/auth/reset-password` | `authApi.resetPassword` | ✅ desde a 6A |
 | `GET /api/users/me` | `authApi.me` | ✅ |
 | `GET/POST /api/customers/me` | `customersApi.me`/`register` | ✅ |
 | `GET /api/businesses/search` | `businessesApi.search` | ➕ campos e parâmetros novos (§2.3) |
@@ -98,6 +102,8 @@ resultado (é uma consulta de disponibilidade por estabelecimento), filtro "Disp
 | 403 `tenant.missing`, `auth.forbidden` | existem | não traduzidos | ⚠️ (só relevantes no painel) |
 | 400 `business.activation_checklist_incomplete` | traz `missing` | — | ❌ no TS (onboarding do painel) |
 | 429 | limitador de autenticação | traduzido ("Muitas tentativas…") | ✅ |
+| 403 `identity.email_not_confirmed` (6A) | login e refresh de conta sem e-mail confirmado; só depois da senha certa (senha errada continua 401 `auth.invalid_credentials`) | traduzido; Entrar mostra "Reenviar e-mail de confirmação" | ✅ |
+| 400 `user_token.invalid` | link de confirmação ou de redefinição vencido, usado ou de outro tipo | telas "Link inválido" | ✅ |
 
 ## 4. O que a agenda do dia (branch `dashboard`) vai precisar
 
@@ -126,8 +132,8 @@ Nenhuma rota de API nova. Os e-mails levam links para **rotas do frontend** (Has
 
 | Link no e-mail | Tela que o frontend precisa ter | Chamada de API que a tela faz |
 |---|---|---|
-| `#/confirmar-email?token={token}` | Confirmação de e-mail (lê o `token` da URL e confirma) | `POST /api/auth/confirm-email` `{ token }` — **já existe** |
-| `#/redefinir-senha?token={token}` | Nova senha (lê o `token`, pede a senha nova) | `POST /api/auth/reset-password` `{ token, newPassword }` — **já existe** |
+| `#/confirmar-email?token={token}` | Confirmação de e-mail (lê o `token` da URL e confirma) — **tela feita na 6A** | `POST /api/auth/confirm-email` `{ token }` |
+| `#/redefinir-senha?token={token}` | Nova senha (lê o `token`, pede a senha nova) — **tela feita na 6A** | `POST /api/auth/reset-password` `{ token, newPassword }` |
 | `#/painel/pedidos` | Pedidos pendentes do painel | `GET /api/businesses/current/appointments/pending` |
 | `#/painel/agenda` | Agenda do dia do painel (branch `dashboard`) | `GET /api/businesses/current/appointments?date=` |
 
@@ -138,6 +144,23 @@ Nenhuma rota de API nova. Os e-mails levam links para **rotas do frontend** (Has
   `http://localhost:8025`.
 - Os textos da tela "Pedido enviado" sobre lembretes continuam sem backend até a 5C (`MOCK_REMINDER_HOURS = [24, 3]`,
   padrão real `[24, 1]`).
+
+## 4.2 Conta com e-mail obrigatório (Onda 6A, 28/10)
+
+- **Cadastro não abre sessão.** `POST /api/auth/register` continua `201` com `UserResponse` (sem token) e põe o e-mail de
+  confirmação na outbox. O frontend vai para `#/sign-up/check-email`; o endereço vai no estado da navegação, nunca na URL.
+- **Login e refresh** de conta não confirmada: `403 identity.email_not_confirmed`. Desligável por
+  `Identity__RequireEmailConfirmation=false` (padrão `true`).
+- **`POST /api/auth/resend-confirmation`** `{ email }`: sempre `202` com corpo vazio, exista a conta ou não. No máximo um
+  e-mail a cada 60 s por conta (contado do último token emitido, vale entre instâncias) e o limitador `auth` por IP.
+  Um reenvio invalida o link anterior.
+- **Redefinir a senha confirma o e-mail**: quem abriu o link provou que lê a caixa de entrada.
+- **Perfil de consumidor** (data de nascimento): sem sessão no cadastro, fica guardado no `localStorage` do aparelho
+  (`lib/api/pending-profile.ts`) e é criado na primeira entrada com o mesmo e-mail. Quem entra por outro aparelho fica
+  sem perfil até existir a tela de perfil.
+
+Rotas novas do frontend: `#/sign-up/check-email`, `#/forgot-password`, `#/confirmar-email?token=` e
+`#/redefinir-senha?token=` (os dois últimos são os caminhos dos e-mails da 5B, §4.1).
 
 ## 5. Resumo para fechar o lado do frontend
 
