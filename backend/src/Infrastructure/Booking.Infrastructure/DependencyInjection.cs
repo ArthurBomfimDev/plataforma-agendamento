@@ -26,6 +26,7 @@ using Booking.Application.Module.Scheduling.Commands;
 using Booking.Application.Module.Scheduling.Integration;
 using Booking.Application.Module.Scheduling.Queries;
 using Booking.Application.Module.Tenancy.Commands;
+using Booking.Application.Module.Tenancy.Geo;
 using Booking.Application.Module.Tenancy.Queries;
 using Booking.Domain.Interface.Repository.Module.Availability;
 using Booking.Domain.Interface.Repository.Module.Catalog;
@@ -49,6 +50,7 @@ using Booking.Infrastructure.Module.People.Repository;
 using Booking.Infrastructure.Module.Scheduling;
 using Booking.Infrastructure.Module.Scheduling.Repository;
 using Booking.Infrastructure.Module.Tenancy;
+using Booking.Infrastructure.Module.Tenancy.Geo;
 using Booking.Infrastructure.Module.Tenancy.Repository;
 using Booking.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -85,9 +87,63 @@ public static class DependencyInjection
         services.AddSchedulingModule();
         services.AddComplianceModule();
         services.AddNotificationsModule(configuration, isDevelopment);
+        services.AddGeo(configuration);
 
         return services;
     }
+
+    /// <summary>
+    /// Geocodificação e CEP (ADR-016, ADR-022), no módulo Tenancy. Cada provedor tem um <c>HttpClient</c> próprio, sem
+    /// os loggers padrão: eles escreveriam a URL, e a URL leva o texto ou o ponto consultado.
+    /// </summary>
+    private static void AddGeo(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<GeoOptions>()
+            .Bind(configuration.GetSection(GeoOptions.SectionName))
+            .Validate(o => !string.IsNullOrWhiteSpace(o.UserAgent), "Geo:UserAgent é obrigatório (política do Nominatim).")
+            .Validate(o => o.TimeoutSeconds is >= 1 and <= 30, "Geo:TimeoutSeconds deve ficar entre 1 e 30.")
+            .Validate(o => Uri.TryCreate(o.Nominatim.BaseUrl, UriKind.Absolute, out _), "Geo:Nominatim:BaseUrl precisa ser uma URL absoluta.")
+            .Validate(
+                o => o.PostalCode.Provider is PostalCodeOptions.BrasilApi or PostalCodeOptions.ViaCep,
+                "Geo:PostalCode:Provider deve ser BrasilApi ou ViaCep.")
+            .Validate(o => Uri.TryCreate(o.PostalCode.ResolvedBaseUrl, UriKind.Absolute, out _), "Geo:PostalCode:BaseUrl precisa ser uma URL absoluta.")
+            .ValidateOnStart();
+
+        services.AddSingleton<GeoCache>();
+        services.AddSingleton<NominatimThrottle>();
+
+        void Configure(IServiceProvider sp, HttpClient client, Func<GeoOptions, string> baseUrl)
+        {
+            GeoOptions options = sp.GetRequiredService<IOptions<GeoOptions>>().Value;
+            client.BaseAddress = new Uri(EnsureTrailingSlash(baseUrl(options)));
+            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        }
+
+        services.AddHttpClient<NominatimGeocodingProvider>((sp, client) => Configure(sp, client, o => o.Nominatim.BaseUrl))
+            .RemoveAllLoggers();
+        services.AddHttpClient<BrasilApiPostalCodeLookup>((sp, client) => Configure(sp, client, o => o.PostalCode.ResolvedBaseUrl))
+            .RemoveAllLoggers();
+        services.AddHttpClient<ViaCepPostalCodeLookup>((sp, client) => Configure(sp, client, o => o.PostalCode.ResolvedBaseUrl))
+            .RemoveAllLoggers();
+
+        services.AddScoped<IGeocodingProvider>(sp => new CachingGeocodingProvider(
+            sp.GetRequiredService<NominatimGeocodingProvider>(), sp.GetRequiredService<GeoCache>()));
+        services.AddScoped<IPostalCodeLookup>(sp =>
+        {
+            IPostalCodeLookup inner = sp.GetRequiredService<IOptions<GeoOptions>>().Value.PostalCode.Provider == PostalCodeOptions.ViaCep
+                ? sp.GetRequiredService<ViaCepPostalCodeLookup>()
+                : sp.GetRequiredService<BrasilApiPostalCodeLookup>();
+            return new CachingPostalCodeLookup(inner, sp.GetRequiredService<GeoCache>());
+        });
+
+        services.AddScoped<LookupPostalCodeQuery>();
+        services.AddScoped<SearchPlacesQuery>();
+        services.AddScoped<ReverseGeocodeQuery>();
+    }
+
+    private static string EnsureTrailingSlash(string url) => url.EndsWith('/') ? url : url + "/";
 
     private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
