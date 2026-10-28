@@ -9,7 +9,8 @@ namespace Booking.Application.Module.Scheduling.Converter;
 /// </summary>
 public static class AppointmentConverter
 {
-    public static AppointmentResponse ToResponse(Appointment a) =>
+    /// <param name="customerName">Só no lado do estabelecimento (<see cref="Commands.CustomerNameResolver"/>); nulo para o consumidor.</param>
+    public static AppointmentResponse ToResponse(Appointment a, string? customerName = null) =>
         new(
             a.Id,
             a.BusinessId,
@@ -26,5 +27,7 @@ public static class AppointmentConverter
             a.WalkInName,
             a.CustomerNotes,
             a.CancellationReason,
-            a.CancelledBy?.ToString());
+            a.CancelledBy?.ToString(),
+            a.RequestedAt,
+            customerName);
 }

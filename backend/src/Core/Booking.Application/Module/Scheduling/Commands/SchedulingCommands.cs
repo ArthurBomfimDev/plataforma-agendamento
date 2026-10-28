@@ -214,12 +214,14 @@ public sealed class CreateCounterAppointmentCommand(
             throw await slots.ConflictAsync(service, r.StartsAt, ignoreLeadTime: true, ct);
         }
 
-        return AppointmentConverter.ToResponse(appointment);
+        // Balcão: o nome é o informado (WalkInName), sem consulta a outro módulo.
+        return AppointmentConverter.ToResponse(appointment, appointment.WalkInName);
     }
 }
 
 /// <summary>Transições do lado do estabelecimento: aceitar, recusar, cancelar, concluir, marcar falta.</summary>
-public sealed class ManageAppointmentCommand(AppointmentAccess access, IUnitOfWork unitOfWork, TimeProvider clock)
+public sealed class ManageAppointmentCommand(
+    AppointmentAccess access, CustomerNameResolver names, IUnitOfWork unitOfWork, TimeProvider clock)
 {
     public Task<AppointmentResponse> ConfirmAsync(Guid id, CancellationToken ct = default) =>
         RunAsync(id, "confirm", (a, actor, now) => a.Confirm(actor, now), ct);
@@ -244,7 +246,7 @@ public sealed class ManageAppointmentCommand(AppointmentAccess access, IUnitOfWo
         transition(appointment, access.CurrentActor(), clock.GetUtcNow());
 
         await unitOfWork.SaveChangesAsync(ct);
-        return AppointmentConverter.ToResponse(appointment);
+        return AppointmentConverter.ToResponse(appointment, await names.ResolveAsync(appointment, ct));
     }
 }
 

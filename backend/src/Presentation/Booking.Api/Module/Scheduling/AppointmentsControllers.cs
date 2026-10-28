@@ -51,11 +51,16 @@ public sealed class BusinessAppointmentsController : ControllerBase
         [FromQuery] int pageSize = 100) =>
         Ok(await query.ExecuteAsync(date, professionalId, new PageRequest(page, pageSize), ct));
 
+    /// <summary><c>professionalId</c> filtra para o proprietário; para o profissional, vale sempre o próprio.</summary>
     [HttpGet("pending")]
     [ProducesResponseType<PagedResult<AppointmentResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Pending(
-        [FromServices] ListPendingAppointmentsQuery query, CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) =>
-        Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
+        [FromServices] ListPendingAppointmentsQuery query,
+        CancellationToken ct,
+        [FromQuery] Guid? professionalId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await query.ExecuteAsync(professionalId, new PageRequest(page, pageSize), ct));
 
     [HttpPost("counter")]
     [ProducesResponseType<AppointmentResponse>(StatusCodes.Status201Created)]

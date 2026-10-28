@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-27 (fechamento do backend, Onda 4) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-27 (Onda 5A — ajustes do painel e do log) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -49,7 +49,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 - **4 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (82 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (43 casos, todos ativos — segurança I1–I3 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (82 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (50 casos, todos ativos — segurança I1–I3, painel J1–J4 e log de token K1 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -283,16 +283,16 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 |---|---|---|---|
 | **F** | **Comitê de Ética + aceitação do DSR + recorte etário de 18 anos** | Coleta com participantes | Orientadora |
 | **E** | **Confirmação do recorte de entrega** (§12) | Planejamento até a entrega | Orientadora + autores |
-| G | Hospedagem com PostGIS e `btree_gist` (ADR-008) | Deploy da demonstração | Arthur |
-| I | E-mail `@fatec.sp.gov.br` / Azure for Students | Cold start na defesa | Ambos |
+| G | Hospedagem (ADR-008, revisada em 27/10): **Docker Compose como unidade de implantação**, banco em contêiner; VPS paga, VM do crédito de estudante ou máquina própria por Cloudflare Tunnel. Neon e Heroku descartados. **Provedor final em aberto** | Deploy da demonstração | Arthur |
+| I | ✅ Conta Azure for Students criada (27/10): US$ 100 até 27/10/2027 | — | — |
 | **K** | **Nome técnico:** renomear repositório e `Booking.*` para Vagoo, ou manter neutro e registrar | Consistência | Ambos |
 | L | Colisão de marca: **Vagaro** (agendamento de salão) — registrar como risco ou consultar INPI | Uso comercial pós-TCC | Ambos |
 | M | Skills ainda com prefixo `agendeaki-` | Nada técnico; ruído | Arthur |
 | N | Marca: tiles do ícone de app, favicon, área de proteção | PWA instalável | Rafael |
 | O | ✅ **Corrigido e mergeado (#14, 27/10).** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
 | P | ✅ **Corrigido e mergeado (#14 e, a janela restante, #15).** Mesma `IdempotencyKey` simultânea devolvia 400/409; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
-| S | **Lacunas de segurança do RNF-06, não corrigidas:** token de confirmação e de redefinição de senha no log em nível Debug (`LoggingIdentityMailer`, ligado no Compose); cadastro revela e-mail existente (409); `TenantContextExtensions.RequireBusinessId` morto lança exceção que viraria 500; sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
-| T | **Agenda do dia (branch `dashboard`) precisa de backend que não existe:** nome do consumidor no agendamento (decisão de LGPD: em Saúde é dado sensível), `requestedAt`, filtro de pendentes por profissional, indicadores do dia, remarcação. Ver `docs/produto/contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
+| S | Lacunas de segurança do RNF-06. **Corrigidas na 5A:** token de e-mail fora do log fora de Development; `TenantContextExtensions` morto removido. **Abertas:** cadastro revela e-mail existente (409); sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
+| T | Agenda do dia (branch `dashboard`). **Feito na 5A:** `customerName` (nome social, senão o do cadastro; no balcão, o informado) e `requestedAt` nas rotas do estabelecimento; filtro de pendentes por profissional. **Falta:** indicadores do dia e remarcação. Ver `contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
 | U | **Promessa de lembrete na tela "Pedido enviado" sem backend:** não há módulo de notificação nem campo de lembrete na API. Decidir: implementar um mínimo, ou remover/qualificar o texto | Coerência da demonstração | Arthur |
 | R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
