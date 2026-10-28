@@ -119,6 +119,26 @@ resultado (é uma consulta de disponibilidade por estabelecimento), filtro "Disp
 | Remarcação (`AgendaMove`) | **não existe** | ❌ — hoje seria cancelar e marcar de novo |
 | Entrar no painel | `POST /api/users/me/context` → `ContextTokenResponse` | ✅ existe; não tipado no TS |
 
+## 4.1 E-mails (Onda 5B, 28/10) — o que o frontend precisa ter
+
+Nenhuma rota de API nova. Os e-mails levam links para **rotas do frontend** (HashRouter), montadas a partir de
+`App__PublicBaseUrl`:
+
+| Link no e-mail | Tela que o frontend precisa ter | Chamada de API que a tela faz |
+|---|---|---|
+| `#/confirmar-email?token={token}` | Confirmação de e-mail (lê o `token` da URL e confirma) | `POST /api/auth/confirm-email` `{ token }` — **já existe** |
+| `#/redefinir-senha?token={token}` | Nova senha (lê o `token`, pede a senha nova) | `POST /api/auth/reset-password` `{ token, newPassword }` — **já existe** |
+| `#/painel/pedidos` | Pedidos pendentes do painel | `GET /api/businesses/current/appointments/pending` |
+| `#/painel/agenda` | Agenda do dia do painel (branch `dashboard`) | `GET /api/businesses/current/appointments?date=` |
+
+- O token vem com escape de URL (`encodeURIComponent`): a tela usa o valor de `URLSearchParams` direto.
+- O e-mail de confirmação de agendamento leva um `.ics` anexo. O botão "Adicionar à agenda" dentro do app e o feed de
+  agenda são da Onda 5C.
+- Os e-mails chegam alguns segundos depois da ação (outbox + worker). Em desenvolvimento, aparecem no Mailpit:
+  `http://localhost:8025`.
+- Os textos da tela "Pedido enviado" sobre lembretes continuam sem backend até a 5C (`MOCK_REMINDER_HOURS = [24, 3]`,
+  padrão real `[24, 1]`).
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Tipar os campos novos da busca e o `ContextTokenResponse`.

@@ -3,6 +3,7 @@ using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.Availability;
 using Booking.Application.Contracts.Catalog;
 using Booking.Application.Contracts.Compliance;
+using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.People;
 using Booking.Application.Contracts.Tenancy;
 using Booking.Application.Module.Scheduling.Converter;
@@ -65,6 +66,7 @@ public sealed class RequestAppointmentCommand(
     IPeopleDirectory people,
     IComplianceGateway compliance,
     SlotGuard slots,
+    IAppointmentNotifier notifier,
     IActorContext actor,
     IUnitOfWork unitOfWork,
     TimeProvider clock)
@@ -129,6 +131,9 @@ public sealed class RequestAppointmentCommand(
             r.IdempotencyKey);
 
         appointments.Add(appointment);
+
+        // Na outbox, no mesmo SaveChanges: se a gravação for recusada (horário tomado, toque duplo), o aviso não existe.
+        await notifier.NotifyAsync(AppointmentConverter.ToFacts(appointment), AppointmentChange.Requested, ct);
 
         try
         {
@@ -221,29 +226,35 @@ public sealed class CreateCounterAppointmentCommand(
 
 /// <summary>Transições do lado do estabelecimento: aceitar, recusar, cancelar, concluir, marcar falta.</summary>
 public sealed class ManageAppointmentCommand(
-    AppointmentAccess access, CustomerNameResolver names, IUnitOfWork unitOfWork, TimeProvider clock)
+    AppointmentAccess access, CustomerNameResolver names, IAppointmentNotifier notifier, IUnitOfWork unitOfWork, TimeProvider clock)
 {
     public Task<AppointmentResponse> ConfirmAsync(Guid id, CancellationToken ct = default) =>
-        RunAsync(id, "confirm", (a, actor, now) => a.Confirm(actor, now), ct);
+        RunAsync(id, "confirm", (a, actor, now) => a.Confirm(actor, now), AppointmentChange.Confirmed, ct);
 
     public Task<AppointmentResponse> RejectAsync(Guid id, string? reason, CancellationToken ct = default) =>
-        RunAsync(id, "reject", (a, actor, now) => a.Reject(actor, now, reason), ct);
+        RunAsync(id, "reject", (a, actor, now) => a.Reject(actor, now, reason), AppointmentChange.Rejected, ct);
 
     public Task<AppointmentResponse> CancelAsync(Guid id, string? reason, CancellationToken ct = default) =>
-        RunAsync(id, "cancel", (a, actor, now) => a.CancelByBusiness(actor, now, reason), ct);
+        RunAsync(id, "cancel", (a, actor, now) => a.CancelByBusiness(actor, now, reason), AppointmentChange.CancelledByBusiness, ct);
 
+    // Concluir e marcar falta não avisam ninguém: o consumidor já esteve lá (ou não).
     public Task<AppointmentResponse> CompleteAsync(Guid id, CancellationToken ct = default) =>
-        RunAsync(id, "complete", (a, actor, now) => a.Complete(actor, now), ct);
+        RunAsync(id, "complete", (a, actor, now) => a.Complete(actor, now), change: null, ct);
 
     public Task<AppointmentResponse> MarkNoShowAsync(Guid id, CancellationToken ct = default) =>
-        RunAsync(id, "no_show", (a, actor, now) => a.MarkNoShow(actor, now), ct);
+        RunAsync(id, "no_show", (a, actor, now) => a.MarkNoShow(actor, now), change: null, ct);
 
     private async Task<AppointmentResponse> RunAsync(
-        Guid id, string action, Action<Appointment, SchedulingActor, DateTimeOffset> transition, CancellationToken ct)
+        Guid id, string action, Action<Appointment, SchedulingActor, DateTimeOffset> transition, AppointmentChange? change, CancellationToken ct)
     {
         Appointment appointment = await access.LoadAsync(id, action, ct);
 
         transition(appointment, access.CurrentActor(), clock.GetUtcNow());
+
+        if (change is AppointmentChange notice)
+        {
+            await notifier.NotifyAsync(AppointmentConverter.ToFacts(appointment), notice, ct);
+        }
 
         await unitOfWork.SaveChangesAsync(ct);
         return AppointmentConverter.ToResponse(appointment, await names.ResolveAsync(appointment, ct));
@@ -254,6 +265,7 @@ public sealed class CancelMyAppointmentCommand(
     IAppointmentRepository appointments,
     IBusinessDirectory businesses,
     IPeopleDirectory people,
+    IAppointmentNotifier notifier,
     IActorContext actor,
     IUnitOfWork unitOfWork,
     TimeProvider clock)
@@ -272,6 +284,7 @@ public sealed class CancelMyAppointmentCommand(
             ?? throw new DomainException("business.not_found");
 
         appointment.CancelByCustomer(new SchedulingActor(userId, "Customer"), clock.GetUtcNow(), business.CancellationWindowHours, reason);
+        await notifier.NotifyAsync(AppointmentConverter.ToFacts(appointment), AppointmentChange.CancelledByCustomer, ct);
 
         await unitOfWork.SaveChangesAsync(ct);
         return AppointmentConverter.ToResponse(appointment);
@@ -279,7 +292,8 @@ public sealed class CancelMyAppointmentCommand(
 }
 
 /// <summary>Expira pedidos pendentes vencidos, em lotes. Roda fora de requisição, sem tenant no contexto.</summary>
-public sealed class ExpirePendingAppointmentsCommand(IAppointmentRepository appointments, IUnitOfWork unitOfWork, TimeProvider clock)
+public sealed class ExpirePendingAppointmentsCommand(
+    IAppointmentRepository appointments, IAppointmentNotifier notifier, IUnitOfWork unitOfWork, TimeProvider clock)
 {
     private const int _batchSize = 200;
 
@@ -291,6 +305,7 @@ public sealed class ExpirePendingAppointmentsCommand(IAppointmentRepository appo
         foreach (Appointment appointment in expired)
         {
             appointment.Expire(now);
+            await notifier.NotifyAsync(AppointmentConverter.ToFacts(appointment), AppointmentChange.Expired, ct);
         }
 
         await unitOfWork.SaveChangesAsync(ct);

@@ -6,6 +6,7 @@
 #   Frontend  http://localhost:8080
 #   API       http://localhost:8081      (OpenAPI em /openapi/v1.json)
 #   Postgres  localhost:5433             (5433 para não colidir com um Postgres local na 5432)
+#   Mailpit   http://localhost:8025      (os e-mails de desenvolvimento chegam aqui)
 #
 # Os segredos vêm do .env, que não é versionado. Sem ele o compose recusa subir.
 #
@@ -56,14 +57,31 @@ services:
       ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-booking};Username=${POSTGRES_USER:-booking};Password=${POSTGRES_PASSWORD};Gss Encryption Mode=Disable
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?defina JWT_SIGNING_KEY no .env (rode scripts/setup-env)}
       Cors__AllowedOrigins__0: http://localhost:${WEB_PORT:-8080}
-      # Sem provedor de e-mail, o token de confirmação e de redefinição de senha só aparece no log,
-      # em nível Debug. Veja com: docker compose logs api
-      Logging__LogLevel__Booking.Infrastructure.Module.Identity.LoggingIdentityMailer: Debug
+      # E-mail de desenvolvimento: tudo vai para o Mailpit (http://localhost:8025), nada sai da máquina.
+      # Em produção estas variáveis apontam para o SMTP do provedor (ADR-021), com credencial só no .env.
+      Email__Smtp__Host: mailpit
+      Email__Smtp__Port: "1025"
+      Email__Smtp__UseSsl: "false"
+      Email__From: nao-responda@example.com
+      Email__FromName: ${APP_BRAND_NAME:-Vagoo}
+      App__BrandName: ${APP_BRAND_NAME:-Vagoo}
+      App__PublicBaseUrl: http://localhost:${WEB_PORT:-8080}
     ports:
       - "127.0.0.1:${API_PORT:-8081}:8080"
     depends_on:
       migrations:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+
+  # Caixa de e-mail falsa do ambiente local: recebe por SMTP e mostra numa página. Nada é entregue de verdade.
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+      # SMTP também no host: a API rodando com `dotnet run` (Development) usa localhost:1025 por padrão.
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
 
   web:
     build:

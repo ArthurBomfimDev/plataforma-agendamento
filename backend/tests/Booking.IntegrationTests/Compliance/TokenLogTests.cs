@@ -1,26 +1,30 @@
 using System.Net;
+using System.Text.RegularExpressions;
+using Booking.Application.Module.Notifications.Commands;
 using Booking.Arguments.Module.Identity;
 using Booking.IntegrationTests.Infrastructure;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Booking.IntegrationTests.Compliance;
 
 /// <summary>
-/// Pendência S: o token de confirmação e o de redefinição de senha não vão para o log fora de Development. A metade
-/// em Development é o par que prova que a captura enxergaria o token se ele fosse escrito.
+/// Pendência S, depois da Onda 5B: o token de confirmação e o de redefinição de senha só existem no link do e-mail.
+/// Em nenhum ambiente, em nenhuma categoria de log, com Debug aberto de propósito, o token bruto aparece.
 /// </summary>
+/// <remarks>
+/// O par que prova o teste: o token é tirado do próprio e-mail capturado — ele existe, e a captura de log o veria se
+/// estivesse lá.
+/// </remarks>
 [Collection(IntegrationCollection.Name)]
-public sealed class TokenLogTests(IntegrationFixture fixture)
+public sealed partial class TokenLogTests(IntegrationFixture fixture)
 {
-    private const string _mailerCategory = "Booking.Infrastructure.Module.Identity";
-
     [Theory]
-    [InlineData("Testing", false)]
-    [InlineData("Production", false)]
-    [InlineData("Development", true)]
-    public async Task K1_email_tokens_reach_the_log_only_in_development(string environment, bool tokenExpected)
+    [InlineData("Testing")]
+    [InlineData("Production")]
+    [InlineData("Development")]
+    public async Task K1_email_tokens_never_reach_the_log(string environment)
     {
-        var logs = new LogCapture(_mailerCategory);
+        var logs = new LogCapture(categoryPrefix: string.Empty);
         await using var factory = new BookingApiFactory(fixture.ConnectionString, environment, logs);
         using HttpClient client = factory.CreateClient();
         string email = $"it-log-{Guid.NewGuid():N}@exemplo.test";
@@ -37,11 +41,24 @@ public sealed class TokenLogTests(IntegrationFixture fixture)
             Assert.True(forgot.IsSuccessStatusCode);
         }
 
-        // A captura funciona nos três ambientes: o aviso de envio pendente aparece sempre.
-        Assert.Contains(logs.Entries, e => e.Level == LogLevel.Information && e.Message.Contains("confirmação pendente"));
-        Assert.Contains(logs.Entries, e => e.Level == LogLevel.Information && e.Message.Contains("redefinição de senha pendente"));
+        await using (AsyncServiceScope scope = factory.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<DispatchOutboxCommand>().ExecuteAsync();
+        }
 
-        bool tokenLogged = logs.Entries.Any(e => e.Message.StartsWith("Token de", StringComparison.Ordinal));
-        Assert.Equal(tokenExpected, tokenLogged);
+        string[] tokens = [.. factory.Emails.To(email).Select(m => TokenIn(m.TextBody))];
+        Assert.Equal(2, tokens.Length);
+        Assert.All(tokens, token => Assert.True(token.Length >= 20));
+
+        Assert.NotEmpty(logs.Entries);
+        foreach (string token in tokens)
+        {
+            Assert.DoesNotContain(logs.Entries, e => e.Message.Contains(token, StringComparison.Ordinal));
+        }
     }
+
+    private static string TokenIn(string body) => Uri.UnescapeDataString(TokenPattern().Match(body).Groups[1].Value);
+
+    [GeneratedRegex(@"token=([^\s&]+)")]
+    private static partial Regex TokenPattern();
 }

@@ -44,7 +44,8 @@ public sealed class ForgotPasswordCommand(
         GeneratedToken reset = tokens.Generate();
         userTokens.Add(UserToken.Issue(user.Id, UserTokenType.PasswordReset, reset.Hash, now + policy.PasswordResetLifetime));
 
+        // Na mesma transação do token (outbox, ADR-021).
+        await mailer.QueuePasswordResetAsync(email.Address, user.FullName, reset.Raw, ct);
         await unitOfWork.SaveChangesAsync(ct);
-        await mailer.SendPasswordResetAsync(email.Address, reset.Raw, ct);
     }
 }

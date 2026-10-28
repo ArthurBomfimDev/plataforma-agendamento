@@ -5,6 +5,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
+    <PackageReference Include="MailKit" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
