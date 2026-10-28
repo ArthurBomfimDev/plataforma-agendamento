@@ -15,12 +15,15 @@ export const ROUTES = {
   panel: '/panel',
   /** Painel do estabelecimento: pedidos pendentes (tela 10). */
   panelRequests: '/panel/requests',
+  /** Painel do estabelecimento: cadastro de serviço (tela 11). Ainda não há lista de serviços. */
+  panelNewService: '/panel/services/new',
 } as const
 
 /** Destino de cada seção do painel. Sem destino = tela ainda não existe. */
 export const PANEL_PATHS: Partial<Record<PanelSection | PanelBottomItem, string>> = {
   agenda: ROUTES.panel,
   requests: ROUTES.panelRequests,
+  services: ROUTES.panelNewService,
 }
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */

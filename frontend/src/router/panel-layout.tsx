@@ -21,7 +21,7 @@ const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests', 'rep
  *
  * Os pedidos pendentes moram aqui porque o contador das duas navegações depende deles.
  *
- * TODO: as outras seções (Serviços, Profissionais, Relatórios, "Mais"…) ainda não têm tela e por
+ * TODO: as outras seções (Profissionais, Relatórios, "Mais"…) ainda não têm tela e por
  * enquanto avisam. O painel também ainda não exige login de Owner ou Professional: isso depende do
  * módulo Identity, que exige revisão humana.
  */

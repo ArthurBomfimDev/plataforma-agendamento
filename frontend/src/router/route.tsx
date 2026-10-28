@@ -12,6 +12,7 @@ import { NotFoundScreen } from '@features/not-found'
 import { PanelAgendaRoute } from './panel-agenda-route'
 import { PanelLayout } from './panel-layout'
 import { PanelRequestsRoute } from './panel-requests-route'
+import { PanelServicesRoute } from './panel-services-route'
 import { ROUTES } from './consts'
 import { SignInRoute } from './sign-in-route'
 
@@ -41,6 +42,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.panel} element={<PanelLayout />}>
         <Route index element={<PanelAgendaRoute />} />
         <Route path={ROUTES.panelRequests} element={<PanelRequestsRoute />} />
+        <Route path={ROUTES.panelNewService} element={<PanelServicesRoute />} />
       </Route>
     </Routes>
   )
