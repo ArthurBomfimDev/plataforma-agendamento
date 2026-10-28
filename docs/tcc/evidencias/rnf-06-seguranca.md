@@ -33,6 +33,10 @@
 | Bloqueio por conta no login | Só há limite por IP | Força bruta distribuída (vários IPs) contra uma conta | Fora do recorte; registrar |
 | RLS no banco | ADR-003: depois do MVP | Uma consulta SQL à mão fora do EF não tem filtro de tenant | Já registrado como trabalho futuro |
 
+**Atualização (Onda 5A, 27/10):** duas lacunas da tabela acima foram corrigidas na branch `fix/ajustes-painel-e-log`:
+o token de e-mail só vai para o log em Development (teste `TokenLogTests.K1`, em Testing, Production e Development —
+este último é o par que prova que a captura enxergaria o token), e o `TenantContextExtensions` morto foi removido.
+
 ## 3. Não verificado
 
 - ⚠️ **TLS em produção** — depende da hospedagem (ADR-008, pendência G). O HSTS está ligado fora de Development,

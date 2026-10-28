@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27. **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado na Onda 5A. **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Só relatório: nenhum arquivo do frontend foi alterado.
@@ -82,6 +82,8 @@ resultado (é uma consulta de disponibilidade por estabelecimento), filtro "Disp
 | | `status` | `string` (nome do enum) | união dos 7 estados | ✅ — os 7 nomes batem com `AppointmentStatus` |
 | | `source` | `string` (`Online` \| `Counter`) | `string` | ✅ (o TS podia ser a união) |
 | | `expiresAt`, `attendeeName`, `customerNotes`, `cancellationReason`, `cancelledBy` | `string?` / `DateTimeOffset?` | `string \| null` | ✅ |
+| | `requestedAt` | `DateTimeOffset` (sempre) | — | ➕ desde a 5A (27/10) |
+| | `customerName` | `string?` — **só nas rotas do estabelecimento**: nome social do consumidor, senão o do cadastro; no balcão, o nome informado. **Nulo** nas rotas do consumidor (`/api/appointments/*`) | — | ➕ desde a 5A |
 | `RequestAppointmentRequest` | `businessId`, `serviceId`, `professionalId`, `startsAt` | `Guid`, `Guid`, `Guid`, `DateTimeOffset` | `string` × 4 | ✅ |
 | | `notes`, `attendeeName` | `string?` | `string \| null` | ✅ |
 | | `idempotencyKey` | `string?` (até 64) | `string` (obrigatório) | ✅ — o TS é mais restrito, e está certo |
@@ -106,11 +108,11 @@ resultado (é uma consulta de disponibilidade por estabelecimento), filtro "Disp
 | Agendamentos do dia por profissional | `GET /api/businesses/current/appointments?date=&professionalId=` → `PagedResult<AppointmentResponse>` | ✅ existe; não está em `endpoints.ts` |
 | `start` (`HH:mm` no fuso), `durationMinutes`, `serviceName` | `startsAt` (UTC) + `timeZone` do estabelecimento, `durationMinutes`, `serviceName` | ✅ com conversão de fuso no frontend |
 | `status: 'pending' \| 'confirmed'` | `status` com 7 estados | ⚠️ a agenda também recebe `Completed`, `NoShow`, `Cancelled`… do dia; a tela precisa decidir o que mostrar |
-| **`customerName`** | **não existe** — `AppointmentResponse` só tem `attendeeName` (balcão ou atendimento para outra pessoa) | ❌ **lacuna**: o estabelecimento não recebe o nome do consumidor de um pedido online. Expor exige decisão (LGPD: em Saúde, o nome do paciente é dado sensível e sua leitura vai para o log de acesso) |
-| `requestedAt` | não está no `AppointmentResponse` (existe na entidade) | ❌ — o prazo de resposta do pendente usa `expiresAt`, que já vem |
+| **`customerName`** | `AppointmentResponse.customerName` nas rotas `businesses/current/appointments/*` (decisão T, 27/10). Em Saúde, a leitura continua registrada no log de acesso | ✅ desde a 5A |
+| `requestedAt` | `AppointmentResponse.requestedAt` | ✅ desde a 5A |
 | Jornada do dia (`workStart`, `workEnd`) | `GET /api/businesses/current/work-schedules?professionalId=` (todas as linhas da semana) | ✅ com filtro por dia no frontend; pausa = duas linhas |
 | Bloqueios (`AgendaBlock`) | `GET /api/businesses/current/schedule-exceptions` | ✅ parcial — "Bloqueio recorrente" não existe: a pausa recorrente é a ausência de linha de jornada |
-| `pendingRequests` por profissional | `GET /api/businesses/current/appointments/pending` | ⚠️ sem parâmetro `professionalId` na rota (o repositório já aceita); contagem por profissional teria de ser feita no frontend |
+| `pendingRequests` por profissional | `GET /api/businesses/current/appointments/pending?professionalId=` — `totalCount` dá o número. Para o papel `Professional`, vale sempre o próprio, seja qual for o parâmetro | ✅ desde a 5A |
 | Indicadores (`AgendaSummary`: receita esperada, ocupação, variação semanal, tempo médio de resposta) | não existem | ❌ — nenhum endpoint de indicador; o mock já avisa que não são métrica medida |
 | Confirmar, recusar, cancelar, concluir, falta | `POST …/appointments/{id}/confirm`, `reject`, `cancel`, `complete`, `no-show` | ✅ existem; não estão em `endpoints.ts` |
 | Marcação de balcão ("Encaixar") | `POST /api/businesses/current/appointments/counter` | ✅ |
@@ -122,5 +124,5 @@ resultado (é uma consulta de disponibilidade por estabelecimento), filtro "Disp
 1. Tipar os campos novos da busca e o `ContextTokenResponse`.
 2. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
 3. Traduzir `appointment.contention_try_again` (503: "tente de novo").
-4. Para a agenda: as rotas `businesses/current/*` já existem; faltam no backend o **nome do consumidor** (decisão de
-   LGPD), `requestedAt`, filtro de pendentes por profissional, indicadores e remarcação.
+4. Para a agenda: as rotas `businesses/current/*` já existem, com `customerName`, `requestedAt` e o filtro de
+   pendentes por profissional desde a 5A; faltam no backend os indicadores e a remarcação.
