@@ -49,11 +49,6 @@ describe('BusinessAgendaScreen', () => {
     expect(html).toMatch(/R\$\s1\.240/)
     expect(html).toContain('2 h 14')
   })
-
-  it('marca "Agenda" como a seção atual nas duas navegações', () => {
-    const current = render().match(/aria-current="page"/g) ?? []
-    expect(current).toHaveLength(2)
-  })
 })
 
 describe('agenda do dia', () => {
