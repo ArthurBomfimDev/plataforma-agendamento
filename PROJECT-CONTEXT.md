@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-28 (Onda 6B — localização real) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-28 (Onda 6C — busca por categoria e acabamento) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -69,7 +69,9 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 
 - Camada única em `src/lib/api`: token em vez de cookie, renovação deduplicada, conversão de fuso pelo IANA do estabelecimento.
 - **Fluxo do consumidor integrado à API real**: home, estabelecimento, escolher profissional, calendário, revisão, pedido enviado, meus agendamentos, entrar, criar conta.
-- Ainda com mock: **home** (categorias), **resultados da busca** (tela sem rota), **lembretes** na tela de pedido enviado (`MOCK_REMINDER_HOURS` ainda mostra **24 h e 3 h**, a decisão vigente é 24 h e 1 h — §10) e o **prazo de avaliação** em meus agendamentos (`MOCK_REVIEW_WINDOW_DAYS`, 30 dias; só aparece com avaliação, que ainda não existe).
+- **Desde a 6C:** categorias da Home e resultados da busca (`#/search`) ligados à API, com categoria, termo, raio, preço
+  máximo e ordenação; "Disponível hoje" e "★ 4,5+" saíram da tela (sem backend, trabalho futuro no contrato §4.4).
+- Ainda com mock: **lembretes** na tela de pedido enviado (`MOCK_REMINDER_HOURS` ainda mostra **24 h e 3 h**, a decisão vigente é 24 h e 1 h — §10) e o **prazo de avaliação** em meus agendamentos (`MOCK_REVIEW_WINDOW_DAYS`, 30 dias; só aparece com avaliação, que ainda não existe).
 - Testes do frontend: 60 casos (Vitest), sem jsdom — renderização em HTML de servidor.
 - **Tema claro e escuro** implementados (tokens + alternador).
 - **Não existe nenhuma tela do lado do estabelecimento** (painel, onboarding), nem consentimento LGPD, nem a tela de 409 com alternativas, nem recuperação de senha / confirmação de e-mail.
@@ -224,7 +226,7 @@ As 4 hipóteses originais são de mercado e vão para limitações. Limiares dec
 
 | ID | Meta | Medição | Situação |
 |---|---|---|---|
-| RNF-01 | Busca com slots p95 ≤ 800 ms, 30 empresas | k6 | ✅ **292 ms no p95** (busca + horários da 1ª página, 10 VUs, local, 27/10). Tela de resultados ainda em mock: o cenário mede o que ela vai precisar. `docs/tcc/evidencias/rnf-01-busca.md` |
+| RNF-01 | Busca com slots p95 ≤ 800 ms, 30 empresas | k6 | ✅ **292 ms no p95** (busca + horários da 1ª página, 10 VUs, local, 27/10). A tela de resultados usa a busca desde a 6C, sem os horários por resultado que o cenário mede. `docs/tcc/evidencias/rnf-01-busca.md` |
 | RNF-02 | Disponibilidade p95 ≤ 200 ms | Teste cronometrado | ✅ **dia 12 ms, calendário de 14 dias 58 ms no p95** (profissional mais ocupado do seed, 10 VUs, local, 27/10). `docs/tcc/evidencias/rnf-02-disponibilidade.md` |
 | RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | ✅ **Atendido nas condições medidas** (local, 27/10, uma instância da API): zero dupla reserva contra o endpoint real; com o lock por profissional (ADR-019), 20 de 20 execuções aprovadas, sem 500 e sem rodada sem vencedor. Custo: corrida de 50 de ≈ 180 ms para ≈ 480 ms (p50). Caminho do CI executado localmente e no GitHub Actions (PR #14: integração 20/20). `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
 | RNF-04 | Lighthouse mobile ≥ 85 perf, ≥ 95 a11y | CI | ⬜ |
@@ -312,7 +314,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | # | Item do recorte | Situação | Falta |
 |---|---|---|---|
 | 1 | **Fatia vertical completa** | 🟡 Backend completo; front só do consumidor | Painel: onboarding, serviço, profissional, jornada, **pedidos pendentes**, **agenda do dia** |
-| 2 | Busca pública geográfica + disponibilidade | 🟡 Backend pronto | Resultados da busca ainda em mock |
+| 2 | Busca pública geográfica + disponibilidade | 🟡 Busca ligada na tela (6C) | Horários no próprio resultado ainda não aparecem |
 | 3 | **Prova de concorrência (RNF-03)** | ✅ Zero dupla reserva, isolamento de tenant (404) e disputa sem 500 observados; defeitos O e P corrigidos (aguardando revisão) | Aceitar a ADR-019 |
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
 | 5 | Autenticação, cadastro, recuperação de senha | 🟡 Backend pronto | Telas de recuperação e confirmação de e-mail |
