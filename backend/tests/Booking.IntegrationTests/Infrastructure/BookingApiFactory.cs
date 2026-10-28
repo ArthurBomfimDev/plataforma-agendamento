@@ -11,7 +11,7 @@ namespace Booking.IntegrationTests.Infrastructure;
 /// A API real, em processo, apontada para o banco isolado da execução. Nada de <c>Program.cs</c> muda:
 /// o limitador de autenticação continua ligado, e os testes simplesmente não passam por ele em massa.
 /// </summary>
-public sealed class BookingApiFactory(string connectionString) : WebApplicationFactory<Program>
+public sealed class BookingApiFactory(string connectionString, string environment = "Testing") : WebApplicationFactory<Program>
 {
     // Chave de assinatura gerada a cada execução: valor de teste, nunca gravado em arquivo.
     private readonly string _signingKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
@@ -20,8 +20,9 @@ public sealed class BookingApiFactory(string connectionString) : WebApplicationF
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Fora de Development: sem user-secrets da máquina de quem roda o teste.
-        builder.UseEnvironment("Testing");
+        // Padrão fora de Development: sem user-secrets da máquina de quem roda o teste. Os testes de segurança
+        // sobem também em Development, que é como o docker compose roda.
+        builder.UseEnvironment(environment);
         builder.UseSetting("ConnectionStrings:Default", connectionString);
         builder.UseSetting("Jwt:SigningKey", _signingKey);
 

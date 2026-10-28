@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-27 (seed de 30 e desempenho, Onda 3) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-27 (fechamento do backend, Onda 4) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -28,7 +28,7 @@ Marketplace SaaS de descoberta e agendamento de serviços presenciais, web e mob
 
 ---
 
-## 2. Estado atual (26/10)
+## 2. Estado atual (27/10)
 
 Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `main` protegida, 4 checks obrigatórios, CODEOWNERS com os dois em todo caminho.
 
@@ -49,7 +49,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 - **4 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (82 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (39 casos, todos ativos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (82 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (43 casos, todos ativos — segurança I1–I3 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -225,7 +225,7 @@ As 4 hipóteses originais são de mercado e vão para limitações. Limiares dec
 | RNF-03 | Zero dupla reserva sob 50 requisições concorrentes | Teste de integração | ✅ **Atendido nas condições medidas** (local, 27/10, uma instância da API): zero dupla reserva contra o endpoint real; com o lock por profissional (ADR-019), 20 de 20 execuções aprovadas, sem 500 e sem rodada sem vencedor. Custo: corrida de 50 de ≈ 180 ms para ≈ 480 ms (p50). Caminho do CI executado localmente e no GitHub Actions (PR #14: integração 20/20). `docs/tcc/evidencias/rnf-03-dupla-reserva.md` |
 | RNF-04 | Lighthouse mobile ≥ 85 perf, ≥ 95 a11y | CI | ⬜ |
 | RNF-05 | Busca → confirmação em ≤ 4 passos | Contagem | 🟡 Fluxo existe, contar |
-| RNF-06 | Argon2id, TLS, zero dado sensível em página pública | Checklist | 🟡 Argon2id feito |
+| RNF-06 | Argon2id, TLS, zero dado sensível em página pública | Checklist | ✅ checklist verificado item a item (código e testes I1–I3); cabeçalhos de segurança e HSTS acrescentados. TLS em produção ⚠️ depende da hospedagem. Lacunas na pendência S. `docs/tcc/evidencias/rnf-06-seguranca.md` |
 
 **Dados de demonstração:** 30 estabelecimentos na mesma cidade, coordenadas reais, 2 verticais, 3–5 profissionais, 60 dias de histórico. Script versionado e reexecutável.
 
@@ -289,8 +289,11 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | L | Colisão de marca: **Vagaro** (agendamento de salão) — registrar como risco ou consultar INPI | Uso comercial pós-TCC | Ambos |
 | M | Skills ainda com prefixo `agendeaki-` | Nada técnico; ruído | Arthur |
 | N | Marca: tiles do ícone de app, favicon, área de proteção | PWA instalável | Rafael |
-| O | ✅ **Corrigido em `fix/concorrencia-reserva`, aguardando revisão.** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
-| P | ✅ **Corrigido em `fix/concorrencia-reserva`, aguardando revisão.** Mesma `IdempotencyKey` simultânea devolvia 400; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
+| O | ✅ **Corrigido e mergeado (#14, 27/10).** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
+| P | ✅ **Corrigido e mergeado (#14 e, a janela restante, #15).** Mesma `IdempotencyKey` simultânea devolvia 400/409; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
+| S | **Lacunas de segurança do RNF-06, não corrigidas:** token de confirmação e de redefinição de senha no log em nível Debug (`LoggingIdentityMailer`, ligado no Compose); cadastro revela e-mail existente (409); `TenantContextExtensions.RequireBusinessId` morto lança exceção que viraria 500; sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
+| T | **Agenda do dia (branch `dashboard`) precisa de backend que não existe:** nome do consumidor no agendamento (decisão de LGPD: em Saúde é dado sensível), `requestedAt`, filtro de pendentes por profissional, indicadores do dia, remarcação. Ver `docs/produto/contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
+| U | **Promessa de lembrete na tela "Pedido enviado" sem backend:** não há módulo de notificação nem campo de lembrete na API. Decidir: implementar um mínimo, ou remover/qualificar o texto | Coerência da demonstração | Arthur |
 | R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
 
@@ -361,9 +364,9 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 ## 16. Próximo passo
 
-1. Mergear a correção de documentação (inclui a branch `docs/modelo-dominio-revisado`).
-2. PR `feat/integracao-front-back` → `main`. A integração já contém tudo da `main` (32 commits à frente, nenhum atrás).
-3. Revisar o PR da Onda 3 (`feat/seed-e-desempenho`). Aceitar as ADRs 019 e 020; decidir a pendência R. Depois, Onda 4 (segurança, contrato API × frontend, PR para a `main`).
+1. ✅ Ondas 1 a 3 mergeadas em `feat/integracao-front-back` (#14, #15, #16). Onda 4 em revisão.
+2. PR #11 `feat/integracao-front-back` → `main`, com a exceção de merge administrativo registrada na descrição.
+3. Aceitar as ADRs 019 e 020; decidir as pendências R, T e U. Juntar a branch `dashboard` do Rafael quando ele terminar (conflita em `frontend/src/router/consts.ts` e `route.tsx`).
 4. Painel do estabelecimento mínimo para fechar a fatia 1.
 5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
 6. Responder F e E com a orientadora.

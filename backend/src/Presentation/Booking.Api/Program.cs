@@ -52,6 +52,14 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseSecurityHeaders();
+
+// HSTS só fora de Development: em produção a API fica atrás de TLS; no ambiente local, HTTP puro.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseRateLimiter();

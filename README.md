@@ -105,9 +105,9 @@ Uso da válvula deve ser registrado no PR ou na issue correspondente, com a raz�
 ## Comandos
 
 ```bash
-# Backend (em backend/) — requer SDK .NET 10
+# Backend (em backend/) — requer SDK .NET 10 e Docker rodando (testes de integração)
 dotnet build Booking.slnx
-dotnet test Booking.slnx          # inclui os testes de arquitetura
+dotnet test Booking.slnx          # arquitetura, unitários e integração
 dotnet format Booking.slnx --verify-no-changes
 
 # Frontend (em frontend/) — requer Bun 1.4.2 (winget install Oven-sh.Bun)
@@ -120,9 +120,14 @@ O Bun é o gerenciador de pacotes e o executor de scripts; **o bundler é o Vite
 A versão do Bun fica em `frontend/.bun-version` e é a mesma usada no CI.
 
 O backend é organizado em camadas (`src/Core`, `src/Infrastructure`, `src/Presentation`), com os
-8 módulos como pastas `Module/<Contexto>` dentro de cada camada. A fronteira entre módulos não é
+módulos como pastas `Module/<Contexto>` dentro de cada camada. A fronteira entre módulos não é
 garantida pelo compilador — é garantida por `Booking.ArchitectureTests`, que quebra o build.
 Detalhes e motivo de cada regra: `CLAUDE.md` §5 e ADR-010.
+
+`Booking.IntegrationTests` sobe a API real contra um PostgreSQL + PostGIS próprio: com
+`ConnectionStrings__Default` definida (o CI define), cria um banco novo nesse servidor; sem ela, sobe
+`postgis/postgis:17-3.5` por Testcontainers — por isso precisa do Docker. Nunca toca o banco de
+desenvolvimento. Evidências das execuções em `docs/tcc/evidencias/`.
 
 ## Rodando o projeto com Docker
 
@@ -148,17 +153,25 @@ Para recomeçar do zero: `docker compose down -v`.
 
 ### Dados de demonstração
 
-Com o ambiente no ar, popule o banco com estabelecimentos fictícios em Garça-SP (onde é feita a
-demonstração do TCC), profissionais, serviços, jornadas e uma conta de consumidor:
+Com o ambiente no ar, popule o banco com 30 estabelecimentos fictícios em Garça-SP (onde é feita a
+demonstração do TCC) — 26 de Beleza e 4 de Saúde —, profissionais, serviços, jornadas, uma conta de
+consumidor e um Admin da plataforma:
 
 ```bash
-bun scripts/seed-demo.ts
+bun scripts/seed-demo.ts               # pela API, ~6 min (limite de 10 logins por minuto)
+bun scripts/seed-demo.ts --historico   # o mesmo + 60 dias de histórico e agenda futura (só banco local)
 ```
 
-O roteiro passa pela própria API, com as mesmas regras do app. A única exceção é a aprovação do
-estabelecimento, papel do Admin que ainda não tem endpoint: ela é feita por SQL no container do
-banco. As contas de teste e a senha aparecem no fim da execução e no topo de
-`scripts/seed-demo.ts`. O roteiro pode rodar de novo; se as contas já existem, ele não cria nada.
+O roteiro passa pela própria API, com as mesmas regras do app — inclusive a aprovação, feita pelo
+Admin de demonstração em `api/admin/businesses`. Duas escritas são diretas no banco local: conceder o
+papel de Admin (nunca concedido por endpoint, ADR-020) e, com `--historico`, o histórico, que não
+passa pela API (antecedência mínima, horizonte). As contas de teste e a senha aparecem no fim da
+execução e no topo de `scripts/seed-demo.ts`. Pode rodar de novo: conta, CNPJ e histórico que já
+existem são pulados. Num banco de um seed anterior (contas em `exemplo.com`), recomece do zero com
+`docker compose down -v` para ter os 30.
+
+Testes de carga (k6) dos RNF-01 e RNF-02: `scripts/perf/`, com o passo a passo em
+`docs/tcc/evidencias/rnf-01-busca.md`.
 
 Sem provedor de e-mail, o token de confirmação e o de redefinição de senha aparecem só no log
 da API (`docker compose logs api`). A URL da API é embutida no frontend no build: mudou
