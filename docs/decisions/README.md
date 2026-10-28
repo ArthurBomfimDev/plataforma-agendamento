@@ -58,6 +58,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [018](0018-marca-vagoo-e-paleta-azul.md) | Marca Vagoo e paleta azul — revoga a proibição de azul | 📝 Proposto | 2026-10-26 |
 | [019](0019-serializacao-por-profissional-advisory-lock.md) | Serialização por profissional com advisory lock na criação de agendamento — complementa a 005 | 📝 Proposto | 2026-10-27 |
 | [020](0020-papel-de-admin-da-plataforma.md) | Papel de Admin da plataforma — complementa a 004 | 📝 Proposto | 2026-10-27 |
+| [021](0021-envio-de-email-smtp-generico-e-outbox.md) | Envio de e-mail: SMTP genérico e outbox — complementa a 010 | 📝 Proposto | 2026-10-28 |
 
 ### Notas sobre a fila
 
