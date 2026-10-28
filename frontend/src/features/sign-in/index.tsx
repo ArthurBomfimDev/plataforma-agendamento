@@ -14,6 +14,7 @@ import { useRef, useState } from 'react'
 import { Button } from '../../components/button'
 import { HeroPanel } from './components/hero-panel'
 import { Logotype } from '../../components/logotype'
+import { PasswordField } from '@components/password-field'
 import { SegmentedControl } from '../../components/segmented-control'
 import { TextField } from '../../components/text-field'
 import { ThemeToggle } from '@components/theme-toggle'
@@ -28,7 +29,16 @@ const LINK_CLASSES =
  * Fica fora da moldura com a barra superior: a tela é a própria porta de entrada.
  */
 export const SignInScreen = (props: SignInScreenProps) => {
-  const { onSubmit, onForgotPassword, onCreateAccount, submitting, error } = props
+  const {
+    onSubmit,
+    onForgotPassword,
+    onCreateAccount,
+    submitting,
+    error,
+    unconfirmed,
+    onResendConfirmation,
+    resending,
+  } = props
 
   const [role, setRole] = useState<SignInRole>('customer')
   const [email, setEmail] = useState('')
@@ -139,11 +149,10 @@ export const SignInScreen = (props: SignInScreenProps) => {
                   helperClassName="invisible lg:visible"
                   error={errors.email}
                 />
-                <TextField
+                <PasswordField
                   ref={passwordRef}
                   id="sign-in-password"
                   label="Senha"
-                  type="password"
                   autoComplete="current-password"
                   value={password}
                   onChange={(event) => {
@@ -162,6 +171,18 @@ export const SignInScreen = (props: SignInScreenProps) => {
                   <p role="alert" className="type-label text-(--status-rejected-fg)">
                     {error}
                   </p>
+                )}
+                {/* Conta que ainda não confirmou o e-mail: a saída fica ao lado da mensagem. */}
+                {unconfirmed && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    disabled={resending}
+                    onClick={() => onResendConfirmation?.(email.trim())}
+                  >
+                    {resending ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
+                  </Button>
                 )}
                 <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                   {submitting ? 'Entrando…' : 'Entrar'}

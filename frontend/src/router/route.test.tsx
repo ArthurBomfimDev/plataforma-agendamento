@@ -52,6 +52,25 @@ describe('AppRoutes', () => {
     expect(renderAt('/sign-up')).toContain('Data de nascimento')
   })
 
+  it('abre "Confira seu e-mail" depois do cadastro, sem o endereço na URL', () => {
+    expect(renderAt('/sign-up/check-email')).toContain('Confira seu e-mail')
+  })
+
+  it('abre os caminhos dos links dos e-mails (Onda 5B)', () => {
+    // No HTML do servidor o efeito não roda: com token, a tela fica em "conferindo".
+    expect(renderAt('/confirmar-email?token=abc')).toContain('Confirmando seu e-mail')
+    expect(renderAt('/redefinir-senha?token=abc')).toContain('Nova senha')
+  })
+
+  it('link sem token já cai no estado de link inválido', () => {
+    expect(renderAt('/confirmar-email')).toContain('Link inválido')
+    expect(renderAt('/redefinir-senha')).toContain('Link inválido')
+  })
+
+  it('abre esqueci minha senha', () => {
+    expect(renderAt('/forgot-password')).toContain('Esqueci minha senha')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

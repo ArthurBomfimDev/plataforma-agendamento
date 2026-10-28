@@ -1,16 +1,22 @@
-import { ROUTES, SEARCH_PARAMS, safeRedirect, signUpPath } from './consts'
+import {
+  type CheckEmailState,
+  ROUTES,
+  SEARCH_PARAMS,
+  checkEmailPath,
+  safeRedirect,
+  signUpPath,
+} from './consts'
 import { useNavigate, useSearchParams } from 'react-router'
+import { useResendConfirmation, useSignIn } from '@lib/api/queries'
 
+import { ApiError, errorMessage } from '@lib/api/errors'
 import { SignInScreen } from '@features/sign-in'
-import { errorMessage } from '@lib/api/errors'
 import { toast } from '@lib/toast'
-import { useSignIn } from '@lib/api/queries'
 
 /**
  * Entrar com e-mail e senha (módulo Identity). Volta para onde o consumidor estava, se veio de
- * uma tela que exige sessão.
+ * uma tela que exige sessão. Conta sem e-mail confirmado recebe 403 e o botão de reenvio.
  *
- * TODO: "Esqueci minha senha" é a tela A05, ainda não implementada (o endpoint já existe).
  * TODO: o lado "estabelecimento" entra, mas o painel do estabelecimento ainda não existe.
  */
 export const SignInRoute = () => {
@@ -18,11 +24,26 @@ export const SignInRoute = () => {
   const [searchParams] = useSearchParams()
   const redirect = safeRedirect(searchParams.get(SEARCH_PARAMS.redirect))
   const signIn = useSignIn()
+  const resend = useResendConfirmation()
+
+  const unconfirmed =
+    signIn.error instanceof ApiError && signIn.error.code === 'identity.email_not_confirmed'
 
   return (
     <SignInScreen
       submitting={signIn.isPending}
       error={signIn.isError ? errorMessage(signIn.error) : undefined}
+      unconfirmed={unconfirmed}
+      resending={resend.isPending}
+      onResendConfirmation={(email) =>
+        resend.mutate(email, {
+          onSuccess: () => {
+            const state: CheckEmailState = { email, sentAt: Date.now() }
+            navigate(checkEmailPath(redirect), { state })
+          },
+          onError: (error) => toast.error(errorMessage(error)),
+        })
+      }
       onSubmit={({ email, password, role }) =>
         signIn.mutate(
           { email, password },
@@ -37,7 +58,7 @@ export const SignInRoute = () => {
         )
       }
       onCreateAccount={() => navigate(signUpPath(redirect))}
-      onForgotPassword={() => toast.info('Recuperar senha ainda não está disponível.')}
+      onForgotPassword={() => navigate(ROUTES.forgotPassword)}
     />
   )
 }

@@ -10,6 +10,12 @@ export const ROUTES = {
   appointments: '/appointments',
   signIn: '/sign-in',
   signUp: '/sign-up',
+  /** "Confira seu e-mail", depois do cadastro. O endereço vai no estado da navegação, nunca na URL. */
+  checkEmail: '/sign-up/check-email',
+  forgotPassword: '/forgot-password',
+  // Os dois caminhos abaixo estão nos e-mails da Onda 5B (contrato §4.1): não mudar sem mudar o e-mail.
+  confirmEmail: '/confirmar-email',
+  resetPassword: '/redefinir-senha',
 } as const
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
@@ -30,7 +36,12 @@ export const SEARCH_PARAMS = {
   sentAt: 'sentAt',
   /** Para onde voltar depois de entrar ou criar conta. Só caminho interno. */
   redirect: 'redirect',
+  /** Token de uso único dos links de confirmação e de redefinição (e-mails da Onda 5B). */
+  token: 'token',
 } as const
+
+/** Estado da navegação para "Confira seu e-mail": o endereço e quando o último e-mail saiu. */
+export type CheckEmailState = { email: string; sentAt: number }
 
 export const businessPath = (businessId: string) => `/businesses/${encodeURIComponent(businessId)}`
 
@@ -86,3 +97,6 @@ export const signInPath = (redirect?: string) =>
 
 export const signUpPath = (redirect?: string | null) =>
   withSearch(ROUTES.signUp, { [SEARCH_PARAMS.redirect]: redirect ?? null })
+
+export const checkEmailPath = (redirect?: string | null) =>
+  withSearch(ROUTES.checkEmail, { [SEARCH_PARAMS.redirect]: redirect ?? null })

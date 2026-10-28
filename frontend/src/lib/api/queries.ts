@@ -1,6 +1,9 @@
 import { appointmentsApi, authApi, availabilityApi, businessesApi, customersApi } from './endpoints'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { clearPendingProfile, readPendingProfile, savePendingProfile } from './pending-profile'
+
+import { ApiError } from './errors'
 import type { RequestAppointmentRequest } from './types'
 import { useSessionStore } from '@lib/zustand/session'
 
@@ -134,24 +137,44 @@ export const useMe = () => {
   return useQuery({ queryKey: queryKeys.me, queryFn: authApi.me, enabled: signedIn })
 }
 
-/** Entrar: guarda a sessão e limpa o cache de quem estava antes. */
+/**
+ * Entrar: guarda a sessão e limpa o cache de quem estava antes. Na primeira entrada depois do
+ * cadastro, cria o perfil de consumidor guardado no cadastro (ver `pending-profile`).
+ */
 export const useSignIn = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      authApi.login(email, password),
-    onSuccess: (auth) => {
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const auth = await authApi.login(email, password)
       queryClient.removeQueries({ queryKey: ['appointments'] })
       queryClient.removeQueries({ queryKey: queryKeys.me })
       useSessionStore.getState().setSession(auth)
+
+      const birthDate = readPendingProfile(email)
+      if (birthDate) {
+        try {
+          await customersApi.register(birthDate)
+        } catch (error) {
+          // Perfil já criado (outra aba, outra tentativa): segue. Outro erro não impede a entrada;
+          // o agendamento pede o perfil depois, com mensagem própria.
+          if (!(error instanceof ApiError) || error.code !== 'customer.already_registered') {
+            return auth
+          }
+        }
+        clearPendingProfile()
+      }
+
+      return auth
     },
   })
 }
 
-/** Criar conta de consumidor: conta, sessão e perfil de consumidor, nessa ordem. */
-export const useSignUp = () => {
-  const signIn = useSignIn()
-  return useMutation({
+/**
+ * Criar conta de consumidor. Desde a Onda 6A, o cadastro não abre sessão: a conta só entra depois de
+ * confirmar o e-mail. A data de nascimento fica guardada para criar o perfil na primeira entrada.
+ */
+export const useSignUp = () =>
+  useMutation({
     mutationFn: async (values: {
       fullName: string
       email: string
@@ -159,11 +182,24 @@ export const useSignUp = () => {
       birthDate: string
     }) => {
       await authApi.register(values.email, values.password, values.fullName)
-      await signIn.mutateAsync({ email: values.email, password: values.password })
-      await customersApi.register(values.birthDate)
+      savePendingProfile(values.email, values.birthDate)
     },
   })
-}
+
+export const useConfirmEmail = () =>
+  useMutation({ mutationFn: (token: string) => authApi.confirmEmail(token) })
+
+export const useResendConfirmation = () =>
+  useMutation({ mutationFn: (email: string) => authApi.resendConfirmation(email) })
+
+export const useForgotPassword = () =>
+  useMutation({ mutationFn: (email: string) => authApi.forgotPassword(email) })
+
+export const useResetPassword = () =>
+  useMutation({
+    mutationFn: ({ token, newPassword }: { token: string; newPassword: string }) =>
+      authApi.resetPassword(token, newPassword),
+  })
 
 export const useSignOut = () => {
   const queryClient = useQueryClient()

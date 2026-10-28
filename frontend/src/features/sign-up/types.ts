@@ -2,6 +2,8 @@ export type SignUpValues = {
   fullName: string
   email: string
   password: string
+  /** Repetição da senha: só o formulário confere; não vai para a API. */
+  passwordConfirmation: string
   /** `yyyy-MM-dd`. */
   birthDate: string
 }

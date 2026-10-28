@@ -12,6 +12,10 @@ import { NotFoundScreen } from '@features/not-found'
 import { ROUTES } from './consts'
 import { SignInRoute } from './sign-in-route'
 import { SignUpRoute } from './sign-up-route'
+import { CheckEmailRoute } from './check-email-route'
+import { ConfirmEmailRoute } from './confirm-email-route'
+import { ForgotPasswordRoute } from './forgot-password-route'
+import { ResetPasswordRoute } from './reset-password-route'
 
 /**
  * Rotas da aplicação, no modo declarativo do React Router. O `<HashRouter>` fica em `main.tsx`.
@@ -36,6 +40,10 @@ export const AppRoutes = () => {
       {/* Fora da moldura: entrar e criar conta não têm barra superior. */}
       <Route path={ROUTES.signIn} element={<SignInRoute />} />
       <Route path={ROUTES.signUp} element={<SignUpRoute />} />
+      <Route path={ROUTES.checkEmail} element={<CheckEmailRoute />} />
+      <Route path={ROUTES.forgotPassword} element={<ForgotPasswordRoute />} />
+      <Route path={ROUTES.confirmEmail} element={<ConfirmEmailRoute />} />
+      <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
     </Routes>
   )
 }
