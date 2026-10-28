@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-28 (Onda 6A — conta com e-mail obrigatório) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-28 (Onda 6B — localização real) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -37,7 +37,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 | Módulo | Situação |
 |---|---|
 | Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo. **Desde a 6A:** login e refresh exigem e-mail confirmado (`403 identity.email_not_confirmed`, `Identity__RequireEmailConfirmation`), reenvio sem enumeração (`resend-confirmation`, 1 por minuto por conta); contas anteriores confirmadas pela migration `ConfirmExistingAccounts`. Frontend: mostrar senha, "Confira seu e-mail", confirmar e-mail, esqueci e redefinir senha |
-| Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar |
+| Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar. **Localização (6B, ADR-022):** portas `IGeocodingProvider` e `IPostalCodeLookup`, adaptadores Nominatim e BrasilAPI/ViaCEP, rotas públicas `api/geo` (CEP, busca, reverso) com cache, limite por IP e coordenada arredondada a 3 casas antes de sair |
 | People | ✅ `Customer` (com `BirthDate`), `Professional` (consentimento de perfil público) |
 | Catalog | ✅ `Service`, `ServiceProfessional` |
 | Availability | ✅ `WorkSchedule` (criar, **editar**, remover), `ScheduleException`, `Holiday`; `AvailabilityCalculator`; feriados pela Páscoa; calendário de vários dias; **bloqueio com agendamentos afetados**: prévia, manter ou cancelar todos, tudo ou nada |
@@ -49,7 +49,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 - **6 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`, `AddOutbox`, `ConfirmExistingAccounts` — esta só de dado). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (96 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (70 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes, e-mail M1–M13 e confirmação obrigatória N1–N5 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (108 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (77 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes, e-mail M1–M13, confirmação obrigatória N1–N5 e localização L1–L7 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -177,8 +177,12 @@ Calculados (fixos + móveis pela Páscoa), sem API. Padrão indisponível; a emp
 ### Localização
 
 - Geocodificador dá o palpite, **o dono confirma o pino**. Só entra na busca por raio quem tem `LocationConfirmedAt`.
-- `IGeocodingProvider`: Nominatim no TCC; provedor pago em produção.
+- `IGeocodingProvider`: Nominatim no TCC; provedor pago em produção. **Existe desde a 6B** (ADR-022), sem `Autocomplete`
+  (proibido pelo Nominatim público). A tela do dono para confirmar o pino ainda não existe (painel do Rafael).
 - Posição do consumidor pedida no momento de uso, com três saídas (permitiu, negou, falhou). Uso transitório, sem log.
+  **Desde a 6B:** `useGeolocation()`, seletor com aviso antes da permissão, CEP e texto; a referência escolhida fica no
+  `localStorage` com o ponto arredondado — divergência registrada: as decisões de 22/09 só guardavam se a pessoa
+  salvasse, o prompt da 6B pede lembrar a escolha. Sem referência, a Home pede a localização (`DEFAULT_LOCATION` saiu).
 - Busca: `ST_DWithin` → texto → paginação → **só então** slots da página. Disponibilidade + serviço é a primeira dimensão a cortar se faltar tempo.
 
 ### Avaliação
@@ -336,6 +340,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 019 | Serialização por profissional com advisory lock na criação de agendamento | 📝 Proposto (27/10) — complementa a 005 |
 | 020 | Papel de Admin da plataforma | 📝 Proposto (27/10) — complementa a 004 |
 | 021 | Envio de e-mail: SMTP genérico e outbox | 📝 Proposto (28/10) — complementa a 010 |
+| 022 | Provedores de geocodificação e CEP, limites e privacidade da coordenada | 📝 Proposto (28/10) — complementa a 016 |
 
 ---
 
