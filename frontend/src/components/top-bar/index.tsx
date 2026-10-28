@@ -1,7 +1,7 @@
 import { Button } from '@components/button'
 import { Logotype } from '@components/logotype'
-import { DEFAULT_LOCATION } from './consts'
 import { MapPin } from 'lucide-react'
+import { locationReference } from './consts'
 import { SearchField } from '@components/search-field'
 import { ThemeToggle } from '@components/theme-toggle'
 import type { TopBarProps } from './types'
@@ -14,7 +14,16 @@ import type { TopBarProps } from './types'
  * Em 1920px isso alinha a barra com a coluna larga das telas.
  */
 export const TopBar = (props: TopBarProps) => {
-  const { showSearch, onHome, onAppointments, onSignIn, signedIn, onSignOut } = props
+  const {
+    showSearch,
+    onHome,
+    onAppointments,
+    onSignIn,
+    signedIn,
+    onSignOut,
+    locationLabel,
+    onChooseLocation,
+  } = props
 
   return (
     <header className="hidden border-b border-(--border-subtle) bg-(--bg-surface) lg:block">
@@ -30,10 +39,16 @@ export const TopBar = (props: TopBarProps) => {
           <Logotype tone="dark" alt="" className="hidden dark:block" />
         </button>
 
-        <p className="type-label flex shrink-0 items-center gap-(--space-4) text-(--text-link)">
-          <MapPin aria-hidden="true" className="size-4" />
-          {DEFAULT_LOCATION.label}
-        </p>
+        <button
+          type="button"
+          onClick={onChooseLocation}
+          aria-haspopup="dialog"
+          className="type-label flex min-h-(--size-touch-min) max-w-64 shrink-0 items-center gap-(--space-4) rounded-md px-(--space-4) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+        >
+          <MapPin aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">{locationReference(locationLabel ?? null)}</span>
+          {locationLabel && <span className="sr-only">, trocar localização</span>}
+        </button>
 
         {showSearch ? (
           <SearchField

@@ -5,15 +5,19 @@ import type {
   AvailableSlotsResponse,
   BusinessSearchItemResponse,
   CustomerResponse,
+  GeoPlaceResponse,
   PagedResult,
+  PostalCodeResponse,
   PublicBusinessResponse,
   PublicProfessionalResponse,
   PublicServiceResponse,
   RequestAppointmentRequest,
+  ReverseGeocodeResponse,
   UserResponse,
 } from './types'
 
 import { api } from './client'
+import { roundCoordinate } from '@lib/zustand/location'
 
 const query = (params: Record<string, string | number | undefined>) =>
   new URLSearchParams(
@@ -81,6 +85,21 @@ export const availabilityApi = {
     ),
   day: (businessId: string, params: { serviceId: string; professionalId: string; date: string }) =>
     api<AvailableSlotsResponse>(`/api/businesses/${enc(businessId)}/availability?${query(params)}`),
+}
+
+/**
+ * Localização. O ponto do aparelho vai arredondado (3 casas) já daqui: a API arredonda de novo antes de falar
+ * com o provedor, mas o dado exato não precisa sair do aparelho.
+ */
+export const geoApi = {
+  postalCode: (postalCode: string) =>
+    api<PostalCodeResponse>(`/api/geo/postal-code/${enc(postalCode)}`),
+  search: (text: string) =>
+    api<PagedResult<GeoPlaceResponse>>(`/api/geo/search?${query({ q: text })}`),
+  reverse: (latitude: number, longitude: number) =>
+    api<ReverseGeocodeResponse>(
+      `/api/geo/reverse?${query({ lat: roundCoordinate(latitude), lng: roundCoordinate(longitude) })}`,
+    ),
 }
 
 export const appointmentsApi = {

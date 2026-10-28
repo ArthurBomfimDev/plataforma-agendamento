@@ -31,6 +31,11 @@ builder.Services.AddRateLimiter(limiter =>
     limiter.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+
+    // Localização (Onda 6B): cada chamada pode ir a um provedor com cota. 30 por minuto por IP; o cache absorve a repetição.
+    limiter.AddPolicy("geo", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
 });
 
 // O frontend roda em outra origem (e, depois, o Capacitor e o Tauri também). Só as origens

@@ -7,4 +7,8 @@ export type TopBarProps = {
   /** Com sessão, "Entrar" vira "Sair". */
   signedIn?: boolean
   onSignOut?: () => void
+  /** Referência da busca ("Centro, Garça"); nula enquanto a pessoa não escolheu. */
+  locationLabel?: string | null
+  /** Abre o seletor de localização. */
+  onChooseLocation?: () => void
 }

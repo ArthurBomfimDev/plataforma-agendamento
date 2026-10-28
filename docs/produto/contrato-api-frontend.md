@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B e 6A (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A e 6B (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -22,6 +22,9 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `POST /api/auth/resend-confirmation` (novo na 6A) | `authApi.resendConfirmation` | ✅ |
 | `POST /api/auth/forgot-password` | `authApi.forgotPassword` | ✅ desde a 6A |
 | `POST /api/auth/reset-password` | `authApi.resetPassword` | ✅ desde a 6A |
+| `GET /api/geo/postal-code/{cep}` (novo na 6B) | `geoApi.postalCode` | ✅ |
+| `GET /api/geo/search?q=` (novo na 6B) | `geoApi.search` | ✅ |
+| `GET /api/geo/reverse?lat=&lng=` (novo na 6B) | `geoApi.reverse` | ✅ |
 | `GET /api/users/me` | `authApi.me` | ✅ |
 | `GET/POST /api/customers/me` | `customersApi.me`/`register` | ✅ |
 | `GET /api/businesses/search` | `businessesApi.search` | ➕ campos e parâmetros novos (§2.3) |
@@ -161,6 +164,27 @@ Nenhuma rota de API nova. Os e-mails levam links para **rotas do frontend** (Has
 
 Rotas novas do frontend: `#/sign-up/check-email`, `#/forgot-password`, `#/confirmar-email?token=` e
 `#/redefinir-senha?token=` (os dois últimos são os caminhos dos e-mails da 5B, §4.1).
+
+## 4.3 Localização (Onda 6B, 28/10)
+
+Rotas públicas, limite de 30 por minuto por IP (`geo`), cache no servidor. ADR-022.
+
+| Rota | Resposta | Erros |
+|---|---|---|
+| `GET /api/geo/postal-code/{cep}` (com ou sem hífen) | `{ postalCode, street, district, city, state }` — `street` e `district` nulos em CEP geral | 400 `geo.postal_code_invalid` · 404 `postal_code.not_found` · 503 `geo.provider_unavailable` |
+| `GET /api/geo/search?q=` (3 a 200 caracteres) | `PagedResult<{ label, latitude, longitude, precision }>`, até 5, só Brasil; `precision` ∈ `Rooftop`, `Street`, `Locality`, `City` | 400 `geo.query_invalid` · 503 |
+| `GET /api/geo/reverse?lat=&lng=` | `{ label }` — "Centro, Garça" | 400 `geo.coordinates_invalid` · 404 `place.not_found` · 503 |
+
+- **Sem autocomplete:** a busca por texto só roda no envio (política do Nominatim público).
+- **Coordenada:** a API arredonda para 3 casas antes de falar com o provedor; o frontend já manda arredondado
+  (`geoApi.reverse`) e só guarda arredondado.
+- **CEP não traz ponto:** o seletor busca o endereço do CEP em `/api/geo/search`, do mais preciso ao mais largo.
+- **Frontend:** `useGeolocation()` (`hooks/use-geolocation`), store `lib/zustand/location` (`localStorage`
+  `vagoo-location`), seletor `components/location-picker`, aberto pela barra superior (desktop) e pela Home
+  (celular). Sem referência escolhida, a Home não busca: mostra "Escolher localização". `DEFAULT_LOCATION` saiu;
+  "Garça, SP (demonstração)" é uma opção do seletor.
+- **Painel (Rafael):** a confirmação do ponto pelo dono (`PUT /api/businesses/current/location`, `ConfirmLocationRequest`)
+  ainda não tem tela; quando houver, o palpite pode vir de `/api/geo/search` com o endereço do estabelecimento.
 
 ## 5. Resumo para fechar o lado do frontend
 

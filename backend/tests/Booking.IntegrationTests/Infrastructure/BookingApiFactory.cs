@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Booking.Api.Common;
 using Booking.Application.Module.Notifications.Email;
+using Booking.Infrastructure.Module.Tenancy.Geo;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,9 @@ public sealed class BookingApiFactory(
     /// <summary>O canal falso desta instância da API: o que ela teria enviado por e-mail.</summary>
     public FakeEmailSender Emails { get; } = new();
 
+    /// <summary>O lado de fora dos provedores de localização desta instância. Sem resposta configurada, recusa.</summary>
+    public FakeGeoHttp Geo { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Padrão fora de Development: sem user-secrets da máquina de quem roda o teste. Os testes de segurança
@@ -52,6 +56,9 @@ public sealed class BookingApiFactory(
             builder.UseSetting("Email:FromName", "Vagoo de teste");
             builder.UseSetting("App:PublicBaseUrl", "http://app.exemplo.test");
         }
+
+        // Sem a espera de 1 s entre chamadas ao Nominatim: o intervalo tem teste próprio (unitário).
+        builder.UseSetting("Geo:Nominatim:MinIntervalMilliseconds", "0");
 
         foreach ((string key, string value) in settings ?? new Dictionary<string, string>())
         {
@@ -82,6 +89,11 @@ public sealed class BookingApiFactory(
 
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(Emails);
+
+            // Os adaptadores de localização rodam de verdade, com a rede trocada pelo FakeGeoHttp.
+            services.AddHttpClient<NominatimGeocodingProvider>().ConfigurePrimaryHttpMessageHandler(Geo.CreateHandler);
+            services.AddHttpClient<BrasilApiPostalCodeLookup>().ConfigurePrimaryHttpMessageHandler(Geo.CreateHandler);
+            services.AddHttpClient<ViaCepPostalCodeLookup>().ConfigurePrimaryHttpMessageHandler(Geo.CreateHandler);
         });
     }
 }
