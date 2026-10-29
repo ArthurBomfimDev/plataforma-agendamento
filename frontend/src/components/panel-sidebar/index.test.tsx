@@ -27,14 +27,28 @@ describe('PanelSidebar', () => {
     expect(html).toContain('Menu da conta')
   })
 
-  it('para o profissional, esconde catálogo, equipe, jornadas e configurações', () => {
+  it('para o profissional, esconde catálogo, equipe, jornadas, fotos e configurações', () => {
     const html = sidebar(OWNER_ONLY_SECTIONS)
 
-    for (const label of ['Serviços', 'Profissionais', 'Jornadas e bloqueios', 'Configurações']) {
+    for (const label of [
+      'Serviços',
+      'Profissionais',
+      'Jornadas e bloqueios',
+      'Fotos',
+      'Configurações',
+    ]) {
       expect(html).not.toContain(label)
     }
     expect(html).toContain('Agenda')
     expect(html).toContain('Pedidos')
+  })
+
+  it('não tem item sem tela: Avaliações e Relatórios saíram (Onda 7D)', () => {
+    const html = sidebar()
+
+    expect(html).not.toContain('Avaliações')
+    expect(html).not.toContain('Relatórios')
+    expect(html.match(/<button/g)).toHaveLength(7)
   })
 })
 
@@ -45,5 +59,15 @@ describe('PanelBottomNavigation', () => {
     ).replaceAll('<!-- -->', '')
 
     expect(html).toMatch(/aria-current="page"[^>]*>.*?Agenda/)
+  })
+
+  it('tem Agenda, Pedidos e Mais, sem Relatórios', () => {
+    const html = renderToString(
+      <PanelBottomNavigation activeItem="more" pendingRequests={0} />,
+    ).replaceAll('<!-- -->', '')
+
+    expect(html).toContain('Mais')
+    expect(html).not.toContain('Relatórios')
+    expect(html).toMatch(/aria-current="page"[^>]*>.*?Mais/)
   })
 })

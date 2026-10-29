@@ -1,4 +1,6 @@
 import type {
+  AddScheduleExceptionRequest,
+  AffectedAppointmentResponse,
   AppointmentResponse,
   AuthResponse,
   AvailabilityCalendarResponse,
@@ -7,6 +9,7 @@ import type {
   BusinessSearchItemResponse,
   ContextTokenResponse,
   CounterAppointmentRequest,
+  CreateProfessionalRequest,
   CurrentUserResponse,
   CustomerResponse,
   GeoPlaceResponse,
@@ -18,6 +21,12 @@ import type {
   PublicServiceResponse,
   RequestAppointmentRequest,
   ReverseGeocodeResponse,
+  SaveServiceRequest,
+  SaveWorkScheduleRequest,
+  ScheduleExceptionResponse,
+  ServiceResponse,
+  UpdateProfessionalRequest,
+  UpdateSchedulingPolicyRequest,
   UserResponse,
   WorkScheduleResponse,
 } from './types'
@@ -123,9 +132,116 @@ export const panelApi = {
       auth: true,
       body: request,
     }),
-  /** Serviços do catálogo, para a marcação de balcão. */
+  /** Serviços do catálogo, ativos e inativos: a marcação de balcão e a tela de Serviços. */
   services: () =>
-    api<PagedResult<PublicServiceResponse>>(`${panel}/services?pageSize=50`, { auth: true }),
+    api<PagedResult<ServiceResponse>>(`${panel}/services?pageSize=50`, { auth: true }),
+}
+
+/**
+ * Gestão do estabelecimento (Onda 7D): catálogo, equipe, jornadas, bloqueios, imagens e política. Toda
+ * escrita aqui é só do dono — a API responde 403 `auth.forbidden` ao profissional.
+ */
+export const manageApi = {
+  createService: (request: SaveServiceRequest) =>
+    api<ServiceResponse>(`${panel}/services`, { method: 'POST', auth: true, body: request }),
+  updateService: (serviceId: string, request: SaveServiceRequest) =>
+    api<ServiceResponse>(`${panel}/services/${enc(serviceId)}`, {
+      method: 'PUT',
+      auth: true,
+      body: request,
+    }),
+  /** Habilita o profissional no serviço, com o preço e a duração do serviço. */
+  enableProfessional: (serviceId: string, professionalId: string) =>
+    api<ServiceResponse>(
+      `${panel}/services/${enc(serviceId)}/professionals/${enc(professionalId)}`,
+      {
+        method: 'PUT',
+        auth: true,
+        body: { priceOverrideCents: null, durationOverrideMinutes: null },
+      },
+    ),
+  disableProfessional: (serviceId: string, professionalId: string) =>
+    api<void>(`${panel}/services/${enc(serviceId)}/professionals/${enc(professionalId)}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+  createProfessional: (request: CreateProfessionalRequest) =>
+    api<ProfessionalResponse>(`${panel}/professionals`, {
+      method: 'POST',
+      auth: true,
+      body: request,
+    }),
+  updateProfessional: (professionalId: string, request: UpdateProfessionalRequest) =>
+    api<ProfessionalResponse>(`${panel}/professionals/${enc(professionalId)}`, {
+      method: 'PUT',
+      auth: true,
+      body: request,
+    }),
+  addWorkSchedule: (professionalId: string, request: SaveWorkScheduleRequest) =>
+    api<WorkScheduleResponse>(`${panel}/work-schedules`, {
+      method: 'POST',
+      auth: true,
+      body: { professionalId, ...request },
+    }),
+  updateWorkSchedule: (scheduleId: string, request: SaveWorkScheduleRequest) =>
+    api<WorkScheduleResponse>(`${panel}/work-schedules/${enc(scheduleId)}`, {
+      method: 'PUT',
+      auth: true,
+      body: request,
+    }),
+  removeWorkSchedule: (scheduleId: string) =>
+    api<void>(`${panel}/work-schedules/${enc(scheduleId)}`, { method: 'DELETE', auth: true }),
+  /** Bloqueios que ainda não terminaram, do mais próximo ao mais distante. */
+  exceptions: () =>
+    api<PagedResult<ScheduleExceptionResponse>>(`${panel}/schedule-exceptions?pageSize=50`, {
+      auth: true,
+    }),
+  affectedAppointments: (params: {
+    startsAt: string
+    endsAt: string
+    professionalId: string | null
+  }) =>
+    api<PagedResult<AffectedAppointmentResponse>>(
+      `${panel}/schedule-exceptions/affected-appointments?${query({
+        startsAt: params.startsAt,
+        endsAt: params.endsAt,
+        professionalId: params.professionalId ?? undefined,
+        pageSize: 50,
+      })}`,
+      { auth: true },
+    ),
+  addException: (request: AddScheduleExceptionRequest) =>
+    api<ScheduleExceptionResponse>(`${panel}/schedule-exceptions`, {
+      method: 'POST',
+      auth: true,
+      body: request,
+    }),
+  removeException: (exceptionId: string) =>
+    api<void>(`${panel}/schedule-exceptions/${enc(exceptionId)}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+  updatePolicy: (request: UpdateSchedulingPolicyRequest) =>
+    api<BusinessDetailResponse>(`${panel}/scheduling-policy`, {
+      method: 'PUT',
+      auth: true,
+      body: request,
+    }),
+  /** Logotipo e capa: o envio vai por `uploadFile` (progresso); aqui, só remover. */
+  removeBusinessImage: (slot: 'logo' | 'cover') =>
+    api<BusinessDetailResponse>(`${panel}/${slot}`, { method: 'DELETE', auth: true }),
+  removeProfessionalPhoto: (professionalId: string) =>
+    api<ProfessionalResponse>(`${panel}/professionals/${enc(professionalId)}/photo`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+}
+
+/** Caminhos de envio de imagem, para `uploadFile` (`multipart/form-data`, campo `file`). */
+export const uploadPaths = {
+  businessImage: (slot: 'logo' | 'cover') => `${panel}/${slot}`,
+  professionalPhoto: (professionalId: string) =>
+    `${panel}/professionals/${enc(professionalId)}/photo`,
 }
 
 export const customersApi = {

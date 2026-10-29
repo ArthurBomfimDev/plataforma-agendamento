@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-29 (Onda 7A — painel integrado e troca de contexto) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-29 (Onda 7D — gestão do estabelecimento no painel) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -72,7 +72,7 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 - **Desde a 6C:** categorias da Home e resultados da busca (`#/search`) ligados à API, com categoria, termo, raio, preço
   máximo e ordenação; "Disponível hoje" e "★ 4,5+" saíram da tela (sem backend, trabalho futuro no contrato §4.4).
 - **Desde a 6D:** capa, logotipo e foto com `SmartImage` (`srcSet`, preguiçoso, padrão se falhar) e padrões próprios sem
-  imagem (ilustração por categoria, iniciais, ícone). O `ImageUploader` está pronto e ainda sem rota (contrato §4.5).
+  imagem (ilustração por categoria, iniciais, ícone). O `ImageUploader` ganhou tela na 7D (Fotos, contrato §4.5 e §4.7).
   **Pendência:** apagar os arquivos ao remover estabelecimento ou profissional (hoje não há remoção definitiva).
 - **Desde a 7A — painel integrado** (branch `dashboard` do Rafael mergeada sem squash): agenda do dia (`#/panel`) e pedidos
   pendentes (`#/panel/requests`) com dados da API, confirmar, recusar, concluir e falta (só depois do fim do horário,
@@ -81,11 +81,21 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
   **Conta e contexto** (§2.0 de 22/09): entrada pelo contexto (só estabelecimento → pedidos; os dois → o último usado),
   menu da conta na barra superior e na lateral, tela `#/context`, guards do painel e das telas de consumidor. Os links
   do e-mail ao dono (`#/painel/pedidos`, `#/painel/agenda`) redirecionam para o painel. Contrato §4 e §4.6.
+- **Desde a 7D — gestão do estabelecimento** (cadastro de serviço do Rafael, branch `panel/services`, mergeado sem
+  squash): o dono configura Serviços (lista, criar, editar, ativar/desativar, profissionais de cada um), Profissionais
+  (cadastro sem login, editar, ativar/desativar, serviços, perfil completo só com consentimento), Jornadas e bloqueios
+  (jornada semanal por profissional, 409 de faixa cruzada, bloqueio com prévia e "manter ou cancelar todos"), Fotos
+  (logotipo, capa, foto do profissional) e Configurações (a política de agendamento). Só o dono: o profissional não vê
+  as seções e volta para a agenda se digitar o endereço. **Menu sem item morto:** Avaliações e Relatórios saíram (não
+  há backend), Fotos entrou, ícones do lucide; no celular, "Mais" (`#/panel/more`) lista as seções e a conta. Em
+  Saúde, aviso de que nome e descrição do serviço vão para a vitrine. **Sem mudança no backend.** Contrato §4.7.
 - Ainda com mock: **lembretes** na tela de pedido enviado (`MOCK_REMINDER_HOURS` ainda mostra **24 h e 3 h**, a decisão vigente é 24 h e 1 h — §10) e o **prazo de avaliação** em meus agendamentos (`MOCK_REVIEW_WINDOW_DAYS`, 30 dias; só aparece com avaliação, que ainda não existe).
-- Testes do frontend: 188 casos em 32 arquivos (Vitest), sem jsdom — renderização em HTML de servidor.
+- Testes do frontend: 263 casos em 40 arquivos (Vitest), sem jsdom — renderização em HTML de servidor.
 - **Tema claro e escuro** implementados (tokens + alternador).
-- Do lado do estabelecimento existem só a agenda do dia e os pedidos pendentes (7A). **Não existem** onboarding, catálogo,
-  equipe, jornadas, configurações, visão da semana, consentimento LGPD nem a tela de 409 com alternativas.
+- Do lado do estabelecimento existem a agenda do dia e os pedidos (7A) e a gestão (7D). **Não existem** onboarding
+  (cadastro, endereço e envio para análise), preço e duração próprios por profissional, visão da semana, avaliações,
+  relatórios, consentimento do profissional pelo app (depende do login de profissional, 5D) nem a tela de 409 com
+  alternativas.
 
 ### Infra local
 
@@ -309,7 +319,7 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | O | ✅ **Corrigido e mergeado (#14, 27/10).** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
 | P | ✅ **Corrigido e mergeado (#14 e, a janela restante, #15).** Mesma `IdempotencyKey` simultânea devolvia 400/409; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
 | S | Lacunas de segurança do RNF-06. **Corrigidas na 5A e na 5B:** token de e-mail fora do log em todo ambiente (o `LoggingIdentityMailer` saiu; o token só existe no link do e-mail, e a linha da outbox é limpa depois da entrega); `TenantContextExtensions` morto removido. **Abertas:** cadastro revela e-mail existente (409 — a S2, resposta neutra com aviso ao dono, ficou fora da 6A: o aviso precisa de limite por conta para não virar bombardeio de e-mail); sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
-| T | Agenda do dia (branch `dashboard`). **Feito na 5A:** `customerName` e `requestedAt` nas rotas do estabelecimento; filtro de pendentes por profissional. **Feito na 7A:** telas do Rafael ligadas à API, indicadores somados no frontend. **Falta:** remarcação (sem backend), bloqueios na agenda, visão da semana, histórico do consumidor no pedido. Ver `contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
+| T | Agenda do dia (branch `dashboard`). **Feito na 5A:** `customerName` e `requestedAt` nas rotas do estabelecimento; filtro de pendentes por profissional. **Feito na 7A:** telas do Rafael ligadas à API, indicadores somados no frontend. **Feito na 7D:** bloqueios pela tela de Jornadas e bloqueios (não dentro da grade da agenda). **Falta:** remarcação (sem backend), bloqueio desenhado na grade da agenda, visão da semana, histórico do consumidor no pedido. Ver `contrato-api-frontend.md` §4 e §4.7 | Painel com dado real | Arthur + Rafael |
 | U | Lembretes prometidos na tela "Pedido enviado". **Decidido (27/10): implementar.** E-mail de andamento do pedido feito na 5B; **lembretes (`ReminderOffsetsHours`, padrão 24 h e 1 h) e in-app na 5C**. A tela ainda usa `MOCK_REMINDER_HOURS = [24, 3]` | Coerência da demonstração | Arthur + Rafael |
 | R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
@@ -324,7 +334,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 | # | Item do recorte | Situação | Falta |
 |---|---|---|---|
-| 1 | **Fatia vertical completa** | 🟡 Backend completo; consumidor e painel (agenda do dia e pedidos pendentes, 7A) | Painel: onboarding, serviço, profissional, jornada |
+| 1 | **Fatia vertical completa** | 🟡 Backend completo; consumidor e painel (agenda e pedidos na 7A; serviço, profissional, jornada, bloqueio, fotos e política na 7D) | Painel: onboarding (cadastro, endereço, envio para análise) |
 | 2 | Busca pública geográfica + disponibilidade | 🟡 Busca ligada na tela (6C) | Horários no próprio resultado ainda não aparecem |
 | 3 | **Prova de concorrência (RNF-03)** | ✅ Zero dupla reserva, isolamento de tenant (404) e disputa sem 500 observados; defeitos O e P corrigidos (aguardando revisão) | Aceitar a ADR-019 |
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
@@ -387,6 +397,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 1. ✅ Ondas 1 a 3 mergeadas em `feat/integracao-front-back` (#14, #15, #16). Onda 4 em revisão.
 2. PR #11 `feat/integracao-front-back` → `main`, com a exceção de merge administrativo registrada na descrição.
 3. Aceitar as ADRs 019 e 020; decidir as pendências R, T e U. ✅ Branch `dashboard` do Rafael juntada na 7A.
-4. Painel do estabelecimento: ✅ agenda e pedidos (7A). Próximo: Ondas 7B (Bem-estar) e 7C (raio e cidade).
+4. Painel do estabelecimento: ✅ agenda e pedidos (7A); ✅ gestão (7D, PR em revisão). Próximo: Ondas 7B (Bem-estar) e
+   7C (raio e cidade); depois, onboarding do estabelecimento e login de profissional (5D).
 5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
 6. Responder F e E com a orientadora.

@@ -16,7 +16,12 @@ const TZ = 'America/Sao_Paulo'
 const professional = (id: string, displayName: string): ProfessionalResponse => ({
   id,
   displayName,
+  specialty: null,
+  bio: null,
   isActive: true,
+  isPubliclyVisible: false,
+  hasPublicProfileConsent: false,
+  membershipId: null,
   photo: null,
 })
 

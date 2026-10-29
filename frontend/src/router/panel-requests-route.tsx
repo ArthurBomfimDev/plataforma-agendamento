@@ -6,7 +6,8 @@ import { usePanelContext } from './panel-context'
  * lista se atualiza sozinha. Em Saúde, o nome do consumidor aparece (decisão do Arthur) e a API
  * registra a leitura no log de acesso.
  *
- * TODO: a configuração da confirmação automática ainda não tem tela.
+ * O botão da confirmação automática leva às Configurações (Onda 7D); o profissional recebe o aviso de
+ * que só o dono muda.
  */
 export const PanelRequestsRoute = () => {
   const { pending, business, runAction, navigateTo } = usePanelContext()

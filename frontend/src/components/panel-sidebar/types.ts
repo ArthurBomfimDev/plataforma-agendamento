@@ -2,18 +2,12 @@ import type { ReactNode } from 'react'
 
 /** Seções do painel do estabelecimento. O celular mostra só parte delas; o resto fica em "Mais". */
 export type PanelSection =
-  | 'agenda'
-  | 'requests'
-  | 'services'
-  | 'professionals'
-  | 'schedules'
-  | 'reviews'
-  | 'reports'
-  | 'settings'
+  'agenda' | 'requests' | 'services' | 'professionals' | 'schedules' | 'photos' | 'settings'
 
 export type PanelSidebarProps = {
   businessName: string
-  activeSection: PanelSection
+  /** Nula: a tela aberta não é uma seção do menu (o "Mais" do celular). */
+  activeSection: PanelSection | null
   /** Pedidos aguardando resposta. Zero esconde o contador. */
   pendingRequests: number
   onNavigate?: (section: PanelSection) => void

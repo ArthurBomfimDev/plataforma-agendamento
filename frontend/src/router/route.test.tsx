@@ -101,6 +101,24 @@ describe('AppRoutes', () => {
     expect(renderAt('/context')).not.toContain('Sua conta')
   })
 
+  // A gestão (Onda 7D) mora dentro do painel: sem sessão, nenhuma tela abre. O guard por papel
+  // (`canManageBusiness`) e a seção ativa (`panelSectionOf`) são cobertos em `manage.test.ts`.
+  it.each([
+    '/panel/services',
+    '/panel/services/new',
+    '/panel/services/s1',
+    '/panel/professionals',
+    '/panel/schedules',
+    '/panel/photos',
+    '/panel/settings',
+    '/panel/more',
+  ])('não abre %s sem sessão nem cai na 404', (path) => {
+    const html = renderAt(path)
+
+    expect(html).not.toContain('Painel do estabelecimento')
+    expect(html).not.toContain('Página não encontrada')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })
