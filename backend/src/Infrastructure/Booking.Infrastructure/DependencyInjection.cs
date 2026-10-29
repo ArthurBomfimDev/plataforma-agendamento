@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Contracts.Availability;
 using Booking.Application.Contracts.Catalog;
@@ -43,6 +44,7 @@ using Booking.Infrastructure.Module.Compliance.Repository;
 using Booking.Infrastructure.Module.Identity;
 using Booking.Infrastructure.Module.Identity.Repository;
 using Booking.Infrastructure.Module.Identity.Security;
+using Booking.Infrastructure.Module.Media;
 using Booking.Infrastructure.Module.Notifications;
 using Booking.Infrastructure.Module.Notifications.Repository;
 using Booking.Infrastructure.Module.People;
@@ -88,8 +90,26 @@ public static class DependencyInjection
         services.AddComplianceModule();
         services.AddNotificationsModule(configuration, isDevelopment);
         services.AddGeo(configuration);
+        services.AddMedia(configuration);
 
         return services;
+    }
+
+    /// <summary>Imagens (ADR-023): disco local atrás de <see cref="IFileStorage"/>, processamento com SkiaSharp.</summary>
+    private static void AddMedia(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<StorageOptions>()
+            .Bind(configuration.GetSection(StorageOptions.SectionName))
+            .Validate(o => !string.IsNullOrWhiteSpace(o.Root), "Storage:Root é obrigatório.")
+            .ValidateOnStart();
+
+        services.AddSingleton<IFileStorage, DiskFileStorage>();
+        services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
+        services.AddScoped<ImageStore>();
+        services.AddScoped<IImageUrls>(sp => sp.GetRequiredService<ImageStore>());
+
+        services.AddScoped<BusinessImageCommand>();
+        services.AddScoped<ProfessionalPhotoCommand>();
     }
 
     /// <summary>

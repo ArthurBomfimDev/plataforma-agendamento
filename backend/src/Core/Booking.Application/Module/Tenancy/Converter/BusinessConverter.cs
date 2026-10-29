@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Module.Tenancy;
 using Booking.Domain.Enum.Module.Tenancy;
@@ -18,7 +19,7 @@ public static class BusinessConverter
     public static AddressResponse ToAddress(Business business) =>
         new(business.Street, business.StreetNumber, business.District, business.City, business.State, business.PostalCode);
 
-    public static BusinessDetailResponse ToDetail(Business business) =>
+    public static BusinessDetailResponse ToDetail(Business business, IImageUrls images) =>
         new(
             business.Id,
             business.Name,
@@ -37,12 +38,15 @@ public static class BusinessConverter
                 business.MinLeadTimeHours,
                 business.BookingHorizonDays,
                 business.CancellationWindowHours,
-                business.TimeZone));
+                business.TimeZone),
+            images.For(business.LogoImageKey),
+            images.For(business.CoverImageKey));
 
-    public static AdminBusinessDetailResponse ToAdminDetail(Business business, IReadOnlyList<ChecklistItemResponse> checklist) =>
-        new(ToDetail(business), checklist, business.VerifiedByUserId, business.VerifiedAt, business.VerificationNote);
+    public static AdminBusinessDetailResponse ToAdminDetail(
+        Business business, IReadOnlyList<ChecklistItemResponse> checklist, IImageUrls images) =>
+        new(ToDetail(business, images), checklist, business.VerifiedByUserId, business.VerifiedAt, business.VerificationNote);
 
-    public static PublicBusinessResponse ToPublic(Business business) =>
+    public static PublicBusinessResponse ToPublic(Business business, IImageUrls images) =>
         new(
             business.Id,
             business.Name,
@@ -54,5 +58,7 @@ public static class BusinessConverter
             business.CancellationWindowHours,
             business.PendingExpirationHours,
             business.AutoConfirm,
-            business.TimeZone);
+            business.TimeZone,
+            images.For(business.LogoImageKey),
+            images.For(business.CoverImageKey));
 }

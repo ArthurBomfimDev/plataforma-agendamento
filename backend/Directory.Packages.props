@@ -31,6 +31,9 @@
     <!-- ADR-021: SMTP genérico. O provedor (Resend, Brevo, Gmail) é configuração, não SDK. -->
     <PackageVersion Include="MailKit" Version="4.18.1" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <!-- Imagens (ADR-023): SkiaSharp, MIT. O ImageSharp 4 exige chave de licença no build de Release. -->
+    <PackageVersion Include="SkiaSharp" Version="4.154.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.154.0" />
     <!--
       O MailKit (via MimeKit) puxa System.Security.Cryptography.Pkcs 10.0.0, com vulnerabilidade conhecida
       (GHSA-2fmv-rv2c-59x7, moderada; GHSA-846f-f764-76mx, alta; afetadas 10.0.0 a 10.0.12). O NuGet Audit barrou

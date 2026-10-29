@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.Availability;
@@ -25,7 +26,7 @@ public sealed class CurrentBusinessLoader(IBusinessRepository businesses, IActor
     }
 }
 
-public sealed class UpdateSchedulingPolicyCommand(CurrentBusinessLoader loader, IUnitOfWork unitOfWork)
+public sealed class UpdateSchedulingPolicyCommand(CurrentBusinessLoader loader, IUnitOfWork unitOfWork, IImageUrls images)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(UpdateSchedulingPolicyRequest request, CancellationToken ct = default)
     {
@@ -44,11 +45,11 @@ public sealed class UpdateSchedulingPolicyCommand(CurrentBusinessLoader loader, 
         }
 
         await unitOfWork.SaveChangesAsync(ct);
-        return BusinessConverter.ToDetail(business);
+        return BusinessConverter.ToDetail(business, images);
     }
 }
 
-public sealed class UpdateAddressCommand(CurrentBusinessLoader loader, IUnitOfWork unitOfWork)
+public sealed class UpdateAddressCommand(CurrentBusinessLoader loader, IUnitOfWork unitOfWork, IImageUrls images)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(UpdateAddressRequest request, CancellationToken ct = default)
     {
@@ -57,7 +58,7 @@ public sealed class UpdateAddressCommand(CurrentBusinessLoader loader, IUnitOfWo
         business.UpdateAddress(request.Street, request.StreetNumber, request.District, request.City, request.State, request.PostalCode);
 
         await unitOfWork.SaveChangesAsync(ct);
-        return BusinessConverter.ToDetail(business);
+        return BusinessConverter.ToDetail(business, images);
     }
 }
 
@@ -65,7 +66,7 @@ public sealed class UpdateAddressCommand(CurrentBusinessLoader loader, IUnitOfWo
 /// Registra o ponto escolhido pelo proprietário. Sem geocodificador integrado ainda (porta IGeocodingProvider
 /// fora do recorte), o palpite e a confirmação chegam juntos, vindos do mapa da tela.
 /// </summary>
-public sealed class ConfirmLocationCommand(CurrentBusinessLoader loader, IUnitOfWork unitOfWork, TimeProvider clock)
+public sealed class ConfirmLocationCommand(CurrentBusinessLoader loader, IUnitOfWork unitOfWork, TimeProvider clock, IImageUrls images)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(ConfirmLocationRequest request, CancellationToken ct = default)
     {
@@ -84,12 +85,13 @@ public sealed class ConfirmLocationCommand(CurrentBusinessLoader loader, IUnitOf
         business.ConfirmLocation(point, precision, now);
 
         await unitOfWork.SaveChangesAsync(ct);
-        return BusinessConverter.ToDetail(business);
+        return BusinessConverter.ToDetail(business, images);
     }
 }
 
 /// <summary>Envia para análise depois de conferir a checklist de ativação nos outros módulos.</summary>
-public sealed class SubmitBusinessCommand(CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork)
+public sealed class SubmitBusinessCommand(
+    CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(CancellationToken ct = default)
     {
@@ -105,6 +107,6 @@ public sealed class SubmitBusinessCommand(CurrentBusinessLoader loader, Activati
         business.Submit();
 
         await unitOfWork.SaveChangesAsync(ct);
-        return BusinessConverter.ToDetail(business);
+        return BusinessConverter.ToDetail(business, images);
     }
 }

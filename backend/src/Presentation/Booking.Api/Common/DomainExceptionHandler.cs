@@ -47,6 +47,8 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
             or "appointment.slot_no_longer_available" or "customer.already_registered"
             or "work_schedule.overlaps" => StatusCodes.Status409Conflict,
         "appointment.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
+        "image.too_large" => StatusCodes.Status413PayloadTooLarge,
+        "image.unsupported_type" => StatusCodes.Status415UnsupportedMediaType,
         _ when code.EndsWith(".not_found", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
         _ when code.Contains(".cannot_", StringComparison.Ordinal) => StatusCodes.Status409Conflict,
         _ => StatusCodes.Status400BadRequest,
