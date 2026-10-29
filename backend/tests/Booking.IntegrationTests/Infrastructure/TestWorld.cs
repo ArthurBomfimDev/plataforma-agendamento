@@ -200,7 +200,8 @@ public sealed class TestWorld(IntegrationFixture fixture)
     // --- Estabelecimento ---
 
     public async Task<TestBusiness> NewBusinessAsync(
-        int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true, TestLocation? location = null)
+        int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true, TestLocation? location = null,
+        string city = "Garça")
     {
         TestUser owner = await NewUserAsync("Dono de teste");
         string name = $"Estabelecimento {Guid.NewGuid():N}"[..40];
@@ -215,7 +216,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
         string token = context.AccessToken;
 
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/address",
-            new UpdateAddressRequest("Rua de Teste", "100", "Centro", "Garça", "SP", "17400000"), token);
+            new UpdateAddressRequest("Rua de Teste", "100", "Centro", city, "SP", "17400000"), token);
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/location",
             new ConfirmLocationRequest((location ?? TestLocation.Garca).Latitude, (location ?? TestLocation.Garca).Longitude, "Rooftop", "integration-test"), token);
         await SendOkAsync(HttpMethod.Put, "/api/businesses/current/scheduling-policy",

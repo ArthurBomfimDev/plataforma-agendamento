@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Booking.Application.Common.Media;
 using Booking.Application.Contracts.Catalog;
 using Booking.Application.Module.Tenancy.Commands;
@@ -45,13 +47,20 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
     public async Task<PagedResult<BusinessSearchItemResponse>> ExecuteAsync(SearchBusinessesRequest request, CancellationToken ct = default)
     {
         GeoPoint center = GeoPoint.Of(request.Latitude, request.Longitude);
-        double radiusKm = Math.Clamp(request.RadiusKm, 0.1, _maxRadiusKm);
+        string? city = string.IsNullOrWhiteSpace(request.City) ? null : NormalizeCity(request.City);
+        // Com cidade, o raio é o teto: a cidade decide, e o teto evita trazer a homônima de outro estado.
+        double radiusKm = city is null ? Math.Clamp(request.RadiusKm, 0.1, _maxRadiusKm) : _maxRadiusKm;
         int page = Math.Max(1, request.Page);
         int pageSize = Math.Clamp(request.PageSize, 1, _maxPageSize);
         bool byPrice = ParseSort(request.SortBy);
 
         // 1. Geográfico (ST_DWithin sobre índice GiST), já em ordem de distância.
         IEnumerable<Business> matching = await businesses.FindBookableNearbyAsync(center, radiusKm * 1000, _maxCandidates, ct);
+
+        if (city is not null)
+        {
+            matching = matching.Where(b => b.City is not null && NormalizeCity(b.City) == city);
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
@@ -112,6 +121,23 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
             .ToList();
 
         return new PagedResult<BusinessSearchItemResponse>(items, page, pageSize, candidates.Count);
+    }
+
+    /// <summary>"São Paulo", "sao paulo" e " SÃO  PAULO " viram a mesma chave: sem acento, sem caixa, espaços únicos.</summary>
+    private static string NormalizeCity(string city)
+    {
+        string decomposed = city.Trim().Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(decomposed.Length);
+
+        foreach (char c in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(c);
+            }
+        }
+
+        return string.Join(' ', builder.ToString().ToUpperInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
     }
 
     private static bool ParseSort(string? sortBy) => sortBy?.Trim().ToLowerInvariant() switch

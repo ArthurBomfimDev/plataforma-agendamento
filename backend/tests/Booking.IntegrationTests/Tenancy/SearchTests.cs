@@ -69,6 +69,46 @@ public sealed class SearchTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task H5_city_filter_ignores_accent_case_and_spacing_and_drops_other_cities()
+    {
+        // Nome de cidade único por teste: com cidade, o raio é de 50 km e pegaria estabelecimentos de outros testes.
+        string suffix = Guid.NewGuid().ToString("N")[..8];
+        string city = $"São Tomé {suffix}";
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness inCity = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here, city: city);
+        // A 5 km, fora do raio de 1 km: com cidade, o raio pedido não vale.
+        TestBusiness farInCity = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here.North(5_000), city: city);
+        await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here.North(100), city: $"Outra {suffix}");
+
+        foreach (string query in new[] { $"são tomé {suffix}", $"SAO TOME {suffix}", $"  Sao   Tome {suffix} " })
+        {
+            PagedResult<BusinessSearchItemResponse> result = await SearchAsync(here, $"&city={Uri.EscapeDataString(query)}");
+            Assert.Equal([inCity.Id, farInCity.Id], result.Items.Select(i => i.Id));
+        }
+
+        Assert.Empty((await SearchAsync(here, $"&city={Uri.EscapeDataString($"São Tomás {suffix}")}")).Items);
+    }
+
+    [Fact]
+    public async Task H6_city_keeps_the_50_km_ceiling_and_combines_with_the_other_filters()
+    {
+        string suffix = Guid.NewGuid().ToString("N")[..8];
+        string city = $"Itaí {suffix}";
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness beauty = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here, city: city);
+        TestBusiness health = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], category: "Saude", location: here.North(20_000), city: city);
+        // Homônima a 60 km: fora do teto de 50 km.
+        await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here.North(60_000), city: city);
+
+        string byCity = $"&city={Uri.EscapeDataString(city)}";
+        Assert.Equal([beauty.Id, health.Id], (await SearchAsync(here, byCity)).Items.Select(i => i.Id));
+        Assert.Equal(health.Id, Assert.Single((await SearchAsync(here, byCity + "&category=Saude")).Items).Id);
+
+        // Sem cidade, vale o raio de antes (1 km nesta busca).
+        Assert.Equal(beauty.Id, Assert.Single((await SearchAsync(here)).Items).Id);
+    }
+
+    [Fact]
     public async Task H4_invalid_sort_or_category_is_refused()
     {
         TestLocation here = TestLocation.Isolated();
