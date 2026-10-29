@@ -33,7 +33,8 @@ public sealed record TestBusiness(
     IReadOnlyList<Guid> ProfessionalIds,
     IReadOnlyList<Guid> WorkScheduleIds,
     IReadOnlyList<TestService> Services,
-    string OwnerEmail = "");
+    string OwnerEmail = "",
+    Guid OwnerUserId = default);
 
 /// <summary>Serviço a criar: duração, buffers, preço e nome. O passo de grade é sempre 15 min.</summary>
 public sealed record ServiceSpec(
@@ -153,6 +154,19 @@ public sealed class TestWorld(IntegrationFixture fixture)
         return new TestUser(user.Id, null, tokens.Issue(user, DateTimeOffset.UtcNow).Value, user.Email.Address);
     }
 
+    /// <summary>Dá perfil de consumidor a uma conta que já existe: o dono que também agenda (decisão de 22/09, §2.0).</summary>
+    public async Task<Guid> AddCustomerProfileAsync(Guid userId)
+    {
+        await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
+        BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+
+        Customer customer = Customer.Create(userId, new DateOnly(1990, 1, 1), null, DateOnly.FromDateTime(DateTime.UtcNow));
+        db.Add(customer);
+        await db.SaveChangesAsync();
+
+        return customer.Id;
+    }
+
     /// <summary>
     /// Conta com o e-mail já confirmado: o login e o refresh exigem confirmação desde a Onda 6A. O caminho sem confirmação tem testes próprios (<c>EmailConfirmationTests</c>).
     /// </summary>
@@ -255,7 +269,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
             await SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/approve", new AdminDecisionRequest("Aprovado no teste"), admin.Token);
         }
 
-        return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices, owner.Email);
+        return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices, owner.Email, owner.UserId);
     }
 
     /// <summary>
