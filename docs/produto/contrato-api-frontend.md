@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C e 6D (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10) e 7A (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -25,7 +25,16 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `GET /api/geo/postal-code/{cep}` (novo na 6B) | `geoApi.postalCode` | ✅ |
 | `GET /api/geo/search?q=` (novo na 6B) | `geoApi.search` | ✅ |
 | `GET /api/geo/reverse?lat=&lng=` (novo na 6B) | `geoApi.reverse` | ✅ |
-| `GET /api/users/me` | `authApi.me` | ✅ |
+| `GET /api/users/me` | `authApi.me` | ✅ — desde a 7A traz `hasCustomerProfile` e `businesses` (§4.6) |
+| `POST /api/users/me/context` | `authApi.switchContext` | ✅ desde a 7A |
+| `GET /api/businesses/current` | `panelApi.business` (só o dono) | ✅ desde a 7A |
+| `GET /api/businesses/current/professionals` | `panelApi.professionals` | ✅ desde a 7A |
+| `GET /api/businesses/current/work-schedules?professionalId=` | `panelApi.workSchedules` | ✅ desde a 7A |
+| `GET /api/businesses/current/services` | `panelApi.services` (marcação de balcão) | ✅ desde a 7A |
+| `GET /api/businesses/current/appointments?date=` | `panelApi.agenda` | ✅ desde a 7A |
+| `GET /api/businesses/current/appointments/pending` | `panelApi.pending` | ✅ desde a 7A |
+| `POST …/appointments/{id}/confirm` · `reject` · `cancel` · `complete` · `no-show` | `panelApi.confirm` … `noShow` | ✅ desde a 7A |
+| `POST /api/businesses/current/appointments/counter` | `panelApi.counter` | ✅ desde a 7A |
 | `GET/POST /api/customers/me` | `customersApi.me`/`register` | ✅ |
 | `GET /api/businesses/search` | `businessesApi.search` | ✅ desde a 6C (§2.3, §4.4) |
 | `GET /api/businesses/{id}` | `businessesApi.get` | ✅ |
@@ -48,7 +57,9 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | | `refreshToken` | `string` | `string` | ✅ |
 | `UserResponse` | `id`, `email`, `fullName` | `Guid`, `string`, `string` | `string` × 3 | ✅ |
 | | `emailConfirmed` | `bool` | `boolean` | ✅ |
-| `ContextTokenResponse` (`POST /api/users/me/context`) | — | existe | não tipado | ❌ no TS — o painel vai precisar para entrar no estabelecimento |
+| `CurrentUserResponse` (`GET /api/users/me`, novo na 7A) | `UserResponse` + `hasCustomerProfile`, `businesses` | + `bool`, `UserBusinessResponse[]` (até 20) | iguais | ✅ |
+| `UserBusinessResponse` | `businessId`, `name`, `role` (`Owner` \| `Professional`) | `Guid`, `string`, `string` | iguais | ✅ |
+| `ContextTokenResponse` (`POST /api/users/me/context`) | `accessToken`, `accessTokenExpiresAt`, `businessId`, `role` | `string`, `DateTimeOffset`, `Guid?`, `string?` | iguais | ✅ desde a 7A |
 
 ### 2.2 Tenancy, Catalog, People, Availability (rotas públicas)
 
@@ -87,8 +98,8 @@ estabelecimento) e os filtros "Disponível hoje" e "★ 4,5+" — saíram da tel
 | | `status` | `string` (nome do enum) | união dos 7 estados | ✅ — os 7 nomes batem com `AppointmentStatus` |
 | | `source` | `string` (`Online` \| `Counter`) | `string` | ✅ (o TS podia ser a união) |
 | | `expiresAt`, `attendeeName`, `customerNotes`, `cancellationReason`, `cancelledBy` | `string?` / `DateTimeOffset?` | `string \| null` | ✅ |
-| | `requestedAt` | `DateTimeOffset` (sempre) | — | ➕ desde a 5A (27/10) |
-| | `customerName` | `string?` — **só nas rotas do estabelecimento**: nome social do consumidor, senão o do cadastro; no balcão, o nome informado. **Nulo** nas rotas do consumidor (`/api/appointments/*`) | — | ➕ desde a 5A |
+| | `requestedAt` | `DateTimeOffset` (sempre) | `string` | ✅ tipado na 7A |
+| | `customerName` | `string?` — **só nas rotas do estabelecimento**: nome social do consumidor, senão o do cadastro; no balcão, o nome informado. **Nulo** nas rotas do consumidor (`/api/appointments/*`) | `string \| null` (opcional) | ✅ tipado na 7A |
 | `RequestAppointmentRequest` | `businessId`, `serviceId`, `professionalId`, `startsAt` | `Guid`, `Guid`, `Guid`, `DateTimeOffset` | `string` × 4 | ✅ |
 | | `notes`, `attendeeName` | `string?` | `string \| null` | ✅ |
 | | `idempotencyKey` | `string?` (até 64) | `string` (obrigatório) | ✅ — o TS é mais restrito, e está certo |
@@ -100,31 +111,38 @@ estabelecimento) e os filtros "Disponível hoje" e "★ 4,5+" — saíram da tel
 | Corpo de erro | ProblemDetails com `code` estável e extensões | `ApiError(status, code)` lê `code ?? title` | ✅ |
 | 409 `appointment.slot_no_longer_available` | traz `alternatives` (até 5 horários) | `parse` descarta o corpo além do `code`; a mensagem genérica diz "Escolha outro" | ⚠️ as alternativas não chegam à tela |
 | 503 `appointment.contention_try_again` (Onda 1, defesa) | novo | não traduzido | ⚠️ cai na mensagem genérica |
-| 403 `tenant.missing`, `auth.forbidden` | existem | não traduzidos | ⚠️ (só relevantes no painel) |
+| 403 `tenant.missing`, `auth.forbidden` | existem | traduzidos na 7A | ✅ |
+| 403 `appointment.customer_context_required` (novo na 7A) | `POST /api/appointments` com token no contexto de estabelecimento | traduzido; o frontend nem chega a chamar (as telas de consumidor levam à troca de contexto) | ✅ |
+| 409 `appointment.cannot_book_own_business` (novo na 7A) | o dono pede horário no próprio estabelecimento | traduzido ("use a marcação de balcão") | ✅ |
+| 409 `appointment.cannot_*_from_current_status`, `cannot_confirm_expired` | transição de estado inválida (pedido já respondido em outra aba, expirado) | traduzidos na 7A; a lista é buscada de novo | ✅ |
 | 400 `business.activation_checklist_incomplete` | traz `missing` | — | ❌ no TS (onboarding do painel) |
 | 429 | limitador de autenticação | traduzido ("Muitas tentativas…") | ✅ |
 | 403 `identity.email_not_confirmed` (6A) | login e refresh de conta sem e-mail confirmado; só depois da senha certa (senha errada continua 401 `auth.invalid_credentials`) | traduzido; Entrar mostra "Reenviar e-mail de confirmação" | ✅ |
 | 400 `user_token.invalid` | link de confirmação ou de redefinição vencido, usado ou de outro tipo | telas "Link inválido" | ✅ |
 
-## 4. O que a agenda do dia (branch `dashboard`) vai precisar
+## 4. Agenda do dia e pedidos pendentes (painel do Rafael, ligado na 7A)
 
-`features/business-agenda` usa `mock.ts`. Para trocar o mock pela API:
+Desde a 7A, `features/business-agenda` e `features/pending-requests` recebem os dados por props, das rotas
+`router/panel-agenda-route.tsx` e `panel-requests-route.tsx`; os `mock.ts` viraram `fixtures.ts`, só dos testes. A
+conversão mora em `router/panel-adapters.ts`.
 
-| A tela usa | API hoje | Situação |
+| A tela usa | API | Situação |
 |---|---|---|
-| Agendamentos do dia por profissional | `GET /api/businesses/current/appointments?date=&professionalId=` → `PagedResult<AppointmentResponse>` | ✅ existe; não está em `endpoints.ts` |
-| `start` (`HH:mm` no fuso), `durationMinutes`, `serviceName` | `startsAt` (UTC) + `timeZone` do estabelecimento, `durationMinutes`, `serviceName` | ✅ com conversão de fuso no frontend |
-| `status: 'pending' \| 'confirmed'` | `status` com 7 estados | ⚠️ a agenda também recebe `Completed`, `NoShow`, `Cancelled`… do dia; a tela precisa decidir o que mostrar |
-| **`customerName`** | `AppointmentResponse.customerName` nas rotas `businesses/current/appointments/*` (decisão T, 27/10). Em Saúde, a leitura continua registrada no log de acesso | ✅ desde a 5A |
-| `requestedAt` | `AppointmentResponse.requestedAt` | ✅ desde a 5A |
-| Jornada do dia (`workStart`, `workEnd`) | `GET /api/businesses/current/work-schedules?professionalId=` (todas as linhas da semana) | ✅ com filtro por dia no frontend; pausa = duas linhas |
-| Bloqueios (`AgendaBlock`) | `GET /api/businesses/current/schedule-exceptions` | ✅ parcial — "Bloqueio recorrente" não existe: a pausa recorrente é a ausência de linha de jornada |
-| `pendingRequests` por profissional | `GET /api/businesses/current/appointments/pending?professionalId=` — `totalCount` dá o número. Para o papel `Professional`, vale sempre o próprio, seja qual for o parâmetro | ✅ desde a 5A |
-| Indicadores (`AgendaSummary`: receita esperada, ocupação, variação semanal, tempo médio de resposta) | não existem | ❌ — nenhum endpoint de indicador; o mock já avisa que não são métrica medida |
-| Confirmar, recusar, cancelar, concluir, falta | `POST …/appointments/{id}/confirm`, `reject`, `cancel`, `complete`, `no-show` | ✅ existem; não estão em `endpoints.ts` |
-| Marcação de balcão ("Encaixar") | `POST /api/businesses/current/appointments/counter` | ✅ |
-| Remarcação (`AgendaMove`) | **não existe** | ❌ — hoje seria cancelar e marcar de novo |
-| Entrar no painel | `POST /api/users/me/context` → `ContextTokenResponse` | ✅ existe; não tipado no TS |
+| Agendamentos do dia por profissional | `GET /api/businesses/current/appointments?date=` → `PagedResult<AppointmentResponse>` (até 100) | ✅ |
+| `start` (`HH:mm` no fuso), duração, serviço | `startsAt`/`endsAt` (UTC) + fuso do estabelecimento | ✅ conversão com `Intl` |
+| Estados | `Pending`, `Confirmed`, `Completed`, `NoShow` ficam na agenda; `Rejected`, `Expired`, `Cancelled` saem (liberaram o horário) | ✅ |
+| `customerName` | nome social, senão o do cadastro; no balcão, o informado. Em Saúde, a leitura fica no log de acesso (decisão do Arthur: o painel mostra o nome) | ✅ |
+| Prazo do pedido | `expiresAt` da API (antes: `requestedAt` + 12 h fixas) | ✅ |
+| Jornada do dia | `work-schedules` de cada profissional, filtrado pelo dia da semana e pela vigência; com duas faixas, da primeira entrada à última saída | ✅ |
+| Bloqueios (`AgendaBlock`) | `schedule-exceptions` existe, mas a tela ainda não mostra | ⚠️ trabalho futuro |
+| Pedidos pendentes | `…/appointments/pending` (até 50); `totalCount` alimenta os contadores | ✅ |
+| Indicadores do dia | sem endpoint: total, confirmados, pendentes e receita prevista são somados da agenda no frontend; ocupação e tempo de resposta saíram | ✅ |
+| Confirmar, recusar, cancelar, concluir, falta | `POST …/{id}/confirm`, `reject`, `cancel`, `complete`, `no-show` — recusar, falta e cancelar pedem confirmação | ✅ |
+| Marcação de balcão ("+ Marcação de balcão" e "Encaixar") | `POST …/appointments/counter`; serviço, horário (no fuso do estabelecimento), nome, telefone opcional | ✅ |
+| Remarcação | **não existe** no backend | ❌ — a grade não arrasta mais; o detalhe diz "cancele e peça ao consumidor que agende de novo". Trabalho futuro |
+| Histórico do consumidor ("3 atendimentos · 1 falta") | não existe | ❌ — a linha não aparece, em vez de afirmar "primeira vez" sem saber |
+| Atualização | a cada 30 s (`PANEL_REFRESH_MS`) e depois de cada ação, também quando ela falha (um 409 quer dizer lista velha) | ✅ |
+| Papel `Professional` | a API devolve só a própria agenda; a tela mostra só quem tem item e esconde Serviços, Profissionais, Jornadas e Configurações | ✅ |
 
 ## 4.1 E-mails (Onda 5B, 28/10) — o que o frontend precisa ter
 
@@ -135,8 +153,8 @@ Nenhuma rota de API nova. Os e-mails levam links para **rotas do frontend** (Has
 |---|---|---|
 | `#/confirmar-email?token={token}` | Confirmação de e-mail (lê o `token` da URL e confirma) — **tela feita na 6A** | `POST /api/auth/confirm-email` `{ token }` |
 | `#/redefinir-senha?token={token}` | Nova senha (lê o `token`, pede a senha nova) — **tela feita na 6A** | `POST /api/auth/reset-password` `{ token, newPassword }` |
-| `#/painel/pedidos` | Pedidos pendentes do painel | `GET /api/businesses/current/appointments/pending` |
-| `#/painel/agenda` | Agenda do dia do painel (branch `dashboard`) | `GET /api/businesses/current/appointments?date=` |
+| `#/painel/pedidos` | Pedidos pendentes do painel — desde a 7A redireciona para `#/panel/requests` | `GET /api/businesses/current/appointments/pending` |
+| `#/painel/agenda` | Agenda do dia do painel — desde a 7A redireciona para `#/panel` | `GET /api/businesses/current/appointments?date=` |
 
 - O token vem com escape de URL (`encodeURIComponent`): a tela usa o valor de `URLSearchParams` direto.
 - O e-mail de confirmação de agendamento leva um `.ics` anexo. O botão "Adicionar à agenda" dentro do app e o feed de
@@ -254,10 +272,33 @@ import { uploadFile } from '@lib/api/upload'
   `shape="round"` e `fallback={<InitialsAvatar name={professional.displayName} />}`.
 - Depois de enviar, invalide a consulta do estabelecimento (`queryKeys.business(id)`) para a vitrine pegar a imagem nova.
 
+## 4.6 Conta e contexto (Onda 7A, 29/10)
+
+Decisão de 22/09 (§2.0): conta única com troca de contexto explícita — "Consumidor" ou "Painel: Estúdio Duartina".
+
+- **`GET /api/users/me`** traz `hasCustomerProfile` e `businesses` (vínculos ativos, com nome e papel).
+- **Entrada** (`lib/api/context.ts#chooseEntry`): só estabelecimento → `#/panel/requests`; os dois → o último contexto
+  usado (`localStorage` `vagoo-last-context`, por conta, com `try/catch`), o painel na primeira vez; vários
+  estabelecimentos sem nada lembrado → `#/context`; quem veio de uma tela de consumidor (o `redirect`) volta para ela.
+  "Sou estabelecimento" na tela de entrar pede o painel, e um `redirect` para `#/panel/*` (link do e-mail ao dono)
+  também: depois de entrar, volta para ele. Sair pelo menu esquece o contexto lembrado e leva à Home (a sessão marca
+  `signedOut`, só em memória, para os guards não mandarem a "Entrar"); sessão perdida (refresh recusado) leva a
+  "Entrar" e volta para a tela.
+- **Conta dona e consumidora:** o perfil de consumidor do dono é criado como o de qualquer conta
+  (`POST /api/customers/me`, no contexto de consumidor); o seed não cria essa conta — o README mostra como.
+- **Troca:** `POST /api/users/me/context` e o novo access token vai para a sessão (`lib/zustand/session`, campo
+  `context`). O refresh devolve token de consumidor: `client.ts` pede o contexto de novo logo depois; se o vínculo
+  acabou, a conta volta a consumidor.
+- **Onde troca:** menu da conta na barra superior e no rodapé da barra lateral do painel (`components/account-menu`,
+  `Menu` do Base UI); no celular, "Perfil" (consumidor) e "Mais" (painel) abrem `#/context`.
+- **Guards:** `#/panel/*` exige contexto de estabelecimento (sem sessão → entrar; como consumidor → `#/context`, que
+  diz "Esta conta não tem um estabelecimento" quando é o caso). Agendar, "Pedido enviado" e "Meus agendamentos" no
+  contexto de estabelecimento levam a `#/context` ("troque para consumidor"). No mesmo contexto, a barra superior perde
+  busca, localização e "Meus agendamentos" e ganha "Voltar ao painel".
+- **Backend:** o token do painel não agenda como consumidor (403) e o dono não agenda no próprio estabelecimento (409).
+
 ## 5. Resumo para fechar o lado do frontend
 
-1. Tipar o `ContextTokenResponse` (os campos da busca foram tipados na 6C).
-2. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
-3. Traduzir `appointment.contention_try_again` (503: "tente de novo").
-4. Para a agenda: as rotas `businesses/current/*` já existem, com `customerName`, `requestedAt` e o filtro de
-   pendentes por profissional desde a 5A; faltam no backend os indicadores e a remarcação.
+1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
+2. Traduzir `appointment.contention_try_again` (503: "tente de novo").
+3. Painel: bloqueios na agenda, visão da semana, histórico do consumidor no pedido e a remarcação (sem backend).

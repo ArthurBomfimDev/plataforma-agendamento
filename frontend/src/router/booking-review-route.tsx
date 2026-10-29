@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 
 import { BookingReviewScreen } from '@features/booking-review'
 import { NotFoundScreen } from '@features/not-found'
+import { RequireCustomerContext } from './require-customer-context'
 import { RequireSession } from './require-session'
 import { contextFallback } from './context-fallback'
 import { readBookingSearch } from './booking-search'
@@ -89,6 +90,8 @@ const BookingReview = () => {
 
 export const BookingReviewRoute = () => (
   <RequireSession>
-    <BookingReview />
+    <RequireCustomerContext>
+      <BookingReview />
+    </RequireCustomerContext>
   </RequireSession>
 )

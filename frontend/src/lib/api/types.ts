@@ -29,6 +29,25 @@ export type UserResponse = {
   emailConfirmed: boolean
 }
 
+export type BusinessRole = 'Owner' | 'Professional'
+
+/** Estabelecimento em que a conta tem vínculo ativo: um item do seletor de contexto. */
+export type UserBusinessResponse = { businessId: string; name: string; role: BusinessRole }
+
+/** `GET /api/users/me` (Onda 7A): a conta e os contextos que ela pode abrir. */
+export type CurrentUserResponse = UserResponse & {
+  hasCustomerProfile: boolean
+  businesses: UserBusinessResponse[]
+}
+
+/** `POST /api/users/me/context`. Sem `businessId`, o token volta a ser de consumidor. */
+export type ContextTokenResponse = {
+  accessToken: string
+  accessTokenExpiresAt: string
+  businessId: string | null
+  role: BusinessRole | null
+}
+
 // ---------- Tenancy ----------
 
 export type AddressResponse = {
@@ -166,6 +185,55 @@ export type AppointmentResponse = {
   customerNotes: string | null
   cancellationReason: string | null
   cancelledBy: string | null
+  /** Quando o pedido foi feito. O prazo de resposta conta daqui. */
+  requestedAt: string
+  /**
+   * Só nas rotas do estabelecimento: nome social do consumidor, senão o do cadastro; no balcão, o
+   * nome informado. Nulo nas rotas do consumidor.
+   */
+  customerName?: string | null
+}
+
+// --- Painel do estabelecimento (`businesses/current/*`) ---
+
+/** Visão do dono. Só os campos que o painel usa. */
+export type BusinessDetailResponse = {
+  id: string
+  name: string
+  category: string
+  status: string
+  policy: {
+    autoConfirm: boolean
+    pendingExpirationHours: number
+    timeZone: string
+  }
+}
+
+export type ProfessionalResponse = {
+  id: string
+  displayName: string
+  isActive: boolean
+  photo: ImageSet | null
+}
+
+/** `dayOfWeek` chega como número (0 = domingo, igual ao `Date.getDay()`); horários em `HH:mm:ss`. */
+export type WorkScheduleResponse = {
+  id: string
+  professionalId: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  effectiveFrom: string
+  effectiveTo: string | null
+}
+
+export type CounterAppointmentRequest = {
+  serviceId: string
+  professionalId: string
+  startsAt: string
+  walkInName: string
+  walkInPhone: string | null
+  notes: string | null
 }
 
 export type RequestAppointmentRequest = {

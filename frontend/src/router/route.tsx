@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 
 import { AppLayout } from './app-layout'
 import { AppointmentsRoute } from './appointments-route'
@@ -9,10 +9,14 @@ import { BusinessDetailRoute } from './business-detail-route'
 import { ChooseProfessionalRoute } from './choose-professional-route'
 import { HomeRoute } from './home-route'
 import { NotFoundScreen } from '@features/not-found'
+import { PanelAgendaRoute } from './panel-agenda-route'
+import { PanelLayout } from './panel-layout'
+import { PanelRequestsRoute } from './panel-requests-route'
 import { ROUTES } from './consts'
 import { SignInRoute } from './sign-in-route'
 import { SignUpRoute } from './sign-up-route'
 import { CheckEmailRoute } from './check-email-route'
+import { ChooseContextRoute } from './choose-context-route'
 import { ConfirmEmailRoute } from './confirm-email-route'
 import { ForgotPasswordRoute } from './forgot-password-route'
 import { ResetPasswordRoute } from './reset-password-route'
@@ -46,6 +50,17 @@ export const AppRoutes = () => {
       <Route path={ROUTES.forgotPassword} element={<ForgotPasswordRoute />} />
       <Route path={ROUTES.confirmEmail} element={<ConfirmEmailRoute />} />
       <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
+      <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
+      <Route
+        path={ROUTES.emailPanelRequests}
+        element={<Navigate to={ROUTES.panelRequests} replace />}
+      />
+      <Route path={ROUTES.emailPanelAgenda} element={<Navigate to={ROUTES.panel} replace />} />
+      {/* O painel tem a própria navegação: lateral no desktop, inferior no celular. */}
+      <Route path={ROUTES.panel} element={<PanelLayout />}>
+        <Route index element={<PanelAgendaRoute />} />
+        <Route path={ROUTES.panelRequests} element={<PanelRequestsRoute />} />
+      </Route>
     </Routes>
   )
 }

@@ -7,6 +7,8 @@ import {
 } from '@lib/api/search'
 
 import type { NavigationItemId } from '@components/bottom-navigation/types'
+import type { PanelBottomItem } from '@components/panel-bottom-navigation/types'
+import type { PanelSection } from '@components/panel-sidebar/types'
 
 export const ROUTES = {
   home: '/',
@@ -26,14 +28,47 @@ export const ROUTES = {
   // Os dois caminhos abaixo estão nos e-mails da Onda 5B (contrato §4.1): não mudar sem mudar o e-mail.
   confirmEmail: '/confirmar-email',
   resetPassword: '/redefinir-senha',
+  /** Painel do estabelecimento: agenda do dia (tela 09). */
+  panel: '/panel',
+  /** Painel do estabelecimento: pedidos pendentes (tela 10). */
+  panelRequests: '/panel/requests',
+  /**
+   * Conta e troca de contexto (Onda 7A): "Consumidor" ou o painel de cada estabelecimento, e sair.
+   * Também é a escolha depois de entrar, para quem tem mais de um estabelecimento.
+   */
+  chooseContext: '/context',
+  // Os dois caminhos abaixo estão no e-mail ao dono (Onda 5B, `AppointmentNotifier`) e só redirecionam
+  // para as rotas do painel: não mudar sem mudar o e-mail.
+  emailPanelRequests: '/painel/pedidos',
+  emailPanelAgenda: '/painel/agenda',
 } as const
+
+/** Destino de cada seção do painel. Sem destino = tela ainda não existe. */
+export const PANEL_PATHS: Partial<Record<PanelSection | PanelBottomItem, string>> = {
+  agenda: ROUTES.panel,
+  requests: ROUTES.panelRequests,
+  // No celular, "Mais" leva à conta: trocar de contexto e sair. As outras seções ainda não têm tela.
+  more: ROUTES.chooseContext,
+}
+
+/** Seções que só o dono opera (catálogo, equipe, jornadas, configurações): o profissional não vê. */
+export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
+  'services',
+  'professionals',
+  'schedules',
+  'settings',
+]
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
 export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {
   search: ROUTES.home,
   appointments: ROUTES.appointments,
-  // TODO: "Perfil" ainda não tem tela.
+  // "Perfil" ainda não tem tela própria: leva à conta, com a troca de contexto e o sair.
+  profile: ROUTES.chooseContext,
 }
+
+/** Estado da navegação para a tela de conta: por que a pessoa caiu nela. */
+export type ChooseContextState = { reason?: 'panel' | 'customer' }
 
 /** Parâmetros de busca do fluxo de agendamento. `professional` ausente = "Sem preferência". */
 export const SEARCH_PARAMS = {

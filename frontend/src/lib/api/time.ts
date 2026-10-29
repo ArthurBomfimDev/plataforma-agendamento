@@ -54,5 +54,28 @@ export const keyFromDay = (day: Date) => format(day, 'yyyy-MM-dd')
 /** "Hoje" no fuso do estabelecimento, como dia local. */
 export const todayIn = (timeZone: string, now = new Date()) => dayFromKey(dateKeyIn(now, timeZone))
 
+/** Diferença (ms) entre o relógio do fuso e o UTC naquele instante. */
+const offsetAt = (instant: number, timeZone: string) => {
+  const [date, time] = [dateKeyIn(new Date(instant), timeZone), timeIn(new Date(instant), timeZone)]
+  const [y, m, d] = date.split('-').map(Number)
+  const [h, mi] = time.split(':').map(Number)
+  const asUtc = Date.UTC(y!, m! - 1, d!, h!, mi!)
+  return asUtc - Math.floor(instant / 60_000) * 60_000
+}
+
+/**
+ * `yyyy-MM-dd` + `HH:mm` no fuso do estabelecimento → instante ISO em UTC. Para a marcação de
+ * balcão: o horário digitado é o do relógio do estabelecimento, nunca o do navegador.
+ */
+export const instantIn = (date: string, time: string, timeZone: string) => {
+  const [y, m, d] = date.split('-').map(Number)
+  const [h, mi] = time.split(':').map(Number)
+  const wall = Date.UTC(y!, m! - 1, d!, h!, mi!)
+  // Duas voltas acertam a virada do horário de verão, quando o offset muda no meio.
+  let instant = wall - offsetAt(wall, timeZone)
+  instant = wall - offsetAt(instant, timeZone)
+  return new Date(instant).toISOString()
+}
+
 /** Fuso padrão enquanto o do estabelecimento não chegou — o mesmo default do backend. */
 export const DEFAULT_TIME_ZONE = 'America/Sao_Paulo'

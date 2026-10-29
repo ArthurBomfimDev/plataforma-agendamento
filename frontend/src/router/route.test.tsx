@@ -80,6 +80,27 @@ describe('AppRoutes', () => {
     expect(renderAt('/forgot-password')).toContain('Esqueci minha senha')
   })
 
+  // A decisão do guard (sem sessão / consumidor / painel) é coberta em `panel.test.ts`
+  // (`panelAccess`); aqui, só que sem sessão o painel e a conta não abrem.
+  it.each(['/panel', '/panel/requests'])('não abre o painel em %s sem sessão', (path) => {
+    const html = renderAt(path)
+
+    expect(html).not.toContain('Painel do estabelecimento')
+    expect(html).not.toContain('Agenda de hoje')
+    expect(html).not.toContain('Pedidos pendentes')
+  })
+
+  it.each(['/painel/pedidos', '/painel/agenda'])(
+    'o link do e-mail ao dono (%s) não cai na 404',
+    (path) => {
+      expect(renderAt(path)).not.toContain('Página não encontrada')
+    },
+  )
+
+  it('não abre a conta em /context sem sessão', () => {
+    expect(renderAt('/context')).not.toContain('Sua conta')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

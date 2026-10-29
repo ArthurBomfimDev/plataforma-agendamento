@@ -42,7 +42,7 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
         "auth.invalid_credentials" or "auth.invalid_refresh_token" or "auth.refresh_token_reused"
             or "auth.unauthenticated" => StatusCodes.Status401Unauthorized,
         "auth.account_not_active" or "identity.email_not_confirmed" or "auth.forbidden" or "tenant.missing"
-            or "compliance.consent_required" => StatusCodes.Status403Forbidden,
+            or "compliance.consent_required" or "appointment.customer_context_required" => StatusCodes.Status403Forbidden,
         "user.email_already_registered" or "business.document_already_registered"
             or "appointment.slot_no_longer_available" or "customer.already_registered"
             or "work_schedule.overlaps" => StatusCodes.Status409Conflict,

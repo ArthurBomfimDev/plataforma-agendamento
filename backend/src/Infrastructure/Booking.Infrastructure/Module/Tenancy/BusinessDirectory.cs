@@ -52,6 +52,15 @@ public sealed class BusinessDirectory(BookingDbContext context) : IBusinessDirec
             .Select(x => (Guid?)x.UserId)
             .FirstOrDefaultAsync(ct);
 
+    public async Task<IReadOnlyList<UserBusinessInfo>> ListActiveBusinessesOfUserAsync(Guid userId, int limit, CancellationToken ct = default) =>
+        await context.AcrossTenants<BusinessMembership>()
+            .Where(x => x.UserId == userId && x.Status == BusinessMembershipStatus.Active)
+            .Join(context.Set<Business>(), m => m.BusinessId, b => b.Id, (m, b) => new { b.Id, b.Name, m.Role })
+            .OrderBy(x => x.Name)
+            .Take(limit)
+            .Select(x => new UserBusinessInfo(x.Id, x.Name, x.Role.ToString()))
+            .ToListAsync(ct);
+
     private static string? Join(string? first, string? second, string separator = ", ") =>
         string.IsNullOrWhiteSpace(first) ? second : string.IsNullOrWhiteSpace(second) ? first : $"{first}{separator}{second}";
 

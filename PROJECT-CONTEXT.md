@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-28 (Onda 6D — imagens) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-29 (Onda 7A — painel integrado e troca de contexto) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -36,12 +36,12 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 
 | Módulo | Situação |
 |---|---|
-| Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo. **Desde a 6A:** login e refresh exigem e-mail confirmado (`403 identity.email_not_confirmed`, `Identity__RequireEmailConfirmation`), reenvio sem enumeração (`resend-confirmation`, 1 por minuto por conta); contas anteriores confirmadas pela migration `ConfirmExistingAccounts`. Frontend: mostrar senha, "Confira seu e-mail", confirmar e-mail, esqueci e redefinir senha |
+| Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo. **Desde a 6A:** login e refresh exigem e-mail confirmado (`403 identity.email_not_confirmed`, `Identity__RequireEmailConfirmation`), reenvio sem enumeração (`resend-confirmation`, 1 por minuto por conta); contas anteriores confirmadas pela migration `ConfirmExistingAccounts`. Frontend: mostrar senha, "Confira seu e-mail", confirmar e-mail, esqueci e redefinir senha. **Desde a 7A:** `GET /api/users/me` traz `hasCustomerProfile` e os estabelecimentos da conta (seletor de contexto) |
 | Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar. **Localização (6B, ADR-022):** portas `IGeocodingProvider` e `IPostalCodeLookup`, adaptadores Nominatim e BrasilAPI/ViaCEP, rotas públicas `api/geo` (CEP, busca, reverso) com cache, limite por IP e coordenada arredondada a 3 casas antes de sair |
 | People | ✅ `Customer` (com `BirthDate`), `Professional` (consentimento de perfil público). **Imagens (6D, ADR-023):** logotipo e capa do `Business`, foto do `Professional` (pública só com perfil completo consentido); porta `IFileStorage` (disco no volume `media-data`), SkiaSharp (MIT) reencodando em WebP sem metadados, assinatura do arquivo conferida pelo conteúdo |
 | Catalog | ✅ `Service`, `ServiceProfessional` |
 | Availability | ✅ `WorkSchedule` (criar, **editar**, remover), `ScheduleException`, `Holiday`; `AvailabilityCalculator`; feriados pela Páscoa; calendário de vários dias; **bloqueio com agendamentos afetados**: prévia, manter ou cancelar todos, tudo ou nada |
-| Scheduling | ✅ `Appointment`, `AppointmentEvent`. Pedido, confirmar, recusar, cancelar, concluir, falta, balcão. **409 com horários alternativos** |
+| Scheduling | ✅ `Appointment`, `AppointmentEvent`. Pedido, confirmar, recusar, cancelar, concluir, falta, balcão. **409 com horários alternativos**. **Desde a 7A:** token no contexto de estabelecimento não agenda como consumidor (`403 appointment.customer_context_required`) e o dono não agenda no próprio estabelecimento (`409 appointment.cannot_book_own_business`) |
 | Compliance | ✅ `ConsentRecord`, `SensitiveAccessLog`. Consentimento versionado que **bloqueia**; log de acesso |
 | Reputation | ⬜ Pasta vazia — fora do recorte (§12) |
 | Notifications | 🟡 **E-mail (Onda 5B, ADR-021):** outbox na mesma transação (`notifications.outbox`), worker com nova tentativa e recuo, SMTP genérico (MailKit), Mailpit no Compose. E-mails de conta (confirmação, redefinição) e de agendamento (pedido novo, confirmado com `.ics`, recusado, cancelado, expirado). Lembretes, in-app e `.ics` de cancelamento na 5C |
@@ -49,7 +49,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 - **7 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`, `AddOutbox`, `ConfirmExistingAccounts` — esta só de dado, `AddImages`). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (130 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (89 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes, e-mail M1–M13, confirmação obrigatória N1–N5, localização L1–L7 e imagens P1–P10 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (130 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (92 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes, e-mail M1–M13, confirmação obrigatória N1–N5, localização L1–L7, imagens P1–P10 e contexto ao agendar Q1–Q3 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -72,16 +72,24 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 - **Desde a 6C:** categorias da Home e resultados da busca (`#/search`) ligados à API, com categoria, termo, raio, preço
   máximo e ordenação; "Disponível hoje" e "★ 4,5+" saíram da tela (sem backend, trabalho futuro no contrato §4.4).
 - **Desde a 6D:** capa, logotipo e foto com `SmartImage` (`srcSet`, preguiçoso, padrão se falhar) e padrões próprios sem
-  imagem (ilustração por categoria, iniciais, ícone). O `ImageUploader` está pronto, sem rota: o painel é do Rafael
-  (contrato §4.5). **Pendência:** apagar os arquivos ao remover estabelecimento ou profissional (hoje não há remoção definitiva).
+  imagem (ilustração por categoria, iniciais, ícone). O `ImageUploader` está pronto e ainda sem rota (contrato §4.5).
+  **Pendência:** apagar os arquivos ao remover estabelecimento ou profissional (hoje não há remoção definitiva).
+- **Desde a 7A — painel integrado** (branch `dashboard` do Rafael mergeada sem squash): agenda do dia (`#/panel`) e pedidos
+  pendentes (`#/panel/requests`) com dados da API, confirmar, recusar, concluir e falta (só depois do fim do horário,
+  regra do domínio), cancelar, marcação de balcão e "Encaixar"; atualiza a cada 30 s e depois de cada ação. Indicadores
+  somados da agenda no frontend. **Remarcação não existe no backend:** a grade não arrasta e o detalhe orienta cancelar.
+  **Conta e contexto** (§2.0 de 22/09): entrada pelo contexto (só estabelecimento → pedidos; os dois → o último usado),
+  menu da conta na barra superior e na lateral, tela `#/context`, guards do painel e das telas de consumidor. Os links
+  do e-mail ao dono (`#/painel/pedidos`, `#/painel/agenda`) redirecionam para o painel. Contrato §4 e §4.6.
 - Ainda com mock: **lembretes** na tela de pedido enviado (`MOCK_REMINDER_HOURS` ainda mostra **24 h e 3 h**, a decisão vigente é 24 h e 1 h — §10) e o **prazo de avaliação** em meus agendamentos (`MOCK_REVIEW_WINDOW_DAYS`, 30 dias; só aparece com avaliação, que ainda não existe).
-- Testes do frontend: 60 casos (Vitest), sem jsdom — renderização em HTML de servidor.
+- Testes do frontend: 188 casos em 32 arquivos (Vitest), sem jsdom — renderização em HTML de servidor.
 - **Tema claro e escuro** implementados (tokens + alternador).
-- **Não existe nenhuma tela do lado do estabelecimento** (painel, onboarding), nem consentimento LGPD, nem a tela de 409 com alternativas, nem recuperação de senha / confirmação de e-mail.
+- Do lado do estabelecimento existem só a agenda do dia e os pedidos pendentes (7A). **Não existem** onboarding, catálogo,
+  equipe, jornadas, configurações, visão da semana, consentimento LGPD nem a tela de 409 com alternativas.
 
 ### Infra local
 
-`compose.yaml` com `postgis/postgis:17-3.5`, migrations, API e frontend. `scripts/seed-demo.ts` cria **3 estabelecimentos de Beleza**, sem histórico e sem tenant de saúde.
+`compose.yaml` com `postgis/postgis:17-3.5`, migrations, API e frontend. `scripts/seed-demo.ts` cria **30 estabelecimentos** (26 Beleza, 4 Saúde), a consumidora e o Admin de demonstração; os 3 primeiros ganham agenda de hoje e de amanhã (7A). Com `--historico`, 60 dias de passado e 14 de agenda futura — é o modo para ver o painel cheio (README).
 
 ### Design (Figma `E2M0TJehjcrSk4uaXlHI0s`)
 
@@ -301,7 +309,7 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | O | ✅ **Corrigido e mergeado (#14, 27/10).** Deadlock `40P01` e timeout sob disputa: `pg_advisory_xact_lock` por profissional (ADR-019, `Proposto`). A2 reativado; 20 de 20 execuções aprovadas | — | Arthur (revisar e aceitar a ADR-019) |
 | P | ✅ **Corrigido e mergeado (#14 e, a janela restante, #15).** Mesma `IdempotencyKey` simultânea devolvia 400/409; agora devolve o agendamento vencedor. C2 reativado | — | Arthur (revisar) |
 | S | Lacunas de segurança do RNF-06. **Corrigidas na 5A e na 5B:** token de e-mail fora do log em todo ambiente (o `LoggingIdentityMailer` saiu; o token só existe no link do e-mail, e a linha da outbox é limpa depois da entrega); `TenantContextExtensions` morto removido. **Abertas:** cadastro revela e-mail existente (409 — a S2, resposta neutra com aviso ao dono, ficou fora da 6A: o aviso precisa de limite por conta para não virar bombardeio de e-mail); sem bloqueio por conta no login. Ver `rnf-06-seguranca.md` §2 | Produção | Arthur |
-| T | Agenda do dia (branch `dashboard`). **Feito na 5A:** `customerName` (nome social, senão o do cadastro; no balcão, o informado) e `requestedAt` nas rotas do estabelecimento; filtro de pendentes por profissional. **Falta:** indicadores do dia e remarcação. Ver `contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
+| T | Agenda do dia (branch `dashboard`). **Feito na 5A:** `customerName` e `requestedAt` nas rotas do estabelecimento; filtro de pendentes por profissional. **Feito na 7A:** telas do Rafael ligadas à API, indicadores somados no frontend. **Falta:** remarcação (sem backend), bloqueios na agenda, visão da semana, histórico do consumidor no pedido. Ver `contrato-api-frontend.md` §4 | Painel com dado real | Arthur + Rafael |
 | U | Lembretes prometidos na tela "Pedido enviado". **Decidido (27/10): implementar.** E-mail de andamento do pedido feito na 5B; **lembretes (`ReminderOffsetsHours`, padrão 24 h e 1 h) e in-app na 5C**. A tela ainda usa `MOCK_REMINDER_HOURS = [24, 3]` | Coerência da demonstração | Arthur + Rafael |
 | R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
@@ -316,7 +324,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 | # | Item do recorte | Situação | Falta |
 |---|---|---|---|
-| 1 | **Fatia vertical completa** | 🟡 Backend completo; front só do consumidor | Painel: onboarding, serviço, profissional, jornada, **pedidos pendentes**, **agenda do dia** |
+| 1 | **Fatia vertical completa** | 🟡 Backend completo; consumidor e painel (agenda do dia e pedidos pendentes, 7A) | Painel: onboarding, serviço, profissional, jornada |
 | 2 | Busca pública geográfica + disponibilidade | 🟡 Busca ligada na tela (6C) | Horários no próprio resultado ainda não aparecem |
 | 3 | **Prova de concorrência (RNF-03)** | ✅ Zero dupla reserva, isolamento de tenant (404) e disputa sem 500 observados; defeitos O e P corrigidos (aguardando revisão) | Aceitar a ADR-019 |
 | 4 | Dado sensível da vertical de saúde | 🟡 Backend pronto | Tela de consentimento; tenant de saúde no seed |
@@ -378,7 +386,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 
 1. ✅ Ondas 1 a 3 mergeadas em `feat/integracao-front-back` (#14, #15, #16). Onda 4 em revisão.
 2. PR #11 `feat/integracao-front-back` → `main`, com a exceção de merge administrativo registrada na descrição.
-3. Aceitar as ADRs 019 e 020; decidir as pendências R, T e U. Juntar a branch `dashboard` do Rafael quando ele terminar (conflita em `frontend/src/router/consts.ts` e `route.tsx`).
-4. Painel do estabelecimento mínimo para fechar a fatia 1.
+3. Aceitar as ADRs 019 e 020; decidir as pendências R, T e U. ✅ Branch `dashboard` do Rafael juntada na 7A.
+4. Painel do estabelecimento: ✅ agenda e pedidos (7A). Próximo: Ondas 7B (Bem-estar) e 7C (raio e cidade).
 5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
 6. Responder F e E com a orientadora.

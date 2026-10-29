@@ -26,8 +26,11 @@ export const TopBar = (props: TopBarProps) => {
     locationLabel,
     onChooseLocation,
     onSearch,
+    accountMenu,
+    onOpenPanel,
   } = props
   const [term, setTerm] = useState('')
+  const inPanel = onOpenPanel !== undefined
 
   return (
     <header className="hidden border-b border-(--border-subtle) bg-(--bg-surface) lg:block">
@@ -43,18 +46,20 @@ export const TopBar = (props: TopBarProps) => {
           <Logotype tone="dark" alt="" className="hidden dark:block" />
         </button>
 
-        <button
-          type="button"
-          onClick={onChooseLocation}
-          aria-haspopup="dialog"
-          className="type-label flex min-h-(--size-touch-min) max-w-64 shrink-0 items-center gap-(--space-4) rounded-md px-(--space-4) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
-        >
-          <MapPin aria-hidden="true" className="size-4 shrink-0" />
-          <span className="truncate">{locationReference(locationLabel ?? null)}</span>
-          {locationLabel && <span className="sr-only">, trocar localização</span>}
-        </button>
+        {!inPanel && (
+          <button
+            type="button"
+            onClick={onChooseLocation}
+            aria-haspopup="dialog"
+            className="type-label flex min-h-(--size-touch-min) max-w-64 shrink-0 items-center gap-(--space-4) rounded-md px-(--space-4) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+          >
+            <MapPin aria-hidden="true" className="size-4 shrink-0" />
+            <span className="truncate">{locationReference(locationLabel ?? null)}</span>
+            {locationLabel && <span className="sr-only">, trocar localização</span>}
+          </button>
+        )}
 
-        {showSearch ? (
+        {showSearch && !inPanel ? (
           <form
             role="search"
             className="min-w-0 flex-1"
@@ -79,14 +84,22 @@ export const TopBar = (props: TopBarProps) => {
         )}
 
         <ThemeToggle />
-        <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
-          Meus agendamentos
-        </Button>
-        {/* TODO(figma): logado, o Figma prevê o avatar com menu; por ora é só "Sair". */}
-        {signedIn ? (
-          <Button variant="secondary" className="shrink-0" onClick={onSignOut}>
-            Sair
+        {inPanel ? (
+          <Button variant="ghost" className="shrink-0" onClick={onOpenPanel}>
+            Voltar ao painel
           </Button>
+        ) : (
+          <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
+            Meus agendamentos
+          </Button>
+        )}
+        {/* TODO(figma): logado, o Figma prevê o avatar com menu; o menu é o da conta, sem avatar. */}
+        {signedIn ? (
+          (accountMenu ?? (
+            <Button variant="secondary" className="shrink-0" onClick={onSignOut}>
+              Sair
+            </Button>
+          ))
         ) : (
           <Button className="shrink-0" onClick={onSignIn}>
             Entrar

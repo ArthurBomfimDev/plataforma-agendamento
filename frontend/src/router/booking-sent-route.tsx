@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { BookingSentScreen } from '@features/booking-sent'
 import { NotFoundScreen } from '@features/not-found'
+import { RequireCustomerContext } from './require-customer-context'
 import { RequireSession } from './require-session'
 import { addHours } from 'date-fns'
 import { contextFallback } from './context-fallback'
@@ -78,6 +79,8 @@ const BookingSent = () => {
 
 export const BookingSentRoute = () => (
   <RequireSession>
-    <BookingSent />
+    <RequireCustomerContext>
+      <BookingSent />
+    </RequireCustomerContext>
   </RequireSession>
 )

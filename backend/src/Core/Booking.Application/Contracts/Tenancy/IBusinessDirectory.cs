@@ -2,6 +2,8 @@ namespace Booking.Application.Contracts.Tenancy;
 
 public sealed record BusinessMembershipInfo(Guid MembershipId, Guid BusinessId, Guid UserId, string Role);
 
+public sealed record UserBusinessInfo(Guid BusinessId, string Name, string Role);
+
 /// <summary>O que os outros módulos precisam saber de um estabelecimento para calcular horário e agendar.</summary>
 public sealed record BusinessSchedulingInfo(
     Guid BusinessId,
@@ -40,6 +42,12 @@ public interface IBusinessDirectory
 
     /// <summary>Vínculo ativo do usuário com o estabelecimento, sem depender do tenant do token.</summary>
     Task<BusinessMembershipInfo?> FindActiveMembershipAsync(Guid businessId, Guid userId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Estabelecimentos em que o usuário tem vínculo ativo, em ordem de nome, até <paramref name="limit"/>. Atravessa os
+    /// tenants de propósito: alimenta o seletor de contexto, antes de existir um estabelecimento no token.
+    /// </summary>
+    Task<IReadOnlyList<UserBusinessInfo>> ListActiveBusinessesOfUserAsync(Guid userId, int limit, CancellationToken ct = default);
 
     Task<BusinessSchedulingInfo?> GetSchedulingInfoAsync(Guid businessId, CancellationToken ct = default);
 }

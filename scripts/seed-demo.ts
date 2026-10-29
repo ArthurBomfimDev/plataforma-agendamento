@@ -7,7 +7,9 @@
  *
  *   bun scripts/seed-demo.ts              30 estabelecimentos pela própria API (cadastro, estabelecimento,
  *                                         profissionais, serviços, jornada, submissão) e aprovação pelo
- *                                         Admin de demonstração em `api/admin/businesses`.
+ *                                         Admin de demonstração em `api/admin/businesses`. Os 3 primeiros
+ *                                         ganham uma agenda pequena de hoje (balcão) e de amanhã (pedidos),
+ *                                         para o painel não abrir vazio.
  *
  *   bun scripts/seed-demo.ts --historico  ⚠️ SÓ PARA O BANCO LOCAL DO DOCKER. Consumidores fictícios,
  *                                         60 dias de histórico (concluídos, cancelados, faltas) e agenda
@@ -568,6 +570,89 @@ async function approvePendingBusinesses() {
   console.log(pending.items.length === 0 ? '  nada em análise' : `  ${pending.items.length} aprovados`)
 }
 
+// --- Agenda de hoje e amanhã (sem --historico) --------------------------------------------------------
+
+const AGENDA_BUSINESSES = 3
+const WALK_IN_NAMES = ['Joana Pereira', 'Carlos Menezes']
+
+type Slots = { slots: string[] }
+
+const login = async (email: string) =>
+  (await call<{ accessToken: string }>('POST', '/api/auth/login', { email, password: DEMO_PASSWORD })).accessToken
+
+/**
+ * Sem histórico, o painel abre vazio. Para a banca ver algo ao entrar, os 3 primeiros estabelecimentos ganham,
+ * pela própria API (com as regras de horário de verdade), duas marcações de balcão hoje e dois pedidos da
+ * consumidora de demonstração amanhã — pendentes onde a confirmação não é automática. Pula o estabelecimento
+ * que já tem agendamento hoje ou amanhã: reexecutar no mesmo dia não duplica.
+ */
+async function seedTodayAgenda() {
+  console.log('• Agenda de hoje e amanhã (3 primeiros estabelecimentos)')
+  const customerToken = await login(CUSTOMER.email)
+
+  for (const [index, demo] of BUSINESSES.slice(0, AGENDA_BUSINESSES).entries()) {
+    const userToken = await login(demo.owner.email)
+    const me = await call<{ businesses: { businessId: string }[] }>('GET', '/api/users/me', undefined, userToken)
+    const businessId = me.businesses[0]?.businessId
+    if (!businessId) continue
+    const { accessToken: owner } = await call<{ accessToken: string }>('POST', '/api/users/me/context', { businessId }, userToken)
+
+    const days = [daysFromToday(0), daysFromToday(1)]
+    const existing = await Promise.all(
+      days.map((date) => call<{ totalCount: number }>('GET', `/api/businesses/current/appointments?date=${date}`, undefined, owner)),
+    )
+    if (existing.some(({ totalCount }) => totalCount > 0)) {
+      console.log(`  ${demo.name}: já tem agenda — pulando`)
+      continue
+    }
+
+    const services = await call<{ items: { id: string; professionals: { professionalId: string }[] }[] }>(
+      'GET',
+      `/api/businesses/${businessId}/services?pageSize=50`,
+    )
+    const offers = services.items.flatMap((service) =>
+      service.professionals.map(({ professionalId }) => ({ serviceId: service.id, professionalId })),
+    )
+    const slotsOf = async (offer: (typeof offers)[number], date: string) =>
+      (
+        await call<Slots>(
+          'GET',
+          `/api/businesses/${businessId}/availability?serviceId=${offer.serviceId}&professionalId=${offer.professionalId}&date=${date}`,
+        )
+      ).slots
+
+    let counter = 0
+    let requested = 0
+    // Hoje: balcão, com profissionais diferentes. Amanhã: pedidos online.
+    for (const [n, offer] of offers.slice(0, 2).entries()) {
+      const startsAt = (await slotsOf(offer, days[0]!))[n * 2]
+      if (!startsAt) continue
+      await call(
+        'POST',
+        '/api/businesses/current/appointments/counter',
+        { ...offer, startsAt, walkInName: WALK_IN_NAMES[n]!, walkInPhone: null, notes: null },
+        owner,
+      )
+      counter++
+    }
+    const tomorrowOffers = [offers[0], offers.find((o) => o.professionalId !== offers[0]?.professionalId)].filter(
+      (o): o is (typeof offers)[number] => o !== undefined,
+    )
+    for (const [n, offer] of tomorrowOffers.entries()) {
+      const startsAt = (await slotsOf(offer, days[1]!))[n * 3]
+      if (!startsAt) continue
+      await call(
+        'POST',
+        '/api/appointments',
+        { businessId, ...offer, startsAt, notes: null, attendeeName: null, idempotencyKey: `seed-agenda-${days[1]}-${index}-${n}` },
+        customerToken,
+      )
+      requested++
+    }
+    console.log(`  ${demo.name}: ${counter} no balcão hoje, ${requested} ${demo.autoConfirm ? 'confirmados' : 'pendentes'} amanhã`)
+  }
+}
+
 // --- Histórico (--historico) --------------------------------------------------------------------------
 
 const HISTORY_MARKER = 'Histórico de demonstração'
@@ -877,7 +962,9 @@ async function main() {
   await seedCustomer()
   await approvePendingBusinesses()
 
+  // O histórico já traz hoje e os próximos 14 dias; sem ele, uma agenda pequena para o painel não abrir vazio.
   if (WITH_HISTORY) seedHistory()
+  else await seedTodayAgenda()
   printCounts()
 
   console.log(`\nPronto. Contas de demonstração (senha: ${DEMO_PASSWORD}):`)

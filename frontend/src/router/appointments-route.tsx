@@ -4,13 +4,21 @@ import { useBusinesses, useCancelAppointment, useMyAppointments } from '@lib/api
 import type { AppointmentsList } from '@features/appointments/types'
 import { AppointmentsScreen } from '@features/appointments'
 import { DEFAULT_TIME_ZONE } from '@lib/api/time'
+import { RequireCustomerContext } from './require-customer-context'
 import { errorMessage } from '@lib/api/errors'
 import { toCustomerAppointment } from './adapters'
 import { toast } from '@lib/toast'
 import { useNavigate } from 'react-router'
 import { useSessionStore } from '@lib/zustand/session'
 
-export const AppointmentsRoute = () => {
+/** "Meus agendamentos" é do consumidor: no contexto de estabelecimento, leva à troca de contexto. */
+export const AppointmentsRoute = () => (
+  <RequireCustomerContext>
+    <Appointments />
+  </RequireCustomerContext>
+)
+
+const Appointments = () => {
   const navigate = useNavigate()
   const signedIn = useSessionStore((state) => state.session !== null)
   const appointments = useMyAppointments()
