@@ -18,8 +18,12 @@ export const PanelPhotosRoute = () => {
   const queryClient = useQueryClient()
   const detail = usePanelBusinessDetail(context.businessId)
 
-  const refresh = () =>
+  // O painel (lateral, Fotos) e o lado público (vitrine, busca, revisão do pedido): sem isto, a vitrine mostrava a
+  // imagem antiga até o cache vencer.
+  const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.panel(context.businessId) })
+    void queryClient.invalidateQueries({ queryKey: ['businesses'] })
+  }
 
   const data: PhotosData = detail.isError
     ? {

@@ -11,6 +11,7 @@ import { NewMemberSheet } from './components/new-member-sheet'
 import { TeamMemberSheet } from './components/team-member-sheet'
 import { cn } from 'cn'
 import { initials } from '@features/business-agenda/consts'
+import { mediaUrl } from '@lib/api/media'
 import { toast } from '@lib/toast'
 import { useState } from 'react'
 
@@ -84,7 +85,12 @@ export const TeamScreen = (props: TeamScreenProps) => {
           {members.map((member) => (
             <li key={member.id} className={PANEL_CARD}>
               <div className="flex items-start gap-(--space-12)">
-                <Avatar alt="" initials={initials(member.displayName)} size="md" />
+                <Avatar
+                  alt=""
+                  src={member.photo ? mediaUrl(member.photo.small) : undefined}
+                  initials={initials(member.displayName)}
+                  size="md"
+                />
                 <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
                   <h2 className="type-label text-(--text-strong)">{member.displayName}</h2>
                   {member.specialty && (

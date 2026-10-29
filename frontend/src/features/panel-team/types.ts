@@ -1,3 +1,5 @@
+import type { ImageSet } from '@lib/api/types'
+
 /** Um profissional na tela de equipe, já com os serviços que executa. */
 export type TeamMember = {
   id: string
@@ -12,6 +14,8 @@ export type TeamMember = {
   /** Tem login (vínculo com uma conta). Sem login, o dono cadastrou e opera por ele. */
   hasAccount: boolean
   serviceIds: string[]
+  /** Foto enviada em Fotos (7CF). Nula: as iniciais. */
+  photo?: ImageSet | null
 }
 
 export type TeamService = { id: string; name: string; isActive: boolean }

@@ -1,9 +1,13 @@
 import type { BusinessService } from '@features/business-detail/types'
+import type { ImageSet } from '@lib/api/types'
 
 export type BookingBusiness = {
   name: string
   verified?: boolean
-  coverUrl?: string
+  /** Miniatura: o logotipo, ou a capa. Nula: a ilustração da categoria (7CF). */
+  image?: ImageSet | null
+  /** `Beleza` ou `Saude`, para a ilustração. */
+  category?: string
 }
 
 export type BookingReviewScreenProps = {

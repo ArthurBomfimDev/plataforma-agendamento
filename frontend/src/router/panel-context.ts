@@ -1,6 +1,7 @@
 import type { AgendaAction, CounterBookingSlot } from '@features/business-agenda/types'
 import type {
   AppointmentResponse,
+  ImageSet,
   ProfessionalResponse,
   WorkScheduleResponse,
 } from '@lib/api/types'
@@ -14,6 +15,10 @@ import { useOutletContext } from 'react-router'
 /** O que o painel precisa do estabelecimento. O dono lê o detalhe; o profissional, a vitrine. */
 export type PanelBusiness = {
   name: string
+  /** `Beleza` ou `Saude`. */
+  category: string
+  /** Logotipo, para a barra lateral (7CF). Nulo: a ilustração da categoria. */
+  logo: ImageSet | null
   timeZone: string
   pendingExpirationHours: number
   autoConfirm: boolean

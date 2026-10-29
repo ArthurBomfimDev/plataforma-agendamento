@@ -319,6 +319,8 @@ export const usePanelBusiness = (context: BusinessContext) =>
         const business = await panelApi.business()
         return {
           name: business.name,
+          category: business.category,
+          logo: business.logo,
           timeZone: business.policy.timeZone,
           pendingExpirationHours: business.policy.pendingExpirationHours,
           autoConfirm: business.policy.autoConfirm,
@@ -327,6 +329,8 @@ export const usePanelBusiness = (context: BusinessContext) =>
       const business = await businessesApi.get(context.businessId)
       return {
         name: business.name,
+        category: business.category,
+        logo: business.logo,
         timeZone: business.timeZone,
         pendingExpirationHours: business.pendingExpirationHours,
         autoConfirm: business.autoConfirm,
