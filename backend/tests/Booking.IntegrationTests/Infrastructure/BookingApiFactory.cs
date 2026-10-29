@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Booking.Api.Common;
+using Booking.Application.Common.Media;
 using Booking.Application.Module.Notifications.Email;
 using Booking.Infrastructure.Module.Tenancy.Geo;
 using Microsoft.AspNetCore.Hosting;
@@ -26,7 +27,8 @@ public sealed class BookingApiFactory(
     string environment = "Testing",
     LogCapture? logs = null,
     bool configureEmail = true,
-    IReadOnlyDictionary<string, string>? settings = null)
+    IReadOnlyDictionary<string, string>? settings = null,
+    bool useDiskStorage = false)
     : WebApplicationFactory<Program>
 {
     // Chave de assinatura gerada a cada execução: valor de teste, nunca gravado em arquivo.
@@ -34,11 +36,30 @@ public sealed class BookingApiFactory(
 
     public string ConnectionString => connectionString;
 
+    /// <summary>A chave desta instância: outra instância que a receba aceita os mesmos tokens.</summary>
+    public string SigningKey => _signingKey;
+
     /// <summary>O canal falso desta instância da API: o que ela teria enviado por e-mail.</summary>
     public FakeEmailSender Emails { get; } = new();
 
     /// <summary>O lado de fora dos provedores de localização desta instância. Sem resposta configurada, recusa.</summary>
     public FakeGeoHttp Geo { get; } = new();
+
+    /// <summary>O armazenamento de arquivos desta instância, em memória (salvo <paramref name="useDiskStorage"/>).</summary>
+    public InMemoryFileStorage Files { get; } = new();
+
+    /// <summary>Pasta própria da instância para a mídia: o disco de verdade, quando <c>useDiskStorage</c>.</summary>
+    public string MediaRoot { get; } = Path.Combine(Path.GetTempPath(), $"booking-media-{Guid.NewGuid():N}");
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+
+        if (Directory.Exists(MediaRoot))
+        {
+            Directory.Delete(MediaRoot, recursive: true);
+        }
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -59,6 +80,7 @@ public sealed class BookingApiFactory(
 
         // Sem a espera de 1 s entre chamadas ao Nominatim: o intervalo tem teste próprio (unitário).
         builder.UseSetting("Geo:Nominatim:MinIntervalMilliseconds", "0");
+        builder.UseSetting("Storage:Root", MediaRoot);
 
         foreach ((string key, string value) in settings ?? new Dictionary<string, string>())
         {
@@ -94,6 +116,12 @@ public sealed class BookingApiFactory(
             services.AddHttpClient<NominatimGeocodingProvider>().ConfigurePrimaryHttpMessageHandler(Geo.CreateHandler);
             services.AddHttpClient<BrasilApiPostalCodeLookup>().ConfigurePrimaryHttpMessageHandler(Geo.CreateHandler);
             services.AddHttpClient<ViaCepPostalCodeLookup>().ConfigurePrimaryHttpMessageHandler(Geo.CreateHandler);
+
+            if (!useDiskStorage)
+            {
+                services.RemoveAll<IFileStorage>();
+                services.AddSingleton<IFileStorage>(Files);
+            }
         });
     }
 }
