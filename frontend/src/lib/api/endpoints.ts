@@ -64,6 +64,16 @@ export const authApi = {
   resetPassword: (token: string, newPassword: string) =>
     api<void>('/api/auth/reset-password', { method: 'POST', body: { token, newPassword } }),
   me: () => api<CurrentUserResponse>('/api/users/me', { auth: true }),
+  /** "Minha conta" (7CF): só o nome. */
+  updateMe: (fullName: string) =>
+    api<UserResponse>('/api/users/me', { method: 'PUT', auth: true, body: { fullName } }),
+  /** Pede a senha atual; devolve uma sessão nova e encerra as outras. */
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<AuthResponse>('/api/users/me/password', {
+      method: 'POST',
+      auth: true,
+      body: { currentPassword, newPassword },
+    }),
   /** Painel de um estabelecimento (com `businessId`) ou consumidor (`null`). */
   switchContext: (businessId: string | null) =>
     api<ContextTokenResponse>('/api/users/me/context', {

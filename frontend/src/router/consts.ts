@@ -50,6 +50,8 @@ export const ROUTES = {
    * Também é a escolha depois de entrar, para quem tem mais de um estabelecimento.
    */
   chooseContext: '/context',
+  /** Minha conta (Onda 7CF): nome, e-mail, trocar a senha, sair. */
+  account: '/account',
   // Os dois caminhos abaixo estão no e-mail ao dono (Onda 5B, `AppointmentNotifier`) e só redirecionam
   // para as rotas do painel: não mudar sem mudar o e-mail.
   emailPanelRequests: '/painel/pedidos',

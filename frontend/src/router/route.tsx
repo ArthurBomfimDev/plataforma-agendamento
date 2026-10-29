@@ -24,6 +24,7 @@ import { SignInRoute } from './sign-in-route'
 import { SignUpRoute } from './sign-up-route'
 import { CheckEmailRoute } from './check-email-route'
 import { ChooseContextRoute } from './choose-context-route'
+import { MyAccountRoute } from './my-account-route'
 import { ConfirmEmailRoute } from './confirm-email-route'
 import { ForgotPasswordRoute } from './forgot-password-route'
 import { ResetPasswordRoute } from './reset-password-route'
@@ -58,6 +59,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.confirmEmail} element={<ConfirmEmailRoute />} />
       <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
       <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
+      <Route path={ROUTES.account} element={<MyAccountRoute />} />
       <Route
         path={ROUTES.emailPanelRequests}
         element={<Navigate to={ROUTES.panelRequests} replace />}

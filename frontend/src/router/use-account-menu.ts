@@ -87,6 +87,7 @@ export const useContextSwitch = () => {
 /** Props do `AccountMenu`, ou `null` sem sessão. */
 export const useAccountMenu = (): AccountMenuProps | null => {
   const signedIn = useSessionStore((state) => state.session !== null)
+  const navigate = useNavigate()
   const { me, context, choose, leave } = useContextSwitch()
   if (!signedIn) return null
 
@@ -95,6 +96,7 @@ export const useAccountMenu = (): AccountMenuProps | null => {
     currentLabel: accountTriggerLabel(me.data, currentBusinessId, context?.businessName ?? null),
     items: me.data ? contextItems(me.data, currentBusinessId) : [],
     onSelect: choose,
+    onAccount: () => navigate(ROUTES.account),
     onSignOut: leave,
   }
 }

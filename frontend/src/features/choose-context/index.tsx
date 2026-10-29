@@ -1,4 +1,4 @@
-import { Check, ChevronRight, LogOut, Store, User } from 'lucide-react'
+import { Check, ChevronRight, CircleUser, LogOut, Store, User } from 'lucide-react'
 import { ErrorState, LoadingState } from '@components/screen-state'
 
 import { Button } from '@components/button'
@@ -13,7 +13,16 @@ const CUSTOMER = 'customer'
  * quem tem mais de um estabelecimento, e o destino de "Perfil" e de "Mais" no celular.
  */
 export const ChooseContextScreen = (props: ChooseContextScreenProps) => {
-  const { status, items, fromPanel, fromCustomerScreen, switching, onChoose, onSignOut } = props
+  const {
+    status,
+    items,
+    fromPanel,
+    fromCustomerScreen,
+    switching,
+    onChoose,
+    onSignOut,
+    onAccount,
+  } = props
 
   const businesses = items.filter(({ id }) => id !== CUSTOMER)
   const hasCustomer = items.some(({ id }) => id === CUSTOMER)
@@ -97,6 +106,12 @@ export const ChooseContextScreen = (props: ChooseContextScreenProps) => {
           </section>
         )}
 
+        {onAccount && (
+          <Button variant="secondary" className="self-start" onClick={onAccount}>
+            <CircleUser aria-hidden="true" className="size-4" />
+            Minha conta
+          </Button>
+        )}
         <Button variant="secondary" className="self-start" onClick={onSignOut}>
           <LogOut aria-hidden="true" className="size-4" />
           Sair

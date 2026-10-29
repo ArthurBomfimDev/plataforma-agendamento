@@ -7,6 +7,8 @@ export type AccountMenuProps = {
   /** Contextos disponíveis. Com um só, o menu mostra só o sair. */
   items: AccountMenuItem[]
   onSelect: (id: string) => void
+  /** "Minha conta" (7CF): nome, e-mail, senha. */
+  onAccount?: () => void
   onSignOut: () => void
   /** Lado do botão em que o menu abre. Padrão: `end`. */
   align?: 'start' | 'end'

@@ -459,6 +459,35 @@ export const useCounterBooking = (businessId: string) => {
   })
 }
 
+/** "Minha conta" (7CF): troca o nome e recarrega a conta (o menu mostra o nome novo). */
+export const useUpdateMe = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (fullName: string) => authApi.updateMe(fullName),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+  })
+}
+
+/**
+ * Troca a senha. A API devolve uma sessão nova (de consumidor) e encerra as outras: guarda a nova e, se o painel
+ * estava aberto, pede o contexto de novo, como depois de uma renovação.
+ */
+export const useChangePassword = () =>
+  useMutation({
+    mutationFn: async ({ current, next }: { current: string; next: string }) => {
+      const session = await authApi.changePassword(current, next)
+      const store = useSessionStore.getState()
+      const context = store.context
+      store.setSession(session)
+      if (context) {
+        const token = await authApi.switchContext(context.businessId)
+        useSessionStore
+          .getState()
+          .setContext(token.accessToken, token.accessTokenExpiresAt, context)
+      }
+    },
+  })
+
 export const useSignOut = () => {
   const queryClient = useQueryClient()
   return () => {
