@@ -18,7 +18,8 @@ export const useSessionStore = create<SessionState>()(
     (set) => ({
       session: null,
       context: null,
-      setSession: (session) => set({ session }),
+      signedOut: false,
+      setSession: (session) => set({ session, signedOut: false }),
       setContext: (accessToken, accessTokenExpiresAt, context) =>
         set((state) =>
           state.session
@@ -26,6 +27,7 @@ export const useSessionStore = create<SessionState>()(
             : state,
         ),
       clearSession: () => set({ session: null, context: null }),
+      signOut: () => set({ session: null, context: null, signedOut: true }),
     }),
     {
       name: SESSION_STORAGE_KEY,

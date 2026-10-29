@@ -45,19 +45,24 @@ export const useContextSwitch = () => {
       id === CUSTOMER
         ? null
         : (me.data.businesses.find(({ businessId }) => businessId === id) ?? null)
+    // Para consumidor, sai do painel antes: com o contexto já trocado, o guard do painel
+    // mandaria para a escolha de contexto. A Home é pública e não depende do token novo.
+    if (!business) navigate(ROUTES.home)
     switchContext.mutate(
       { userId: me.data.id, business },
       {
-        onSuccess: () => navigate(business ? ROUTES.panelRequests : ROUTES.home),
+        onSuccess: () => business && navigate(ROUTES.panelRequests),
         onError: (error) => toast.error(errorMessage(error)),
       },
     )
   }
 
+  // Navega antes de limpar a sessão: dentro do painel, o guard reagiria primeiro e mandaria para
+  // "Entrar" com o painel no `redirect`.
   const leave = () => {
+    navigate(ROUTES.home)
     signOut()
     toast.info('Você saiu da sua conta.')
-    navigate(ROUTES.home)
   }
 
   return { me, context, choose, leave, switching: switchContext.isPending }

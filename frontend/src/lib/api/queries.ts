@@ -379,7 +379,7 @@ export const useSignOut = () => {
   const queryClient = useQueryClient()
   return () => {
     const session = useSessionStore.getState().session
-    useSessionStore.getState().clearSession()
+    useSessionStore.getState().signOut()
     forgetContexts()
     queryClient.removeQueries({ queryKey: ['appointments'] })
     queryClient.removeQueries({ queryKey: ['panel'] })

@@ -61,6 +61,8 @@ describe('panelAccess (guard de /panel)', () => {
     expect(panelAccess(false, null)).toBe('sign-in')
     expect(panelAccess(true, null)).toBe('choose-context')
     expect(panelAccess(true, context)).toBe('allowed')
+    // Saiu pelo menu: a Home, não "Entrar" com o painel no `redirect`.
+    expect(panelAccess(false, null, true)).toBe('home')
   })
 })
 

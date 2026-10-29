@@ -56,10 +56,13 @@ const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests', 'rep
  */
 export const PanelLayout = () => {
   const signedIn = useSessionStore((state) => state.session !== null)
+  const signedOut = useSessionStore((state) => state.signedOut)
   const context = useBusinessContext()
   const { pathname } = useLocation()
 
-  switch (panelAccess(signedIn, context)) {
+  switch (panelAccess(signedIn, context, signedOut)) {
+    case 'home':
+      return <Navigate to={ROUTES.home} replace />
     case 'sign-in':
       return <Navigate to={signInPath(pathname)} replace />
     case 'choose-context': {
