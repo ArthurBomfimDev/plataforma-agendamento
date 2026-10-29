@@ -75,6 +75,13 @@ public sealed class RequestAppointmentCommand(
     {
         Guid userId = actor.RequireUserId();
 
+        // Conta única com troca de contexto (§2.0): no painel de um estabelecimento a pessoa não agenda como
+        // consumidor. Sem esta trava, o token do painel marcava em nome do perfil de consumidor da conta.
+        if (actor.BusinessId is not null)
+        {
+            throw new DomainException("appointment.customer_context_required");
+        }
+
         Guid customerId = await people.FindCustomerIdAsync(userId, ct)
             ?? throw new DomainException("customer.profile_required");
 
@@ -89,6 +96,12 @@ public sealed class RequestAppointmentCommand(
         if (!business.IsBookable)
         {
             throw new DomainException("business.not_found");
+        }
+
+        // O dono agenda no próprio estabelecimento pela marcação de balcão, não como consumidor.
+        if (await businesses.FindActiveMembershipAsync(r.BusinessId, userId, ct) is { Role: "Owner" })
+        {
+            throw new DomainException("appointment.cannot_book_own_business");
         }
 
         // Categoria sensível: sem consentimento específico vigente, a operação é recusada — bloqueio, não aviso.
