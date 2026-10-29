@@ -670,6 +670,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_publicly_visible");
 
+                    b.Property<string>("PhotoImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("photo_image_key");
+
                     b.Property<DateTimeOffset?>("PublicProfileConsentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("public_profile_consent_at");
@@ -949,6 +954,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("city");
 
+                    b.Property<string>("CoverImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("cover_image_key");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -985,6 +995,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("location_source");
+
+                    b.Property<string>("LogoImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("logo_image_key");
 
                     b.Property<int>("MinLeadTimeHours")
                         .HasColumnType("integer")
