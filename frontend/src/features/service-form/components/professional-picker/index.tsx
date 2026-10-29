@@ -23,6 +23,12 @@ export const ProfessionalPicker = memo((props: ProfessionalPickerProps) => {
       <legend className="type-caption mb-(--space-8) text-(--text-muted)">
         Quem executa este serviço
       </legend>
+      {professionals.length === 0 && (
+        <p className="type-caption text-(--text-body)">
+          Nenhum profissional ativo. Cadastre a equipe em Profissionais; até lá, o serviço fica
+          salvo sem horário para agendar.
+        </p>
+      )}
       <div className="flex flex-wrap gap-(--space-8)">
         {professionals.map((professional) => {
           const selected = selectedIds.includes(professional.id)

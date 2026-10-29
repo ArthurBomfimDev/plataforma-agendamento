@@ -101,18 +101,22 @@ describe('AppRoutes', () => {
     expect(renderAt('/context')).not.toContain('Sua conta')
   })
 
-  it('abre o cadastro de serviço em /panel/services/new, com Serviços atual na lateral', () => {
-    const html = renderAt('/panel/services/new')
-    const current = [...html.matchAll(/aria-current="page".*?<\/button>/g)].map(
-      ([button]) => button,
-    )
+  // A gestão (Onda 7D) mora dentro do painel: sem sessão, nenhuma tela abre. O guard por papel
+  // (`canManageBusiness`) e a seção ativa (`panelSectionOf`) são cobertos em `manage.test.ts`.
+  it.each([
+    '/panel/services',
+    '/panel/services/new',
+    '/panel/services/s1',
+    '/panel/professionals',
+    '/panel/schedules',
+    '/panel/photos',
+    '/panel/settings',
+    '/panel/more',
+  ])('não abre %s sem sessão nem cai na 404', (path) => {
+    const html = renderAt(path)
 
-    expect(html).toContain('Novo serviço')
-    expect(html).toContain('Painel do estabelecimento')
-    // Serviços não tem aba no celular: lá ele mora em "Mais".
-    expect(current).toHaveLength(2)
-    expect(current[0]).toContain('Serviços')
-    expect(current[1]).toContain('Mais')
+    expect(html).not.toContain('Painel do estabelecimento')
+    expect(html).not.toContain('Página não encontrada')
   })
 
   it('abre a 404 em rota desconhecida', () => {

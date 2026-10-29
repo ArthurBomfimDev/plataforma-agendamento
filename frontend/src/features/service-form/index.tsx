@@ -16,6 +16,8 @@ import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { OccupancySummary } from './components/occupancy-summary'
 import { PANEL_CONTENT_BOTTOM_PADDING } from '@components/panel-bottom-navigation/consts'
+import { PANEL_NOTICE } from '@components/panel-page'
+import { ShieldCheck } from 'lucide-react'
 import { ProfessionalPicker } from './components/professional-picker'
 import { SlotPreview } from './components/slot-preview'
 import { TextField } from '@components/text-field'
@@ -51,15 +53,20 @@ const Section = (props: { id: string; title: string; children: ReactNode }) => (
  *
  * Os erros só aparecem depois da primeira tentativa de salvar e somem conforme são corrigidos.
  *
- * TODO: salvar depende da API de Catalog; por enquanto a tela só entrega o `ServiceDraft` validado.
+ * Salvar vai para a API de Catalog pela rota (`panel-services-route`, Onda 7D): cria ou altera o
+ * serviço e liga ou desliga os profissionais escolhidos.
  */
 export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
   const {
+    mode = 'new',
     businessName,
     categoryName,
+    sensitive = false,
     professionals,
     initialValues,
     previewHours,
+    saving = false,
+    error,
     onSave,
     onCancel,
   } = props
@@ -69,9 +76,11 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
   const [submitted, setSubmitted] = useState(false)
   const [discarding, setDiscarding] = useState(false)
 
-  const errors = submitted ? validateService(values) : {}
+  const requireProfessional = professionals.length > 0
+  const errors = submitted ? validateService(values, requireProfessional) : {}
   const { duration, bufferBefore, bufferAfter, slotStep } = timesOf(values)
   const subtitle = `${businessName} · ${categoryName}`
+  const title = mode === 'edit' ? 'Editar serviço' : 'Novo serviço'
 
   const setField = (field: Exclude<ServiceFormField, 'professionalIds'>, value: string) =>
     setValues((current) => ({ ...current, [field]: value }))
@@ -114,7 +123,7 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
     event.preventDefault()
     setSubmitted(true)
     const invalid = (Object.keys(FIELD_IDS) as ServiceFormField[]).filter(
-      (field) => validateService(values)[field],
+      (field) => validateService(values, requireProfessional)[field],
     )
     if (invalid.length > 0) return focusFirstError(invalid)
     onSave?.(toServiceDraft(values))
@@ -136,14 +145,26 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
         variant="secondary"
         size={size}
         className={size === 'lg' ? 'flex-1' : 'shrink-0'}
+        disabled={saving}
         onClick={cancel}
       >
         Cancelar
       </Button>
-      <Button type="submit" size={size} className={size === 'lg' ? 'flex-1' : 'shrink-0'}>
-        Salvar serviço
+      <Button
+        type="submit"
+        size={size}
+        className={size === 'lg' ? 'flex-1' : 'shrink-0'}
+        disabled={saving}
+      >
+        {saving ? 'Salvando…' : 'Salvar serviço'}
       </Button>
     </>
+  )
+
+  const errorAlert = error && (
+    <p role="alert" className="type-label text-(--status-rejected-fg)">
+      {error}
+    </p>
   )
 
   return (
@@ -151,7 +172,7 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
       {/* Celular e tablet */}
       <header className="sticky top-0 z-10 border-b border-(--border-subtle) bg-(--bg-surface) pt-[calc(var(--space-16)+env(safe-area-inset-top))] pb-(--space-12) lg:hidden">
         <div className="flex flex-col gap-(--space-2) px-(--space-16) md:mx-auto md:max-w-160">
-          <h1 className="type-heading text-(--text-strong)">Novo serviço</h1>
+          <h1 className="type-heading text-(--text-strong)">{title}</h1>
           <p className="type-caption text-(--text-muted)">{subtitle}</p>
         </div>
       </header>
@@ -160,7 +181,7 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
         ref={formRef}
         noValidate
         onSubmit={save}
-        aria-label="Novo serviço"
+        aria-label={title}
         className={cn(
           'flex flex-col gap-(--space-12) px-(--space-16) pt-(--space-12) md:mx-auto md:max-w-160 lg:mx-0 lg:max-w-none lg:px-(--space-24) lg:pt-(--space-20)',
           PANEL_CONTENT_BOTTOM_PADDING,
@@ -169,11 +190,20 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
         {/* Desktop (11) */}
         <div className="hidden items-center gap-(--space-12) lg:flex">
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
-            <h1 className="type-title text-(--text-strong)">Novo serviço</h1>
+            <h1 className="type-title text-(--text-strong)">{title}</h1>
             <p className="type-caption text-(--text-muted)">{subtitle}</p>
           </div>
           {actions('md')}
         </div>
+        <div className="hidden lg:block">{errorAlert}</div>
+
+        {sensitive && (
+          <p className={PANEL_NOTICE}>
+            <ShieldCheck aria-hidden="true" className="mt-(--space-2) size-4 shrink-0" />
+            Estabelecimento de saúde: nome e descrição aparecem na vitrine pública. Não coloque
+            neles nada sobre um paciente.
+          </p>
+        )}
 
         <div className="flex flex-col gap-(--space-12) xl:flex-row xl:items-start xl:gap-(--space-16)">
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-12)">
@@ -249,15 +279,16 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
         </div>
 
         {/* Celular e tablet: ações no fim do formulário. */}
+        <div className="lg:hidden">{errorAlert}</div>
         <div className="flex gap-(--space-8) lg:hidden">{actions('lg')}</div>
       </form>
 
       <ConfirmDialog
         open={discarding}
         onOpenChange={setDiscarding}
-        title="Descartar o novo serviço?"
+        title={mode === 'edit' ? 'Descartar as alterações?' : 'Descartar o novo serviço?'}
         description="O que você preencheu neste formulário será perdido."
-        confirmLabel="Descartar serviço"
+        confirmLabel={mode === 'edit' ? 'Descartar alterações' : 'Descartar serviço'}
         dismissLabel="Continuar editando"
         onConfirm={discard}
       />

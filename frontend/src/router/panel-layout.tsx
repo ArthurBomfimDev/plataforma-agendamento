@@ -3,6 +3,8 @@ import {
   OWNER_ONLY_SECTIONS,
   PANEL_PATHS,
   ROUTES,
+  canManageBusiness,
+  panelSectionOf,
   signInPath,
 } from './consts'
 import { ErrorScreen, LoadingScreen } from '@components/screen-state'
@@ -42,7 +44,7 @@ import { useMediaQuery } from '@hooks/use-media-query'
 import { useState } from 'react'
 import { useSessionStore } from '@lib/zustand/session'
 
-const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests', 'reports']
+const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests']
 
 /**
  * Moldura do painel do estabelecimento: navegação lateral no desktop, inferior no celular, e a
@@ -52,7 +54,8 @@ const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests', 'rep
  * porque o contador das duas navegações depende deles; a marcação de balcão também, porque o botão
  * do celular fica na navegação inferior.
  *
- * TODO: as outras seções (Profissionais, Relatórios…) ainda não têm tela e avisam.
+ * As seções de gestão (Onda 7D) são só do dono: o profissional não as vê no menu e, se digitar o
+ * endereço, `RequireOwner` o devolve para a agenda.
  */
 export const PanelLayout = () => {
   const signedIn = useSessionStore((state) => state.session !== null)
@@ -146,17 +149,17 @@ const PanelShell = ({
       : { status: 'loading' }
   const pendingCount = pending.data?.totalCount ?? 0
 
-  const hidden = context.role === 'Owner' ? [] : OWNER_ONLY_SECTIONS
-  const activeSection =
-    (Object.keys(PANEL_PATHS) as PanelSection[]).find(
-      (section) => PANEL_PATHS[section] === pathname,
-    ) ?? 'agenda'
-  const activeItem = BOTTOM_ITEMS.find((item) => item === activeSection) ?? 'more'
+  const hidden = canManageBusiness(context.role) ? [] : OWNER_ONLY_SECTIONS
+  const section = panelSectionOf(pathname)
+  const activeSection = section === 'more' ? null : section
+  const activeItem = BOTTOM_ITEMS.find((item) => item === section) ?? 'more'
 
-  const navigateTo = (section: PanelSection | PanelBottomItem) => {
-    const path = PANEL_PATHS[section]
-    if (path) navigate(path)
-    else toast.info('Esta seção do painel ainda não está disponível.')
+  const navigateTo = (target: PanelSection | PanelBottomItem) => {
+    if (target !== 'more' && hidden.includes(target)) {
+      toast.info('Só o dono do estabelecimento altera esta seção.')
+      return
+    }
+    navigate(PANEL_PATHS[target])
   }
 
   const openCounterBooking = (slot?: CounterBookingSlot) => {

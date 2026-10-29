@@ -6,6 +6,7 @@ import {
   type SearchFilters,
 } from '@lib/api/search'
 
+import type { BusinessRole } from '@lib/api/types'
 import type { NavigationItemId } from '@components/bottom-navigation/types'
 import type { PanelBottomItem } from '@components/panel-bottom-navigation/types'
 import type { PanelSection } from '@components/panel-sidebar/types'
@@ -32,8 +33,17 @@ export const ROUTES = {
   panel: '/panel',
   /** Painel do estabelecimento: pedidos pendentes (tela 10). */
   panelRequests: '/panel/requests',
-  /** Painel do estabelecimento: cadastro de serviço (tela 11). Ainda não há lista de serviços. */
+  // Gestão do estabelecimento (Onda 7D). Só o dono: o profissional volta para a agenda.
+  panelServices: '/panel/services',
+  /** Painel do estabelecimento: cadastro de serviço (tela 11). */
   panelNewService: '/panel/services/new',
+  panelEditService: '/panel/services/:serviceId',
+  panelProfessionals: '/panel/professionals',
+  panelSchedules: '/panel/schedules',
+  panelPhotos: '/panel/photos',
+  panelSettings: '/panel/settings',
+  /** "Mais", no celular: as seções que não cabem nas abas, e a conta. */
+  panelMore: '/panel/more',
   /**
    * Conta e troca de contexto (Onda 7A): "Consumidor" ou o painel de cada estabelecimento, e sair.
    * Também é a escolha depois de entrar, para quem tem mais de um estabelecimento.
@@ -45,22 +55,48 @@ export const ROUTES = {
   emailPanelAgenda: '/painel/agenda',
 } as const
 
-/** Destino de cada seção do painel. Sem destino = tela ainda não existe. */
-export const PANEL_PATHS: Partial<Record<PanelSection | PanelBottomItem, string>> = {
+/** Destino de cada seção do painel. Toda seção do menu tem tela (Onda 7D): nenhum item morto. */
+export const PANEL_PATHS: Record<PanelSection | PanelBottomItem, string> = {
   agenda: ROUTES.panel,
   requests: ROUTES.panelRequests,
-  services: ROUTES.panelNewService,
-  // No celular, "Mais" leva à conta: trocar de contexto e sair. As outras seções ainda não têm tela.
-  more: ROUTES.chooseContext,
+  services: ROUTES.panelServices,
+  professionals: ROUTES.panelProfessionals,
+  schedules: ROUTES.panelSchedules,
+  photos: ROUTES.panelPhotos,
+  settings: ROUTES.panelSettings,
+  // No celular, "Mais" lista as outras seções e leva à conta (trocar de contexto e sair).
+  more: ROUTES.panelMore,
 }
 
-/** Seções que só o dono opera (catálogo, equipe, jornadas, configurações): o profissional não vê. */
+/**
+ * Seções que só o dono opera (catálogo, equipe, jornadas, imagens, configurações): o profissional não
+ * as vê no menu, e o endereço digitado volta para a agenda. A API recusa do mesmo jeito (403).
+ */
 export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
   'services',
   'professionals',
   'schedules',
+  'photos',
   'settings',
 ]
+
+/**
+ * Seção do menu de um endereço do painel. Subpáginas contam como a seção ("Novo serviço" é Serviços);
+ * "Mais" só no celular. Fora disso, a agenda.
+ */
+export const panelSectionOf = (pathname: string): PanelSection | 'more' => {
+  const sections = Object.entries(PANEL_PATHS) as Array<[PanelSection | 'more', string]>
+  const match = sections
+    .filter(([, path]) => path !== ROUTES.panel)
+    .find(([, path]) => pathname === path || pathname.startsWith(`${path}/`))
+  return match?.[0] ?? 'agenda'
+}
+
+/** Só o dono gere o estabelecimento (matriz de permissões); o profissional opera a própria agenda. */
+export const canManageBusiness = (role: BusinessRole) => role === 'Owner'
+
+export const editServicePath = (serviceId: string) =>
+  `${ROUTES.panelServices}/${encodeURIComponent(serviceId)}`
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
 export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {

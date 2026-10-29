@@ -11,9 +11,15 @@ import { HomeRoute } from './home-route'
 import { NotFoundScreen } from '@features/not-found'
 import { PanelAgendaRoute } from './panel-agenda-route'
 import { PanelLayout } from './panel-layout'
+import { PanelServiceFormRoute, PanelServicesRoute } from './panel-services-route'
+import { PanelMoreRoute } from './panel-more-route'
+import { PanelPhotosRoute } from './panel-photos-route'
 import { PanelRequestsRoute } from './panel-requests-route'
-import { PanelServicesRoute } from './panel-services-route'
+import { PanelSchedulesRoute } from './panel-schedules-route'
+import { PanelSettingsRoute } from './panel-settings-route'
+import { PanelTeamRoute } from './panel-team-route'
 import { ROUTES } from './consts'
+import { RequireOwner } from './require-owner'
 import { SignInRoute } from './sign-in-route'
 import { SignUpRoute } from './sign-up-route'
 import { CheckEmailRoute } from './check-email-route'
@@ -61,7 +67,17 @@ export const AppRoutes = () => {
       <Route path={ROUTES.panel} element={<PanelLayout />}>
         <Route index element={<PanelAgendaRoute />} />
         <Route path={ROUTES.panelRequests} element={<PanelRequestsRoute />} />
-        <Route path={ROUTES.panelNewService} element={<PanelServicesRoute />} />
+        <Route path={ROUTES.panelMore} element={<PanelMoreRoute />} />
+        {/* Gestão do estabelecimento (Onda 7D): só o dono. */}
+        <Route element={<RequireOwner />}>
+          <Route path={ROUTES.panelServices} element={<PanelServicesRoute />} />
+          <Route path={ROUTES.panelNewService} element={<PanelServiceFormRoute />} />
+          <Route path={ROUTES.panelEditService} element={<PanelServiceFormRoute />} />
+          <Route path={ROUTES.panelProfessionals} element={<PanelTeamRoute />} />
+          <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
+          <Route path={ROUTES.panelPhotos} element={<PanelPhotosRoute />} />
+          <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />
+        </Route>
       </Route>
     </Routes>
   )

@@ -1,13 +1,17 @@
-import { ArrowUpRight, Calendar, Clock, User } from 'lucide-react'
+import { CalendarDays, Inbox, Menu } from 'lucide-react'
 
 import type { PanelBottomItem } from './types'
 
+/** Os mesmos ícones da lateral (`panel-sidebar/consts.ts`); "Mais" abre as outras seções e a conta. */
 export const ITEMS = [
-  { id: 'agenda', label: 'Agenda', icon: Calendar },
-  { id: 'requests', label: 'Pedidos', icon: Clock },
-  { id: 'reports', label: 'Relatórios', icon: ArrowUpRight },
-  { id: 'more', label: 'Mais', icon: User },
-] as const satisfies ReadonlyArray<{ id: PanelBottomItem; label: string; icon: typeof Calendar }>
+  { id: 'agenda', label: 'Agenda', icon: CalendarDays },
+  { id: 'requests', label: 'Pedidos', icon: Inbox },
+  { id: 'more', label: 'Mais', icon: Menu },
+] as const satisfies ReadonlyArray<{
+  id: PanelBottomItem
+  label: string
+  icon: typeof CalendarDays
+}>
 
 // Abas (8 + 44 + 8) mais a safe-area; com ação, soma o botão grande (16 + 24 + 16) e o espaço entre eles.
 // No desktop a navegação inferior some e sobra só o respiro do Figma.

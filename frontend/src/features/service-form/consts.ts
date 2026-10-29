@@ -69,26 +69,75 @@ export const timesOf = (values: ServiceFormValues) => ({
   slotStep: parseMinutes(values.slotStepMinutes) ?? 0,
 })
 
+/** Limites do `Service` no domínio (`Service.cs`): a tela avisa antes de a API recusar. */
+export const SERVICE_LIMITS = { maxDuration: 480, maxBuffer: 120, minSlotStep: 5 } as const
+
 /**
  * Regras do `Service` (modelo de domínio, §6): nome e duração obrigatórios, granularidade de no
  * máximo a duração e ao menos um profissional habilitado. O backend valida de novo; aqui é só para
  * o Owner corrigir antes de enviar.
+ *
+ * `requireProfessional` falso: o estabelecimento ainda não tem profissional ativo, e o serviço pode
+ * ser salvo sem ninguém (não aparece para agendar até ter).
  */
-export const validateService = (values: ServiceFormValues): ServiceFormErrors => {
-  const { duration, slotStep } = timesOf(values)
+export const validateService = (
+  values: ServiceFormValues,
+  requireProfessional = true,
+): ServiceFormErrors => {
+  const { duration, bufferBefore, bufferAfter, slotStep } = timesOf(values)
   const errors: ServiceFormErrors = {}
+  const bufferError = `Até ${minutesLabel(SERVICE_LIMITS.maxBuffer)}.`
 
   if (!values.name.trim()) errors.name = 'Informe o nome do serviço.'
   if (duration <= 0) errors.durationMinutes = 'Informe a duração.'
+  else if (duration > SERVICE_LIMITS.maxDuration)
+    errors.durationMinutes = `Até ${minutesLabel(SERVICE_LIMITS.maxDuration)} (8 h).`
+  if (bufferBefore > SERVICE_LIMITS.maxBuffer) errors.bufferBeforeMinutes = bufferError
+  if (bufferAfter > SERVICE_LIMITS.maxBuffer) errors.bufferAfterMinutes = bufferError
   if (slotStep <= 0) errors.slotStepMinutes = 'Informe de quanto em quanto tempo.'
+  else if (slotStep < SERVICE_LIMITS.minSlotStep)
+    errors.slotStepMinutes = `O mínimo é ${minutesLabel(SERVICE_LIMITS.minSlotStep)}.`
   else if (duration > 0 && slotStep > duration)
     errors.slotStepMinutes = `Não pode passar da duração (${minutesLabel(duration)}).`
   if (parseCents(values.price) === null) errors.price = 'Informe o preço, como R$ 45,00.'
-  if (values.professionalIds.length === 0)
+  if (requireProfessional && values.professionalIds.length === 0)
     errors.professionalIds = 'Escolha ao menos um profissional.'
 
   return errors
 }
+
+/** Serviço novo: vazio, com os padrões do domínio (sem intervalos, horários de 15 em 15 min). */
+export const EMPTY_SERVICE_VALUES: ServiceFormValues = {
+  name: '',
+  description: '',
+  durationMinutes: '',
+  bufferBeforeMinutes: minutesLabel(0),
+  bufferAfterMinutes: minutesLabel(0),
+  slotStepMinutes: minutesLabel(15),
+  price: '',
+  professionalIds: [],
+}
+
+/** Um serviço da API no formato dos campos, para editar. */
+export const toFormValues = (service: {
+  name: string
+  description: string | null
+  durationMinutes: number
+  bufferBeforeMinutes: number
+  bufferAfterMinutes: number
+  slotStepMinutes: number
+  priceCents: number
+  professionals: ReadonlyArray<{ professionalId: string }>
+}): ServiceFormValues => ({
+  name: service.name,
+  description: service.description ?? '',
+  durationMinutes: minutesLabel(service.durationMinutes),
+  bufferBeforeMinutes: minutesLabel(service.bufferBeforeMinutes),
+  bufferAfterMinutes: minutesLabel(service.bufferAfterMinutes),
+  slotStepMinutes: minutesLabel(service.slotStepMinutes),
+  price: formatCents(service.priceCents),
+  professionalIds: service.professionals.map(({ professionalId }) => professionalId),
+})
 
 /** Converte o formulário já validado no contrato que vai para o backend. */
 export const toServiceDraft = (values: ServiceFormValues): ServiceDraft => {
