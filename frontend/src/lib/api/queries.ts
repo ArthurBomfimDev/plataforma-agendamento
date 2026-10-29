@@ -4,6 +4,7 @@ import {
   availabilityApi,
   businessesApi,
   customersApi,
+  manageApi,
   panelApi,
 } from './endpoints'
 import type {
@@ -54,6 +55,8 @@ export const queryKeys = {
   panelSchedules: (businessId: string, professionalId: string) =>
     ['panel', businessId, 'work-schedules', professionalId] as const,
   panelServices: (businessId: string) => ['panel', businessId, 'services'] as const,
+  panelBusinessDetail: (businessId: string) => ['panel', businessId, 'business-detail'] as const,
+  panelExceptions: (businessId: string) => ['panel', businessId, 'schedule-exceptions'] as const,
 }
 
 /** A agenda e os pedidos se atualizam sozinhos neste intervalo, sem recarregar a página. */
@@ -319,11 +322,48 @@ export const usePanelBusiness = (context: BusinessContext) =>
     },
   })
 
+/** Equipe ativa: quem aparece na agenda e no balcão. */
 export const usePanelProfessionals = (businessId: string) =>
   useQuery({
     queryKey: queryKeys.panelProfessionals(businessId),
-    queryFn: async () => (await panelApi.professionals()).items.filter(({ isActive }) => isActive),
+    queryFn: async () => (await panelApi.professionals()).items,
+    select: (professionals) => professionals.filter(({ isActive }) => isActive),
   })
+
+/** Equipe inteira, com quem foi desativado: a tela de Profissionais. Mesmo cache da equipe ativa. */
+export const usePanelTeam = (businessId: string) =>
+  useQuery({
+    queryKey: queryKeys.panelProfessionals(businessId),
+    queryFn: async () => (await panelApi.professionals()).items,
+  })
+
+/** Detalhe do estabelecimento para as telas de gestão (só o dono). */
+export const usePanelBusinessDetail = (businessId: string) =>
+  useQuery({
+    queryKey: queryKeys.panelBusinessDetail(businessId),
+    queryFn: () => panelApi.business(),
+  })
+
+export const usePanelExceptions = (businessId: string) =>
+  useQuery({
+    queryKey: queryKeys.panelExceptions(businessId),
+    queryFn: async () => (await manageApi.exceptions()).items,
+  })
+
+/**
+ * Uma escrita da gestão. Depois dela (também no erro: um 409 quer dizer que a tela está velha), o painel
+ * inteiro do estabelecimento é buscado de novo — catálogo, equipe e jornada alimentam a agenda e o balcão.
+ */
+export const usePanelMutation = <TVariables, TResult>(
+  businessId: string,
+  mutationFn: (variables: TVariables) => Promise<TResult>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.panel(businessId) }),
+  })
+}
 
 export const usePanelWorkSchedules = (businessId: string, professionalIds: string[]) =>
   useQueries({

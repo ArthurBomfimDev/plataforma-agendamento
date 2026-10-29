@@ -49,6 +49,34 @@ const MESSAGES: Record<string, string> = {
   'appointment.cannot_mark_no_show_from_current_status':
     'Só dá para marcar falta num agendamento confirmado, depois do horário dele.',
   'appointment.walk_in_name_required': 'Informe o nome de quem vai ser atendido.',
+  // Gestão do estabelecimento (Onda 7D). Os limites são os do domínio (`Service`, `Business`).
+  'service.name_required': 'Informe o nome do serviço.',
+  'service.duration_invalid': 'A duração vai de 1 a 480 minutos.',
+  'service.buffer_invalid': 'Cada intervalo vai de 0 a 120 minutos.',
+  'service.slot_step_invalid': 'O passo dos horários vai de 5 minutos até a duração do serviço.',
+  'service.price_invalid': 'O preço não pode ser negativo.',
+  'service_professional.not_found':
+    'Este profissional já não estava no serviço. A lista foi atualizada.',
+  'professional.not_found': 'Profissional não encontrado ou desativado. A lista foi atualizada.',
+  'professional.display_name_required': 'Informe o nome do profissional.',
+  'professional.public_profile_requires_consent':
+    'O perfil completo só aparece com o consentimento do próprio profissional.',
+  'work_schedule.overlaps': 'Esse horário cruza outro horário do mesmo profissional.',
+  'work_schedule.end_before_start': 'O fim precisa ser depois do início.',
+  'work_schedule.effective_range_invalid': 'A data final precisa ser depois da data inicial.',
+  'work_schedule.not_found': 'Esse horário já foi removido. A lista foi atualizada.',
+  'schedule_exception.not_found': 'Esse bloqueio já foi removido. A lista foi atualizada.',
+  'schedule_exception.extra_shift_requires_professional':
+    'Um turno extra precisa de um profissional.',
+  'schedule_exception.cancel_requires_block': 'Turno extra não cancela agendamentos.',
+  'schedule_exception.cancellation_reason_required':
+    'Informe o motivo: ele aparece para quem tinha horário marcado.',
+  'time_range.end_before_start': 'O fim precisa ser depois do início.',
+  'business.pending_expiration_invalid': 'O prazo para responder vai de 1 a 72 horas.',
+  'business.min_lead_time_invalid': 'A antecedência mínima vai de 0 a 72 horas.',
+  'business.booking_horizon_invalid': 'O horizonte de agendamento vai de 1 a 365 dias.',
+  'business.cancellation_window_invalid': 'O prazo para cancelar vai de 0 a 48 horas.',
+  'business.time_zone_invalid': 'Fuso horário inválido.',
   'image.unsupported_type': 'Envie uma imagem JPEG, PNG ou WebP.',
   'image.too_large': 'A imagem passa de 5 MB. Escolha uma menor.',
   'image.dimensions_too_large': 'A imagem é grande demais (mais de 6000 px de lado).',

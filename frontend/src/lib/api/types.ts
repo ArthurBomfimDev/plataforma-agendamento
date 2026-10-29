@@ -196,24 +196,124 @@ export type AppointmentResponse = {
 
 // --- Painel do estabelecimento (`businesses/current/*`) ---
 
+export type SchedulingPolicyResponse = {
+  autoConfirm: boolean
+  pendingExpirationHours: number
+  minLeadTimeHours: number
+  bookingHorizonDays: number
+  cancellationWindowHours: number
+  timeZone: string
+}
+
 /** Visão do dono. Só os campos que o painel usa. */
 export type BusinessDetailResponse = {
   id: string
   name: string
+  /** `Beleza` ou `Saude`. `Saude` exige o tratamento de dado sensível (LGPD Art. 11). */
   category: string
   status: string
-  policy: {
-    autoConfirm: boolean
-    pendingExpirationHours: number
-    timeZone: string
-  }
+  policy: SchedulingPolicyResponse
+  logo: ImageSet | null
+  cover: ImageSet | null
+}
+
+export type UpdateSchedulingPolicyRequest = Omit<SchedulingPolicyResponse, 'timeZone'> & {
+  timeZone: string | null
 }
 
 export type ProfessionalResponse = {
   id: string
   displayName: string
+  specialty: string | null
+  bio: string | null
   isActive: boolean
+  /** Perfil completo (especialidade, bio, foto) na vitrine: exige o consentimento do profissional. */
+  isPubliclyVisible: boolean
+  hasPublicProfileConsent: boolean
+  /** Vínculo com uma conta. Nulo: profissional sem login (o dono cadastrou). */
+  membershipId: string | null
   photo: ImageSet | null
+}
+
+export type CreateProfessionalRequest = {
+  displayName: string
+  specialty: string | null
+  bio: string | null
+  /** O dono também atende: liga o profissional à própria conta. */
+  isMe: boolean
+}
+
+export type UpdateProfessionalRequest = {
+  displayName: string
+  specialty: string | null
+  bio: string | null
+  isActive: boolean
+  showFullProfile: boolean
+}
+
+/** Visão do painel: com intervalos, passo e nota de insumos, que a vitrine não mostra. */
+export type ServiceResponse = PublicServiceResponse & {
+  bufferBeforeMinutes: number
+  bufferAfterMinutes: number
+  slotStepMinutes: number
+  suppliesNote: string | null
+  isActive: boolean
+}
+
+export type SaveServiceRequest = {
+  name: string
+  description: string | null
+  durationMinutes: number
+  bufferBeforeMinutes: number
+  bufferAfterMinutes: number
+  slotStepMinutes: number
+  priceCents: number
+  suppliesNote: string | null
+  isActive: boolean
+}
+
+/** Dia: 0 = domingo. Horários `HH:mm` no fuso do estabelecimento; datas `yyyy-MM-dd`. */
+export type SaveWorkScheduleRequest = {
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  effectiveFrom: string
+  effectiveTo: string | null
+}
+
+export type ScheduleExceptionKind = 'DayOff' | 'Vacation' | 'Block' | 'ExtraShift'
+
+/** Sem profissional, vale para o estabelecimento inteiro. */
+export type ScheduleExceptionResponse = {
+  id: string
+  professionalId: string | null
+  kind: ScheduleExceptionKind
+  startsAt: string
+  endsAt: string
+  reason: string | null
+  cancelledAppointments: number
+}
+
+export type AddScheduleExceptionRequest = {
+  professionalId: string | null
+  kind: ScheduleExceptionKind
+  startsAt: string
+  endsAt: string
+  reason: string | null
+  /** `Keep` mantém os agendamentos do período; `CancelAll` cancela todos, com motivo. */
+  existingAppointments: 'Keep' | 'CancelAll'
+  cancellationReason: string | null
+}
+
+/** Agendamento que cairia dentro de um bloqueio: a prévia antes de gravar. */
+export type AffectedAppointmentResponse = {
+  id: string
+  professionalId: string
+  serviceName: string
+  startsAt: string
+  endsAt: string
+  status: AppointmentStatusResponse
+  attendeeName: string | null
 }
 
 /** `dayOfWeek` chega como número (0 = domingo, igual ao `Date.getDay()`); horários em `HH:mm:ss`. */
