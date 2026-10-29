@@ -131,15 +131,19 @@ export const AgendaRangeScreen = (props: AgendaRangeScreenProps) => {
               })}
             </ul>
           ) : (
-            <div className={PANEL_CARD}>
-              <div aria-hidden="true" className="grid grid-cols-7 gap-(--space-4)">
+            // Menos respiro no celular: em 390 px, sete colunas precisam caber com 44 px cada.
+            <div className={cn(PANEL_CARD, 'px-(--space-8) md:px-(--space-16)')}>
+              <div
+                aria-hidden="true"
+                className="grid grid-cols-7 gap-(--space-2) md:gap-(--space-4)"
+              >
                 {WEEKDAY_HEADERS.map((weekday) => (
                   <span key={weekday} className="type-caption text-center text-(--text-muted)">
                     {weekday}
                   </span>
                 ))}
               </div>
-              <ul className="grid grid-cols-7 gap-(--space-4)">
+              <ul className="grid grid-cols-7 gap-(--space-2) md:gap-(--space-4)">
                 {days.map((day) => {
                   const items = grouped.get(day) ?? []
                   const pending = items.filter((item) => item.status === 'pending').length
