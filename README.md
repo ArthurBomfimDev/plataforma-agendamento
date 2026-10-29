@@ -149,7 +149,25 @@ versionado e o compose recusa subir sem ele.
 | `migrations` | — | Aplica as migrations do EF Core e termina; roda a cada `up` |
 
 O banco é criado pelas migrations na primeira subida e fica no volume `booking_db-data`.
-Para recomeçar do zero: `docker compose down -v`.
+As imagens enviadas (logotipo, capa, foto do profissional) ficam no volume `booking_media-data`, servidas
+pela API em `/media/…` (ADR-023). O banco guarda só o caminho de cada imagem.
+Para recomeçar do zero: `docker compose down -v` (apaga os dois volumes).
+
+### Backup
+
+O disco do contêiner não guarda nada: o que importa está nos dois volumes, e **o backup precisa levar os
+dois juntos** — um banco restaurado sem as imagens aponta para arquivos que não existem, e o contrário
+deixa arquivos sem dono.
+
+```bash
+docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > backup-banco.dump
+```
+
+```bash
+docker run --rm -v booking_media-data:/media:ro -v "$PWD":/backup alpine tar czf /backup/backup-imagens.tar.gz -C /media .
+```
+
+Restaurar é o caminho inverso (`pg_restore` e `tar xzf` no volume), com a API parada.
 
 ### Dados de demonstração
 

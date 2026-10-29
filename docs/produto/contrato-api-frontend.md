@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B e 6C (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C e 6D (28/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -200,6 +200,59 @@ Rotas públicas, limite de 30 por minuto por IP (`geo`), cache no servidor. ADR-
   Usado na Home (desktop), na barra superior e nos resultados.
 - `SearchResultCard`: `availability` ausente não afirma mais "sem horário" (a busca não calcula horários); ganhou
   `priceFrom` e `onOpen` (o card inteiro abre o estabelecimento).
+
+## 4.5 Imagens (Onda 6D, 28/10)
+
+ADR-023. O banco guarda só a referência; os bytes ficam no volume `media-data`, servidos em `/media/…`.
+
+| Rota | Quem | Resposta |
+|---|---|---|
+| `PUT /api/businesses/current/logo` · `DELETE …` | dono (contexto `Owner`) | `BusinessDetailResponse` com `logo` |
+| `PUT /api/businesses/current/cover` · `DELETE …` | dono | `BusinessDetailResponse` com `cover` |
+| `PUT /api/businesses/current/professionals/{id}/photo` · `DELETE …` | dono, ou o próprio profissional (contexto `Professional`, vínculo da conta) | `ProfessionalResponse` com `photo` |
+
+- **Envio:** `multipart/form-data`, campo `file`. JPEG, PNG ou WebP **pelo conteúdo**, até **5 MB**, até 6000 px de lado.
+  Erros: `415 image.unsupported_type` (SVG, executável renomeado, GIF…), `413 image.too_large`,
+  `400 image.dimensions_too_large`, `400 image.unreadable`, `400 image.empty`, `403 auth.forbidden` (foto de outro
+  profissional), `404 professional.not_found` (outro estabelecimento), `401` sem login, `429` acima de 20 por hora.
+- **Respostas:** `logo`, `cover` (em `BusinessDetailResponse`, `PublicBusinessResponse` e `BusinessSearchItemResponse`) e
+  `photo` (em `ProfessionalResponse` e `PublicProfessionalResponse`) são `null` ou `{ small, medium, large }`: WebP de 160,
+  640 e 1280 px no lado maior. URL relativa à API (`/media/…`) ou absoluta — `lib/api/media.ts#mediaUrl` resolve.
+- **Foto pública do profissional:** só com o perfil completo visível (consentimento do próprio profissional). Sem isso, nula.
+- **Padrões sem imagem** (`frontend/src/global/images/defaults/`): `BusinessIllustration` (Beleza, Saúde; tokens da R5,
+  claro e escuro), `InitialsAvatar`, `ServiceIcon`. `components/smart-image` usa `srcSet`, `loading="lazy"`, espaço
+  reservado e cai no padrão se a imagem falhar.
+
+### Para o Rafael: plugar o `ImageUploader` no painel
+
+O painel (`panel-layout`, branch `dashboard`) não existe nesta base, então o componente está pronto e testado, sem rota.
+No painel, em "Dados do estabelecimento" e no perfil do profissional:
+
+```tsx
+import { BusinessIllustration } from '@global/images/defaults/business-illustration'
+import { ImageUploader } from '@components/image-uploader'
+import type { BusinessDetailResponse } from '@lib/api/types'
+import { api } from '@lib/api/client'
+import { uploadFile } from '@lib/api/upload'
+
+<ImageUploader
+  id="business-cover"
+  label="Capa"
+  shape="cover"            // "square" para o logotipo, "round" para a foto do profissional
+  current={business.cover}
+  fallback={<BusinessIllustration category={business.category} />}
+  onUpload={async (file, onProgress) =>
+    (await uploadFile<BusinessDetailResponse>('/api/businesses/current/cover', file, { onProgress })).cover}
+  onRemove={async () => {
+    await api('/api/businesses/current/cover', { method: 'DELETE', auth: true })
+  }}
+/>
+```
+
+- Logotipo: troque `cover` por `logo` na rota e no retorno, com `shape="square"`.
+- Foto do profissional: rota `/api/businesses/current/professionals/{id}/photo`, retorno `ProfessionalResponse.photo`,
+  `shape="round"` e `fallback={<InitialsAvatar name={professional.displayName} />}`.
+- Depois de enviar, invalide a consulta do estabelecimento (`queryKeys.business(id)`) para a vitrine pegar a imagem nova.
 
 ## 5. Resumo para fechar o lado do frontend
 
