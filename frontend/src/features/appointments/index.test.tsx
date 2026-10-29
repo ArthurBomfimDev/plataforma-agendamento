@@ -1,18 +1,22 @@
 import { describe, expect, it } from 'vitest'
 
 import { AppointmentsScreen } from '.'
+import type { AppointmentsList } from './types'
 import { MemoryRouter } from 'react-router'
-import { calendarEventToIcs } from '../../hooks/useAddToCalendar'
+import { calendarEventToIcs } from '@hooks/use-add-to-calendar'
+import { createMockAppointments } from './mock'
 import { renderToString } from 'react-dom/server'
 
 // O React separa trechos de texto com `<!-- -->` no HTML do servidor; tiramos para comparar o texto.
 const render = (element: React.ReactElement) =>
   renderToString(<MemoryRouter>{element}</MemoryRouter>).replaceAll('<!-- -->', '')
 
+const ready: AppointmentsList = { status: 'ready', items: createMockAppointments() }
+
 describe('AppointmentsScreen', () => {
   // A aba "Passados" e os cliques exigiriam jsdom e Testing Library; aqui só a aba inicial.
   it('lista os próximos com status, resumo e ações de cada estado', () => {
-    const html = render(<AppointmentsScreen />)
+    const html = render(<AppointmentsScreen list={ready} />)
 
     expect(html).toContain('Corte masculino · sex, 11 set · 09:30')
     expect(html).toContain('Pendente')
@@ -25,7 +29,7 @@ describe('AppointmentsScreen', () => {
   })
 
   it('separa os concluídos que ainda podem ser avaliados', () => {
-    const html = render(<AppointmentsScreen />)
+    const html = render(<AppointmentsScreen list={ready} />)
 
     expect(html).toContain('Concluídos')
     expect(html).toContain('Corte feminino · 22 ago · 10:00')
@@ -33,9 +37,28 @@ describe('AppointmentsScreen', () => {
   })
 
   it('marca "Agendamentos" como a aba atual da navegação', () => {
-    expect(render(<AppointmentsScreen />)).toMatch(
+    expect(render(<AppointmentsScreen list={ready} />)).toMatch(
       /<button[^>]*aria-current="page"[^>]*>.*?Agendamentos<\/button>/,
     )
+  })
+
+  it('pede para entrar quando não há sessão', () => {
+    const html = render(<AppointmentsScreen list={{ status: 'signed-out', onSignIn: () => {} }} />)
+
+    expect(html).toContain('Entre na sua conta para ver seus agendamentos.')
+    expect(html).not.toContain('Próximos')
+  })
+
+  it('avisa enquanto carrega e mostra o erro com "Tentar de novo"', () => {
+    expect(render(<AppointmentsScreen list={{ status: 'loading' }} />)).toContain(
+      'Carregando seus agendamentos…',
+    )
+
+    const html = render(
+      <AppointmentsScreen list={{ status: 'error', message: 'Sem conexão.', onRetry: () => {} }} />,
+    )
+    expect(html).toContain('Sem conexão.')
+    expect(html).toContain('Tentar de novo')
   })
 })
 

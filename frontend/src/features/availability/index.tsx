@@ -1,18 +1,14 @@
 import { ChevronLeft, Clock } from 'lucide-react'
 import type { DayPeriod, AvailabilityScreenProps } from './types'
-import { MOCK_CONFIRMATION_HOURS, MOCK_MONTHS_AHEAD, getMockDayInfo, getMockDaySlots } from './mock'
-import { addDays, addMinutes, addMonths, format, parse, startOfMonth } from 'date-fns'
+import { addMinutes, addMonths, format, parse, startOfMonth } from 'date-fns'
 
-import { AvailabilityCalendar } from '../../components/availability-calendar'
-import { Breadcrumb } from '../../components/breadcrumb'
-import { Button } from '../../components/button'
-import { MOCK_BUSINESSES } from '../business-detail/mock'
-import { MOCK_PROFESSIONALS } from '../choose-professional/mock'
-import { NotFoundScreen } from '../not-found'
-import { PageContainer } from '../../components/page-container'
-import { SlotPeriod } from '../../components/slot-period'
-import { TimeSlotGroup } from '../../components/time-slot-group'
-import { priceFormat } from '../../components/service-card/consts'
+import { AvailabilityCalendar } from '@components/availability-calendar'
+import { Breadcrumb } from '@components/breadcrumb'
+import { Button } from '@components/button'
+import { PageContainer } from '@components/page-container'
+import { SlotPeriod } from '@components/slot-period'
+import { TimeSlotGroup } from '@components/time-slot-group'
+import { priceFormat } from '@components/service-card/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { useState } from 'react'
 
@@ -32,45 +28,38 @@ const countLabel = (count: number) => `${count} ${count === 1 ? 'horário' : 'ho
 const timeRange = (time: string, durationMinutes: number) =>
   `${time} — ${format(addMinutes(parse(time, 'HH:mm', new Date(0)), durationMinutes), 'HH:mm')}`
 
-/** Primeiro dia com horário a partir de hoje, dentro da janela navegável. */
-const firstAvailableDay = (today: Date, lastDay: Date) => {
-  for (let day = today; day <= lastDay; day = addDays(day, 1)) {
-    if (getMockDayInfo(day, today).status === 'available') return day
-  }
-  return undefined
-}
-
 /**
  * Tela 05 · Calendário e horários (Figma, 390px; desktop: 05D, 1440px).
  */
 export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
-  const { businessId, serviceId, professionalId, today, onBack, onOpenBusiness, onContinue } = props
+  const {
+    businessName,
+    service,
+    today,
+    monthsAhead,
+    confirmationHours,
+    getDayInfo,
+    selectedDate,
+    onSelectDate,
+    slots,
+    onBack,
+    onOpenBusiness,
+    onContinue,
+  } = props
 
   const startMonth = startOfMonth(today)
-  const endMonth = addMonths(startMonth, MOCK_MONTHS_AHEAD)
+  const endMonth = addMonths(startMonth, monthsAhead)
 
-  const [selectedDate, setSelectedDate] = useState(() =>
-    firstAvailableDay(today, addDays(addMonths(endMonth, 1), -1)),
-  )
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
 
-  const business = MOCK_BUSINESSES[businessId]
-  const service = business?.services.find(({ id }) => id === serviceId)
-  const professional = MOCK_PROFESSIONALS[businessId]?.find(({ id }) => id === professionalId)
-
-  if (!business || !service || (professionalId && !professional)) {
-    return <NotFoundScreen />
-  }
-
-  const professionalName = professional?.name ?? 'Sem preferência'
+  const professionalName = props.professionalName ?? 'Sem preferência'
   const price = priceFormat.format(service.priceCents / 100)
-  const slots = selectedDate ? getMockDaySlots(selectedDate, today) : null
   const periods = PERIODS.filter(({ id }) => slots?.[id].length)
   const firstOpenPeriod = periods.find(({ id }) => slots?.[id].some((slot) => !slot.unavailable))
   const canContinue = Boolean(selectedDate && selectedTime)
 
   const selectDate = (date: Date) => {
-    setSelectedDate(date)
+    onSelectDate(date)
     setSelectedTime(null)
   }
 
@@ -110,7 +99,7 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
           <Breadcrumb
             className="hidden lg:block"
             items={[
-              { label: business.name, onClick: onOpenBusiness },
+              { label: businessName, onClick: onOpenBusiness },
               {
                 label: `${service.name} · ${service.durationMinutes} min · ${price} · ${professionalName}`,
               },
@@ -127,7 +116,7 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
               onSelect={selectDate}
               startMonth={startMonth}
               endMonth={endMonth}
-              getDayInfo={(date) => getMockDayInfo(date, today)}
+              getDayInfo={getDayInfo}
               className="lg:w-110 lg:shrink-0 lg:gap-(--space-12) lg:p-(--space-20)"
             />
 
@@ -140,6 +129,17 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
                   <h2 id="availability-slots" className="type-heading text-(--text-strong)">
                     Horários — {dayHeading(selectedDate)}
                   </h2>
+
+                  {slots === null && (
+                    <p role="status" className="type-body text-(--text-muted)">
+                      Carregando horários…
+                    </p>
+                  )}
+                  {slots !== null && periods.length === 0 && (
+                    <p className="type-body text-(--text-muted)">
+                      Sem horários livres neste dia. Escolha outro no calendário.
+                    </p>
+                  )}
 
                   {/* Celular: períodos recolhíveis, só o primeiro aberto. `key`: ao trocar de
                       dia, voltam ao estado inicial. */}
@@ -205,8 +205,8 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
                 <p className="type-caption flex items-center gap-(--space-4) text-(--text-muted)">
                   <Clock aria-hidden="true" className="size-4 shrink-0" />
                   <span>
-                    O estabelecimento confirma em até {MOCK_CONFIRMATION_HOURS} h. Você é avisado
-                    por e-mail e no app.
+                    O estabelecimento confirma em até {confirmationHours} h. Você é avisado por
+                    e-mail e no app.
                   </span>
                 </p>
               </section>
@@ -220,7 +220,7 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
         {continueButton('w-full')}
         <p className="type-caption flex items-center justify-center gap-(--space-4) text-(--text-muted)">
           <Clock aria-hidden="true" className="size-4 shrink-0" />
-          <span>O estabelecimento confirma em até {MOCK_CONFIRMATION_HOURS} h.</span>
+          <span>O estabelecimento confirma em até {confirmationHours} h.</span>
         </p>
       </footer>
     </div>

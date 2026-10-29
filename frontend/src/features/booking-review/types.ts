@@ -1,14 +1,24 @@
+import type { BusinessService } from '@features/business-detail/types'
+
+export type BookingBusiness = {
+  name: string
+  verified?: boolean
+  coverUrl?: string
+}
+
 export type BookingReviewScreenProps = {
-  businessId: string
-  serviceId: string
+  business: BookingBusiness
+  service: Omit<BusinessService, 'id'>
   /** `null` = "Sem preferência". */
-  professionalId: string | null
+  professionalName: string | null
   /** Dia escolhido, meia-noite local. */
   date: Date
   /** Horário de início, `HH:mm`, no fuso do estabelecimento. */
   time: string
-  /** Data de hoje no fuso do estabelecimento, para validar o horário escolhido. */
-  today: Date
+  /** Até quantas horas antes o cancelamento é gratuito (política do estabelecimento). */
+  cancellationWindowHours: number
+  /** Pedido em envio: o botão fica desabilitado para não mandar duas vezes. */
+  submitting?: boolean
   onBack?: () => void
   onSubmit?: (note: string) => void
 }

@@ -1,55 +1,26 @@
 import { Clock, MapPin, Star } from 'lucide-react'
-import {
-  MOCK_CONFIRMATION_HOURS,
-  MOCK_TODAY,
-  getMockDayInfo,
-  getMockDaySlots,
-} from '../availability/mock'
-import { distanceFormat, ratingFormat } from '../../components/card-establishment/consts'
+import { distanceFormat, ratingFormat } from '@components/card-establishment/consts'
 
+import { BusinessIllustration } from '@global/images/defaults/business-illustration'
 import type { BusinessDetailScreenProps } from './types'
-import { Button } from '../../components/button'
-import { MOCK_BUSINESSES } from './mock'
-import { NotFoundScreen } from '../not-found'
-import { PageContainer } from '../../components/page-container'
-import { ServiceCard } from '../../components/service-card'
-import { TabBar } from '../../components/tab-bar'
-import { TimeSlotChip } from '../../components/time-slot-chip'
-import { VerifiedBadge } from '../../components/card-establishment/components/VerifiedBadge'
-import { addDays } from 'date-fns'
+import { Button } from '@components/button'
+import { ServiceIcon } from '@global/images/defaults/service-icon'
+import { SmartImage } from '@components/smart-image'
+import { PageContainer } from '@components/page-container'
+import { ServiceCard } from '@components/service-card'
+import { TabBar } from '@components/tab-bar'
+import { TimeSlotChip } from '@components/time-slot-chip'
+import { VerifiedBadge } from '@components/card-establishment/components/VerifiedBadge'
 import { useRef } from 'react'
-
 const comingSoon = <p className="type-body text-(--text-muted)">Em breve.</p>
-
-/** Quantos horários livres o card "Agendar agora" do desktop mostra. */
-const NEXT_SLOTS_SHOWN = 3
-
-/** Primeiros horários livres a partir de hoje (dado provisório da disponibilidade). */
-const nextFreeSlots = () => {
-  for (let day = MOCK_TODAY, i = 0; i < 60; day = addDays(day, 1), i++) {
-    if (getMockDayInfo(day, MOCK_TODAY).status !== 'available') continue
-    return Object.values(getMockDaySlots(day, MOCK_TODAY) ?? {})
-      .flat()
-      .filter(({ unavailable }) => !unavailable)
-      .slice(0, NEXT_SLOTS_SHOWN)
-      .map(({ time }) => time)
-  }
-  return []
-}
 
 /**
  * Tela 03 · Página do estabelecimento (Figma, 390px; desktop: 03D, 1440px).
  */
 export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
-  const { businessId, onBookService } = props
+  const { business, nextFreeSlots = [], onBookService } = props
 
   const servicesRef = useRef<HTMLUListElement>(null)
-
-  const business = MOCK_BUSINESSES[businessId]
-
-  if (!business) {
-    return <NotFoundScreen />
-  }
 
   const { name, rating, reviewCount, verified, street, neighborhood, distanceKm, openUntil } =
     business
@@ -71,16 +42,18 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
       </p>
     )
 
-  const photo = (className: string) =>
-    business.coverUrl ? (
-      <img
-        src={business.coverUrl}
-        alt={`Foto de ${name}`}
-        className={`object-cover ${className}`}
-      />
-    ) : (
-      <div aria-hidden="true" className={`bg-(--bg-disabled) ${className}`} />
-    )
+  // A capa é informativa (mostra o lugar); sem ela, a ilustração da categoria é decorativa.
+  const photo = (className: string) => (
+    <SmartImage
+      image={business.cover}
+      alt={`Foto de ${name}`}
+      sizes="(min-width: 1024px) 66vw, 100vw"
+      width={16}
+      height={9}
+      fallback={<BusinessIllustration category={business.category} />}
+      className={className}
+    />
+  )
 
   return (
     <div className="min-h-dvh bg-(--bg-page) pb-[env(safe-area-inset-bottom)] lg:pb-(--space-40)">
@@ -98,18 +71,33 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
         <div className="lg:flex lg:items-start lg:gap-(--space-24)">
           <div className="lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-(--space-20)">
             <header className="flex flex-col items-start gap-(--space-8) bg-(--bg-surface) p-(--space-16) md:bg-transparent lg:gap-(--space-20) lg:p-0">
-              <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
-                {name}
-              </h1>
+              <div className="flex items-center gap-(--space-12)">
+                {business.logo && (
+                  <SmartImage
+                    image={business.logo}
+                    alt=""
+                    sizes="56px"
+                    width={1}
+                    height={1}
+                    fallback={null}
+                    className="size-12 shrink-0 rounded-md border border-(--border-subtle) bg-(--bg-surface) lg:size-14"
+                  />
+                )}
+                <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
+                  {name}
+                </h1>
+              </div>
 
               <div className="flex flex-wrap items-center gap-(--space-8) lg:gap-(--space-12)">
-                <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted) lg:text-(length:--size-label)! lg:leading-(--line-height-label)! lg:font-medium! lg:text-(--text-body)">
-                  <Star aria-hidden="true" className="size-4" />
-                  <span>
-                    <span className="sr-only">Nota </span>
-                    {ratingFormat.format(rating)} ({reviewCount})
-                  </span>
-                </p>
+                {rating !== undefined && reviewCount ? (
+                  <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted) lg:text-(length:--size-label)! lg:leading-(--line-height-label)! lg:font-medium! lg:text-(--text-body)">
+                    <Star aria-hidden="true" className="size-4" />
+                    <span>
+                      <span className="sr-only">Nota </span>
+                      {ratingFormat.format(rating)} ({reviewCount})
+                    </span>
+                  </p>
+                ) : null}
                 {verified && <VerifiedBadge />}
                 {openUntilChip('hidden lg:flex')}
               </div>
@@ -117,7 +105,8 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
               <p className="type-caption flex items-center gap-(--space-8) text-(--text-muted) lg:text-(length:--size-label)! lg:leading-(--line-height-label)! lg:font-medium!">
                 <MapPin aria-hidden="true" className="size-4 shrink-0" />
                 <span>
-                  {street} — {neighborhood} · {distanceFormat.format(distanceKm)} km
+                  {street} — {neighborhood}
+                  {distanceKm !== undefined && ` · ${distanceFormat.format(distanceKm)} km`}
                 </span>
               </p>
 
@@ -140,7 +129,11 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                       >
                         {business.services.map(({ id, ...service }) => (
                           <li key={id}>
-                            <ServiceCard {...service} onBook={() => onBookService?.(id)} />
+                            <ServiceCard
+                              {...service}
+                              leading={<ServiceIcon category={business.category} />}
+                              onBook={() => onBookService?.(id)}
+                            />
                           </li>
                         ))}
                       </ul>
@@ -162,9 +155,11 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
             <h2 id="business-book-now" className="type-heading text-(--text-strong)">
               Agendar agora
             </h2>
-            <p className="type-caption text-(--text-muted)">Próximos horários livres</p>
+            {nextFreeSlots.length > 0 && (
+              <p className="type-caption text-(--text-muted)">Próximos horários livres</p>
+            )}
             <ul className="grid grid-cols-3 gap-(--space-8)">
-              {nextFreeSlots().map((time) => (
+              {nextFreeSlots.map((time) => (
                 <li key={time}>
                   <TimeSlotChip
                     time={time}
@@ -177,7 +172,7 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
             </ul>
             <p className="type-caption flex items-center gap-(--space-8) rounded-md border border-(--border-interactive) bg-(--bg-accent-soft) px-(--space-12) py-(--space-8) text-(--text-body)">
               <Clock aria-hidden="true" className="size-4 shrink-0" />
-              <span>O estabelecimento confirma em até {MOCK_CONFIRMATION_HOURS} h.</span>
+              <span>O estabelecimento confirma em até {business.confirmationHours} h.</span>
             </p>
             <Button size="lg" className="w-full" onClick={goToServices}>
               Escolher serviço

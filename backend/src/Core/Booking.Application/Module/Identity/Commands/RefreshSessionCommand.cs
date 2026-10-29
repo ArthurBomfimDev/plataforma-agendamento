@@ -8,6 +8,10 @@ using Booking.Domain.Interface.Repository.Module.Identity;
 
 namespace Booking.Application.Module.Identity.Commands;
 
+/// <summary>
+/// Rotação de refresh token: cada token vale uma vez. Apresentar um token já revogado indica
+/// roubo ou cópia, e derruba todas as sessões do usuário.
+/// </summary>
 public sealed class RefreshSessionCommand(
     IRefreshTokenRepository refreshTokens,
     IUserRepository users,
@@ -44,6 +48,12 @@ public sealed class RefreshSessionCommand(
         if (!current.IsActive(now) || user is null || user.Status != UserStatus.Active)
         {
             throw new DomainException("auth.invalid_refresh_token");
+        }
+
+        // Sessão aberta antes de a regra valer (ou com ela desligada) não sobrevive a ela ligada.
+        if (policy.RequireEmailConfirmation && user.EmailConfirmedAt is null)
+        {
+            throw new DomainException("identity.email_not_confirmed");
         }
 
         GeneratedToken next = tokens.Generate();

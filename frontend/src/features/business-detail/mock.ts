@@ -9,6 +9,7 @@ export const MOCK_BUSINESSES: Record<string, BusinessDetail> = {
   'estudio-duartina': {
     id: 'estudio-duartina',
     name: 'Estúdio Duartina',
+    category: 'Beleza',
     rating: 4.8,
     reviewCount: 128,
     verified: true,
@@ -16,6 +17,7 @@ export const MOCK_BUSINESSES: Record<string, BusinessDetail> = {
     neighborhood: 'Centro',
     distanceKm: 1.2,
     openUntil: '18:00',
+    confirmationHours: 12,
     services: [
       { id: 'corte-masculino', name: 'Corte masculino', durationMinutes: 30, priceCents: 4500 },
       { id: 'corte-barba', name: 'Corte + barba', durationMinutes: 60, priceCents: 8000 },

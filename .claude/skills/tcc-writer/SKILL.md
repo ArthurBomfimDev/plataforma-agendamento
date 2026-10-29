@@ -38,7 +38,7 @@ Ainda dependem da orientadora (manter marcados no texto quando afetarem uma seç
 - As 4 hipóteses originais de mercado (`02_Apresentacao_do_Tema.md`) vão para **limitações**, não para resultados.
 - O que saiu do recorte de entrega vira **trabalho futuro com a justificativa preservada**, nunca some calado.
 - Não usar `05_Agendeaki_Pitch_TCC.md` como fonte.
-- Não citar nome de marca enquanto ela estiver indefinida — usar "a plataforma". "Agendeaki" e "Agendify" estão descartados.
+- A marca é **Vagoo** (definida em 09/10, `docs/design/marca-vagoo.md`). Citar pelo nome quando o texto falar do produto; "a plataforma" continua valendo quando o assunto é o sistema em geral. "Agendeaki", "Agendify" e "Kairon Place" estão descartados — nunca usar. O repositório e o namespace `Booking.*` têm nome neutro (pendência K): não chamar o código de "Vagoo".
 
 ## Regras de escrita
 - Português formal, voz impessoal ou terceira pessoa, frases diretas. Parágrafo com uma ideia; sem adjetivo promocional ("revolucionário", "definitivo", "total").
@@ -85,7 +85,7 @@ Registrar durante o projeto, não no fim.
 - [ ] Toda ilustração/tabela citada no texto, com identificação e fonte.
 - [ ] Siglas definidas na primeira ocorrência; "cliente" ausente.
 - [ ] Seção dentro do orçamento de páginas.
-- [ ] Nome de marca ausente.
+- [ ] Marca citada como **Vagoo**; nenhum nome descartado (Agendeaki, Agendify, Kairon Place).
 
 ## Antipadrões
 - Inventar número para "fechar" uma seção.
