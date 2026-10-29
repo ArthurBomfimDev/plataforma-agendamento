@@ -50,6 +50,17 @@ public sealed class UpdateProfessionalCommand(
 
         professional.UpdateProfile(request.DisplayName, request.Specialty, request.Bio);
 
+        // Perfil antes da situação: desativar por último garante que inativo nunca fica com o perfil completo
+        // ligado, mesmo num pedido que peça as duas coisas. Inativo não pede consentimento para esconder.
+        if (request.ShowFullProfile && request.IsActive)
+        {
+            professional.ShowFullProfile();
+        }
+        else
+        {
+            professional.HideFullProfile();
+        }
+
         if (request.IsActive)
         {
             professional.Activate();
@@ -57,15 +68,6 @@ public sealed class UpdateProfessionalCommand(
         else
         {
             professional.Deactivate();
-        }
-
-        if (request.ShowFullProfile)
-        {
-            professional.ShowFullProfile();
-        }
-        else
-        {
-            professional.HideFullProfile();
         }
 
         await unitOfWork.SaveChangesAsync(ct);
