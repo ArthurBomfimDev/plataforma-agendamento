@@ -14,7 +14,7 @@ public sealed class ContextBookingTests(IntegrationFixture fixture)
     private readonly TestWorld _world = new(fixture);
 
     [Fact]
-    public async Task K1_business_context_token_cannot_book_as_customer()
+    public async Task Q1_business_context_token_cannot_book_as_customer()
     {
         TestBusiness own = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         TestBusiness other = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
@@ -29,7 +29,7 @@ public sealed class ContextBookingTests(IntegrationFixture fixture)
     }
 
     [Fact]
-    public async Task K2_owner_cannot_book_the_own_business_and_still_books_elsewhere()
+    public async Task Q2_owner_cannot_book_the_own_business_and_still_books_elsewhere()
     {
         TestBusiness own = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         TestBusiness other = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
@@ -49,7 +49,7 @@ public sealed class ContextBookingTests(IntegrationFixture fixture)
     }
 
     [Fact]
-    public async Task K3_me_lists_the_contexts_the_account_can_open()
+    public async Task Q3_me_lists_the_contexts_the_account_can_open()
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         TestUser staff = await _world.NewStaffAsync(business, 0);
