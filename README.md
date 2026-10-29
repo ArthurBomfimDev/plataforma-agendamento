@@ -195,6 +195,10 @@ Espaço Helena Unhas, Barbearia do Rogério) ganham uma agenda pequena pela API:
 balcão hoje e dois pedidos da consumidora de demonstração amanhã (pendentes, exceto no Espaço Helena,
 que confirma sozinho). Rodar de novo num dia seguinte cria a agenda daquele dia.
 
+Busca: os 30 estabelecimentos ficam em Garça-SP. Escolha "Garça, SP (demonstração)" no seletor de
+localização; a distância padrão é "Cidade" (os 30), e 1, 2, 5, 10 e 20 km recortam por raio. A
+distância escolhida fica na URL (`radius=`) e lembrada no navegador.
+
 Painel: entre com `dono.duartina@example.com` (senha no fim da execução). Conta só de
 estabelecimento abre direto nos pedidos (`#/panel/requests`). A gestão do estabelecimento fica no
 menu lateral (no celular, em "Mais"): Serviços, Profissionais, Jornadas e bloqueios, Fotos e

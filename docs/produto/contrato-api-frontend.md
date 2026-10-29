@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A e 7D (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A, 7D e 7C (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -94,6 +94,7 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `id`, `name`, `category`, `verified`, `district`, `city`, `distanceKm` | iguais | iguais | ✅ |
 | `serviceId`, `serviceName`, `durationMinutes`, `fromPriceCents` | nuláveis | `string \| null`, `number \| null` | ✅ desde a 6C — o card mostra ("a partir de") |
 | Parâmetros `category`, `maxPriceCents`, `sortBy` (`distance`\|`price`), `radiusKm`, `term` | existem | todos enviados desde a 6C | ✅ |
+| Parâmetro `city` (novo na 7C) | só a cidade, até 50 km do ponto, sem acento e sem caixa; ignora `radiusKm` | enviado na distância "Cidade" (§4.4) | ✅ |
 | `page`, `pageSize` | existem | não enviados (primeira página, 20) | ⚠️ sem "carregar mais" |
 
 Sem API na tela de resultados: foto, horários no próprio resultado (é uma consulta de disponibilidade por
@@ -218,8 +219,21 @@ Rotas públicas, limite de 30 por minuto por IP (`geo`), cache no servidor. ADR-
 - **Tiles da Home** (`features/home/consts.ts`, o `mock.ts` saiu): Beleza e Saúde mandam `category=Beleza|Saude`;
   Cabelo, Barbearia, Unhas e Sobrancelha mandam `term` (`corte`, `barba`, `unha`, `sobrancelha`, conferidos contra os
   serviços do seed).
-- **Filtros na tela:** categoria e termo como chips removíveis; "Até 5 km" (`radiusKm` 5 ou 20); "Até R$ 50/100/200"
+- **Filtros na tela:** categoria e termo como chips removíveis; distância (Onda 7C, abaixo); "Até R$ 50/100/200"
   (`maxPriceCents`); ordenar por "Mais perto" ou "Menor preço" (`sortBy`).
+- **Distância (Onda 7C, 29/10):** "Cidade" (padrão) e 1, 2, 5, 10 e 20 km (`lib/api/search.ts`).
+  - Na URL: `radius=city|1|2|5|10|20`. Fica lembrada no aparelho (`localStorage` `vagoo-search-distance`, com
+    `try/catch`). A URL vence: um link com distância passa a ser a lembrada, e um link sem ela (as categorias da Home)
+    usa a lembrada; sem as duas, Cidade.
+  - "Cidade" manda `city` com a cidade da localização escolhida, e o backend ignora o raio (abaixo). Sem cidade
+    conhecida (localização guardada antes da 7C, ou o provedor não soube), busca a até 20 km, e a tela avisa.
+  - O seletor de localização guarda `city` e `state` junto do ponto: a do CEP vem dos Correios; a do aparelho e a da
+    busca, do Nominatim (`ReverseGeocodeResponse` e `GeoPlaceResponse` ganharam `city` e `state`, opcionais).
+  - **Estado vazio:** diz onde procurou. Abaixo de 20 km, "Ampliar para 20 km"; em 20 km ou em Cidade, "Limpar
+    filtros" quando há termo, categoria ou preço, e "Trocar localização" quando não há.
+- **`City` no backend (`SearchBusinessesRequest`):** com ela, os candidatos vêm de um raio de 50 km (o teto) e ficam
+  só os da cidade, comparada sem acento, sem diferença de maiúsculas e com espaços normalizados. O teto evita a
+  homônima de outro estado. Sem `City`, nada muda: `RadiusKm` com padrão 5, limitado a 0,1–50. Testes H5 e H6.
 - **Trabalho futuro (sem backend):** "Disponível hoje" (exigiria disponibilidade por resultado na busca) e "★ 4,5+"
   (módulo Reputation fora do recorte). Também: paginação ("carregar mais") e horários no card.
 - **Botão "Buscar":** `components/search-button` — `Button` primário do sistema, `type="submit"` dentro de
