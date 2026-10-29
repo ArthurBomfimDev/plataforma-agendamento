@@ -196,7 +196,10 @@ balcão hoje e dois pedidos da consumidora de demonstração amanhã (pendentes,
 que confirma sozinho). Rodar de novo num dia seguinte cria a agenda daquele dia.
 
 Painel: entre com `dono.duartina@example.com` (senha no fim da execução). Conta só de
-estabelecimento abre direto nos pedidos (`#/panel/requests`).
+estabelecimento abre direto nos pedidos (`#/panel/requests`). A gestão do estabelecimento fica no
+menu lateral (no celular, em "Mais"): Serviços, Profissionais, Jornadas e bloqueios, Fotos e
+Configurações, só para o dono. Para ver o aviso de saúde, entre com o dono de um estabelecimento de
+Saúde, por exemplo `dono.clinica.de.fisioterapia.duarte@example.com`.
 
 Conta dona **e** consumidora (o seed não cria): entre com a conta do dono e crie o perfil de
 consumidor pela API, com o token do login (que vem em contexto de consumidor):

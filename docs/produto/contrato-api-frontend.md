@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10) e 7A (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A e 7D (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -35,6 +35,15 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `GET /api/businesses/current/appointments/pending` | `panelApi.pending` | ✅ desde a 7A |
 | `POST …/appointments/{id}/confirm` · `reject` · `cancel` · `complete` · `no-show` | `panelApi.confirm` … `noShow` | ✅ desde a 7A |
 | `POST /api/businesses/current/appointments/counter` | `panelApi.counter` | ✅ desde a 7A |
+| `POST /api/businesses/current/services` · `PUT …/{id}` | `manageApi.createService` · `updateService` | ✅ desde a 7D (§4.7) |
+| `PUT` · `DELETE …/services/{id}/professionals/{pid}` | `manageApi.enableProfessional` · `disableProfessional` | ✅ desde a 7D — o preço e a duração próprios por profissional ainda não têm tela |
+| `POST /api/businesses/current/professionals` · `PUT …/{id}` | `manageApi.createProfessional` · `updateProfessional` | ✅ desde a 7D |
+| `PUT` · `DELETE …/professionals/{id}/public-profile-consent` | — | ⬜ só o próprio profissional dá; sem login de profissional (5D), não há tela |
+| `POST` · `PUT …/{id}` · `DELETE …/{id}` em `…/work-schedules` | `manageApi.addWorkSchedule` · `updateWorkSchedule` · `removeWorkSchedule` | ✅ desde a 7D |
+| `GET` · `POST` · `DELETE …/{id}` em `…/schedule-exceptions`, `GET …/affected-appointments` | `manageApi.exceptions` · `addException` · `removeException` · `affectedAppointments` | ✅ desde a 7D |
+| `PUT /api/businesses/current/scheduling-policy` | `manageApi.updatePolicy` (`timeZone: null` mantém o fuso) | ✅ desde a 7D |
+| `PUT` · `DELETE …/current/logo`, `…/current/cover`, `…/professionals/{id}/photo` | `uploadFile` com `uploadPaths` · `manageApi.removeBusinessImage` · `removeProfessionalPhoto` | ✅ desde a 7D |
+| `PUT …/current/address`, `…/current/location`, `POST …/current/submit` | — | ⬜ existem; a tela de cadastro e endereço do estabelecimento não está no recorte da 7D |
 | `GET/POST /api/customers/me` | `customersApi.me`/`register` | ✅ |
 | `GET /api/businesses/search` | `businessesApi.search` | ✅ desde a 6C (§2.3, §4.4) |
 | `GET /api/businesses/{id}` | `businessesApi.get` | ✅ |
@@ -290,15 +299,43 @@ Decisão de 22/09 (§2.0): conta única com troca de contexto explícita — "Co
   `context`). O refresh devolve token de consumidor: `client.ts` pede o contexto de novo logo depois; se o vínculo
   acabou, a conta volta a consumidor.
 - **Onde troca:** menu da conta na barra superior e no rodapé da barra lateral do painel (`components/account-menu`,
-  `Menu` do Base UI); no celular, "Perfil" (consumidor) e "Mais" (painel) abrem `#/context`.
+  `Menu` do Base UI); no celular, "Perfil" (consumidor) abre `#/context`, e "Mais" (painel) abre `#/panel/more`
+  (desde a 7D), que lista as outras seções e leva à conta em `#/context`.
 - **Guards:** `#/panel/*` exige contexto de estabelecimento (sem sessão → entrar; como consumidor → `#/context`, que
   diz "Esta conta não tem um estabelecimento" quando é o caso). Agendar, "Pedido enviado" e "Meus agendamentos" no
   contexto de estabelecimento levam a `#/context` ("troque para consumidor"). No mesmo contexto, a barra superior perde
   busca, localização e "Meus agendamentos" e ganha "Voltar ao painel".
 - **Backend:** o token do painel não agenda como consumidor (403) e o dono não agenda no próprio estabelecimento (409).
 
+## 4.7 Gestão do estabelecimento (Onda 7D, 29/10)
+
+Só o dono. O menu do profissional não mostra estas seções, e o endereço digitado volta para a agenda
+(`router/require-owner.tsx`); a API recusa com 403 `auth.forbidden` do mesmo jeito (`RequireOwner` nos comandos).
+
+| Tela | Rota | O que faz | Limites que a tela aplica antes da API |
+|---|---|---|---|
+| Serviços | `#/panel/services`, `…/new`, `…/{id}` | Lista, ativa/desativa (pela edição, com `isActive`), cria e edita com o cadastro do Rafael (tela 11); depois de gravar, liga e desliga os profissionais | duração 1–480 min, intervalos 0–120, passo 5 até a duração, preço ≥ 0 (`Service.cs`) |
+| Profissionais | `#/panel/professionals` | Lista, cria (sem login), edita perfil, ativa/desativa, serviços de cada um, perfil completo só com consentimento | nome obrigatório |
+| Jornadas e bloqueios | `#/panel/schedules` | Jornada semanal de um profissional por vez; bloqueio em dois passos: prévia (`affected-appointments`) e, com agendamentos, manter ou cancelar todos com motivo | fim depois do início; data final depois da inicial; turno extra com profissional |
+| Fotos | `#/panel/photos` | Logotipo, capa e foto de cada profissional ativo, com o `ImageUploader` (§4.5) | JPEG, PNG ou WebP, até 5 MB (o `ImageUploader` confere) |
+| Configurações | `#/panel/settings` | Política de agendamento: confirmação automática e os quatro prazos; o fuso aparece e não muda | prazo do pendente 1–72 h, antecedência 0–72 h, horizonte 1–365 dias, cancelamento 0–48 h (`Business.cs`) |
+| Mais (celular) | `#/panel/more` | As seções fora das abas e a conta | — |
+
+- **Categoria sensível:** não há categoria por serviço; ela é do estabelecimento (ADR-015). Com `category = Saude`
+  (`RequiresSensitiveHandling`), a lista e o cadastro de serviço avisam que nome e descrição vão para a vitrine
+  pública e não devem citar paciente.
+- **409:** nesta área só a jornada responde 409 (`work_schedule.overlaps`, faixa cruzada), mostrado na gaveta. Os
+  erros de serviço e de profissional são 400/404, com mensagem própria; um 404 diz que a lista foi atualizada.
+- **Ordem das gravações do serviço:** primeiro o serviço, depois os vínculos. Se um serviço novo foi criado e um
+  vínculo falhou, a tela abre a edição dele (salvar de novo não duplica).
+- **Menu:** Avaliações e Relatórios saíram da lateral e da navegação inferior (não há backend; `Reputation` está
+  fora do recorte) em vez de ficarem com "Em breve". Fotos entrou. Ícones do lucide, iguais na lateral, nas abas e
+  no "Mais".
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
 2. Traduzir `appointment.contention_try_again` (503: "tente de novo").
 3. Painel: bloqueios na agenda, visão da semana, histórico do consumidor no pedido e a remarcação (sem backend).
+4. Gestão: preço e duração próprios por profissional no serviço; consentimento do perfil público pelo próprio
+   profissional (depende do login de profissional, 5D); cadastro, endereço e envio para análise do estabelecimento.
