@@ -12,7 +12,7 @@ namespace Booking.Api.Module.Identity;
 public sealed class UsersController : ControllerBase
 {
     [HttpGet("me")]
-    [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Me([FromServices] GetCurrentUserQuery query, CancellationToken ct)
     {
         string? sub = User.FindFirst("sub")?.Value;
