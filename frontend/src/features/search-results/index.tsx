@@ -1,6 +1,6 @@
+import { MAX_SEARCH_RADIUS_KM, distanceChipLabel } from '@lib/api/search'
 import {
   CATEGORY_LABELS,
-  DISTANCE_OPTIONS,
   PRICE_CEILINGS,
   areaLabel,
   emptyAction,
@@ -8,7 +8,6 @@ import {
   priceCeilingLabel,
   resultsCount,
 } from './consts'
-import { MAX_SEARCH_RADIUS_KM } from '@lib/api/search'
 import { ChevronLeft, MapPin, X } from 'lucide-react'
 import { useState } from 'react'
 
@@ -123,21 +122,6 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
             </ul>
           )}
 
-          <div
-            role="group"
-            aria-label="Distância"
-            className="-mx-(--space-16) flex gap-(--space-8) overflow-x-auto px-(--space-16) lg:mx-0 lg:flex-wrap lg:px-0"
-          >
-            {DISTANCE_OPTIONS.map((option) => (
-              <FilterChip
-                key={option.value}
-                selected={filters.distance === option.value}
-                onClick={() => onChange?.({ distance: option.value })}
-              >
-                {option.label}
-              </FilterChip>
-            ))}
-          </div>
           {filters.distance === 'city' && !cityName && locationLabel && (
             <p className="type-caption text-(--text-muted)">
               Não sabemos a cidade desta localização: mostrando a até {MAX_SEARCH_RADIUS_KM} km.
@@ -150,6 +134,18 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
             aria-label="Filtros"
             className="-mx-(--space-16) flex gap-(--space-8) overflow-x-auto px-(--space-16) lg:mx-0 lg:flex-wrap lg:px-0"
           >
+            {/* A distância mora no seletor de endereço (7CF): aqui, só mostra e reabre o seletor. */}
+            {locationLabel && (
+              <FilterChip
+                selected
+                aria-haspopup="dialog"
+                aria-label={`Distância: ${distanceChipLabel(filters.distance, cityName)}. Trocar no seletor de endereço`}
+                onClick={onChooseLocation}
+              >
+                <MapPin aria-hidden="true" className="size-4" />
+                {distanceChipLabel(filters.distance, cityName)}
+              </FilterChip>
+            )}
             {PRICE_CEILINGS.map((cents) => (
               <FilterChip
                 key={cents}

@@ -54,21 +54,32 @@ export const searchArea = (distance: SearchDistance, city: string | null | undef
       : { radiusKm: MAX_SEARCH_RADIUS_KM, city: undefined, cityKnown: false }
     : { radiusKm: distance, city: undefined, cityKnown: true }
 
-const DISTANCE_STORAGE_KEY = 'vagoo-search-distance'
+/**
+ * Os chips do seletor de endereço (7CF): Cidade primeiro, que é o padrão, e os raios em ordem. A distância fica no
+ * seletor, junto do endereço (`useLocationStore`); a busca só a lê.
+ */
+export const DISTANCE_OPTIONS: ReadonlyArray<{ value: SearchDistance; label: string }> = [
+  { value: 'city', label: 'Cidade' },
+  ...SEARCH_RADII.map((km) => ({ value: km, label: `${km} km` })),
+]
 
-/** A última distância escolhida neste aparelho. O navegador pode bloquear o armazenamento: aí não há. */
-export const readStoredDistance = (): SearchDistance | null => {
-  try {
-    return parseDistance(localStorage.getItem(DISTANCE_STORAGE_KEY))
-  } catch {
-    return null
-  }
+/**
+ * Quem cede quando a URL e o seletor divergem na tela de busca (7CF). A URL vence quando foi ela que mudou — link
+ * aberto, voltar no histórico — e o seletor recebe o valor dela (`take-url`). Se foi o seletor que mudou (a pessoa
+ * tocou num chip lá), a URL é que se atualiza (`write-url`), também quando ainda não tinha distância. Iguais,
+ * nada a fazer.
+ */
+export const distanceSync = (
+  previous: { url: SearchDistance | null; picker: SearchDistance },
+  next: { url: SearchDistance | null; picker: SearchDistance },
+): 'none' | 'take-url' | 'write-url' => {
+  const pickerChanged = next.picker !== previous.picker
+  if (next.url === null) return pickerChanged ? 'write-url' : 'none'
+  if (next.url === next.picker) return 'none'
+  const urlChanged = next.url !== previous.url
+  return pickerChanged && !urlChanged ? 'write-url' : 'take-url'
 }
 
-export const storeDistance = (distance: SearchDistance) => {
-  try {
-    localStorage.setItem(DISTANCE_STORAGE_KEY, String(distance))
-  } catch {
-    // Sem armazenamento, a distância vale só pela URL.
-  }
-}
+/** O chip da busca que reabre o seletor: "Cidade: Garça", "Até 5 km". */
+export const distanceChipLabel = (distance: SearchDistance, city: string | null | undefined) =>
+  distance === 'city' ? (city ? `Cidade: ${city}` : 'Cidade') : `Até ${distance} km`

@@ -1,3 +1,5 @@
+import type { SearchDistance } from '@lib/api/search'
+
 /** De onde veio a referência da busca. */
 export type LocationSource = 'device' | 'postal-code' | 'search' | 'demo'
 
@@ -20,6 +22,9 @@ export type ChosenLocation = {
 
 export type LocationState = {
   location: ChosenLocation | null
+  /** Distância da busca (7CF), escolhida no mesmo seletor e guardada junto do endereço. Padrão: Cidade. */
+  distance: SearchDistance
+  setDistance: (distance: SearchDistance) => void
   setLocation: (location: ChosenLocation) => void
   clearLocation: () => void
   /** O seletor é um só, montado na moldura; a barra e a Home só pedem para abrir. */

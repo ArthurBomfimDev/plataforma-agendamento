@@ -2,6 +2,8 @@ import { ChevronRight, Hash, LocateFixed, MapPin, Search, TriangleAlert } from '
 import { formatDistance, formatPostalCode, postalCodeDigits } from './consts'
 
 import { Button } from '@components/button'
+import { DISTANCE_OPTIONS } from '@lib/api/search'
+import { FilterChip } from '@components/filter-chip'
 import type { LocationPickerPanelProps } from './types'
 import type { ReactNode } from 'react'
 import { TextField } from '@components/text-field'
@@ -72,6 +74,8 @@ export const LocationPickerPanel = (props: LocationPickerPanelProps) => {
     onUsePostalCodeMatch,
     onSubmitSearch,
     onPickResult,
+    distance,
+    onDistance,
   } = props
 
   const [postalCode, setPostalCode] = useState('')
@@ -86,6 +90,29 @@ export const LocationPickerPanel = (props: LocationPickerPanelProps) => {
           <p className="type-caption text-(--text-muted)">
             Agora: <span className="text-(--text-strong)">{current.label}</span>
           </p>
+        )}
+        {distance && (
+          // Endereço e distância são uma escolha só (7CF, como no iFood): o chip muda na hora, sem fechar.
+          <div
+            role="group"
+            aria-label="Distância da busca"
+            className="flex flex-col gap-(--space-8)"
+          >
+            <p className="type-label text-(--text-body)">Distância</p>
+            <div className="flex flex-wrap gap-(--space-8)">
+              {DISTANCE_OPTIONS.map((option) => (
+                <FilterChip
+                  key={option.value}
+                  selected={distance === option.value}
+                  onClick={() => onDistance?.(option.value)}
+                >
+                  {option.value === 'city' && current?.city
+                    ? `Cidade (${current.city})`
+                    : option.label}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
         )}
         <ul className="flex flex-col gap-(--space-4)">
           <Option

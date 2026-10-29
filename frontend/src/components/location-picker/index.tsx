@@ -34,6 +34,8 @@ export const LocationPicker = () => {
   const closePicker = useLocationStore((state) => state.closePicker)
   const current = useLocationStore((state) => state.location)
   const setLocation = useLocationStore((state) => state.setLocation)
+  const distance = useLocationStore((state) => state.distance)
+  const setDistance = useLocationStore((state) => state.setDistance)
   const device = useGeolocation()
 
   const [step, setStep] = useState<PickerStep>('menu')
@@ -182,6 +184,8 @@ export const LocationPicker = () => {
             onSubmitPostalCode={(postalCode) => void submitPostalCode(postalCode)}
             onUsePostalCodeMatch={() => postalCodeMatch && choose(postalCodeMatch)}
             onSubmitSearch={(text) => void submitSearch(text)}
+            distance={distance}
+            onDistance={setDistance}
             onPickResult={(place) =>
               choose({
                 label: place.label,

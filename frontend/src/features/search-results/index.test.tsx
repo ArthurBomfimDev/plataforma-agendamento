@@ -69,7 +69,7 @@ describe('SearchResultsScreen', () => {
       filters: { ...EMPTY_SEARCH, maxPriceCents: 10_000, sortBy: 'price', distance: 5 },
     })
 
-    expect(page).toMatch(/aria-pressed="true"[^>]*>5 km/)
+    expect(page).toContain('Até 5 km')
     expect(page).toMatch(/aria-pressed="true"[^>]*>Até R\$ 100/)
     expect(page).toMatch(/aria-pressed="true"[^>]*>Menor preço/)
     expect(page).toMatch(/aria-pressed="false"[^>]*>Mais perto/)
@@ -103,19 +103,15 @@ describe('SearchResultsScreen', () => {
     expect(html()).toContain('role="search"')
   })
 
-  it('distância: Cidade e 1, 2, 5, 10 e 20 km, com Cidade marcada por padrão', () => {
-    const page = html()
-    const options = [...page.matchAll(/aria-label="Distância".*?<\/div>/gs)][0]![0]
+  it('a distância é só um chip que reabre o seletor de endereço, sem controle duplicado (7CF)', () => {
+    const page = html({ filters: { ...EMPTY_SEARCH, distance: 5 } })
 
-    expect([...options.matchAll(/>([^<]+)<\/button>/g)].map(([, label]) => label)).toEqual([
-      'Cidade',
-      '1 km',
-      '2 km',
-      '5 km',
-      '10 km',
-      '20 km',
-    ])
-    expect(page).toMatch(/aria-pressed="true"[^>]*>Cidade/)
+    expect(page).toContain('Até 5 km')
+    expect(page).toMatch(/aria-haspopup="dialog"[^>]*aria-label="Distância: Até 5 km\. Trocar/)
+    expect(page).not.toContain('aria-label="Distância"')
+    // Os outros raios ficam no seletor; o "20 km" que aparece é o do estado vazio ("Ampliar para 20 km").
+    for (const other of ['>1 km<', '>2 km<', '>10 km<']) expect(page).not.toContain(other)
+    expect(html()).toContain('Cidade: Garça')
   })
 
   it('em Cidade sem cidade conhecida, avisa que busca a até 20 km', () => {

@@ -1,16 +1,9 @@
 import {
   MAX_SEARCH_RADIUS_KM,
-  SEARCH_RADII,
   type SearchCategory,
   type SearchDistance,
   type SearchFilters,
 } from '@lib/api/search'
-
-/** O controle de distância (Onda 7C): Cidade primeiro, que é o padrão, e os raios em ordem. */
-export const DISTANCE_OPTIONS: ReadonlyArray<{ value: SearchDistance; label: string }> = [
-  { value: 'city', label: 'Cidade' },
-  ...SEARCH_RADII.map((km) => ({ value: km, label: `${km} km` })),
-]
 
 /** Termo, categoria ou preço máximo aplicados: o que "Limpar filtros" tira. */
 export const hasNarrowingFilters = (filters: SearchFilters) =>

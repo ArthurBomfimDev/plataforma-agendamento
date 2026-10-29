@@ -12,7 +12,9 @@ import { useSearchBusinesses } from '@lib/api/queries'
 export const HomeRoute = () => {
   const location = useLocationStore((state) => state.location)
   const openPicker = useLocationStore((state) => state.openPicker)
-  const search = useSearchBusinesses(location)
+  // A mesma distância do seletor de endereço (7CF): a Home e a busca mostram o mesmo recorte.
+  const distance = useLocationStore((state) => state.distance)
+  const search = useSearchBusinesses(location, { distance })
 
   const nearby: HomeNearby = !location
     ? { status: 'no-location' }

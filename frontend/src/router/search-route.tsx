@@ -1,5 +1,6 @@
 import { ROUTES, businessPath, readSearchFilters, searchPath } from './consts'
-import { type SearchFilters, readStoredDistance, storeDistance } from '@lib/api/search'
+import { type SearchFilters, distanceSync, parseDistance } from '@lib/api/search'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { SearchResultsScreen } from '@features/search-results'
@@ -7,26 +8,36 @@ import type { SearchResultsState } from '@features/search-results/types'
 import { errorMessage } from '@lib/api/errors'
 import { toSearchResult } from './adapters'
 import { useLocationStore } from '@lib/zustand/location'
-import { useEffect } from 'react'
 import { useSearchBusinesses } from '@lib/api/queries'
 
 /**
  * `#/search?term=&category=&maxPrice=&sort=&radius=` (Onda 6C). Os filtros moram na URL: voltar no histórico
  * desfaz um filtro, e o link pode ser compartilhado. Nada pessoal vai nela — a localização fica no aparelho.
  *
- * Distância (Onda 7C): a da URL vence e passa a ser a lembrada no aparelho; sem ela na URL, vale a lembrada.
+ * Distância (7CF): escolhida no seletor de endereço e guardada com ele; a tela só a lê e mostra num chip que
+ * reabre o seletor. Na URL também; quando as duas divergem, `distanceSync` decide quem cede.
  */
 export const SearchRoute = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const filters = readSearchFilters(searchParams, readStoredDistance())
-  const urlDistance = searchParams.get('radius')
   const location = useLocationStore((state) => state.location)
+  const pickerDistance = useLocationStore((state) => state.distance)
+  const setDistance = useLocationStore((state) => state.setDistance)
+  const urlDistance = parseDistance(searchParams.get('radius'))
+  const filters = readSearchFilters(searchParams, pickerDistance)
 
-  // A URL vence: um link com distância (compartilhado, ou o voltar do histórico) passa a ser a lembrada.
+  const previous = useRef({ url: urlDistance, picker: pickerDistance })
   useEffect(() => {
-    if (urlDistance !== null) storeDistance(filters.distance)
-  }, [urlDistance, filters.distance])
+    const next = { url: urlDistance, picker: pickerDistance }
+    const action = distanceSync(previous.current, next)
+    previous.current = next
+    if (action === 'take-url' && urlDistance !== null) setDistance(urlDistance)
+    if (action === 'write-url') {
+      navigate(searchPath({ ...readSearchFilters(searchParams), distance: pickerDistance }), {
+        replace: true,
+      })
+    }
+  }, [urlDistance, pickerDistance, setDistance, navigate, searchParams])
   const openPicker = useLocationStore((state) => state.openPicker)
   const search = useSearchBusinesses(location, filters)
 
