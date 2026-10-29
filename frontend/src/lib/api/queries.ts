@@ -8,6 +8,7 @@ import {
   panelApi,
 } from './endpoints'
 import type {
+  AppointmentResponse,
   CounterAppointmentRequest,
   RequestAppointmentRequest,
   UserBusinessResponse,
@@ -53,6 +54,8 @@ export const queryKeys = {
   panel: (businessId: string) => ['panel', businessId] as const,
   panelAgenda: (businessId: string, date: string) => ['panel', businessId, 'agenda', date] as const,
   panelPending: (businessId: string) => ['panel', businessId, 'pending'] as const,
+  panelAgendaRange: (businessId: string, from: string, to: string) =>
+    ['panel', businessId, 'agenda-range', from, to] as const,
   panelBusiness: (businessId: string) => ['panel', businessId, 'business'] as const,
   panelProfessionals: (businessId: string) => ['panel', businessId, 'professionals'] as const,
   panelSchedules: (businessId: string, professionalId: string) =>
@@ -393,6 +396,31 @@ export const usePanelAgenda = (businessId: string, date: string) =>
   useQuery({
     queryKey: queryKeys.panelAgenda(businessId, date),
     queryFn: async () => (await panelApi.agenda(date)).items,
+    refetchInterval: PANEL_REFRESH_MS,
+  })
+
+/**
+ * Agenda de um período (semana ou mês, Onda 7CF). A API devolve até 100 por página; aqui busca as páginas até
+ * completar, com teto de 10 (1.000 agendamentos), que um mês de um estabelecimento pequeno não alcança.
+ */
+export const usePanelAgendaRange = (
+  businessId: string,
+  from: string,
+  to: string,
+  enabled: boolean,
+) =>
+  useQuery({
+    queryKey: queryKeys.panelAgendaRange(businessId, from, to),
+    queryFn: async () => {
+      const items: AppointmentResponse[] = []
+      for (let page = 1; page <= 10; page++) {
+        const result = await panelApi.agendaRange(from, to, page)
+        items.push(...result.items)
+        if (items.length >= result.totalCount || result.items.length === 0) break
+      }
+      return items
+    },
+    enabled,
     refetchInterval: PANEL_REFRESH_MS,
   })
 

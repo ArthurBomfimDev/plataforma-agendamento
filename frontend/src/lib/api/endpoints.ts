@@ -94,6 +94,12 @@ export const panelApi = {
       `${panel}/appointments?${query({ date, pageSize: 100 })}`,
       { auth: true },
     ),
+  /** Semana e mês (7CF): de `date` a `to`, inclusivo, até 42 dias. */
+  agendaRange: (from: string, to: string, page: number) =>
+    api<PagedResult<AppointmentResponse>>(
+      `${panel}/appointments?${query({ date: from, to, page, pageSize: 100 })}`,
+      { auth: true },
+    ),
   pending: (professionalId?: string) =>
     api<PagedResult<AppointmentResponse>>(
       `${panel}/appointments/pending?${query({ professionalId, pageSize: 50 })}`,
