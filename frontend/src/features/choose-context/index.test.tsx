@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ChooseContextScreen } from '.'
 import type { ChooseContextScreenProps } from './types'
-import { contextItems } from '@router/use-account-menu'
+import { accountTriggerLabel, contextItems } from '@router/use-account-menu'
 import { renderToString } from 'react-dom/server'
 
 const render = (overrides: Partial<ChooseContextScreenProps> = {}) =>
@@ -73,5 +73,48 @@ describe('ChooseContextScreen', () => {
     )
 
     expect(items.map(({ id }) => id)).toEqual(['b1'])
+  })
+
+  it('com um contexto só, não mostra a escolha nem o rótulo de papel (7CF)', () => {
+    const html = render({ items: contextItems({ hasCustomerProfile: true, businesses: [] }, null) })
+
+    expect(html).toContain('Joana Dona')
+    expect(html).not.toContain('Entrar como')
+    expect(html).not.toContain('Consumidor')
+    expect(html).toContain('Sair')
+  })
+})
+
+describe('rótulo do botão da conta', () => {
+  const owner = { businessId: 'b1', name: 'Estúdio Duartina', role: 'Owner' as const }
+
+  it('com um papel só, o nome da pessoa', () => {
+    expect(
+      accountTriggerLabel(
+        { fullName: 'Ana Consumidora', hasCustomerProfile: true, businesses: [] },
+        null,
+        null,
+      ),
+    ).toBe('Ana Consumidora')
+    expect(
+      accountTriggerLabel(
+        { fullName: 'Joana Dona', hasCustomerProfile: false, businesses: [owner] },
+        'b1',
+        'Estúdio Duartina',
+      ),
+    ).toBe('Joana Dona')
+  })
+
+  it('com mais de um contexto, o contexto atual, que é o que se troca', () => {
+    const both = { fullName: 'Joana Dona', hasCustomerProfile: true, businesses: [owner] }
+
+    expect(accountTriggerLabel(both, null, null)).toBe('Consumidor')
+    expect(accountTriggerLabel(both, 'b1', 'Estúdio Duartina')).toBe('Painel: Estúdio Duartina')
+  })
+
+  it('antes de a conta carregar, o contexto da sessão', () => {
+    expect(accountTriggerLabel(undefined, 'b1', 'Estúdio Duartina')).toBe(
+      'Painel: Estúdio Duartina',
+    )
   })
 })

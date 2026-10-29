@@ -50,7 +50,8 @@ export const ChooseContextScreen = (props: ChooseContextScreenProps) => {
           <ErrorState message={props.errorMessage ?? ''} onRetry={props.onRetry} />
         )}
 
-        {status === 'ready' && items.length > 0 && (
+        {/* Com um contexto só não há o que escolher (7CF): a tela fica com o nome e o "Sair". */}
+        {status === 'ready' && items.length > 1 && (
           <section aria-labelledby="choose-context-title" className="flex flex-col gap-(--space-8)">
             <h2 id="choose-context-title" className="type-label text-(--text-muted)">
               Entrar como

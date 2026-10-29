@@ -29,6 +29,22 @@ export const contextItems = (
 ]
 
 /**
+ * Rótulo do botão da conta (7CF): com mais de um contexto, o contexto atual ("Consumidor", "Painel: X"), que é o
+ * que a pessoa troca; com um só, o nome dela — um papel sem alternativa não diz nada. Sem a conta carregada
+ * ainda, o contexto da sessão.
+ */
+export const accountTriggerLabel = (
+  me: Pick<CurrentUserResponse, 'fullName' | 'hasCustomerProfile' | 'businesses'> | undefined,
+  currentBusinessId: string | null,
+  currentBusinessName: string | null,
+) => {
+  if (!me) return contextLabel(currentBusinessName)
+  return contextItems(me, currentBusinessId).length > 1
+    ? contextLabel(currentBusinessName)
+    : me.fullName
+}
+
+/**
  * Troca de contexto e sair, para a barra superior, a lateral do painel e a tela de conta. Escolher
  * um painel abre os pedidos; escolher consumidor volta para a Home.
  */
@@ -76,7 +92,7 @@ export const useAccountMenu = (): AccountMenuProps | null => {
 
   const currentBusinessId = context?.businessId ?? null
   return {
-    currentLabel: contextLabel(context?.businessName ?? null),
+    currentLabel: accountTriggerLabel(me.data, currentBusinessId, context?.businessName ?? null),
     items: me.data ? contextItems(me.data, currentBusinessId) : [],
     onSelect: choose,
     onSignOut: leave,
