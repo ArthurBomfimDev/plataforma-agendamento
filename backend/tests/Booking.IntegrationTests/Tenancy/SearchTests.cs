@@ -109,6 +109,38 @@ public sealed class SearchTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task H7_cabelo_with_any_case_or_accent_and_corte_find_the_same_business()
+    {
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness haircut = await _world.NewBusinessAsync(1, [new ServiceSpec(30, Name: "Corte masculino")], location: here);
+        await _world.NewBusinessAsync(1, [new ServiceSpec(45, Name: "Manicure")], location: here.North(100));
+
+        foreach (string term in new[] { "cabelo", "Cabelo", "cabêlo", "CABELOS", "corte", "CÔRTE" })
+        {
+            BusinessSearchItemResponse found = Assert.Single((await SearchAsync(here, $"&term={Uri.EscapeDataString(term)}")).Items);
+            Assert.Equal(haircut.Id, found.Id);
+            Assert.Equal("Corte masculino", found.ServiceName);
+        }
+    }
+
+    [Fact]
+    public async Task H8_term_matches_synonyms_the_category_name_and_accented_service_names()
+    {
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness nails = await _world.NewBusinessAsync(1, [new ServiceSpec(45, Name: "Pé e mão")], location: here);
+        TestBusiness hair = await _world.NewBusinessAsync(1, [new ServiceSpec(60, Name: "Hidratação")], location: here.North(100));
+        TestBusiness health = await _world.NewBusinessAsync(
+            1, [new ServiceSpec(50, Name: "Sessão de psicoterapia")], category: "Saude", location: here.North(200));
+
+        Assert.Equal(nails.Id, Assert.Single((await SearchAsync(here, "&term=unhas")).Items).Id);
+        Assert.Equal(hair.Id, Assert.Single((await SearchAsync(here, "&term=hidratacao")).Items).Id);
+        Assert.Equal(health.Id, Assert.Single((await SearchAsync(here, "&term=psicologa")).Items).Id);
+        // O nome da categoria também casa, sem acento.
+        Assert.Equal(health.Id, Assert.Single((await SearchAsync(here, "&term=saude")).Items).Id);
+        Assert.Empty((await SearchAsync(here, "&term=tatuagem")).Items);
+    }
+
+    [Fact]
     public async Task H4_invalid_sort_or_category_is_refused()
     {
         TestLocation here = TestLocation.Isolated();
