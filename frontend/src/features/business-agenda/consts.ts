@@ -1,12 +1,13 @@
 import type {
+  AgendaAction,
+  AgendaAppointment,
   AgendaDay,
   AgendaEntry,
-  AgendaMove,
   AgendaProfessional,
   AgendaRow,
   AgendaSummary,
 } from './types'
-import { addDays, format, parse } from 'date-fns'
+import { addDays, differenceInMinutes, format, parse } from 'date-fns'
 
 import { ptBR } from 'date-fns/locale/pt-BR'
 
@@ -28,12 +29,27 @@ export const SLIDE = {
   exit: (direction: number) => ({ x: direction * -40, opacity: 0 }),
 }
 
-/** Indicadores do dia, no topo do desktop. */
+/**
+ * Indicadores do dia, no topo do desktop, somados da agenda. TODO(figma): ocupação e tempo médio de
+ * resposta do wireframe saíram até existir dado medido; entraram confirmados e pendentes do dia.
+ */
 export const summaryCards = (summary: AgendaSummary, pendingRequests: number) => [
   {
-    label: 'Agendamentos hoje',
+    label: 'Agendamentos do dia',
     value: String(summary.appointmentsCount),
-    caption: `${pendingRequests} pendentes`,
+    caption: `${pendingRequests} ${pendingRequests === 1 ? 'pedido pendente' : 'pedidos pendentes'} no total`,
+    captionClassName: 'text-(--status-pending-fg)',
+  },
+  {
+    label: 'Confirmados',
+    value: String(summary.confirmedCount),
+    caption: 'no dia',
+    captionClassName: 'text-(--status-confirmed-fg)',
+  },
+  {
+    label: 'Pendentes',
+    value: String(summary.pendingCount),
+    caption: 'aguardando sua resposta',
     captionClassName: 'text-(--status-pending-fg)',
   },
   {
@@ -41,19 +57,19 @@ export const summaryCards = (summary: AgendaSummary, pendingRequests: number) =>
     value: currencyFormat.format(summary.expectedRevenueCents / 100),
     caption: 'estimativa, não faturamento',
   },
-  {
-    label: 'Ocupação da agenda',
-    value: `${summary.occupancyPercent}%`,
-    caption: `${summary.occupancyDeltaPercent >= 0 ? '+' : ''}${summary.occupancyDeltaPercent}% vs. semana passada`,
-    captionClassName: 'text-(--status-confirmed-fg)',
-  },
-  {
-    label: 'Tempo médio de resposta',
-    value: durationLabel(summary.averageResponseMinutes),
-    // TODO(figma): texto do wireframe; é anotação do TCC, não deveria chegar ao estabelecimento.
-    caption: 'sustenta a hipótese do TCC',
-  },
 ]
+
+/** Itens que ocupam a agenda e entram nos indicadores. */
+export const summarize = (
+  appointments: ReadonlyArray<{ status: AgendaAppointment['status']; priceCents: number }>,
+): AgendaSummary => ({
+  appointmentsCount: appointments.length,
+  confirmedCount: appointments.filter(({ status }) => status === 'confirmed').length,
+  pendingCount: appointments.filter(({ status }) => status === 'pending').length,
+  expectedRevenueCents: appointments
+    .filter(({ status }) => status !== 'no-show')
+    .reduce((sum, { priceCents }) => sum + priceCents, 0),
+})
 
 /** Grade do desktop: 72px por hora, como na tela 09. */
 export const PX_PER_MINUTE = 72 / 60
@@ -182,47 +198,15 @@ export const findAppointment = (day: AgendaDay, id: string) => {
   return null
 }
 
-const withProfessionals = (
-  day: AgendaDay,
-  update: (professional: AgendaProfessional) => AgendaProfessional,
-): AgendaDay => ({ ...day, professionals: day.professionals.map(update) })
+/** Minutos até o pedido expirar, pelo prazo que a API manda. Sem prazo = encerrado. */
+export const minutesToExpire = (entry: AgendaAppointment, now: Date) =>
+  entry.expiresAt ? differenceInMinutes(entry.expiresAt, now) : 0
 
-const answerRequest = (
-  day: AgendaDay,
-  id: string,
-  update: (entries: AgendaEntry[]) => AgendaEntry[],
-) =>
-  withProfessionals(day, (professional) =>
-    professional.entries.some((entry) => entry.id === id)
-      ? {
-          ...professional,
-          pendingRequests: Math.max(0, professional.pendingRequests - 1),
-          entries: update(professional.entries),
-        }
-      : professional,
-  )
-
-export const confirmAppointment = (day: AgendaDay, id: string) =>
-  answerRequest(day, id, (entries) =>
-    entries.map((entry) =>
-      entry.id === id && entry.kind === 'appointment' ? { ...entry, status: 'confirmed' } : entry,
-    ),
-  )
-
-/** Recusado sai da agenda: o horário volta a ficar livre. */
-export const rejectAppointment = (day: AgendaDay, id: string) =>
-  answerRequest(day, id, (entries) => entries.filter((entry) => entry.id !== id))
-
-export const moveAppointment = (day: AgendaDay, move: AgendaMove): AgendaDay => {
-  const found = findAppointment(day, move.entryId)
-  if (!found) return day
-  const moved = { ...found.entry, start: move.start }
-
-  return withProfessionals(day, (professional) => {
-    const entries = professional.entries.filter((entry) => entry.id !== move.entryId)
-    return {
-      ...professional,
-      entries: professional.id === move.professionalId ? [...entries, moved] : entries,
-    }
-  })
+/** Mensagem de sucesso de cada ação, na voz da tela 09. */
+export const ACTION_SUCCESS: Record<AgendaAction, string> = {
+  confirm: 'Agendamento confirmado',
+  reject: 'Pedido recusado. O horário voltou a ficar livre.',
+  cancel: 'Agendamento cancelado. O consumidor será avisado.',
+  complete: 'Atendimento concluído',
+  noShow: 'Falta registrada',
 }

@@ -1,7 +1,7 @@
 import { getSession, useSessionStore } from '@lib/zustand/session'
 
 import { ApiError } from './errors'
-import type { AuthResponse } from './types'
+import type { AuthResponse, ContextTokenResponse } from './types'
 import { apiBaseUrl } from './config'
 
 type RequestOptions = {
@@ -60,8 +60,27 @@ export function refreshAccessToken(): Promise<string | null> {
         body: { refreshToken: session.refreshToken },
       })
       const auth = await parse<AuthResponse>(response)
-      useSessionStore.getState().setSession(auth)
-      return auth.accessToken
+      const store = useSessionStore.getState()
+      store.setSession(auth)
+
+      // O refresh devolve token de consumidor. No painel, pede o contexto de novo; se o vínculo
+      // acabou nesse meio-tempo, a conta volta a ser só consumidor em vez de cair.
+      const context = store.context
+      if (!context) return auth.accessToken
+      try {
+        const switched = await parse<ContextTokenResponse>(
+          await send(
+            '/api/users/me/context',
+            { method: 'POST', body: { businessId: context.businessId } },
+            auth.accessToken,
+          ),
+        )
+        store.setContext(switched.accessToken, switched.accessTokenExpiresAt, context)
+        return switched.accessToken
+      } catch {
+        store.setContext(auth.accessToken, auth.accessTokenExpiresAt, null)
+        return auth.accessToken
+      }
     } catch {
       useSessionStore.getState().clearSession()
       return null

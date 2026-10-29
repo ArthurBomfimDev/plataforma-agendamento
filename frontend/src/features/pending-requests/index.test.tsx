@@ -1,23 +1,40 @@
+import { FIXTURE_EXPIRATION_HOURS, createFixturePendingRequests } from './fixtures'
+import type { PendingRequestsData, PendingRequestsScreenProps } from './types'
 import { describe, expect, it } from 'vitest'
 import { historyLabel, whenLabel } from './consts'
 
 import { PendingRequestsScreen } from '.'
-import { createMockPendingRequests } from './mock'
 import { renderToString } from 'react-dom/server'
 
+const ready = (requests = createFixturePendingRequests()): PendingRequestsData => ({
+  status: 'ready',
+  requests,
+})
+
 // O React separa trechos de texto com `<!-- -->` no HTML do servidor; tiramos para comparar o texto.
-const render = (requests = createMockPendingRequests()) =>
-  renderToString(<PendingRequestsScreen requests={requests} />)
+const render = (overrides: Partial<PendingRequestsScreenProps> = {}) =>
+  renderToString(
+    <PendingRequestsScreen
+      data={ready()}
+      expirationHours={FIXTURE_EXPIRATION_HOURS}
+      autoConfirm={false}
+      {...overrides}
+    />,
+  )
     .replaceAll('<!-- -->', '')
     .replaceAll(' ', ' ')
 
 describe('PendingRequestsScreen', () => {
-  it('conta os pedidos e explica o prazo de resposta', () => {
+  it('conta os pedidos e explica o prazo de resposta da política', () => {
     const html = render()
 
     expect(html).toContain('3 aguardando sua resposta')
     expect(html).toContain('Pedido não respondido em 12 h expira automaticamente')
     expect(html).toContain('Confirmação automática: desligada')
+    expect(render({ expirationHours: 24, autoConfirm: true })).toContain(
+      'Confirmação automática: ligada',
+    )
+    expect(render({ expirationHours: 24 })).toContain('Pedido não respondido em 24 h')
   })
 
   it('mostra serviço, horário, profissional e prazo de cada pedido', () => {
@@ -40,8 +57,27 @@ describe('PendingRequestsScreen', () => {
     expect(html).toContain('Fora do horário')
   })
 
+  it('sem histórico do consumidor na API, não afirma "primeira vez"', () => {
+    const [ana] = createFixturePendingRequests()
+    const html = render({ data: ready([{ ...ana!, customerHistory: undefined }]) })
+
+    expect(html).toContain('Ana Ribeiro')
+    expect(html).not.toContain('Primeira vez neste estabelecimento')
+  })
+
   it('avisa quando não há pedido', () => {
-    expect(render([])).toContain('Nenhum pedido aguardando resposta.')
+    expect(render({ data: ready([]) })).toContain('Nenhum pedido aguardando resposta.')
+  })
+
+  it('mostra o carregando e o erro com "Tentar de novo"', () => {
+    expect(render({ data: { status: 'loading' } })).toContain('Carregando os pedidos…')
+
+    const html = render({
+      data: { status: 'error', message: 'Sem conexão com o servidor.', onRetry: () => undefined },
+    })
+    expect(html).toContain('Sem conexão com o servidor.')
+    expect(html).toContain('Tentar de novo')
+    expect(html).not.toContain('Nenhum pedido aguardando resposta.')
   })
 })
 
@@ -53,8 +89,8 @@ describe('pedidos pendentes', () => {
   })
 
   it('abrevia o dia da semana e o mês como no Figma', () => {
-    const [ana] = createMockPendingRequests()
-    expect(whenLabel({ ...ana, date: '2026-09-12', start: '14:00', durationMinutes: 90 })).toBe(
+    const [ana] = createFixturePendingRequests()
+    expect(whenLabel({ ...ana!, date: '2026-09-12', start: '14:00', durationMinutes: 90 })).toBe(
       'sáb, 12 set · 14:00 — 15:30',
     )
   })

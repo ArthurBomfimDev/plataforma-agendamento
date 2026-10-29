@@ -7,7 +7,15 @@ import type { PanelSidebarProps } from './types'
  * é a `PanelBottomNavigation`.
  */
 export const PanelSidebar = (props: PanelSidebarProps) => {
-  const { businessName, activeSection, pendingRequests, onNavigate } = props
+  const {
+    businessName,
+    activeSection,
+    pendingRequests,
+    onNavigate,
+    hiddenSections = [],
+    footer,
+  } = props
+  const sections = SECTIONS.filter(({ id }) => !hiddenSections.includes(id))
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-(--space-24) overflow-y-auto border-r border-(--border-subtle) bg-(--bg-surface) px-(--space-12) py-(--space-24) lg:flex">
@@ -22,7 +30,7 @@ export const PanelSidebar = (props: PanelSidebarProps) => {
 
       <nav aria-label="Painel do estabelecimento">
         <ul className="flex flex-col gap-(--space-2)">
-          {SECTIONS.map(({ id, label, icon: Icon }) => (
+          {sections.map(({ id, label, icon: Icon }) => (
             <li key={id}>
               <button
                 type="button"
@@ -43,6 +51,8 @@ export const PanelSidebar = (props: PanelSidebarProps) => {
           ))}
         </ul>
       </nav>
+
+      {footer && <div className="mt-auto">{footer}</div>}
     </aside>
   )
 }

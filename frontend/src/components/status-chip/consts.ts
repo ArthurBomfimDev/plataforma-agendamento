@@ -1,4 +1,4 @@
-import { Ban, Check, CheckCheck, Clock, type LucideIcon } from 'lucide-react'
+import { Ban, Check, CheckCheck, Clock, type LucideIcon, UserX } from 'lucide-react'
 import type { AppointmentStatus } from './types'
 
 /**
@@ -32,5 +32,11 @@ export const STATUS: Record<
     label: 'Cancelado',
     icon: Ban,
     className: 'border-transparent bg-(--status-cancelled-bg) text-(--status-cancelled-fg)',
+  },
+  // Painel (Onda 7A): o estabelecimento marca a falta. Ícone próprio, além da cor.
+  'no-show': {
+    label: 'Faltou',
+    icon: UserX,
+    className: 'border-(--status-noshow-fg) bg-(--status-noshow-bg) text-(--status-noshow-fg)',
   },
 }

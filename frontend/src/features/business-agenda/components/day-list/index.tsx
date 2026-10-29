@@ -1,11 +1,10 @@
 import type { AgendaEntry, AgendaRow } from '../../types'
 import { CARD, INTERACTIVE } from './consts'
 import { Clock, Lock, Plus, User } from 'lucide-react'
-import { addHours, differenceInMinutes } from 'date-fns'
-import { buildRows, expiryLabel, freeLabel } from '../../consts'
+import { buildRows, expiryLabel, freeLabel, minutesToExpire } from '../../consts'
 
 import type { DayListProps } from './types'
-import { MOCK_CONFIRMATION_HOURS } from '@features/availability/mock'
+import { STATUS_TEXT } from './consts'
 import { StatusChip } from '@components/status-chip'
 import { cardTitle } from './components/card-title'
 import { cn } from 'cn'
@@ -39,9 +38,7 @@ export const DayList = (props: DayListProps) => {
     }
 
     if (entry.status === 'pending') {
-      const remaining = entry.requestedAt
-        ? differenceInMinutes(addHours(entry.requestedAt, MOCK_CONFIRMATION_HOURS), now)
-        : 0
+      const remaining = minutesToExpire(entry, now)
 
       return (
         <button
@@ -81,8 +78,11 @@ export const DayList = (props: DayListProps) => {
           <User aria-hidden="true" className="size-4 shrink-0 text-(--text-strong)" />,
           entry.serviceName,
           'text-(--text-strong)',
+          entry.status !== 'confirmed' && <StatusChip status={entry.status} className="shrink-0" />,
         )}
-        <p className="type-caption text-(--text-muted)">{entry.customerName} · confirmado</p>
+        <p className="type-caption text-(--text-muted)">
+          {entry.customerName} · {STATUS_TEXT[entry.status]}
+        </p>
       </button>
     )
   }

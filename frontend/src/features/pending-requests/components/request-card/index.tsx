@@ -26,7 +26,7 @@ import { durationLabel, initials } from '@features/business-agenda/consts'
  * O pedido perto de expirar ganha a borda de 2px no tom "urgente".
  */
 export const RequestCard = (props: RequestCardProps) => {
-  const { request, now, onAccept, onReject } = props
+  const { request, now, busy = false, onAccept, onReject } = props
 
   const remaining = remainingMinutes(request, now)
   const urgent = remaining < URGENT_REMAINING_MINUTES
@@ -39,6 +39,7 @@ export const RequestCard = (props: RequestCardProps) => {
         variant="secondary"
         size={size}
         className={cn(size === 'lg' && 'flex-1')}
+        disabled={busy}
         onClick={() => onReject(request)}
       >
         Recusar<span className="sr-only"> pedido de {request.customerName}</span>
@@ -46,6 +47,7 @@ export const RequestCard = (props: RequestCardProps) => {
       <Button
         size={size}
         className={cn(size === 'lg' && 'flex-1')}
+        disabled={busy}
         onClick={() => onAccept(request)}
       >
         Aceitar<span className="sr-only"> pedido de {request.customerName}</span>
@@ -79,9 +81,11 @@ export const RequestCard = (props: RequestCardProps) => {
           <h2 id={titleId} className="type-body truncate text-(--text-strong)">
             {request.customerName}
           </h2>
-          <p className="type-caption text-(--text-muted)">
-            {historyLabel(request.customerHistory)}
-          </p>
+          {request.customerHistory !== undefined && (
+            <p className="type-caption text-(--text-muted)">
+              {historyLabel(request.customerHistory)}
+            </p>
+          )}
         </div>
 
         {/* Desktop (10): marcadores e ações na mesma linha do consumidor. */}

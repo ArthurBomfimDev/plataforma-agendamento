@@ -1,12 +1,30 @@
-import { appointmentsApi, authApi, availabilityApi, businessesApi, customersApi } from './endpoints'
+import {
+  appointmentsApi,
+  authApi,
+  availabilityApi,
+  businessesApi,
+  customersApi,
+  panelApi,
+} from './endpoints'
+import type {
+  CounterAppointmentRequest,
+  RequestAppointmentRequest,
+  UserBusinessResponse,
+} from './types'
+import { EMPTY_SEARCH, type SearchFilters } from './search'
+import { clearPendingProfile, readPendingProfile, savePendingProfile } from './pending-profile'
+import {
+  type Entry,
+  type EntryIntent,
+  chooseEntry,
+  forgetContexts,
+  readLastContext,
+  rememberContext,
+} from './context'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { clearPendingProfile, readPendingProfile, savePendingProfile } from './pending-profile'
-
-import { EMPTY_SEARCH, type SearchFilters } from './search'
-
 import { ApiError } from './errors'
-import type { RequestAppointmentRequest } from './types'
+import type { BusinessContext } from '@lib/zustand/session/types'
 import { useSessionStore } from '@lib/zustand/session'
 
 /** Chaves do cache. Invalidar por prefixo: `['appointments']` derruba todas as listas. */
@@ -27,7 +45,19 @@ export const queryKeys = {
     ['availability', businessId, serviceId, professionalId, 'day', date] as const,
   myAppointments: ['appointments', 'mine'] as const,
   me: ['me'] as const,
+  // O painel inteiro mora sob `['panel', businessId]`: trocar de contexto não mistura estabelecimentos.
+  panel: (businessId: string) => ['panel', businessId] as const,
+  panelAgenda: (businessId: string, date: string) => ['panel', businessId, 'agenda', date] as const,
+  panelPending: (businessId: string) => ['panel', businessId, 'pending'] as const,
+  panelBusiness: (businessId: string) => ['panel', businessId, 'business'] as const,
+  panelProfessionals: (businessId: string) => ['panel', businessId, 'professionals'] as const,
+  panelSchedules: (businessId: string, professionalId: string) =>
+    ['panel', businessId, 'work-schedules', professionalId] as const,
+  panelServices: (businessId: string) => ['panel', businessId, 'services'] as const,
 }
+
+/** A agenda e os pedidos se atualizam sozinhos neste intervalo, sem recarregar a página. */
+export const PANEL_REFRESH_MS = 30_000
 
 /** Busca perto da referência, com os filtros que o backend suporta. Sem referência, não busca. */
 export const useSearchBusinesses = (
@@ -156,7 +186,10 @@ export const useSignIn = () => {
       const auth = await authApi.login(email, password)
       queryClient.removeQueries({ queryKey: ['appointments'] })
       queryClient.removeQueries({ queryKey: queryKeys.me })
+      queryClient.removeQueries({ queryKey: ['panel'] })
       useSessionStore.getState().setSession(auth)
+      // Sessão nova começa como consumidor; o contexto de quem estava antes não vale para ela.
+      useSessionStore.getState().setContext(auth.accessToken, auth.accessTokenExpiresAt, null)
 
       const birthDate = readPendingProfile(email)
       if (birthDate) {
@@ -209,12 +242,147 @@ export const useResetPassword = () =>
       authApi.resetPassword(token, newPassword),
   })
 
+/**
+ * Troca o contexto: painel de um estabelecimento ou consumidor (`null`). Guarda o novo token e lembra
+ * a escolha para a próxima entrada.
+ */
+export const useSwitchContext = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      business,
+    }: {
+      userId: string
+      business: UserBusinessResponse | null
+    }) => {
+      const token = await authApi.switchContext(business?.businessId ?? null)
+      useSessionStore.getState().setContext(
+        token.accessToken,
+        token.accessTokenExpiresAt,
+        business && {
+          businessId: business.businessId,
+          businessName: business.name,
+          role: business.role,
+        },
+      )
+      rememberContext(userId, business?.businessId ?? null)
+      queryClient.removeQueries({ queryKey: ['panel'] })
+      return token
+    },
+  })
+}
+
+/**
+ * Depois de entrar: lê os contextos da conta, decide onde ela entra (`chooseEntry`) e, se for um
+ * painel, já troca o token.
+ */
+export const useEnterAccount = () => {
+  const queryClient = useQueryClient()
+  const switchContext = useSwitchContext()
+  return useMutation({
+    mutationFn: async (intent: EntryIntent): Promise<Entry> => {
+      const me = await queryClient.fetchQuery({ queryKey: queryKeys.me, queryFn: authApi.me })
+      const entry = chooseEntry(me, readLastContext(me.id), intent)
+      if (entry.kind === 'business') {
+        await switchContext.mutateAsync({ userId: me.id, business: entry.business })
+      }
+      return entry
+    },
+  })
+}
+
+/** Contexto de estabelecimento ativo, ou `null` no de consumidor. */
+export const useBusinessContext = () => useSessionStore((state) => state.context)
+
+export const usePanelBusiness = (context: BusinessContext) =>
+  useQuery({
+    queryKey: queryKeys.panelBusiness(context.businessId),
+    // O detalhe completo é só do dono; o profissional lê a vitrine, que tem o fuso e o prazo.
+    queryFn: async () => {
+      if (context.role === 'Owner') {
+        const business = await panelApi.business()
+        return {
+          name: business.name,
+          timeZone: business.policy.timeZone,
+          pendingExpirationHours: business.policy.pendingExpirationHours,
+          autoConfirm: business.policy.autoConfirm,
+        }
+      }
+      const business = await businessesApi.get(context.businessId)
+      return {
+        name: business.name,
+        timeZone: business.timeZone,
+        pendingExpirationHours: business.pendingExpirationHours,
+        autoConfirm: business.autoConfirm,
+      }
+    },
+  })
+
+export const usePanelProfessionals = (businessId: string) =>
+  useQuery({
+    queryKey: queryKeys.panelProfessionals(businessId),
+    queryFn: async () => (await panelApi.professionals()).items.filter(({ isActive }) => isActive),
+  })
+
+export const usePanelWorkSchedules = (businessId: string, professionalIds: string[]) =>
+  useQueries({
+    queries: professionalIds.map((professionalId) => ({
+      queryKey: queryKeys.panelSchedules(businessId, professionalId),
+      queryFn: async () => (await panelApi.workSchedules(professionalId)).items,
+    })),
+  })
+
+export const usePanelAgenda = (businessId: string, date: string) =>
+  useQuery({
+    queryKey: queryKeys.panelAgenda(businessId, date),
+    queryFn: async () => (await panelApi.agenda(date)).items,
+    refetchInterval: PANEL_REFRESH_MS,
+  })
+
+export const usePanelPending = (businessId: string) =>
+  useQuery({
+    queryKey: queryKeys.panelPending(businessId),
+    queryFn: () => panelApi.pending(),
+    refetchInterval: PANEL_REFRESH_MS,
+  })
+
+export const usePanelServices = (businessId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: queryKeys.panelServices(businessId),
+    queryFn: async () => (await panelApi.services()).items,
+    enabled,
+  })
+
+export type PanelAction = 'confirm' | 'reject' | 'cancel' | 'complete' | 'noShow'
+
+/** Uma ação sobre um agendamento. Depois dela, agenda e pedidos são buscados de novo. */
+export const usePanelAction = (businessId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ action, appointmentId }: { action: PanelAction; appointmentId: string }) =>
+      panelApi[action](appointmentId),
+    // Também no erro: um 409 quase sempre quer dizer que a lista na tela está velha.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.panel(businessId) }),
+  })
+}
+
+export const useCounterBooking = (businessId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: CounterAppointmentRequest) => panelApi.counter(request),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.panel(businessId) }),
+  })
+}
+
 export const useSignOut = () => {
   const queryClient = useQueryClient()
   return () => {
     const session = useSessionStore.getState().session
     useSessionStore.getState().clearSession()
+    forgetContexts()
     queryClient.removeQueries({ queryKey: ['appointments'] })
+    queryClient.removeQueries({ queryKey: ['panel'] })
     queryClient.removeQueries({ queryKey: queryKeys.me })
     // Revoga o refresh token no servidor; se falhar, a sessão local já foi encerrada.
     if (session) void authApi.logout(session.refreshToken).catch(() => undefined)

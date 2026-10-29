@@ -31,18 +31,25 @@ import {
   TWO_LINES_MIN_MINUTES,
 } from './consts'
 
-/** Agendamento: abre o detalhe no clique; o confirmado também pode ser arrastado. */
+/**
+ * Agendamento: abre o detalhe no clique. TODO: arrastar para remarcar volta quando o backend tiver
+ * remarcação (Onda 7A: não existe); até lá nenhum bloco é arrastável.
+ */
 const AppointmentBlock = (props: AppointmentBlockProps) => {
   const { entry, preview, onOpen } = props
 
-  const draggable = entry.status === 'confirmed'
+  const draggable = false
   const { listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: entry.id,
     disabled: !draggable,
   })
   const twoLines = entry.durationMinutes >= TWO_LINES_MIN_MINUTES
   const detail =
-    entry.status === 'pending' ? `${entry.customerName} · pendente` : entry.customerName
+    entry.status === 'pending'
+      ? `${entry.customerName} · pendente`
+      : entry.status === 'confirmed'
+        ? entry.customerName
+        : `${entry.customerName} · ${entry.status === 'completed' ? 'concluído' : 'faltou'}`
   const start = isDragging && preview ? toTime(preview.start) : entry.start
 
   return (

@@ -1,32 +1,27 @@
 import type { AgendaDay } from './types'
-import { MOCK_CONFIRMATION_HOURS } from '@features/availability/mock'
 
 /**
- * Dados PROVISÓRIOS, copiados dos wireframes "09 · Painel — Agenda do dia" e "P01 · Painel
- * mobile — Agenda do dia" do Figma. Não são dado real, e os indicadores não são métrica medida.
- * Saem quando existir a consulta da agenda do Business em `src/lib/api`.
+ * Dados SÓ DE TESTE, copiados dos wireframes "09 · Painel — Agenda do dia" e "P01 · Painel
+ * mobile — Agenda do dia" do Figma. A tela recebe a agenda da API (Onda 7A); isto alimenta só os
+ * testes de componente. Não são dado real.
  *
  * Onde os dois frames divergem, vale o do celular (P01), que tem duração e consumidor de cada item.
  */
 
-export const MOCK_BUSINESS = {
-  name: 'Estúdio Duartina',
-  timeZone: 'America/Sao_Paulo',
-} as const
+export const FIXTURE_BUSINESS_NAME = 'Estúdio Duartina'
 
-/** O "hoje" dos wireframes. Os outros dias não têm dados. */
-export const MOCK_AGENDA_DATE = '2026-09-11'
+/** O "hoje" dos wireframes. */
+export const FIXTURE_AGENDA_DATE = '2026-09-11'
 
-const hoursAgo = (now: Date, hours: number) => new Date(now.getTime() - hours * 3_600_000)
+const hoursFrom = (now: Date, hours: number) => new Date(now.getTime() + hours * 3_600_000)
 
-export const createMockAgendaDay = (now = new Date()): AgendaDay => ({
-  date: MOCK_AGENDA_DATE,
+export const createFixtureAgendaDay = (now = new Date()): AgendaDay => ({
+  date: FIXTURE_AGENDA_DATE,
   summary: {
-    appointmentsCount: 18,
+    appointmentsCount: 7,
+    confirmedCount: 5,
+    pendingCount: 2,
     expectedRevenueCents: 124_000,
-    occupancyPercent: 72,
-    occupancyDeltaPercent: 6,
-    averageResponseMinutes: 134,
   },
   professionals: [
     {
@@ -70,8 +65,8 @@ export const createMockAgendaDay = (now = new Date()): AgendaDay => ({
           serviceName: 'Corte + barba',
           customerName: 'Carla Menezes',
           status: 'pending',
-          // Enviado há 5 h: "expira em 7 h", como no wireframe.
-          requestedAt: hoursAgo(now, MOCK_CONFIRMATION_HOURS - 7),
+          // "expira em 7 h", como no wireframe.
+          expiresAt: hoursFrom(now, 7),
         },
       ],
     },
@@ -126,7 +121,7 @@ export const createMockAgendaDay = (now = new Date()): AgendaDay => ({
           // TODO(figma): o wireframe não mostra quem pediu; nome provisório.
           customerName: 'Lucas Pereira',
           status: 'pending',
-          requestedAt: hoursAgo(now, 2),
+          expiresAt: hoursFrom(now, 10),
         },
         {
           kind: 'block',

@@ -21,6 +21,9 @@ export const snapToQuarterHour: Modifier = ({ transform }) => ({
 
 export const ENTRY_CLASSES = {
   confirmed: 'bg-(--bg-inverse) text-(--text-on-inverse)',
+  // Já atendido ou faltou: sai do destaque, mas continua ocupando o horário.
+  completed: 'bg-(--status-completed-bg) text-(--status-completed-fg)',
+  'no-show': 'border border-(--status-noshow-fg) bg-(--status-noshow-bg) text-(--status-noshow-fg)',
   pending:
     'border border-dashed border-(--status-pending-fg) bg-(--bg-surface) text-(--status-pending-fg)',
   block: 'bg-(--bg-surface-raised) text-(--text-muted)',

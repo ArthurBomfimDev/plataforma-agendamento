@@ -37,6 +37,7 @@ describe('toCustomerAppointment', () => {
     customerNotes: null,
     cancellationReason: null,
     cancelledBy: null,
+    requestedAt: '2026-11-01T12:00:00Z',
   }
 
   it('mostra dia e hora no fuso do estabelecimento', () => {

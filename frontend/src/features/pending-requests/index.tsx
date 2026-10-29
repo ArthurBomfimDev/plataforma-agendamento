@@ -2,9 +2,9 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { Ban, Hourglass } from 'lucide-react'
 import { useState } from 'react'
 
+import { ErrorState, LoadingState } from '@components/screen-state'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { ICON_BUTTON } from '@features/business-agenda/consts'
-import { MOCK_CONFIRMATION_HOURS } from '@features/availability/mock'
 import { PANEL_CONTENT_BOTTOM_PADDING } from '@components/panel-bottom-navigation/consts'
 import type { PendingRequest, PendingRequestsScreenProps } from './types'
 import { RequestCard } from './components/request-card'
@@ -12,8 +12,6 @@ import { CARD_MOTION, byDeadline } from './consts'
 import { cn } from 'cn'
 import { toast } from '@lib/toast'
 import { useNow } from '@hooks/use-now'
-
-const AUTO_CONFIRM_LABEL = 'Confirmação automática: desligada'
 
 const NOTICE =
   'type-caption flex items-center gap-(--space-8) rounded-md border border-l-3 border-(--status-pending-fg) bg-(--status-pending-bg) py-(--space-8) pl-(--space-12) text-(--status-pending-fg)'
@@ -25,26 +23,40 @@ const NOTICE =
  * O que expira primeiro vem primeiro. TODO(figma): o desktop (10) lista do mais novo para o mais
  * antigo e o celular (P03), do mais urgente; ficou a ordem do celular nos dois.
  *
- * TODO: aceitar e recusar dependem da API de Scheduling; por enquanto só mudam o estado do painel.
+ * Os pedidos vêm da API pela rota (`panel-requests-route`); aceitar e recusar respondem de verdade.
  */
 export const PendingRequestsScreen = (props: PendingRequestsScreenProps) => {
-  const { requests, onAccept, onReject, onAutoConfirmSettings } = props
+  const { data, expirationHours, autoConfirm, onAccept, onReject, onAutoConfirmSettings } = props
 
   const now = useNow()
   const [rejecting, setRejecting] = useState<PendingRequest | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const requests = data.status === 'ready' ? data.requests : []
   const sorted = requests.toSorted(byDeadline)
-  const subtitle = `${requests.length} aguardando sua resposta`
+  const subtitle =
+    data.status === 'ready' ? `${requests.length} aguardando sua resposta` : 'Pedidos pendentes'
+  const autoConfirmLabel = `Confirmação automática: ${autoConfirm ? 'ligada' : 'desligada'}`
 
-  const accept = (request: PendingRequest) => {
-    onAccept?.(request.id)
-    toast.success(`Pedido de ${request.customerName} aceito. O horário está confirmado.`)
+  const respond = async (request: PendingRequest, answer: typeof onAccept, message: string) => {
+    setBusyId(request.id)
+    try {
+      if (await answer?.(request.id)) toast.success(message)
+    } finally {
+      setBusyId(null)
+    }
   }
+
+  const accept = (request: PendingRequest) =>
+    void respond(
+      request,
+      onAccept,
+      `Pedido de ${request.customerName} aceito. O horário está confirmado.`,
+    )
 
   const reject = () => {
     if (!rejecting) return
-    onReject?.(rejecting.id)
+    void respond(rejecting, onReject, 'Pedido recusado. O horário voltou a ficar livre.')
     setRejecting(null)
-    toast.success('Pedido recusado. O horário voltou a ficar livre.')
   }
 
   return (
@@ -60,7 +72,7 @@ export const PendingRequestsScreen = (props: PendingRequestsScreenProps) => {
             </div>
             <button
               type="button"
-              aria-label={AUTO_CONFIRM_LABEL}
+              aria-label={autoConfirmLabel}
               onClick={onAutoConfirmSettings}
               className={ICON_BUTTON}
             >
@@ -69,8 +81,7 @@ export const PendingRequestsScreen = (props: PendingRequestsScreenProps) => {
           </div>
           <p className={cn(NOTICE, 'pr-(--space-12)')}>
             <Hourglass aria-hidden="true" className="size-4 shrink-0" />
-            Sem resposta em {MOCK_CONFIRMATION_HOURS} h, o pedido expira e o horário volta a ficar
-            livre.
+            Sem resposta em {expirationHours} h, o pedido expira e o horário volta a ficar livre.
           </p>
         </div>
       </header>
@@ -93,16 +104,20 @@ export const PendingRequestsScreen = (props: PendingRequestsScreenProps) => {
             className="type-caption flex min-h-(--size-touch-min) shrink-0 items-center gap-(--space-8) rounded-md border border-(--border-interactive) bg-(--bg-surface) px-(--space-12) py-(--space-8) text-(--text-body) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
           >
             <Ban aria-hidden="true" className="size-4 shrink-0" />
-            {AUTO_CONFIRM_LABEL}
+            {autoConfirmLabel}
           </button>
         </div>
         <p className={cn(NOTICE, 'hidden pr-(--space-16) lg:flex')}>
           <Hourglass aria-hidden="true" className="size-4 shrink-0" />
-          Pedido não respondido em {MOCK_CONFIRMATION_HOURS} h expira automaticamente e o horário
-          volta a ficar livre.
+          Pedido não respondido em {expirationHours} h expira automaticamente e o horário volta a
+          ficar livre.
         </p>
 
-        {sorted.length > 0 ? (
+        {data.status === 'loading' ? (
+          <LoadingState label="Carregando os pedidos…" />
+        ) : data.status === 'error' ? (
+          <ErrorState message={data.message} onRetry={data.onRetry} />
+        ) : sorted.length > 0 ? (
           <ul className="flex flex-col gap-(--space-12)">
             <AnimatePresence>
               {sorted.map((request, index) => (
@@ -119,6 +134,7 @@ export const PendingRequestsScreen = (props: PendingRequestsScreenProps) => {
                   <RequestCard
                     request={request}
                     now={now}
+                    busy={busyId === request.id}
                     onAccept={accept}
                     onReject={setRejecting}
                   />
@@ -127,7 +143,9 @@ export const PendingRequestsScreen = (props: PendingRequestsScreenProps) => {
             </AnimatePresence>
           </ul>
         ) : (
-          <p className="type-body text-(--text-muted)">Nenhum pedido aguardando resposta.</p>
+          <p role="status" className="type-body text-(--text-muted)">
+            Nenhum pedido aguardando resposta.
+          </p>
         )}
       </main>
 
