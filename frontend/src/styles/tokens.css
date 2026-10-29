@@ -206,11 +206,11 @@
   /* Alvo mínimo de toque. Vale para TODO controle, inclusive os densos do painel
      — decisão de paridade mobile, PROJECT-CONTEXT §4.1. Não é sugestão. */
   --size-touch-min: 44px;
+  /* Lido da variável do Figma na tela 09 (painel), variante "iniciais" do Avatar. */
+  --size-avatar-sm: 32px;
   --size-avatar-md: 40px;
   /* Lido da variável do Figma no frame 04D. */
   --size-avatar-lg: 56px;
-  /* TODO(figma): size/avatar-sm (32) aparece no component set "Avatar" como valor de
-     frame; confirmar se existe como variável. */
 
   /* ===========================================================================
    * RAIO

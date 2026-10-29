@@ -80,6 +80,32 @@ describe('AppRoutes', () => {
     expect(renderAt('/forgot-password')).toContain('Esqueci minha senha')
   })
 
+  it('abre a agenda do dia do painel em /panel', () => {
+    const html = renderAt('/panel')
+
+    expect(html).toContain('Agenda de hoje')
+    expect(html).toContain('Painel do estabelecimento')
+    expect(html).toContain('+ Marcação de balcão')
+  })
+
+  it('abre os pedidos pendentes do painel em /panel/requests, na mesma moldura', () => {
+    const html = renderAt('/panel/requests')
+
+    expect(html).toContain('Pedidos pendentes')
+    expect(html).toContain('Painel do estabelecimento')
+    expect(html).not.toContain('Agenda de hoje')
+  })
+
+  it.each([
+    ['/panel', 'Agenda'],
+    ['/panel/requests', 'Pedidos'],
+  ])('marca a seção de %s como atual nas duas navegações', (path, label) => {
+    const current = [...renderAt(path).matchAll(/aria-current="page".*?<\/button>/g)]
+
+    expect(current).toHaveLength(2)
+    for (const [button] of current) expect(button).toContain(label)
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

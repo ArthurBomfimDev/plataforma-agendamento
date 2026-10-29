@@ -7,6 +7,8 @@ import {
 } from '@lib/api/search'
 
 import type { NavigationItemId } from '@components/bottom-navigation/types'
+import type { PanelBottomItem } from '@components/panel-bottom-navigation/types'
+import type { PanelSection } from '@components/panel-sidebar/types'
 
 export const ROUTES = {
   home: '/',
@@ -26,7 +28,17 @@ export const ROUTES = {
   // Os dois caminhos abaixo estão nos e-mails da Onda 5B (contrato §4.1): não mudar sem mudar o e-mail.
   confirmEmail: '/confirmar-email',
   resetPassword: '/redefinir-senha',
+  /** Painel do estabelecimento: agenda do dia (tela 09). */
+  panel: '/panel',
+  /** Painel do estabelecimento: pedidos pendentes (tela 10). */
+  panelRequests: '/panel/requests',
 } as const
+
+/** Destino de cada seção do painel. Sem destino = tela ainda não existe. */
+export const PANEL_PATHS: Partial<Record<PanelSection | PanelBottomItem, string>> = {
+  agenda: ROUTES.panel,
+  requests: ROUTES.panelRequests,
+}
 
 /** Destino de cada aba da navegação inferior. Sem destino = tela ainda não existe. */
 export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {
