@@ -188,6 +188,26 @@ execução e no topo de `scripts/seed-demo.ts`. Pode rodar de novo: conta, CNPJ 
 existem são pulados. Num banco de um seed anterior (contas em `exemplo.com`), recomece do zero com
 `docker compose down -v` para ter os 30.
 
+**Para ver o painel do estabelecimento com dados, rode com `--historico`:** são 60 dias de passado
+e 14 de agenda futura, com pedidos pendentes, para todos os estabelecimentos. O histórico é gravado
+uma vez só, no dia em que roda. Sem `--historico`, os 3 primeiros estabelecimentos (Estúdio Duartina,
+Espaço Helena Unhas, Barbearia do Rogério) ganham uma agenda pequena pela API: duas marcações de
+balcão hoje e dois pedidos da consumidora de demonstração amanhã (pendentes, exceto no Espaço Helena,
+que confirma sozinho). Rodar de novo num dia seguinte cria a agenda daquele dia.
+
+Painel: entre com `dono.duartina@example.com` (senha no fim da execução). Conta só de
+estabelecimento abre direto nos pedidos (`#/panel/requests`).
+
+Conta dona **e** consumidora (o seed não cria): entre com a conta do dono e crie o perfil de
+consumidor pela API, com o token do login (que vem em contexto de consumidor):
+
+```bash
+curl -X POST http://localhost:8081/api/customers/me -H "Authorization: Bearer <accessToken do login>" -H "Content-Type: application/json" -d "{\"birthDate\":\"1985-03-20\",\"socialName\":null}"
+```
+
+Depois disso o menu da conta oferece "Consumidor" e "Painel: Estúdio Duartina". O dono não agenda
+no próprio estabelecimento (409): para ele, é a marcação de balcão.
+
 Testes de carga (k6) dos RNF-01 e RNF-02: `scripts/perf/`, com o passo a passo em
 `docs/tcc/evidencias/rnf-01-busca.md`.
 

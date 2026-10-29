@@ -280,7 +280,12 @@ Decisão de 22/09 (§2.0): conta única com troca de contexto explícita — "Co
 - **Entrada** (`lib/api/context.ts#chooseEntry`): só estabelecimento → `#/panel/requests`; os dois → o último contexto
   usado (`localStorage` `vagoo-last-context`, por conta, com `try/catch`), o painel na primeira vez; vários
   estabelecimentos sem nada lembrado → `#/context`; quem veio de uma tela de consumidor (o `redirect`) volta para ela.
-  "Sou estabelecimento" na tela de entrar pede o painel. Sair esquece o contexto lembrado.
+  "Sou estabelecimento" na tela de entrar pede o painel, e um `redirect` para `#/panel/*` (link do e-mail ao dono)
+  também: depois de entrar, volta para ele. Sair pelo menu esquece o contexto lembrado e leva à Home (a sessão marca
+  `signedOut`, só em memória, para os guards não mandarem a "Entrar"); sessão perdida (refresh recusado) leva a
+  "Entrar" e volta para a tela.
+- **Conta dona e consumidora:** o perfil de consumidor do dono é criado como o de qualquer conta
+  (`POST /api/customers/me`, no contexto de consumidor); o seed não cria essa conta — o README mostra como.
 - **Troca:** `POST /api/users/me/context` e o novo access token vai para a sessão (`lib/zustand/session`, campo
   `context`). O refresh devolve token de consumidor: `client.ts` pede o contexto de novo logo depois; se o vínculo
   acabou, a conta volta a consumidor.
