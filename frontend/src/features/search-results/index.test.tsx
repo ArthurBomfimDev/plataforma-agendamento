@@ -11,6 +11,7 @@ const html = (props: Partial<SearchResultsScreenProps> = {}) =>
       filters={EMPTY_SEARCH}
       results={{ status: 'ready', total: 0, items: [] }}
       locationLabel="Centro, Garça"
+      cityName="Garça"
       {...props}
     />,
   ).replaceAll('<!-- -->', '')
@@ -50,7 +51,6 @@ describe('SearchResultsScreen', () => {
 
     expect(page).not.toContain('Disponível hoje')
     expect(page).not.toContain('4,5+')
-    expect(page).toContain('Até 5 km')
     expect(page).toContain('Até R$ 50')
     expect(page).toContain('Mais perto')
     expect(page).toContain('Menor preço')
@@ -66,10 +66,10 @@ describe('SearchResultsScreen', () => {
 
   it('preço e ordenação ligados refletem a URL', () => {
     const page = html({
-      filters: { ...EMPTY_SEARCH, maxPriceCents: 10_000, sortBy: 'price', radiusKm: 5 },
+      filters: { ...EMPTY_SEARCH, maxPriceCents: 10_000, sortBy: 'price', distance: 5 },
     })
 
-    expect(page).toMatch(/aria-pressed="true"[^>]*>Até 5 km/)
+    expect(page).toMatch(/aria-pressed="true"[^>]*>5 km/)
     expect(page).toMatch(/aria-pressed="true"[^>]*>Até R\$ 100/)
     expect(page).toMatch(/aria-pressed="true"[^>]*>Menor preço/)
     expect(page).toMatch(/aria-pressed="false"[^>]*>Mais perto/)
@@ -101,5 +101,56 @@ describe('SearchResultsScreen', () => {
 
   it('a busca é um formulário de busca', () => {
     expect(html()).toContain('role="search"')
+  })
+
+  it('distância: Cidade e 1, 2, 5, 10 e 20 km, com Cidade marcada por padrão', () => {
+    const page = html()
+    const options = [...page.matchAll(/aria-label="Distância".*?<\/div>/gs)][0]![0]
+
+    expect([...options.matchAll(/>([^<]+)<\/button>/g)].map(([, label]) => label)).toEqual([
+      'Cidade',
+      '1 km',
+      '2 km',
+      '5 km',
+      '10 km',
+      '20 km',
+    ])
+    expect(page).toMatch(/aria-pressed="true"[^>]*>Cidade/)
+  })
+
+  it('em Cidade sem cidade conhecida, avisa que busca a até 20 km', () => {
+    expect(html({ cityName: null })).toContain('Não sabemos a cidade desta localização')
+    expect(html()).not.toContain('Não sabemos a cidade')
+  })
+
+  describe('estado vazio', () => {
+    it('em raio menor que 20 km, oferece ampliar para 20 km', () => {
+      const page = html({ filters: { ...EMPTY_SEARCH, distance: 2 } })
+
+      expect(page).toContain('Nenhum estabelecimento a até 2 km.')
+      expect(page).toContain('Ampliar para 20 km')
+      expect(page).not.toContain('Limpar filtros')
+    })
+
+    it('em 20 km ou em Cidade, com filtro, só oferece limpar os filtros', () => {
+      for (const distance of [20, 'city'] as const) {
+        const page = html({ filters: { ...EMPTY_SEARCH, distance, category: 'Saude' } })
+
+        expect(page).toContain('Limpar filtros')
+        expect(page).toContain('com esses filtros')
+        expect(page).not.toContain('Ampliar para')
+      }
+      expect(html({ filters: { ...EMPTY_SEARCH, term: 'barba' } })).toContain(
+        'Nenhum estabelecimento em Garça com esses filtros.',
+      )
+    })
+
+    it('sem filtro para limpar, oferece trocar a localização, nunca um botão sem efeito', () => {
+      const page = html()
+
+      expect(page).toContain('Nenhum estabelecimento em Garça.')
+      expect(page).toContain('Trocar localização')
+      expect(page).not.toContain('Limpar filtros')
+    })
   })
 })

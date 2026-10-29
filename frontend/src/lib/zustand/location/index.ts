@@ -14,6 +14,8 @@ export const DEMO_LOCATION: ChosenLocation = {
   latitude: -22.213,
   longitude: -49.656,
   source: 'demo',
+  city: 'Garça',
+  state: 'SP',
 }
 
 /**

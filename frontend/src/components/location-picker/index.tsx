@@ -76,12 +76,18 @@ export const LocationPicker = () => {
 
     void geoApi
       .reverse(latitude, longitude)
-      .then((place) => place.label)
-      // Sem rótulo do provedor, a busca ainda funciona com o ponto.
-      .catch(() => 'Sua localização')
-      .then((label) => {
+      // Sem rótulo do provedor, a busca ainda funciona com o ponto (em "Cidade", pelo maior raio).
+      .catch(() => ({ label: 'Sua localização', city: null, state: null }))
+      .then((place) => {
         if (cancelled) return
-        const location: ChosenLocation = { label, latitude, longitude, source: 'device' }
+        const location: ChosenLocation = {
+          label: place.label,
+          latitude,
+          longitude,
+          source: 'device',
+          city: place.city ?? null,
+          state: place.state ?? null,
+        }
         if (accuracyMeters > POOR_ACCURACY_METERS) {
           setPoor({ ...location, lowAccuracy: true })
           setStep('device-poor')
@@ -122,6 +128,9 @@ export const LocationPicker = () => {
             latitude: place.latitude,
             longitude: place.longitude,
             source: 'postal-code',
+            // A cidade do CEP é a dos Correios: mais confiável que a do ponto achado no mapa.
+            city: address.city,
+            state: address.state,
           })
           return
         }
@@ -179,6 +188,8 @@ export const LocationPicker = () => {
                 latitude: place.latitude,
                 longitude: place.longitude,
                 source: 'search',
+                city: place.city ?? null,
+                state: place.state ?? null,
               })
             }
           />

@@ -12,7 +12,7 @@ import type {
   RequestAppointmentRequest,
   UserBusinessResponse,
 } from './types'
-import { EMPTY_SEARCH, type SearchFilters } from './search'
+import { EMPTY_SEARCH, type SearchFilters, searchArea } from './search'
 import { clearPendingProfile, readPendingProfile, savePendingProfile } from './pending-profile'
 import {
   type Entry,
@@ -30,8 +30,11 @@ import { useSessionStore } from '@lib/zustand/session'
 
 /** Chaves do cache. Invalidar por prefixo: `['appointments']` derruba todas as listas. */
 export const queryKeys = {
-  search: (latitude: number, longitude: number, filters: Partial<SearchFilters>) =>
-    ['businesses', 'search', latitude, longitude, { ...EMPTY_SEARCH, ...filters }] as const,
+  search: (
+    latitude: number,
+    longitude: number,
+    filters: Partial<SearchFilters> & { city?: string | null },
+  ) => ['businesses', 'search', latitude, longitude, { ...EMPTY_SEARCH, ...filters }] as const,
   business: (businessId: string) => ['businesses', businessId] as const,
   services: (businessId: string) => ['businesses', businessId, 'services'] as const,
   professionals: (businessId: string) => ['businesses', businessId, 'professionals'] as const,
@@ -62,19 +65,28 @@ export const queryKeys = {
 /** A agenda e os pedidos se atualizam sozinhos neste intervalo, sem recarregar a página. */
 export const PANEL_REFRESH_MS = 30_000
 
-/** Busca perto da referência, com os filtros que o backend suporta. Sem referência, não busca. */
+/**
+ * Busca perto da referência, com os filtros que o backend suporta. Sem referência, não busca. Em "Cidade",
+ * manda a cidade da localização escolhida (`searchArea`).
+ */
 export const useSearchBusinesses = (
-  location: { latitude: number; longitude: number } | null,
+  location: { latitude: number; longitude: number; city?: string | null } | null,
   filters: Partial<SearchFilters> = {},
 ) => {
-  const { term, category, maxPriceCents, sortBy, radiusKm } = { ...EMPTY_SEARCH, ...filters }
+  const { term, category, maxPriceCents, sortBy, distance } = { ...EMPTY_SEARCH, ...filters }
+  const { radiusKm, city } = searchArea(distance, location?.city)
   return useQuery({
-    queryKey: queryKeys.search(location?.latitude ?? 0, location?.longitude ?? 0, filters),
+    queryKey: queryKeys.search(location?.latitude ?? 0, location?.longitude ?? 0, {
+      ...filters,
+      distance,
+      city: city ?? null,
+    }),
     queryFn: () =>
       businessesApi.search({
         latitude: location!.latitude,
         longitude: location!.longitude,
         radiusKm,
+        city,
         term: term ?? undefined,
         category: category ?? undefined,
         maxPriceCents: maxPriceCents ?? undefined,

@@ -8,6 +8,12 @@ export type ChosenLocation = {
   latitude: number
   longitude: number
   source: LocationSource
+  /**
+   * Cidade e sigla da UF do ponto (Onda 7C): a distância "Cidade" da busca usa a cidade. Nulas quando o provedor
+   * não soube, e ausentes numa localização guardada antes da 7C.
+   */
+  city?: string | null
+  state?: string | null
   /** O navegador informou precisão ruim e a pessoa quis usar mesmo assim. */
   lowAccuracy?: boolean
 }
