@@ -53,7 +53,16 @@ export type PublicBusinessResponse = {
   autoConfirm: boolean
   /** IANA, ex. `America/Sao_Paulo`. */
   timeZone: string
+  /** Nulas sem imagem: a tela mostra o padrão visual da categoria. */
+  logo: ImageSet | null
+  cover: ImageSet | null
 }
+
+/**
+ * Uma imagem em três tamanhos WebP (ADR-023): 160, 640 e 1280 px no lado maior. Relativas (`/media/…`) ou
+ * absolutas; quem resolve é `mediaUrl`.
+ */
+export type ImageSet = { small: string; medium: string; large: string }
 
 export type BusinessSearchItemResponse = {
   id: string
@@ -69,6 +78,8 @@ export type BusinessSearchItemResponse = {
   durationMinutes: number | null
   /** "A partir de", em centavos. */
   fromPriceCents: number | null
+  logo: ImageSet | null
+  cover: ImageSet | null
 }
 
 // ---------- Catalog ----------
@@ -91,12 +102,13 @@ export type PublicServiceResponse = {
 
 // ---------- People ----------
 
-/** Sem consentimento do profissional, só o nome vem preenchido. */
+/** Sem consentimento do profissional, só o nome vem preenchido — a foto também vem nula. */
 export type PublicProfessionalResponse = {
   id: string
   displayName: string
   specialty: string | null
   bio: string | null
+  photo: ImageSet | null
 }
 
 export type CustomerResponse = {

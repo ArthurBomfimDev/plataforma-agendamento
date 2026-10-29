@@ -1,3 +1,5 @@
+import type { ImageSet } from '@lib/api/types'
+
 export type SearchResultAvailability = {
   /** Rótulo do dia, por exemplo `Hoje` ou `Amanhã`. */
   dayLabel: string
@@ -12,8 +14,10 @@ export type SearchResultCardProps = {
   /** Preço em centavos, inteiro. */
   priceCents: number
   distanceKm: number
-  /** Sem foto, o card mostra o bloco neutro do wireframe. */
-  imageUrl?: string
+  /** Logotipo ou capa. Sem imagem, a ilustração da categoria (Onda 6D). */
+  image?: ImageSet | null
+  /** `Beleza` ou `Saude`. */
+  category?: string
   /**
    * `null` quando não há horário livre na janela de busca. Ausente (`undefined`) quando a tela não calculou
    * horários — a busca não calcula —, e o card não diz nada sobre eles.

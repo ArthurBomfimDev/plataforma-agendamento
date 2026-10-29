@@ -49,7 +49,7 @@ async function parse<T>(response: Response): Promise<T> {
 // roubo e derruba todas as sessões (rotação com detecção de reuso).
 let refreshing: Promise<string | null> | null = null
 
-function refreshAccessToken(): Promise<string | null> {
+export function refreshAccessToken(): Promise<string | null> {
   const session = getSession()
   if (!session) return Promise.resolve(null)
 

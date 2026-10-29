@@ -30,6 +30,9 @@ export const toHomeEstablishment = (item: BusinessSearchItemResponse): HomeEstab
   distanceKm: item.distanceKm,
   neighborhood: item.district ?? item.city ?? '',
   verified: item.verified,
+  // O card é largo: a capa primeiro; sem capa, o logotipo; sem nenhum, a ilustração da categoria.
+  image: item.cover ?? item.logo,
+  category: item.category,
   // TODO: nota e avaliações dependem do módulo Reputation, ainda sem endpoint público.
 })
 
@@ -39,6 +42,10 @@ export const toSearchResult = (item: BusinessSearchItemResponse): SearchResult =
   distanceKm: item.distanceKm,
   neighborhood: item.district ?? item.city ?? '',
   verified: item.verified,
+  category: item.category,
+  // A miniatura é quadrada: o logotipo primeiro.
+  image: item.logo ?? item.cover,
+  cover: item.cover ?? item.logo,
   service:
     item.serviceName !== null && item.durationMinutes !== null && item.fromPriceCents !== null
       ? {
@@ -56,6 +63,9 @@ export const toBusinessDetail = (
   id: business.id,
   name: business.name,
   verified: business.verified,
+  category: business.category,
+  cover: business.cover,
+  logo: business.logo,
   street: streetLine(business),
   neighborhood: business.address.district ?? business.address.city ?? '',
   confirmationHours: business.pendingExpirationHours,
@@ -71,6 +81,7 @@ export const toProfessional = (professional: PublicProfessionalResponse): Busine
   id: professional.id,
   name: professional.displayName,
   specialty: professional.specialty ?? undefined,
+  photo: professional.photo,
 })
 
 /** Manhã até 12h, tarde até 18h, noite depois — no fuso do estabelecimento. */

@@ -2,7 +2,9 @@ import { Card, CardContent } from '@components/ui/card'
 import { Clock, Hourglass } from 'lucide-react'
 import { NO_AVAILABILITY_MESSAGE, priceFormat, priceWholeFormat } from './consts'
 
+import { BusinessIllustration } from '@global/images/defaults/business-illustration'
 import type { SearchResultCardProps } from './types'
+import { SmartImage } from '@components/smart-image'
 import { TimeSlotChip } from '@components/time-slot-chip'
 import { cn } from 'cn'
 import { distanceFormat } from '@components/card-establishment/consts'
@@ -14,7 +16,8 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
     durationMinutes,
     priceCents,
     distanceKm,
-    imageUrl,
+    image,
+    category,
     availability,
     priceFrom,
     onSelectSlot,
@@ -35,15 +38,16 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
     >
       <CardContent className="flex flex-col gap-(--space-12)">
         <div className="flex items-start gap-(--space-12)">
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={`Foto de ${name}`}
-              className="size-14 shrink-0 rounded-md object-cover"
-            />
-          ) : (
-            <div aria-hidden="true" className="size-14 shrink-0 rounded-md bg-(--bg-disabled)" />
-          )}
+          {/* Logotipo (ou a capa); sem imagem, a ilustração da categoria. Decorativa: o nome está ao lado. */}
+          <SmartImage
+            image={image}
+            alt=""
+            sizes="56px"
+            width={1}
+            height={1}
+            fallback={<BusinessIllustration category={category ?? 'Beleza'} />}
+            className="size-14 shrink-0 rounded-md"
+          />
 
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
             <h2 className="type-body truncate text-(--text-strong)">

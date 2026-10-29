@@ -31,6 +31,11 @@ const MESSAGES: Record<string, string> = {
   'business.not_found': 'Estabelecimento não encontrado.',
   'service.not_found': 'Serviço não encontrado.',
   'appointment.not_found': 'Agendamento não encontrado.',
+  'image.unsupported_type': 'Envie uma imagem JPEG, PNG ou WebP.',
+  'image.too_large': 'A imagem passa de 5 MB. Escolha uma menor.',
+  'image.dimensions_too_large': 'A imagem é grande demais (mais de 6000 px de lado).',
+  'image.unreadable': 'Não conseguimos ler essa imagem. Tente outro arquivo.',
+  'image.empty': 'Escolha uma imagem para enviar.',
   'geo.postal_code_invalid': 'Informe um CEP com 8 dígitos.',
   'postal_code.not_found': 'Não encontramos esse CEP.',
   'geo.query_invalid': 'Digite pelo menos 3 letras.',
@@ -45,6 +50,7 @@ export const errorMessage = (error: unknown): string => {
     if (error.code && MESSAGES[error.code]) return MESSAGES[error.code]!
     if (error.status === 0) return 'Sem conexão com o servidor. Tente de novo.'
     if (error.status === 429) return 'Muitas tentativas. Aguarde um minuto e tente de novo.'
+    if (error.status === 413) return 'A imagem passa de 5 MB. Escolha uma menor.'
     if (error.status === 409) return 'Esse horário acabou de ser ocupado. Escolha outro.'
   }
   return 'Algo deu errado. Tente de novo.'

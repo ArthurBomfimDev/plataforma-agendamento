@@ -1,3 +1,4 @@
+import type { ImageSet } from '@lib/api/types'
 import type { ServiceCardProps } from '@components/service-card/types'
 
 export type BusinessService = Pick<ServiceCardProps, 'name' | 'durationMinutes' | 'priceCents'> & {
@@ -17,8 +18,12 @@ export type BusinessDetail = {
   distanceKm?: number
   /** Horário de fechamento de hoje, já formatado no fuso do estabelecimento. Ausente = não exibe. */
   openUntil?: string
-  /** Sem foto, a tela mostra o bloco neutro do wireframe. */
-  coverUrl?: string
+  /** `Beleza` ou `Saude`: escolhe a ilustração padrão quando não há capa. */
+  category: string
+  /** Sem capa, a tela mostra a ilustração da categoria (Onda 6D). */
+  cover?: ImageSet | null
+  /** Sem logotipo, nada aparece ao lado do nome. */
+  logo?: ImageSet | null
   /** Em quantas horas o estabelecimento confirma ou recusa um pedido. */
   confirmationHours: number
   services: BusinessService[]
