@@ -1,5 +1,6 @@
 using System.Net;
 using Booking.Arguments.Module.Scheduling;
+using Booking.Domain.DomainService.Module.Availability;
 using Booking.Domain.Entity.Base;
 using Booking.IntegrationTests.Infrastructure;
 
@@ -15,6 +16,44 @@ public sealed class BusinessPanelTests(IntegrationFixture fixture)
     private readonly TestWorld _world = new(fixture);
 
     private static string Day => TestCalendar.BookableDay.ToString("yyyy-MM-dd");
+
+    [Fact]
+    public async Task J5_agenda_range_brings_the_week_and_refuses_inverted_or_too_long_ranges()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
+        TestUser customer = await _world.NewCustomerAsync();
+        // Uma semana depois, fora de feriado: a jornada de teste cobre todos os dias.
+        DateOnly later = TestCalendar.BookableDay.AddDays(7);
+        while (BrazilianHolidays.IsHoliday(later))
+        {
+            later = later.AddDays(1);
+        }
+
+        TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(TestWorld.TimeZone);
+        DateTime laterLocal = later.ToDateTime(new TimeOnly(10, 0));
+        DateTimeOffset laterAt = new DateTimeOffset(laterLocal, zone.GetUtcOffset(laterLocal)).ToUniversalTime();
+
+        AppointmentResponse first = await _world.BookAsync(customer, business, business.Services[0], business.ProfessionalIds[0], TestCalendar.At(9));
+        AppointmentResponse second = await _world.BookAsync(customer, business, business.Services[0], business.ProfessionalIds[0], laterAt);
+
+        string Url(DateOnly from, DateOnly to) => $"/api/businesses/current/appointments?date={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}";
+
+        PagedResult<AppointmentResponse> range = await _world.SendOkAsync<PagedResult<AppointmentResponse>>(
+            HttpMethod.Get, Url(TestCalendar.BookableDay, later), null, business.OwnerToken);
+        Assert.Equal(new[] { first.Id, second.Id }.Order(), range.Items.Select(a => a.Id).Order());
+
+        // Sem `to`, continua sendo um dia só.
+        PagedResult<AppointmentResponse> day = await _world.SendOkAsync<PagedResult<AppointmentResponse>>(
+            HttpMethod.Get, $"/api/businesses/current/appointments?date={Day}", null, business.OwnerToken);
+        Assert.Equal(first.Id, Assert.Single(day.Items).Id);
+
+        foreach (string url in new[] { Url(later, TestCalendar.BookableDay), Url(TestCalendar.BookableDay, TestCalendar.BookableDay.AddDays(42)) })
+        {
+            using HttpResponseMessage response = await _world.SendAsync(HttpMethod.Get, url, null, business.OwnerToken);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("agenda.range_invalid", await TestWorld.ErrorCodeAsync(response));
+        }
+    }
 
     [Fact]
     public async Task J1_owner_sees_the_customer_name_social_name_first_and_requested_at()
