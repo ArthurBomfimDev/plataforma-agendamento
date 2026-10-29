@@ -32,6 +32,8 @@ export const ROUTES = {
   panel: '/panel',
   /** Painel do estabelecimento: pedidos pendentes (tela 10). */
   panelRequests: '/panel/requests',
+  /** Painel do estabelecimento: cadastro de serviço (tela 11). Ainda não há lista de serviços. */
+  panelNewService: '/panel/services/new',
   /**
    * Conta e troca de contexto (Onda 7A): "Consumidor" ou o painel de cada estabelecimento, e sair.
    * Também é a escolha depois de entrar, para quem tem mais de um estabelecimento.
@@ -47,6 +49,7 @@ export const ROUTES = {
 export const PANEL_PATHS: Partial<Record<PanelSection | PanelBottomItem, string>> = {
   agenda: ROUTES.panel,
   requests: ROUTES.panelRequests,
+  services: ROUTES.panelNewService,
   // No celular, "Mais" leva à conta: trocar de contexto e sair. As outras seções ainda não têm tela.
   more: ROUTES.chooseContext,
 }

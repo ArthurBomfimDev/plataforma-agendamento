@@ -101,6 +101,20 @@ describe('AppRoutes', () => {
     expect(renderAt('/context')).not.toContain('Sua conta')
   })
 
+  it('abre o cadastro de serviço em /panel/services/new, com Serviços atual na lateral', () => {
+    const html = renderAt('/panel/services/new')
+    const current = [...html.matchAll(/aria-current="page".*?<\/button>/g)].map(
+      ([button]) => button,
+    )
+
+    expect(html).toContain('Novo serviço')
+    expect(html).toContain('Painel do estabelecimento')
+    // Serviços não tem aba no celular: lá ele mora em "Mais".
+    expect(current).toHaveLength(2)
+    expect(current[0]).toContain('Serviços')
+    expect(current[1]).toContain('Mais')
+  })
+
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

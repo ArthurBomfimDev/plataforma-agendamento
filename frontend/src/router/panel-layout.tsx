@@ -52,7 +52,7 @@ const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests', 'rep
  * porque o contador das duas navegações depende deles; a marcação de balcão também, porque o botão
  * do celular fica na navegação inferior.
  *
- * TODO: as outras seções (Serviços, Profissionais, Relatórios…) ainda não têm tela e avisam.
+ * TODO: as outras seções (Profissionais, Relatórios…) ainda não têm tela e avisam.
  */
 export const PanelLayout = () => {
   const signedIn = useSessionStore((state) => state.session !== null)
