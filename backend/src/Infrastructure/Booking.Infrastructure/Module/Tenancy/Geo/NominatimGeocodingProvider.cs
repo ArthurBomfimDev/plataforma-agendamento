@@ -44,7 +44,7 @@ public sealed class NominatimGeocodingProvider(HttpClient http, NominatimThrottl
         return places;
     }
 
-    public async Task<string?> ReverseAsync(double latitude, double longitude, CancellationToken ct = default)
+    public async Task<GeoArea?> ReverseAsync(double latitude, double longitude, CancellationToken ct = default)
     {
         // Arredondado de novo aqui: o adaptador não confia em quem chama para proteger a coordenada.
         string lat = GeoPrivacy.Round(latitude).ToString("0.###", CultureInfo.InvariantCulture);
@@ -70,7 +70,8 @@ public sealed class NominatimGeocodingProvider(HttpClient http, NominatimThrottl
             return null;
         }
 
-        return ReverseLabel(new NominatimAddress(address));
+        var parsed = new NominatimAddress(address);
+        return ReverseLabel(parsed) is { } label ? new GeoArea(label, parsed.City, parsed.State) : null;
     }
 
     private string ContactParameter() =>
@@ -97,7 +98,7 @@ public sealed class NominatimGeocodingProvider(HttpClient http, NominatimThrottl
             return false;
         }
 
-        place = new GeoPlace(label, latitude, longitude, precision);
+        place = new GeoPlace(label, latitude, longitude, precision, address.City, address.State);
         return true;
     }
 
