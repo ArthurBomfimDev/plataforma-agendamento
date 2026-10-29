@@ -32,6 +32,8 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `GET /api/businesses/current/work-schedules?professionalId=` | `panelApi.workSchedules` | ✅ desde a 7A |
 | `GET /api/businesses/current/services` | `panelApi.services` (marcação de balcão) | ✅ desde a 7A |
 | `GET /api/businesses/current/appointments?date=` | `panelApi.agenda` | ✅ desde a 7A |
+| `PUT /api/users/me` (novo na 7CF) | `authApi.updateMe` (só o nome) | ✅ — `user.full_name_required` se vazio (teste U1) |
+| `POST /api/users/me/password` (novo na 7CF) | `authApi.changePassword` | ✅ — pede a senha atual (400 `user.current_password_invalid`), encerra as outras sessões e devolve uma nova; 5 por 15 min por conta (teste U2) |
 | `GET …/appointments?date=&to=` (novo na 7CF) | `panelApi.agendaRange` (semana e mês, paginado) | ✅ — até 42 dias; fora disso, 400 `agenda.range_invalid` (teste J5) |
 | `GET /api/businesses/current/appointments/pending` | `panelApi.pending` | ✅ desde a 7A |
 | `POST …/appointments/{id}/confirm` · `reject` · `cancel` · `complete` · `no-show` | `panelApi.confirm` … `noShow` | ✅ desde a 7A |
@@ -367,6 +369,13 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
 - **Agenda:** Dia, Semana e Mês, com filtros por profissional (só o dono), status, serviço e nome, na URL
   (`#/panel?view=&pro=&status=&service=&q=`). Semana e mês leem `GET …/appointments?date=&to=`. Sem visão de ano:
   não há agregado no backend.
+- **Minha conta** (`#/account`, exige sessão, qualquer contexto): trocar o nome, ver o e-mail, trocar a senha pedindo a
+  atual e sair. Entra pelo menu da conta e pela tela "Sua conta" (7A). Depois de trocar a senha, a sessão nova é
+  guardada e, com o painel aberto, o contexto é pedido de novo. **Fora:** telefone (o `User` não tem o campo; exigiria
+  migration e dado pessoal novo), trocar o e-mail e excluir a conta.
+- **Refresh depois de sair ou trocar a senha:** token encerrado sem substituto é só inválido (401
+  `auth.invalid_refresh_token`), não reuso. Antes, o outro aparelho, ao tentar renovar, derrubava a sessão nova. O
+  reuso de token rotacionado continua derrubando todas as sessões.
 - **Horizonte:** Configurações oferecem 30, 60, 90 ou 180 dias (a API aceita de 1 a 365). Um pedido para além do
   horizonte é recusado pelo backend; marcar o Natal em outubro precisa de pelo menos 90 dias.
 
