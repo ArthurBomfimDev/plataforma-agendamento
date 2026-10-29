@@ -44,6 +44,8 @@ ENTRYPOINT ["/bin/sh", "-c", "exec ./efbundle --connection \"$ConnectionStrings_
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime
 WORKDIR /app
 COPY --from=build /app/publish ./
+# Pasta das imagens (ADR-023), já do usuário da aplicação: o volume nomeado herda o dono na primeira montagem.
+RUN mkdir -p /app/media-data && chown $APP_UID /app/media-data
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 USER $APP_UID

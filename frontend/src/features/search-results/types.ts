@@ -1,3 +1,4 @@
+import type { ImageSet } from '@lib/api/types'
 import type { SearchFilters } from '@lib/api/search'
 
 /** Um estabelecimento da busca, com o serviço em destaque (o que casa com o termo, ou o mais barato). */
@@ -7,6 +8,11 @@ export type SearchResult = {
   distanceKm: number
   neighborhood: string
   verified: boolean
+  category: string
+  /** Miniatura: o logotipo, ou a capa. */
+  image: ImageSet | null
+  /** Para o card largo (sem serviço em destaque): a capa, ou o logotipo. */
+  cover: ImageSet | null
   service: { name: string; durationMinutes: number; fromPriceCents: number } | null
 }
 

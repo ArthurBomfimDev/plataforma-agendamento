@@ -1,3 +1,5 @@
+using Booking.Arguments.Common;
+
 namespace Booking.Arguments.Module.People;
 
 /// <summary><c>IsMe</c>: o proprietário também atende — liga o profissional ao vínculo da própria conta.</summary>
@@ -15,9 +17,13 @@ public sealed record ProfessionalResponse(
     bool IsActive,
     bool IsPubliclyVisible,
     bool HasPublicProfileConsent,
-    Guid? MembershipId);
+    Guid? MembershipId,
+    ImageSetResponse? Photo = null);
 
-/// <summary>Visão pública: só o nome, salvo consentimento do profissional para o perfil completo.</summary>
-public sealed record PublicProfessionalResponse(Guid Id, string DisplayName, string? Specialty, string? Bio);
+/// <summary>
+/// Visão pública: só o nome, salvo consentimento do profissional para o perfil completo. A foto segue a mesma regra
+/// (decisões de 22/09 §3): sem perfil completo visível, <c>Photo</c> é nulo.
+/// </summary>
+public sealed record PublicProfessionalResponse(Guid Id, string DisplayName, string? Specialty, string? Bio, ImageSetResponse? Photo = null);
 
 public sealed record CustomerResponse(Guid Id, DateOnly BirthDate, string? SocialName);

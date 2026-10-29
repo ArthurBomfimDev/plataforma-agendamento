@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Module.Tenancy.Commands;
 using Booking.Application.Module.Tenancy.Converter;
@@ -30,7 +31,8 @@ public sealed class ListBusinessesForAdminQuery(IBusinessRepository businesses, 
     }
 }
 
-public sealed class GetBusinessForAdminQuery(IBusinessRepository businesses, ActivationChecklist checklist, IActorContext actor)
+public sealed class GetBusinessForAdminQuery(
+    IBusinessRepository businesses, ActivationChecklist checklist, IActorContext actor, IImageUrls images)
 {
     public async Task<AdminBusinessDetailResponse> ExecuteAsync(Guid businessId, CancellationToken ct = default)
     {
@@ -39,6 +41,6 @@ public sealed class GetBusinessForAdminQuery(IBusinessRepository businesses, Act
         Business business = await businesses.GetByIdAsync(businessId, ct)
             ?? throw new DomainException("business.not_found");
 
-        return BusinessConverter.ToAdminDetail(business, await checklist.EvaluateAsync(business, ct));
+        return BusinessConverter.ToAdminDetail(business, await checklist.EvaluateAsync(business, ct), images);
     }
 }

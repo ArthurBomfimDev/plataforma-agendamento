@@ -43,6 +43,10 @@ public sealed class Business : AggregateRoot, IAuditable
     public DateTimeOffset? GeocodedAt { get; private set; }
     public DateTimeOffset? LocationConfirmedAt { get; private set; }
 
+    /// <summary>Imagens (ADR-023): só a referência ao armazenamento de arquivos, nunca os bytes.</summary>
+    public string? LogoImageKey { get; private set; }
+    public string? CoverImageKey { get; private set; }
+
     private Business()
     {
     }
@@ -256,4 +260,20 @@ public sealed class Business : AggregateRoot, IAuditable
     }
 
     public bool IsBookable => Status == BusinessStatus.Active;
+
+    /// <summary>Troca (ou remove, com nulo) o logotipo. Devolve a referência anterior, para apagar os arquivos velhos.</summary>
+    public string? ReplaceLogo(string? key)
+    {
+        string? previous = LogoImageKey;
+        LogoImageKey = key is null ? null : ImageKey.Ensure(key);
+        return previous;
+    }
+
+    /// <summary>Troca (ou remove, com nulo) a capa. Devolve a referência anterior.</summary>
+    public string? ReplaceCover(string? key)
+    {
+        string? previous = CoverImageKey;
+        CoverImageKey = key is null ? null : ImageKey.Ensure(key);
+        return previous;
+    }
 }

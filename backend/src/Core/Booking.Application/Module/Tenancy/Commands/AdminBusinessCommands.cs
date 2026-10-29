@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Module.Tenancy.Converter;
@@ -17,7 +18,8 @@ public sealed class AdminBusinessCommands(
     ActivationChecklist checklist,
     IActorContext actor,
     IUnitOfWork unitOfWork,
-    TimeProvider clock)
+    TimeProvider clock,
+    IImageUrls images)
 {
     /// <summary>Em análise → ativo, com o selo de verificado e o registro de quem aprovou.</summary>
     public Task<AdminBusinessDetailResponse> ApproveAsync(Guid businessId, string? note, CancellationToken ct = default) =>
@@ -54,7 +56,7 @@ public sealed class AdminBusinessCommands(
         decision(business, adminId, clock.GetUtcNow());
 
         await unitOfWork.SaveChangesAsync(ct);
-        return BusinessConverter.ToAdminDetail(business, await checklist.EvaluateAsync(business, ct));
+        return BusinessConverter.ToAdminDetail(business, await checklist.EvaluateAsync(business, ct), images);
     }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

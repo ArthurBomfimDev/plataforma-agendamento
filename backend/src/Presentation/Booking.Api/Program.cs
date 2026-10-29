@@ -36,6 +36,11 @@ builder.Services.AddRateLimiter(limiter =>
     limiter.AddPolicy("geo", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
+
+    // Envio de imagem (Onda 6D): processar é caro. 20 por hora por usuário (sem login, por IP; a rota recusa de qualquer jeito).
+    limiter.AddPolicy(ImageUpload.RateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
 });
 
 // O frontend roda em outra origem (e, depois, o Capacitor e o Tauri também). Só as origens
@@ -68,6 +73,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseMediaFiles();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

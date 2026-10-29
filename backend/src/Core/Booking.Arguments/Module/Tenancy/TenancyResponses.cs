@@ -1,3 +1,5 @@
+using Booking.Arguments.Common;
+
 namespace Booking.Arguments.Module.Tenancy;
 
 public sealed record BusinessResponse(
@@ -37,7 +39,9 @@ public sealed record BusinessDetailResponse(
     double? Longitude,
     string? LocationPrecision,
     bool LocationConfirmed,
-    SchedulingPolicyResponse Policy);
+    SchedulingPolicyResponse Policy,
+    ImageSetResponse? Logo = null,
+    ImageSetResponse? Cover = null);
 
 /// <summary>
 /// Visão pública da vitrine. Sem documento. Da política, só o que o consumidor precisa ver antes de pedir:
@@ -54,7 +58,9 @@ public sealed record PublicBusinessResponse(
     int CancellationWindowHours,
     int PendingExpirationHours,
     bool AutoConfirm,
-    string TimeZone);
+    string TimeZone,
+    ImageSetResponse? Logo = null,
+    ImageSetResponse? Cover = null);
 
 /// <summary>
 /// Um resultado da busca. O serviço em destaque é o que casa com o termo (ou o mais barato), com o preço "a partir
@@ -72,7 +78,9 @@ public sealed record BusinessSearchItemResponse(
     Guid? ServiceId = null,
     string? ServiceName = null,
     int? DurationMinutes = null,
-    long? FromPriceCents = null);
+    long? FromPriceCents = null,
+    ImageSetResponse? Logo = null,
+    ImageSetResponse? Cover = null);
 
 /// <summary>Item da checklist de ativação. <c>RequiredForSubmit</c> diz se a submissão já exige o item hoje.</summary>
 public sealed record ChecklistItemResponse(string Key, bool Done, bool RequiredForSubmit);

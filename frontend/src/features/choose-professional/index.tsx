@@ -1,13 +1,41 @@
 import { Check, ChevronLeft, Star } from 'lucide-react'
 
-import { Avatar } from '@components/avatar'
+import type { BusinessProfessional, ChooseProfessionalScreenProps } from './types'
+
 import { Breadcrumb } from '@components/breadcrumb'
 import { Button } from '@components/button'
-import type { BusinessProfessional, ChooseProfessionalScreenProps } from './types'
+import type { ImageSet } from '@lib/api/types'
+import { InitialsAvatar } from '@global/images/defaults/initials'
 import { PageContainer } from '@components/page-container'
 import { ProfessionalOption } from '@components/professional-option'
+import { SmartImage } from '@components/smart-image'
+import { cn } from 'cn'
 import { priceFormat } from '@components/service-card/consts'
 import { ratingFormat } from '@components/card-establishment/consts'
+
+/**
+ * Foto do profissional (Onda 6D) ou, sem ela, as iniciais sobre `action/soft`. Decorativa: o nome está escrito
+ * ao lado. A API só manda a foto com o perfil público completo consentido.
+ */
+const ProfessionalPhoto = ({
+  name,
+  photo,
+  className,
+}: {
+  name: string
+  photo?: ImageSet | null
+  className?: string
+}) => (
+  <SmartImage
+    image={photo}
+    alt=""
+    sizes="80px"
+    width={1}
+    height={1}
+    fallback={<InitialsAvatar name={name} />}
+    className={cn('shrink-0 rounded-(--radius-full)', className)}
+  />
+)
 
 const yearsLabel = (years: number) => `${years} ${years === 1 ? 'ano' : 'anos'}`
 
@@ -75,12 +103,18 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
               {divider}
             </li>
             {professionals.map((professional) => {
-              const { id, name, rating, photoUrl } = professional
+              const { id, name, rating, photo } = professional
               const profile = profileLine(professional)
               return (
                 <li key={id} className="flex flex-col gap-(--space-2)">
                   <ProfessionalOption
-                    leading={<Avatar src={photoUrl} alt={`Foto de ${name}`} />}
+                    leading={
+                      <ProfessionalPhoto
+                        name={name}
+                        photo={photo}
+                        className="size-(--size-avatar-md)"
+                      />
+                    }
                     title={name}
                     details={[
                       ...(profile ? [profile] : []),
@@ -121,16 +155,16 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
 
           <ul className="hidden grid-cols-3 gap-(--space-16) lg:grid">
             {professionals.map((professional) => {
-              const { id, name, rating, photoUrl } = professional
+              const { id, name, rating, photo } = professional
               const profile = profileLine(professional)
               return (
                 <li
                   key={id}
                   className="flex flex-col items-center gap-(--space-16) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-20) text-center"
                 >
-                  <Avatar
-                    src={photoUrl}
-                    alt={`Foto de ${name}`}
+                  <ProfessionalPhoto
+                    name={name}
+                    photo={photo}
                     className="size-(--size-avatar-lg)"
                   />
                   <div className="flex flex-col items-center gap-(--space-2)">

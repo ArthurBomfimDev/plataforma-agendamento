@@ -42,6 +42,10 @@ public sealed class BusinessMapping : BaseMapping<Business>
         builder.Property(x => x.LocationPrecision).HasConversion<string>().HasMaxLength(20);
         builder.Property(x => x.LocationSource).HasMaxLength(100);
 
+        // Só a referência ao armazenamento de arquivos (ADR-023); os bytes nunca entram no banco.
+        builder.Property(x => x.LogoImageKey).HasMaxLength(ImageKey.MaxLength);
+        builder.Property(x => x.CoverImageKey).HasMaxLength(ImageKey.MaxLength);
+
         builder.Ignore(x => x.IsBookable);
 
         builder.HasIndex(x => x.Document).IsUnique();

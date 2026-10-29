@@ -1,8 +1,11 @@
 import { Clock, MapPin, Star } from 'lucide-react'
 import { distanceFormat, ratingFormat } from '@components/card-establishment/consts'
 
+import { BusinessIllustration } from '@global/images/defaults/business-illustration'
 import type { BusinessDetailScreenProps } from './types'
 import { Button } from '@components/button'
+import { ServiceIcon } from '@global/images/defaults/service-icon'
+import { SmartImage } from '@components/smart-image'
 import { PageContainer } from '@components/page-container'
 import { ServiceCard } from '@components/service-card'
 import { TabBar } from '@components/tab-bar'
@@ -39,16 +42,18 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
       </p>
     )
 
-  const photo = (className: string) =>
-    business.coverUrl ? (
-      <img
-        src={business.coverUrl}
-        alt={`Foto de ${name}`}
-        className={`object-cover ${className}`}
-      />
-    ) : (
-      <div aria-hidden="true" className={`bg-(--bg-disabled) ${className}`} />
-    )
+  // A capa é informativa (mostra o lugar); sem ela, a ilustração da categoria é decorativa.
+  const photo = (className: string) => (
+    <SmartImage
+      image={business.cover}
+      alt={`Foto de ${name}`}
+      sizes="(min-width: 1024px) 66vw, 100vw"
+      width={16}
+      height={9}
+      fallback={<BusinessIllustration category={business.category} />}
+      className={className}
+    />
+  )
 
   return (
     <div className="min-h-dvh bg-(--bg-page) pb-[env(safe-area-inset-bottom)] lg:pb-(--space-40)">
@@ -66,9 +71,22 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
         <div className="lg:flex lg:items-start lg:gap-(--space-24)">
           <div className="lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-(--space-20)">
             <header className="flex flex-col items-start gap-(--space-8) bg-(--bg-surface) p-(--space-16) md:bg-transparent lg:gap-(--space-20) lg:p-0">
-              <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
-                {name}
-              </h1>
+              <div className="flex items-center gap-(--space-12)">
+                {business.logo && (
+                  <SmartImage
+                    image={business.logo}
+                    alt=""
+                    sizes="56px"
+                    width={1}
+                    height={1}
+                    fallback={null}
+                    className="size-12 shrink-0 rounded-md border border-(--border-subtle) bg-(--bg-surface) lg:size-14"
+                  />
+                )}
+                <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
+                  {name}
+                </h1>
+              </div>
 
               <div className="flex flex-wrap items-center gap-(--space-8) lg:gap-(--space-12)">
                 {rating !== undefined && reviewCount ? (
@@ -111,7 +129,11 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                       >
                         {business.services.map(({ id, ...service }) => (
                           <li key={id}>
-                            <ServiceCard {...service} onBook={() => onBookService?.(id)} />
+                            <ServiceCard
+                              {...service}
+                              leading={<ServiceIcon category={business.category} />}
+                              onBook={() => onBookService?.(id)}
+                            />
                           </li>
                         ))}
                       </ul>

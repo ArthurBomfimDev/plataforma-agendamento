@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.Tenancy;
@@ -13,7 +14,8 @@ public sealed class CreateProfessionalCommand(
     IProfessionalRepository professionals,
     IBusinessDirectory businesses,
     IActorContext actor,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IImageUrls images)
 {
     public async Task<ProfessionalResponse> ExecuteAsync(CreateProfessionalRequest request, CancellationToken ct = default)
     {
@@ -32,11 +34,12 @@ public sealed class CreateProfessionalCommand(
         professionals.Add(professional);
 
         await unitOfWork.SaveChangesAsync(ct);
-        return PeopleConverter.ToResponse(professional);
+        return PeopleConverter.ToResponse(professional, images);
     }
 }
 
-public sealed class UpdateProfessionalCommand(IProfessionalRepository professionals, IActorContext actor, IUnitOfWork unitOfWork)
+public sealed class UpdateProfessionalCommand(
+    IProfessionalRepository professionals, IActorContext actor, IUnitOfWork unitOfWork, IImageUrls images)
 {
     public async Task<ProfessionalResponse> ExecuteAsync(Guid professionalId, UpdateProfessionalRequest request, CancellationToken ct = default)
     {
@@ -66,7 +69,7 @@ public sealed class UpdateProfessionalCommand(IProfessionalRepository profession
         }
 
         await unitOfWork.SaveChangesAsync(ct);
-        return PeopleConverter.ToResponse(professional);
+        return PeopleConverter.ToResponse(professional, images);
     }
 }
 
@@ -78,7 +81,8 @@ public sealed class SetPublicProfileConsentCommand(
     IBusinessDirectory businesses,
     IActorContext actor,
     IUnitOfWork unitOfWork,
-    TimeProvider clock)
+    TimeProvider clock,
+    IImageUrls images)
 {
     public async Task<ProfessionalResponse> ExecuteAsync(Guid professionalId, bool granted, CancellationToken ct = default)
     {
@@ -105,7 +109,7 @@ public sealed class SetPublicProfileConsentCommand(
         }
 
         await unitOfWork.SaveChangesAsync(ct);
-        return PeopleConverter.ToResponse(professional);
+        return PeopleConverter.ToResponse(professional, images);
     }
 }
 

@@ -1,9 +1,11 @@
+using Booking.Api.Common;
 using Booking.Application.Module.People.Commands;
 using Booking.Application.Module.People.Queries;
 using Booking.Arguments.Module.People;
 using Booking.Domain.Entity.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Booking.Api.Module.People;
 
@@ -42,6 +44,26 @@ public sealed class ProfessionalsController : ControllerBase
     public async Task<IActionResult> RevokeConsent(
         Guid professionalId, [FromServices] SetPublicProfileConsentCommand command, CancellationToken ct) =>
         Ok(await command.ExecuteAsync(professionalId, granted: false, ct));
+
+    /// <summary>Foto: o dono, ou o próprio profissional. <c>multipart/form-data</c>, campo <c>file</c>, até 5 MB.</summary>
+    [HttpPut("{professionalId:guid}/photo")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(ImageUpload.MaxRequestBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.MaxRequestBytes)]
+    [EnableRateLimiting(ImageUpload.RateLimitPolicy)]
+    [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetPhoto(
+        Guid professionalId, IFormFile? file, [FromServices] ProfessionalPhotoCommand command, CancellationToken ct)
+    {
+        await using Stream upload = ImageUpload.Open(file);
+        return Ok(await command.SetAsync(professionalId, upload, ct));
+    }
+
+    [HttpDelete("{professionalId:guid}/photo")]
+    [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemovePhoto(
+        Guid professionalId, [FromServices] ProfessionalPhotoCommand command, CancellationToken ct) =>
+        Ok(await command.RemoveAsync(professionalId, ct));
 }
 
 [ApiController]

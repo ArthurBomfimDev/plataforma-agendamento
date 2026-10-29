@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Contracts.Catalog;
 using Booking.Application.Module.Tenancy.Commands;
 using Booking.Application.Module.Tenancy.Converter;
@@ -11,21 +12,21 @@ using Booking.Domain.ValueObject;
 
 namespace Booking.Application.Module.Tenancy.Queries;
 
-public sealed class GetCurrentBusinessQuery(CurrentBusinessLoader loader)
+public sealed class GetCurrentBusinessQuery(CurrentBusinessLoader loader, IImageUrls images)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(CancellationToken ct = default) =>
-        BusinessConverter.ToDetail(await loader.LoadForOwnerAsync(ct));
+        BusinessConverter.ToDetail(await loader.LoadForOwnerAsync(ct), images);
 }
 
 /// <summary>Vitrine: só estabelecimento ativo aparece para o público.</summary>
-public sealed class GetPublicBusinessQuery(IBusinessRepository businesses)
+public sealed class GetPublicBusinessQuery(IBusinessRepository businesses, IImageUrls images)
 {
     public async Task<PublicBusinessResponse> ExecuteAsync(Guid businessId, CancellationToken ct = default)
     {
         Business? business = await businesses.GetByIdAsync(businessId, ct);
 
         return business is { IsBookable: true }
-            ? BusinessConverter.ToPublic(business)
+            ? BusinessConverter.ToPublic(business, images)
             : throw new DomainException("business.not_found");
     }
 }
@@ -35,7 +36,7 @@ public sealed class GetPublicBusinessQuery(IBusinessRepository businesses)
 /// filtros sobre o conjunto que o filtro geográfico já cortou, antes da paginação; a ordenação também.
 /// O cálculo de horários fica para a página exibida, em consulta separada por estabelecimento.
 /// </summary>
-public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServiceCatalog catalog)
+public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServiceCatalog catalog, IImageUrls images)
 {
     private const int _maxCandidates = 500;
     private const int _maxPageSize = 50;
@@ -104,7 +105,9 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
                     h?.ServiceId,
                     h?.Name,
                     h?.DurationMinutes,
-                    h?.FromPriceCents);
+                    h?.FromPriceCents,
+                    images.For(b.LogoImageKey),
+                    images.For(b.CoverImageKey));
             })
             .ToList();
 

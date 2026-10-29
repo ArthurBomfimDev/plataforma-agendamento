@@ -1,5 +1,6 @@
 using Booking.Domain.Entity.Base;
 using Booking.Domain.Exceptions;
+using Booking.Domain.ValueObject;
 
 namespace Booking.Domain.Entity.Module.People;
 
@@ -21,6 +22,9 @@ public sealed class Professional : BaseEntity, IAuditable, ITenantScoped
     public bool IsActive { get; private set; }
     public bool IsPubliclyVisible { get; private set; }
     public DateTimeOffset? PublicProfileConsentAt { get; private set; }
+
+    /// <summary>Foto (ADR-023). Só aparece em rota pública com o perfil completo visível, que exige consentimento.</summary>
+    public string? PhotoImageKey { get; private set; }
 
     private Professional()
     {
@@ -81,4 +85,12 @@ public sealed class Professional : BaseEntity, IAuditable, ITenantScoped
     }
 
     public void HideFullProfile() => IsPubliclyVisible = false;
+
+    /// <summary>Troca (ou remove, com nulo) a foto. Devolve a referência anterior, para apagar os arquivos velhos.</summary>
+    public string? ReplacePhoto(string? key)
+    {
+        string? previous = PhotoImageKey;
+        PhotoImageKey = key is null ? null : ImageKey.Ensure(key);
+        return previous;
+    }
 }

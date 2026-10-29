@@ -197,6 +197,8 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
                         durationMinutes={item.service.durationMinutes}
                         priceCents={item.service.fromPriceCents}
                         priceFrom
+                        image={item.image}
+                        category={item.category}
                         distanceKm={item.distanceKm}
                         onOpen={() => onOpen?.(item.id)}
                       />
@@ -206,6 +208,8 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
                         distanceKm={item.distanceKm}
                         neighborhood={item.neighborhood}
                         verified={item.verified}
+                        image={item.cover}
+                        category={item.category}
                         onClick={() => onOpen?.(item.id)}
                       />
                     )}
