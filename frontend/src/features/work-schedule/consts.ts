@@ -13,7 +13,7 @@ import type {
 } from './types'
 import { format, parseISO } from 'date-fns'
 
-import type { SelectOption } from '@components/select-field/types'
+import type { SelectOption } from '@components/menu-select-field/types'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { toMinutes } from '@features/business-agenda/consts'
 

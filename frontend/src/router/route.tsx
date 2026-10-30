@@ -79,7 +79,6 @@ export const AppRoutes = () => {
           <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
           <Route path={ROUTES.panelPhotos} element={<PanelPhotosRoute />} />
           <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />
-          <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
         </Route>
       </Route>
     </Routes>

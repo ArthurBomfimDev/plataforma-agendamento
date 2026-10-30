@@ -7,8 +7,6 @@ import type {
   WeekSchedule,
 } from './types'
 
-import { MOCK_AGENDA_DATE } from '@features/business-agenda/mock'
-
 /**
  * Dados PROVISÓRIOS, copiados do wireframe "12 · Painel — Jornada e bloqueio de período" do Figma.
  * Não são dado real. Saem quando existirem, em `src/lib/api`, a consulta de jornadas e exceções do
@@ -35,7 +33,7 @@ const week = (days: Partial<WeekSchedule>): WeekSchedule => ({
 const on = (...ranges: TimeRange[]) => ({ enabled: true, ranges })
 
 /** O "hoje" dos wireframes do painel. */
-export const MOCK_SCHEDULE_TODAY = MOCK_AGENDA_DATE
+export const MOCK_SCHEDULE_TODAY = '2026-09-11'
 
 export const MOCK_SCHEDULE_PROFESSIONALS: ScheduleProfessional[] = [
   {

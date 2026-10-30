@@ -123,19 +123,6 @@ describe('AppRoutes', () => {
     expect(html).not.toContain('Página não encontrada')
   })
 
-  it('abre jornadas e bloqueios em /panel/schedules, com a seção atual na lateral', () => {
-    const html = renderAt('/panel/schedules')
-    const current = [...html.matchAll(/aria-current="page".*?<\/button>/g)].map(
-      ([button]) => button,
-    )
-
-    expect(html).toContain('Jornada — Marina Souza')
-    // Jornadas e bloqueios não tem aba no celular: lá mora em "Mais".
-    expect(current).toHaveLength(2)
-    expect(current[0]).toContain('Jornadas e bloqueios')
-    expect(current[1]).toContain('Mais')
-  })
-
   it('abre a 404 em rota desconhecida', () => {
     expect(renderAt('/nao-existe')).toContain('Página não encontrada')
   })

@@ -19,7 +19,7 @@ import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { DateField } from '@components/date-field'
 import { RadioOptionGroup } from '@components/radio-option-group'
-import { SelectField } from '@components/select-field'
+import { MenuSelectField } from '@components/menu-select-field'
 import { TextField } from '@components/text-field'
 import { cn } from 'cn'
 
@@ -99,7 +99,7 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
         </h2>
 
         <div className="grid grid-cols-2 items-start gap-(--space-8) sm:grid-cols-3">
-          <SelectField
+          <MenuSelectField
             id={BLOCK_FIELD_IDS.type}
             label="Tipo"
             labelClassName={COMPACT_LABEL}
