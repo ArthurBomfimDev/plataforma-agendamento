@@ -123,6 +123,7 @@ export const toTeamMember = (
   isPubliclyVisible: professional.isPubliclyVisible,
   hasPublicProfileConsent: professional.hasPublicProfileConsent,
   hasAccount: professional.membershipId !== null,
+  photo: professional.photo,
   serviceIds: services
     .filter((service) =>
       service.professionals.some(({ professionalId }) => professionalId === professional.id),

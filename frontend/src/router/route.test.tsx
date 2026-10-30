@@ -101,6 +101,10 @@ describe('AppRoutes', () => {
     expect(renderAt('/context')).not.toContain('Sua conta')
   })
 
+  it('não abre Minha conta em /account sem sessão (7CF)', () => {
+    expect(renderAt('/account')).not.toContain('Minha conta')
+  })
+
   // A gestão (Onda 7D) mora dentro do painel: sem sessão, nenhuma tela abre. O guard por papel
   // (`canManageBusiness`) e a seção ativa (`panelSectionOf`) são cobertos em `manage.test.ts`.
   it.each([

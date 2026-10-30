@@ -32,6 +32,7 @@ const ChooseContext = () => {
         }
       }}
       onSignOut={leave}
+      onAccount={() => navigate(ROUTES.account)}
     />
   )
 }

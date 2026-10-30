@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router'
+import { PanelServiceFormRoute, PanelServicesRoute } from './panel-services-route'
 
 import { AppLayout } from './app-layout'
 import { AppointmentsRoute } from './appointments-route'
@@ -6,12 +7,16 @@ import { AvailabilityRoute } from './availability-route'
 import { BookingReviewRoute } from './booking-review-route'
 import { BookingSentRoute } from './booking-sent-route'
 import { BusinessDetailRoute } from './business-detail-route'
+import { CheckEmailRoute } from './check-email-route'
+import { ChooseContextRoute } from './choose-context-route'
 import { ChooseProfessionalRoute } from './choose-professional-route'
+import { ConfirmEmailRoute } from './confirm-email-route'
+import { ForgotPasswordRoute } from './forgot-password-route'
 import { HomeRoute } from './home-route'
+import { MyAccountRoute } from './my-account-route'
 import { NotFoundScreen } from '@features/not-found'
 import { PanelAgendaRoute } from './panel-agenda-route'
 import { PanelLayout } from './panel-layout'
-import { PanelServiceFormRoute, PanelServicesRoute } from './panel-services-route'
 import { PanelMoreRoute } from './panel-more-route'
 import { PanelPhotosRoute } from './panel-photos-route'
 import { PanelRequestsRoute } from './panel-requests-route'
@@ -20,14 +25,10 @@ import { PanelSettingsRoute } from './panel-settings-route'
 import { PanelTeamRoute } from './panel-team-route'
 import { ROUTES } from './consts'
 import { RequireOwner } from './require-owner'
-import { SignInRoute } from './sign-in-route'
-import { SignUpRoute } from './sign-up-route'
-import { CheckEmailRoute } from './check-email-route'
-import { ChooseContextRoute } from './choose-context-route'
-import { ConfirmEmailRoute } from './confirm-email-route'
-import { ForgotPasswordRoute } from './forgot-password-route'
 import { ResetPasswordRoute } from './reset-password-route'
 import { SearchRoute } from './search-route'
+import { SignInRoute } from './sign-in-route'
+import { SignUpRoute } from './sign-up-route'
 
 /**
  * Rotas da aplicação, no modo declarativo do React Router. O `<HashRouter>` fica em `main.tsx`.
@@ -58,6 +59,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.confirmEmail} element={<ConfirmEmailRoute />} />
       <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
       <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
+      <Route path={ROUTES.account} element={<MyAccountRoute />} />
       <Route
         path={ROUTES.emailPanelRequests}
         element={<Navigate to={ROUTES.panelRequests} replace />}

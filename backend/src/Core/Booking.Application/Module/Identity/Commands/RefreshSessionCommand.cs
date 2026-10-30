@@ -9,9 +9,14 @@ using Booking.Domain.Interface.Repository.Module.Identity;
 namespace Booking.Application.Module.Identity.Commands;
 
 /// <summary>
-/// Rotação de refresh token: cada token vale uma vez. Apresentar um token já revogado indica
-/// roubo ou cópia, e derruba todas as sessões do usuário.
+/// Rotação de refresh token: cada token vale uma vez. Apresentar de novo um token já rotacionado (trocado por outro)
+/// indica roubo ou cópia, e derruba todas as sessões do usuário.
 /// </summary>
+/// <remarks>
+/// Token encerrado sem substituto (sair, redefinir ou trocar a senha) é só inválido (Onda 7CF): o outro aparelho que
+/// ainda o tinha tenta renovar sozinho, e tratá-lo como reuso derrubava a sessão nova de quem acabou de trocar a
+/// senha. Quem rouba um token encerrado não ganha nada com ele; o reuso de token rotacionado continua derrubando tudo.
+/// </remarks>
 public sealed class RefreshSessionCommand(
     IRefreshTokenRepository refreshTokens,
     IUserRepository users,
@@ -32,6 +37,11 @@ public sealed class RefreshSessionCommand(
         RefreshToken? current = await refreshTokens.GetByHashAsync(tokens.Hash(request.RefreshToken), ct);
 
         if (current is null)
+        {
+            throw new DomainException("auth.invalid_refresh_token");
+        }
+
+        if (current.RevokedAt is not null && current.ReplacedByTokenHash is null)
         {
             throw new DomainException("auth.invalid_refresh_token");
         }

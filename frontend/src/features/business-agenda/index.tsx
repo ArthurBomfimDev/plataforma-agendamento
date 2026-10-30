@@ -80,7 +80,8 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
     onAction,
     onNavigate,
     onCounterBooking,
-    onWeekView,
+    toolbar,
+    filtered = false,
   } = props
 
   const now = useNow()
@@ -137,7 +138,11 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
 
   const noAppointments = day !== null && summary.appointmentsCount === 0 && (
     <p role="status" className="type-body text-(--text-muted)">
-      {isToday ? 'Nenhum agendamento hoje.' : 'Nenhum agendamento neste dia.'}
+      {filtered
+        ? 'Nenhum agendamento com esses filtros neste dia.'
+        : isToday
+          ? 'Nenhum agendamento hoje.'
+          : 'Nenhum agendamento neste dia.'}
     </p>
   )
 
@@ -257,6 +262,7 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
         </header>
 
         <main className="flex flex-col gap-(--space-12) px-(--space-16) py-(--space-12) md:mx-auto md:max-w-160">
+          {toolbar}
           {noAppointments}
           {selected ? (
             <AnimatePresence mode="popLayout" initial={false} custom={professionalDirection}>
@@ -329,25 +335,11 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
               <ChevronRight aria-hidden="true" className="size-5" />
             </button>
           </div>
-          <div role="group" aria-label="Visualização" className="flex gap-(--space-8)">
-            <button
-              type="button"
-              aria-pressed="true"
-              className="type-label min-h-(--size-touch-min) rounded-md border border-(--border-focus) bg-(--action-soft) px-(--space-16) py-(--space-8) text-(--text-link) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
-            >
-              Dia
-            </button>
-            <button
-              type="button"
-              aria-pressed="false"
-              onClick={onWeekView}
-              className="type-label min-h-(--size-touch-min) rounded-md border border-(--border-interactive) bg-(--bg-surface) px-(--space-16) py-(--space-8) text-(--text-body) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
-            >
-              Semana
-            </button>
-          </div>
+          {/* Dia, Semana e Mês ficam na barra da agenda (`toolbar`, 7CF), junto dos filtros. */}
           <Button onClick={() => onCounterBooking?.()}>{COUNTER_BOOKING_LABEL}</Button>
         </div>
+
+        {toolbar}
 
         <ul className="grid grid-cols-4 gap-(--space-16)">
           {summaryCards(summary, pendingRequests).map((card, index) => (

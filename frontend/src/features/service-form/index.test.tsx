@@ -1,6 +1,9 @@
 import {
   EMPTY_SERVICE_VALUES,
+  durationLabel,
+  durationOptions,
   maskPrice,
+  stepGap,
   parseCents,
   parseMinutes,
   previewSlots,
@@ -106,6 +109,39 @@ describe('ServiceFormScreen', () => {
     expect(html).toContain('Cada intervalo vai de 0 a 120 minutos.')
   })
 
+  it('tempos são seletores, não texto livre, e a duração oferece múltiplos do passo', () => {
+    const html = render()
+
+    for (const id of [
+      'service-duration',
+      'service-buffer-before',
+      'service-buffer-after',
+      'service-slot-step',
+    ]) {
+      expect(html).toMatch(new RegExp(`<select[^>]*id="${id}"`))
+      expect(html).not.toMatch(new RegExp(`<input[^>]*id="${id}"`))
+    }
+    expect(html).toMatch(/<option value="30" selected="">30 min<\/option>/)
+    expect(html).toContain('<option value="45">45 min</option>')
+    expect(html).not.toContain('<option value="40">')
+  })
+
+  it('avisa os minutos soltos e sugere a duração que fecha com o passo', () => {
+    const html = render({
+      initialValues: {
+        ...FIXTURE_SERVICE_VALUES,
+        durationMinutes: '45 min',
+        bufferBeforeMinutes: '0 min',
+        bufferAfterMinutes: '0 min',
+        slotStepMinutes: '30 min',
+      },
+    })
+
+    expect(html).toContain('sobram 15 min soltos')
+    expect(html).toContain('Ajustar a duração para 1 h')
+    expect(render()).not.toContain('soltos')
+  })
+
   it('sem profissional ativo, explica onde cadastrar', () => {
     expect(render({ professionals: [] })).toContain('Nenhum profissional ativo')
   })
@@ -176,6 +212,52 @@ describe('cadastro de serviço', () => {
 
   it('sem ninguém para escolher, não exige profissional', () => {
     expect(validateService({ ...FIXTURE_SERVICE_VALUES, professionalIds: [] }, false)).toEqual({})
+  })
+
+  it('oferece durações em múltiplos do passo até 8 h, sem perder um valor antigo', () => {
+    expect(durationOptions(60, null)).toEqual([60, 120, 180, 240, 300, 360, 420, 480])
+    expect(durationOptions(30, 45)).toEqual([
+      30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480,
+    ])
+    expect(durationOptions(15, null).at(-1)).toBe(480)
+    expect(durationLabel(90)).toBe('1 h 30')
+    expect(durationLabel(120)).toBe('2 h')
+    expect(durationLabel(45)).toBe('45 min')
+  })
+
+  it('conta os minutos soltos com os intervalos, porque eles também ocupam a agenda', () => {
+    const base = { ...FIXTURE_SERVICE_VALUES, slotStepMinutes: '30 min' }
+
+    expect(
+      stepGap({
+        ...base,
+        durationMinutes: '45 min',
+        bufferBeforeMinutes: '0 min',
+        bufferAfterMinutes: '0 min',
+      }),
+    ).toEqual({
+      occupancy: 45,
+      leftover: 15,
+      suggested: 60,
+    })
+    // 10 + 40 + 10 = 60: fecha com o passo, sem aviso.
+    expect(
+      stepGap({
+        ...base,
+        durationMinutes: '40 min',
+        bufferBeforeMinutes: '10 min',
+        bufferAfterMinutes: '10 min',
+      }),
+    ).toBeNull()
+    // Perto do limite, não sugere passar de 8 h: 15 + 470 = 485, e fechar exigiria 495 min de duração.
+    expect(
+      stepGap({
+        ...base,
+        durationMinutes: '470 min',
+        bufferBeforeMinutes: '15 min',
+        bufferAfterMinutes: '0 min',
+      })?.suggested,
+    ).toBeNull()
   })
 
   it('começa um serviço novo com os padrões do domínio', () => {

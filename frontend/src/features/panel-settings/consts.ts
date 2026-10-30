@@ -45,6 +45,23 @@ export const POLICY_FIELDS: ReadonlyArray<{
   },
 ]
 
+/** Horizontes oferecidos (7CF), dentro do limite do domínio (1 a 365 dias). */
+export const HORIZON_OPTIONS = [30, 60, 90, 180] as const
+
+/** As opções, mais o valor atual se ele for outro (definido antes, pelo seed ou pela API): ele não some. */
+export const horizonOptions = (current: number) =>
+  Number.isInteger(current) && current > 0 && !HORIZON_OPTIONS.some((days) => days === current)
+    ? [...HORIZON_OPTIONS, current].sort((a, b) => a - b)
+    : [...HORIZON_OPTIONS]
+
+/** "60 dias (cerca de 2 meses)". */
+export const horizonLabel = (days: number) => {
+  const months = Math.round(days / 30)
+  return days % 30 === 0 && months >= 1
+    ? `${days} dias (cerca de ${months} ${months === 1 ? 'mês' : 'meses'})`
+    : `${days} dias`
+}
+
 export const toPolicyValues = (policy: SchedulingPolicyResponse): PolicyValues => ({
   autoConfirm: policy.autoConfirm,
   pendingExpirationHours: String(policy.pendingExpirationHours),

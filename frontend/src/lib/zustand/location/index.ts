@@ -1,4 +1,5 @@
 import type { ChosenLocation, LocationState } from './types'
+import { DEFAULT_DISTANCE, parseDistance } from '@lib/api/search'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { create } from 'zustand'
@@ -14,6 +15,26 @@ export const DEMO_LOCATION: ChosenLocation = {
   latitude: -22.213,
   longitude: -49.656,
   source: 'demo',
+  city: 'Garça',
+  state: 'SP',
+}
+
+/**
+ * O que volta do `localStorage`. Guardado antes da 7CF não tem distância, e um valor estranho (editado à mão) não
+ * pode virar busca inválida: os dois caem em Cidade.
+ */
+export const mergePersistedLocation = (
+  persisted: unknown,
+  current: LocationState,
+): LocationState => {
+  const saved = (persisted ?? {}) as Partial<Pick<LocationState, 'location' | 'distance'>>
+  return {
+    ...current,
+    location: saved.location ?? null,
+    distance:
+      parseDistance(saved.distance === undefined ? null : String(saved.distance)) ??
+      DEFAULT_DISTANCE,
+  }
 }
 
 /**
@@ -26,6 +47,8 @@ export const useLocationStore = create<LocationState>()(
   persist(
     (set) => ({
       location: null,
+      distance: DEFAULT_DISTANCE,
+      setDistance: (distance) => set({ distance }),
       setLocation: (location) =>
         set({
           location: {
@@ -41,8 +64,11 @@ export const useLocationStore = create<LocationState>()(
     }),
     {
       name: LOCATION_STORAGE_KEY,
+      // O `createJSONStorage` engole o erro de um armazenamento bloqueado: sem ele, só não guarda.
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ location: state.location }),
+      // Endereço e distância juntos (7CF): são uma escolha só, feita no mesmo seletor.
+      partialize: (state) => ({ location: state.location, distance: state.distance }),
+      merge: mergePersistedLocation,
     },
   ),
 )

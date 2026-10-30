@@ -198,6 +198,8 @@ public static class DependencyInjection
         services.AddScoped<ForgotPasswordCommand>();
         services.AddScoped<ResetPasswordCommand>();
         services.AddScoped<SwitchContextCommand>();
+        services.AddScoped<UpdateMyAccountCommand>();
+        services.AddScoped<ChangeMyPasswordCommand>();
         services.AddScoped<GetCurrentUserQuery>();
     }
 

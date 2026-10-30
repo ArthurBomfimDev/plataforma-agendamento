@@ -43,6 +43,35 @@ describe('PanelSidebar', () => {
     expect(html).toContain('Pedidos')
   })
 
+  it('mostra o logotipo enviado; sem ele, a ilustração da categoria, nunca o quadrado cinza', () => {
+    const logo = {
+      small: 'businesses/b1/k-s.webp',
+      medium: 'businesses/b1/k-m.webp',
+      large: 'businesses/b1/k-l.webp',
+    }
+    const withLogo = renderToString(
+      <PanelSidebar
+        businessName="Estúdio"
+        logo={logo}
+        activeSection="agenda"
+        pendingRequests={0}
+      />,
+    )
+    const withoutLogo = renderToString(
+      <PanelSidebar
+        businessName="Clínica"
+        category="Saude"
+        activeSection="agenda"
+        pendingRequests={0}
+      />,
+    )
+
+    expect(withLogo).toMatch(/<img[^>]*src="[^"]*businesses\/b1\/k-m\.webp"/)
+    expect(withoutLogo).not.toContain('<img')
+    expect(withoutLogo).toContain('data-category="Saude"')
+    expect(withoutLogo).not.toContain('bg-(--bg-disabled)')
+  })
+
   it('não tem item sem tela: Avaliações e Relatórios saíram (Onda 7D)', () => {
     const html = sidebar()
 

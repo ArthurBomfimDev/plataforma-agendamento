@@ -1,6 +1,14 @@
 import { ErrorState, LoadingState } from '@components/screen-state'
 import { PANEL_CARD, PanelPage } from '@components/panel-page'
-import { POLICY_FIELDS, toPolicy, toPolicyValues, validatePolicy } from './consts'
+import {
+  POLICY_FIELDS,
+  horizonLabel,
+  horizonOptions,
+  toPolicy,
+  toPolicyValues,
+  validatePolicy,
+} from './consts'
+import { SelectField } from '@components/select-field'
 import type { PolicyValues, SettingsScreenProps } from './types'
 
 import { Button } from '@components/button'
@@ -85,21 +93,39 @@ const PolicyForm = (props: {
         <h2 id="settings-deadlines" className="type-label text-(--text-strong)">
           Prazos
         </h2>
-        {POLICY_FIELDS.map(({ field, label, unit, helper }) => (
-          <TextField
-            key={field}
-            id={`settings-${field}`}
-            label={`${label} (${unit})`}
-            helper={helper}
-            inputMode="numeric"
-            autoComplete="off"
-            value={values[field]}
-            error={errors[field]}
-            onChange={(event) =>
-              setValues((current) => ({ ...current, [field]: event.target.value }))
-            }
-          />
-        ))}
+        {POLICY_FIELDS.map(({ field, label, unit, helper }) =>
+          field === 'bookingHorizonDays' ? (
+            // Opções claras (7CF): é ele que decide se dá para marcar o Natal em outubro. A API aceita de 1 a 365.
+            <SelectField
+              key={field}
+              id={`settings-${field}`}
+              label={label}
+              helper={`${helper} Um pedido para depois disso é recusado.`}
+              value={values[field]}
+              options={horizonOptions(Number(values[field])).map((days) => ({
+                value: String(days),
+                label: horizonLabel(days),
+              }))}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, [field]: event.target.value }))
+              }
+            />
+          ) : (
+            <TextField
+              key={field}
+              id={`settings-${field}`}
+              label={`${label} (${unit})`}
+              helper={helper}
+              inputMode="numeric"
+              autoComplete="off"
+              value={values[field]}
+              error={errors[field]}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, [field]: event.target.value }))
+              }
+            />
+          ),
+        )}
         <p className="type-caption text-(--text-muted)">Horários no fuso {timeZone}.</p>
       </section>
 

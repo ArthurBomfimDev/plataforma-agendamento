@@ -29,6 +29,11 @@ export type SearchResultsScreenProps = {
   /** Nova busca em andamento com resultados antigos na tela. */
   searching?: boolean
   locationLabel: string | null
+  /**
+   * Cidade da localização escolhida, usada em "Cidade". Nula: o provedor não soube dizer (ou a localização foi
+   * guardada antes da Onda 7C), e "Cidade" busca no maior raio, com um aviso.
+   */
+  cityName: string | null
   /** Aplica uma mudança nos filtros (a rota grava na URL). */
   onChange?: (patch: Partial<SearchFilters>) => void
   onBack?: () => void

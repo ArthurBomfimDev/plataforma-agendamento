@@ -49,6 +49,18 @@ public sealed class GeoTests
     }
 
     [Fact]
+    public void Search_result_carries_city_and_state_for_the_city_filter()
+    {
+        JsonElement item = JsonDocument.Parse(
+            """{"lat":"-22.21","lon":"-49.65","addresstype":"suburb","address":{"suburb":"Centro","town":"Garça","ISO3166-2-lvl4":"BR-SP"}}""")
+            .RootElement;
+
+        Assert.True(NominatimGeocodingProvider.TryParsePlace(item, out GeoPlace? place));
+        Assert.Equal("Garça", place.City);
+        Assert.Equal("SP", place.State);
+    }
+
+    [Fact]
     public void Search_result_without_coordinates_is_skipped()
     {
         JsonElement item = JsonDocument.Parse("""{"display_name":"Sem ponto","address":{"city":"Garça"}}""").RootElement;
@@ -109,10 +121,10 @@ public sealed class GeoTests
             return Task.FromResult<IReadOnlyList<GeoPlace>>([new GeoPlace("Centro, Garça - SP", -22.2, -49.6, LocationPrecision.Locality)]);
         }
 
-        public Task<string?> ReverseAsync(double latitude, double longitude, CancellationToken ct = default)
+        public Task<GeoArea?> ReverseAsync(double latitude, double longitude, CancellationToken ct = default)
         {
             Reverses++;
-            return Task.FromResult<string?>("Centro, Garça");
+            return Task.FromResult<GeoArea?>(new GeoArea("Centro, Garça", "Garça", "SP"));
         }
     }
 

@@ -24,6 +24,8 @@ public sealed record ConfirmLocationRequest(double Latitude, double Longitude, s
 /// <summary>
 /// Busca. <c>Category</c>: <c>Beleza</c> ou <c>Saude</c>. <c>MaxPriceCents</c>: só quem tem o serviço em destaque até
 /// esse preço. <c>SortBy</c>: <c>distance</c> (padrão) ou <c>price</c> (menor preço "a partir de" primeiro).
+/// <c>City</c> (Onda 7C): só estabelecimentos dessa cidade, comparada sem acento e sem caixa, entre os candidatos
+/// num raio de 50 km do ponto; com ela, <c>RadiusKm</c> é ignorado.
 /// </summary>
 public sealed record SearchBusinessesRequest(
     double Latitude,
@@ -34,7 +36,8 @@ public sealed record SearchBusinessesRequest(
     int PageSize = 20,
     string? Category = null,
     long? MaxPriceCents = null,
-    string? SortBy = null);
+    string? SortBy = null,
+    string? City = null);
 
 /// <summary>Decisão do Admin sobre um estabelecimento. Na recusa, a nota é obrigatória.</summary>
 public sealed record AdminDecisionRequest(string? Note);

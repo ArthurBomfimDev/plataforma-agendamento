@@ -64,6 +64,16 @@ export const authApi = {
   resetPassword: (token: string, newPassword: string) =>
     api<void>('/api/auth/reset-password', { method: 'POST', body: { token, newPassword } }),
   me: () => api<CurrentUserResponse>('/api/users/me', { auth: true }),
+  /** "Minha conta" (7CF): só o nome. */
+  updateMe: (fullName: string) =>
+    api<UserResponse>('/api/users/me', { method: 'PUT', auth: true, body: { fullName } }),
+  /** Pede a senha atual; devolve uma sessão nova e encerra as outras. */
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<AuthResponse>('/api/users/me/password', {
+      method: 'POST',
+      auth: true,
+      body: { currentPassword, newPassword },
+    }),
   /** Painel de um estabelecimento (com `businessId`) ou consumidor (`null`). */
   switchContext: (businessId: string | null) =>
     api<ContextTokenResponse>('/api/users/me/context', {
@@ -92,6 +102,12 @@ export const panelApi = {
   agenda: (date: string) =>
     api<PagedResult<AppointmentResponse>>(
       `${panel}/appointments?${query({ date, pageSize: 100 })}`,
+      { auth: true },
+    ),
+  /** Semana e mês (7CF): de `date` a `to`, inclusivo, até 42 dias. */
+  agendaRange: (from: string, to: string, page: number) =>
+    api<PagedResult<AppointmentResponse>>(
+      `${panel}/appointments?${query({ date: from, to, page, pageSize: 100 })}`,
       { auth: true },
     ),
   pending: (professionalId?: string) =>
@@ -259,6 +275,8 @@ export const businessesApi = {
     latitude: number
     longitude: number
     radiusKm?: number
+    /** Só a cidade (Onda 7C): o backend ignora o raio e compara sem acento, até 50 km do ponto. */
+    city?: string
     term?: string
     category?: string
     maxPriceCents?: number

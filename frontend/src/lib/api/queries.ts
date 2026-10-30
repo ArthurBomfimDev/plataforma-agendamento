@@ -8,11 +8,12 @@ import {
   panelApi,
 } from './endpoints'
 import type {
+  AppointmentResponse,
   CounterAppointmentRequest,
   RequestAppointmentRequest,
   UserBusinessResponse,
 } from './types'
-import { EMPTY_SEARCH, type SearchFilters } from './search'
+import { EMPTY_SEARCH, type SearchFilters, searchArea } from './search'
 import { clearPendingProfile, readPendingProfile, savePendingProfile } from './pending-profile'
 import {
   type Entry,
@@ -30,8 +31,11 @@ import { useSessionStore } from '@lib/zustand/session'
 
 /** Chaves do cache. Invalidar por prefixo: `['appointments']` derruba todas as listas. */
 export const queryKeys = {
-  search: (latitude: number, longitude: number, filters: Partial<SearchFilters>) =>
-    ['businesses', 'search', latitude, longitude, { ...EMPTY_SEARCH, ...filters }] as const,
+  search: (
+    latitude: number,
+    longitude: number,
+    filters: Partial<SearchFilters> & { city?: string | null },
+  ) => ['businesses', 'search', latitude, longitude, { ...EMPTY_SEARCH, ...filters }] as const,
   business: (businessId: string) => ['businesses', businessId] as const,
   services: (businessId: string) => ['businesses', businessId, 'services'] as const,
   professionals: (businessId: string) => ['businesses', businessId, 'professionals'] as const,
@@ -50,6 +54,8 @@ export const queryKeys = {
   panel: (businessId: string) => ['panel', businessId] as const,
   panelAgenda: (businessId: string, date: string) => ['panel', businessId, 'agenda', date] as const,
   panelPending: (businessId: string) => ['panel', businessId, 'pending'] as const,
+  panelAgendaRange: (businessId: string, from: string, to: string) =>
+    ['panel', businessId, 'agenda-range', from, to] as const,
   panelBusiness: (businessId: string) => ['panel', businessId, 'business'] as const,
   panelProfessionals: (businessId: string) => ['panel', businessId, 'professionals'] as const,
   panelSchedules: (businessId: string, professionalId: string) =>
@@ -62,19 +68,28 @@ export const queryKeys = {
 /** A agenda e os pedidos se atualizam sozinhos neste intervalo, sem recarregar a página. */
 export const PANEL_REFRESH_MS = 30_000
 
-/** Busca perto da referência, com os filtros que o backend suporta. Sem referência, não busca. */
+/**
+ * Busca perto da referência, com os filtros que o backend suporta. Sem referência, não busca. Em "Cidade",
+ * manda a cidade da localização escolhida (`searchArea`).
+ */
 export const useSearchBusinesses = (
-  location: { latitude: number; longitude: number } | null,
+  location: { latitude: number; longitude: number; city?: string | null } | null,
   filters: Partial<SearchFilters> = {},
 ) => {
-  const { term, category, maxPriceCents, sortBy, radiusKm } = { ...EMPTY_SEARCH, ...filters }
+  const { term, category, maxPriceCents, sortBy, distance } = { ...EMPTY_SEARCH, ...filters }
+  const { radiusKm, city } = searchArea(distance, location?.city)
   return useQuery({
-    queryKey: queryKeys.search(location?.latitude ?? 0, location?.longitude ?? 0, filters),
+    queryKey: queryKeys.search(location?.latitude ?? 0, location?.longitude ?? 0, {
+      ...filters,
+      distance,
+      city: city ?? null,
+    }),
     queryFn: () =>
       businessesApi.search({
         latitude: location!.latitude,
         longitude: location!.longitude,
         radiusKm,
+        city,
         term: term ?? undefined,
         category: category ?? undefined,
         maxPriceCents: maxPriceCents ?? undefined,
@@ -307,6 +322,8 @@ export const usePanelBusiness = (context: BusinessContext) =>
         const business = await panelApi.business()
         return {
           name: business.name,
+          category: business.category,
+          logo: business.logo,
           timeZone: business.policy.timeZone,
           pendingExpirationHours: business.policy.pendingExpirationHours,
           autoConfirm: business.policy.autoConfirm,
@@ -315,6 +332,8 @@ export const usePanelBusiness = (context: BusinessContext) =>
       const business = await businessesApi.get(context.businessId)
       return {
         name: business.name,
+        category: business.category,
+        logo: business.logo,
         timeZone: business.timeZone,
         pendingExpirationHours: business.pendingExpirationHours,
         autoConfirm: business.autoConfirm,
@@ -380,6 +399,31 @@ export const usePanelAgenda = (businessId: string, date: string) =>
     refetchInterval: PANEL_REFRESH_MS,
   })
 
+/**
+ * Agenda de um período (semana ou mês, Onda 7CF). A API devolve até 100 por página; aqui busca as páginas até
+ * completar, com teto de 10 (1.000 agendamentos), que um mês de um estabelecimento pequeno não alcança.
+ */
+export const usePanelAgendaRange = (
+  businessId: string,
+  from: string,
+  to: string,
+  enabled: boolean,
+) =>
+  useQuery({
+    queryKey: queryKeys.panelAgendaRange(businessId, from, to),
+    queryFn: async () => {
+      const items: AppointmentResponse[] = []
+      for (let page = 1; page <= 10; page++) {
+        const result = await panelApi.agendaRange(from, to, page)
+        items.push(...result.items)
+        if (items.length >= result.totalCount || result.items.length === 0) break
+      }
+      return items
+    },
+    enabled,
+    refetchInterval: PANEL_REFRESH_MS,
+  })
+
 export const usePanelPending = (businessId: string) =>
   useQuery({
     queryKey: queryKeys.panelPending(businessId),
@@ -414,6 +458,35 @@ export const useCounterBooking = (businessId: string) => {
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.panel(businessId) }),
   })
 }
+
+/** "Minha conta" (7CF): troca o nome e recarrega a conta (o menu mostra o nome novo). */
+export const useUpdateMe = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (fullName: string) => authApi.updateMe(fullName),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+  })
+}
+
+/**
+ * Troca a senha. A API devolve uma sessão nova (de consumidor) e encerra as outras: guarda a nova e, se o painel
+ * estava aberto, pede o contexto de novo, como depois de uma renovação.
+ */
+export const useChangePassword = () =>
+  useMutation({
+    mutationFn: async ({ current, next }: { current: string; next: string }) => {
+      const session = await authApi.changePassword(current, next)
+      const store = useSessionStore.getState()
+      const context = store.context
+      store.setSession(session)
+      if (context) {
+        const token = await authApi.switchContext(context.businessId)
+        useSessionStore
+          .getState()
+          .setContext(token.accessToken, token.accessTokenExpiresAt, context)
+      }
+    },
+  })
 
 export const useSignOut = () => {
   const queryClient = useQueryClient()

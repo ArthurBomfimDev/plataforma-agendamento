@@ -41,6 +41,12 @@ builder.Services.AddRateLimiter(limiter =>
     limiter.AddPolicy(ImageUpload.RateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
         context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+
+    // Trocar a senha (Onda 7CF): quem tem um token roubado não pode testar senhas atuais à vontade. 5 por 15 minutos
+    // por conta, que é o que importa aqui (o IP muda; a conta, não).
+    limiter.AddPolicy("password", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) }));
 });
 
 // O frontend roda em outra origem (e, depois, o Capacitor e o Tauri também). Só as origens

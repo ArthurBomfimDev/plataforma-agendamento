@@ -26,6 +26,21 @@ const screen = (overrides: Partial<BookingReviewScreenProps> = {}) =>
   )
 
 describe('BookingReviewScreen', () => {
+  it('mostra o logotipo do estabelecimento; sem ele, a ilustração da categoria (7CF)', () => {
+    const logo = {
+      small: 'businesses/b1/k-s.webp',
+      medium: 'businesses/b1/k-m.webp',
+      large: 'businesses/b1/k-l.webp',
+    }
+
+    expect(screen({ business: { name: 'Estúdio', image: logo } })).toMatch(
+      /<img[^>]*src="[^"]*businesses\/b1\/k-m\.webp"/,
+    )
+    const without = screen({ business: { name: 'Clínica', category: 'Saude', image: null } })
+    expect(without).toContain('data-category="Saude"')
+    expect(without).not.toContain('bg-(--bg-disabled)')
+  })
+
   it('resume estabelecimento, serviço, data, faixa de horário e valor', () => {
     const html = screen()
 

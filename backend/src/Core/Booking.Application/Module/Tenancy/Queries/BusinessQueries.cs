@@ -1,4 +1,5 @@
 using Booking.Application.Common.Media;
+using Booking.Application.Common.Search;
 using Booking.Application.Contracts.Catalog;
 using Booking.Application.Module.Tenancy.Commands;
 using Booking.Application.Module.Tenancy.Converter;
@@ -45,13 +46,20 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
     public async Task<PagedResult<BusinessSearchItemResponse>> ExecuteAsync(SearchBusinessesRequest request, CancellationToken ct = default)
     {
         GeoPoint center = GeoPoint.Of(request.Latitude, request.Longitude);
-        double radiusKm = Math.Clamp(request.RadiusKm, 0.1, _maxRadiusKm);
+        string? city = string.IsNullOrWhiteSpace(request.City) ? null : SearchText.Normalize(request.City);
+        // Com cidade, o raio é o teto: a cidade decide, e o teto evita trazer a homônima de outro estado.
+        double radiusKm = city is null ? Math.Clamp(request.RadiusKm, 0.1, _maxRadiusKm) : _maxRadiusKm;
         int page = Math.Max(1, request.Page);
         int pageSize = Math.Clamp(request.PageSize, 1, _maxPageSize);
         bool byPrice = ParseSort(request.SortBy);
 
         // 1. Geográfico (ST_DWithin sobre índice GiST), já em ordem de distância.
         IEnumerable<Business> matching = await businesses.FindBookableNearbyAsync(center, radiusKm * 1000, _maxCandidates, ct);
+
+        if (city is not null)
+        {
+            matching = matching.Where(b => b.City is not null && SearchText.Normalize(b.City) == city);
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
@@ -66,12 +74,15 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
         List<Business> candidates = [.. matching];
         string? term = string.IsNullOrWhiteSpace(request.Term) ? null : request.Term.Trim();
 
-        // 2. Texto: nome do estabelecimento ou de um serviço ativo.
+        // 2. Texto (ADR-024): nome do estabelecimento, nome da categoria ou de um serviço ativo, sem acento, sem caixa
+        // e com os sinônimos de SearchText ("cabelo" acha "Corte masculino").
         if (term is not null)
         {
+            IReadOnlyList<string> wanted = SearchText.Expand(term);
             IReadOnlySet<Guid> offering = await catalog.FilterBusinessesOfferingAsync([.. candidates.Select(b => b.Id)], term, ct);
 
-            candidates = [.. candidates.Where(b => offering.Contains(b.Id) || b.Name.Contains(term, StringComparison.OrdinalIgnoreCase))];
+            candidates = [.. candidates.Where(b =>
+                offering.Contains(b.Id) || SearchText.Matches(b.Name, wanted) || SearchText.Matches(CategoryName(b.Category), wanted))];
         }
 
         IReadOnlyDictionary<Guid, ServiceHighlight> highlights = await catalog.GetHighlightsAsync([.. candidates.Select(b => b.Id)], term, ct);
@@ -113,6 +124,13 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
 
         return new PagedResult<BusinessSearchItemResponse>(items, page, pageSize, candidates.Count);
     }
+
+    /// <summary>O nome da categoria como a pessoa escreve: "Saúde" casa com <c>Saude</c>.</summary>
+    private static string CategoryName(BusinessCategory category) => category switch
+    {
+        BusinessCategory.Saude => "Saúde",
+        _ => category.ToString(),
+    };
 
     private static bool ParseSort(string? sortBy) => sortBy?.Trim().ToLowerInvariant() switch
     {

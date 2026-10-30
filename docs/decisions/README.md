@@ -61,6 +61,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [021](0021-envio-de-email-smtp-generico-e-outbox.md) | Envio de e-mail: SMTP genérico e outbox — complementa a 010 | 📝 Proposto | 2026-10-28 |
 | [022](0022-provedores-de-geocodificacao-e-cep.md) | Provedores de geocodificação e CEP, limites e privacidade da coordenada — complementa a 016 | 📝 Proposto | 2026-10-28 |
 | [023](0023-imagens-armazenamento-de-arquivos.md) | Imagens: armazenamento de arquivos atrás de porta, processamento com SkiaSharp | 📝 Proposto | 2026-10-28 |
+| [024](0024-busca-por-termo-sem-acento-e-sinonimos.md) | Busca por termo sem acento e com dicionário de sinônimos no código | 📝 Proposto | 2026-10-29 |
 
 ### Notas sobre a fila
 
