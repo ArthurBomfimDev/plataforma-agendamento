@@ -1,11 +1,12 @@
-import type { ComponentProps } from 'react'
+export type SelectOption<Value extends string> = { value: Value; label: string }
 
-export type SelectFieldOption = { value: string; label: string }
-
-export type SelectFieldProps = Omit<ComponentProps<'select'>, 'id' | 'children'> & {
+export type SelectFieldProps<Value extends string> = {
   id: string
   label: string
-  helper?: string
-  error?: string
-  options: ReadonlyArray<SelectFieldOption>
+  value: Value
+  options: ReadonlyArray<SelectOption<Value>>
+  onValueChange: (value: Value) => void
+  className?: string
+  /** Classes do rótulo — por exemplo, a legenda menor dos formulários compactos. */
+  labelClassName?: string
 }

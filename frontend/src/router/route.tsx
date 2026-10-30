@@ -18,6 +18,7 @@ import { PanelRequestsRoute } from './panel-requests-route'
 import { PanelSchedulesRoute } from './panel-schedules-route'
 import { PanelSettingsRoute } from './panel-settings-route'
 import { PanelTeamRoute } from './panel-team-route'
+import { PanelServicesRoute } from './panel-services-route'
 import { ROUTES } from './consts'
 import { RequireOwner } from './require-owner'
 import { SignInRoute } from './sign-in-route'
@@ -78,7 +79,8 @@ export const AppRoutes = () => {
           <Route path={ROUTES.panelProfessionals} element={<PanelTeamRoute />} />
           <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
           <Route path={ROUTES.panelPhotos} element={<PanelPhotosRoute />} />
-          <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />
+          <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />         
+          <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
         </Route>
       </Route>
     </Routes>

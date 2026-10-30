@@ -1,52 +1,56 @@
+import { FIELD_BOX_CLASSES, FIELD_LABEL_CLASSES } from '@components/text-field/consts'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select'
+
 import type { SelectFieldProps } from './types'
-import { X } from 'lucide-react'
 import { cn } from 'cn'
 
-/** Mesmo desenho do seletor da marcação de balcão: altura de toque, borda interativa, foco visível. */
-export const SELECT_CLASSES =
-  'min-h-(--size-touch-min) w-full rounded-md border border-(--border-interactive) bg-(--bg-surface) px-(--space-16) py-(--space-12) text-(length:--size-input) text-(--text-strong) focus-visible:border-(--border-focus) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus) disabled:bg-(--bg-disabled) disabled:text-(--text-disabled)'
-
 /**
- * Seletor nativo com rótulo e erro. Nativo de propósito: no celular abre o seletor do sistema, e leitor
- * de tela e teclado já funcionam.
+ * Campo de seleção com a mesma caixa e o mesmo rótulo do `TextField`, construído sobre o Select do
+ * shadcn (Base UI). A lib dá a lista, o teclado e `aria-*`; aqui entram os tokens.
  */
-export const SelectField = (props: SelectFieldProps) => {
-  const { id, label, helper, error, options, className, ...select } = props
-  const describedBy = error ? `${id}-error` : helper ? `${id}-helper` : undefined
+export const SelectField = <Value extends string>(props: SelectFieldProps<Value>) => {
+  const { id, label, value, options, onValueChange, className, labelClassName } = props
+
+  const labelId = `${id}-label`
 
   return (
     <div className={cn('flex flex-col gap-(--space-4)', className)}>
-      <label htmlFor={id} className="type-label text-(--text-body)">
+      <span id={labelId} className={cn(FIELD_LABEL_CLASSES, labelClassName)}>
         {label}
-      </label>
-      <select
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        className={cn(SELECT_CLASSES, error && 'border-2 border-(--status-rejected-fg)')}
-        {...select}
+      </span>
+      <Select
+        items={options}
+        value={value}
+        onValueChange={(next) => next !== null && onValueChange(next)}
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error ? (
-        <p
-          id={`${id}-error`}
-          className="type-caption flex items-center gap-(--space-4) text-(--status-rejected-fg)"
+        <SelectTrigger
+          id={id}
+          aria-labelledby={labelId}
+          className={cn(
+            FIELD_BOX_CLASSES,
+            'w-full gap-(--space-8) bg-(--bg-surface) data-[size=default]:h-auto [&_svg]:text-(--text-muted)',
+          )}
         >
-          <X aria-hidden="true" className="size-4 shrink-0" />
-          {error}
-        </p>
-      ) : (
-        helper && (
-          <p id={`${id}-helper`} className="type-caption text-(--text-muted)">
-            {helper}
-          </p>
-        )
-      )}
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-md bg-(--bg-surface) p-(--space-4) text-(--text-strong) shadow-(--elevation-card) ring-(--border-subtle)">
+          {options.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="type-body min-h-(--size-touch-min) rounded-sm text-(--text-body) focus:bg-(--bg-surface-raised) focus:text-(--text-strong) data-selected:text-(--text-link)"
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }
