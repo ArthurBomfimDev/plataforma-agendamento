@@ -1,8 +1,7 @@
 import type { CustomerHistory, PendingRequest } from './types'
-import { addHours, differenceInMinutes, format, parse } from 'date-fns'
+import { differenceInMinutes, format, parse } from 'date-fns'
 import { durationLabel, toMinutes, toTime } from '@features/business-agenda/consts'
 
-import { MOCK_CONFIRMATION_HOURS } from '@features/availability/mock'
 import type { Variants } from 'framer-motion'
 import { priceFormat } from '@components/service-card/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
@@ -13,13 +12,13 @@ import { ptBR } from 'date-fns/locale/pt-BR'
  */
 export const URGENT_REMAINING_MINUTES = 8 * 60
 
-/** Minutos até o pedido expirar. Zero ou menos = prazo encerrado. */
+/** Minutos até o pedido expirar, pelo prazo da API. Zero ou menos = prazo encerrado. */
 export const remainingMinutes = (request: PendingRequest, now: Date) =>
-  differenceInMinutes(addHours(request.requestedAt, MOCK_CONFIRMATION_HOURS), now)
+  differenceInMinutes(request.expiresAt, now)
 
 /** O que expira primeiro vem primeiro. */
 export const byDeadline = (a: PendingRequest, b: PendingRequest) =>
-  a.requestedAt.getTime() - b.requestedAt.getTime()
+  a.expiresAt.getTime() - b.expiresAt.getTime()
 
 /** "Primeira vez neste estabelecimento", "3 atendimentos · 1 falta". */
 export const historyLabel = (history: CustomerHistory | null) => {

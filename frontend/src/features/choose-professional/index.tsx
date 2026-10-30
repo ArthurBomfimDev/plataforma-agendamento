@@ -1,18 +1,49 @@
 import { Check, ChevronLeft, Star } from 'lucide-react'
 
-import { Avatar } from '@components/avatar'
+import type { BusinessProfessional, ChooseProfessionalScreenProps } from './types'
+
 import { Breadcrumb } from '@components/breadcrumb'
 import { Button } from '@components/button'
-import type { ChooseProfessionalScreenProps } from './types'
-import { MOCK_BUSINESSES } from '@features/business-detail/mock'
-import { MOCK_PROFESSIONALS } from './mock'
-import { NotFoundScreen } from '@features/not-found'
+import type { ImageSet } from '@lib/api/types'
+import { InitialsAvatar } from '@global/images/defaults/initials'
 import { PageContainer } from '@components/page-container'
 import { ProfessionalOption } from '@components/professional-option'
+import { SmartImage } from '@components/smart-image'
+import { cn } from 'cn'
 import { priceFormat } from '@components/service-card/consts'
 import { ratingFormat } from '@components/card-establishment/consts'
 
+/**
+ * Foto do profissional (Onda 6D) ou, sem ela, as iniciais sobre `action/soft`. Decorativa: o nome está escrito
+ * ao lado. A API só manda a foto com o perfil público completo consentido.
+ */
+const ProfessionalPhoto = ({
+  name,
+  photo,
+  className,
+}: {
+  name: string
+  photo?: ImageSet | null
+  className?: string
+}) => (
+  <SmartImage
+    image={photo}
+    alt=""
+    sizes="80px"
+    width={1}
+    height={1}
+    fallback={<InitialsAvatar name={name} />}
+    className={cn('shrink-0 rounded-(--radius-full)', className)}
+  />
+)
+
 const yearsLabel = (years: number) => `${years} ${years === 1 ? 'ano' : 'anos'}`
+
+/** "Barbeiro · 3 anos", só com o que o perfil público tem. Vazio = só o nome. */
+const profileLine = ({ specialty, yearsOfExperience }: BusinessProfessional) =>
+  [specialty, yearsOfExperience !== undefined && yearsLabel(yearsOfExperience)]
+    .filter(Boolean)
+    .join(' · ')
 
 const divider = <hr aria-hidden="true" className="h-px w-full border-0 bg-(--border-subtle)" />
 
@@ -23,16 +54,8 @@ const divider = <hr aria-hidden="true" className="h-px w-full border-0 bg-(--bor
  * cards —, então cada uma é renderizada e escondida pelo breakpoint.
  */
 export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) => {
-  const { businessId, serviceId, onBack, onSelectProfessional } = props
+  const { businessName, service, professionals, onBack, onSelectProfessional } = props
 
-  const business = MOCK_BUSINESSES[businessId]
-  const service = business?.services.find(({ id }) => id === serviceId)
-
-  if (!business || !service) {
-    return <NotFoundScreen />
-  }
-
-  const professionals = MOCK_PROFESSIONALS[businessId] ?? []
   const serviceSummary = `${service.name} · ${service.durationMinutes} min · ${priceFormat.format(service.priceCents / 100)}`
 
   return (
@@ -56,7 +79,7 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
         <main className="flex flex-col gap-(--space-20) px-(--space-16) pt-(--space-12) pb-(--space-16) lg:gap-(--space-24) lg:px-0 lg:pt-(--space-32) lg:pb-(--space-40)">
           <Breadcrumb
             className="hidden lg:block"
-            items={[{ label: business.name, onClick: onBack }, { label: serviceSummary }]}
+            items={[{ label: businessName, onClick: onBack }, { label: serviceSummary }]}
           />
 
           <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
@@ -79,21 +102,33 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
               />
               {divider}
             </li>
-            {professionals.map(({ id, name, specialty, yearsOfExperience, rating, photoUrl }) => (
-              <li key={id} className="flex flex-col gap-(--space-2)">
-                <ProfessionalOption
-                  leading={<Avatar src={photoUrl} alt={`Foto de ${name}`} />}
-                  title={name}
-                  details={[
-                    `${specialty} · ${yearsLabel(yearsOfExperience)}`,
-                    // TODO: "ver perfil" ainda não tem tela; por ora é só texto dentro da opção.
-                    `★ ${ratingFormat.format(rating)} · ver perfil`,
-                  ]}
-                  onSelect={() => onSelectProfessional?.(id)}
-                />
-                {divider}
-              </li>
-            ))}
+            {professionals.map((professional) => {
+              const { id, name, rating, photo } = professional
+              const profile = profileLine(professional)
+              return (
+                <li key={id} className="flex flex-col gap-(--space-2)">
+                  <ProfessionalOption
+                    leading={
+                      <ProfessionalPhoto
+                        name={name}
+                        photo={photo}
+                        className="size-(--size-avatar-md)"
+                      />
+                    }
+                    title={name}
+                    details={[
+                      ...(profile ? [profile] : []),
+                      // TODO: "ver perfil" ainda não tem tela; por ora é só texto dentro da opção.
+                      ...(rating !== undefined
+                        ? [`★ ${ratingFormat.format(rating)} · ver perfil`]
+                        : []),
+                    ]}
+                    onSelect={() => onSelectProfessional?.(id)}
+                  />
+                  {divider}
+                </li>
+              )
+            })}
           </ul>
 
           {/* Desktop: "Sem preferência" em destaque, profissionais em grade. */}
@@ -119,39 +154,43 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
           </section>
 
           <ul className="hidden grid-cols-3 gap-(--space-16) lg:grid">
-            {professionals.map(({ id, name, specialty, yearsOfExperience, rating, photoUrl }) => (
-              <li
-                key={id}
-                className="flex flex-col items-center gap-(--space-16) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-20) text-center"
-              >
-                <Avatar
-                  src={photoUrl}
-                  alt={`Foto de ${name}`}
-                  className="size-(--size-avatar-lg)"
-                />
-                <div className="flex flex-col items-center gap-(--space-2)">
-                  <h2 className="type-body text-(--text-strong)">{name}</h2>
-                  <p className="type-caption text-(--text-muted)">
-                    {specialty} · {yearsLabel(yearsOfExperience)}
-                  </p>
-                  <p className="type-caption tabular flex items-center gap-(--space-4) text-(--text-body)">
-                    <Star aria-hidden="true" className="size-4" />
-                    <span>
-                      <span className="sr-only">Nota </span>
-                      {ratingFormat.format(rating)}
-                    </span>
-                  </p>
-                </div>
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  aria-label={`Ver horários com ${name}`}
-                  onClick={() => onSelectProfessional?.(id)}
+            {professionals.map((professional) => {
+              const { id, name, rating, photo } = professional
+              const profile = profileLine(professional)
+              return (
+                <li
+                  key={id}
+                  className="flex flex-col items-center gap-(--space-16) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-20) text-center"
                 >
-                  Ver horários
-                </Button>
-              </li>
-            ))}
+                  <ProfessionalPhoto
+                    name={name}
+                    photo={photo}
+                    className="size-(--size-avatar-lg)"
+                  />
+                  <div className="flex flex-col items-center gap-(--space-2)">
+                    <h2 className="type-body text-(--text-strong)">{name}</h2>
+                    {profile && <p className="type-caption text-(--text-muted)">{profile}</p>}
+                    {rating !== undefined && (
+                      <p className="type-caption tabular flex items-center gap-(--space-4) text-(--text-body)">
+                        <Star aria-hidden="true" className="size-4" />
+                        <span>
+                          <span className="sr-only">Nota </span>
+                          {ratingFormat.format(rating)}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    aria-label={`Ver horários com ${name}`}
+                    onClick={() => onSelectProfessional?.(id)}
+                  >
+                    Ver horários
+                  </Button>
+                </li>
+              )
+            })}
           </ul>
         </main>
       </PageContainer>

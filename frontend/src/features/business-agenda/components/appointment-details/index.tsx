@@ -1,52 +1,35 @@
 import { Clock, User, X } from 'lucide-react'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle } from '@components/ui/sheet'
-import { addHours, differenceInMinutes } from 'date-fns'
-import { entryEnd, expiryLabel, firstName, initials, placeableStarts, toTime } from '../../consts'
+import { entryEnd, expiryLabel, initials, minutesToExpire, toTime } from '../../consts'
 import { useState } from 'react'
 
 import type { AppointmentDetailsProps } from './types'
 import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
-import { MOCK_CONFIRMATION_HOURS } from '@features/availability/mock'
-import { SegmentedControl } from '@components/segmented-control'
 import { StatusChip } from '@components/status-chip'
-import { TimeSlotGroup } from '@components/time-slot-group'
 import { cn } from 'cn'
 
 /**
  * Detalhe de um agendamento do painel, num Sheet do shadcn (Base UI): lateral no desktop, de baixo
  * no celular. A lib dá foco preso, Esc e devolução do foco.
  *
- * Pedido pendente: confirmar ou recusar. Confirmado: remarcar escolhendo profissional e horário —
- * a alternativa a arrastar o bloco na grade, para quem não usa ponteiro (WCAG 2.5.7).
+ * Pedido pendente: confirmar ou recusar. Confirmado: concluir, marcar falta ou cancelar. Concluído e
+ * falta: só leitura. Recusar, falta e cancelar pedem confirmação (`onAskConfirm`).
  *
  * TODO(figma): não há wireframe deste painel; segue os componentes e tokens existentes.
  */
 export const AppointmentDetails = (props: AppointmentDetailsProps) => {
-  const { selection, professionals, side, now, onClose, onConfirm, onReject, onMove } = props
-
-  const [targetId, setTargetId] = useState<string | null>(null)
-  const [time, setTime] = useState<string | null>(null)
+  const { selection, side, now, busy, onClose, onAction, onAskConfirm } = props
 
   // O Sheet anima a saída; enquanto isso, mantém o último conteúdo na tela.
   const [shown, setShown] = useState(selection)
-  if (selection && selection !== shown) {
-    // Cada agendamento aberto começa sem remarcação escolhida.
-    if (selection.entry.id !== shown?.entry.id) {
-      setTargetId(null)
-      setTime(null)
-    }
-    setShown(selection)
-  }
+  if (selection && selection !== shown) setShown(selection)
   if (!shown) return null
 
   const { entry, professional } = shown
-  const target =
-    professionals.find(({ id }) => id === (targetId ?? professional.id)) ?? professional
-  const starts = placeableStarts(target, entry.durationMinutes, entry.id)
-  const remaining = entry.requestedAt
-    ? differenceInMinutes(addHours(entry.requestedAt, MOCK_CONFIRMATION_HOURS), now)
-    : 0
+  const remaining = minutesToExpire(entry, now)
+  // Sem o fim (dado de teste), não esconde as ações: a API decide.
+  const finished = !entry.endsAt || now >= entry.endsAt
 
   const row = (icon: React.ReactNode, label: string, value: React.ReactNode) => (
     <div className="flex items-center gap-(--space-12)">
@@ -101,7 +84,7 @@ export const AppointmentDetails = (props: AppointmentDetailsProps) => {
           )}
         </div>
 
-        {entry.status === 'pending' ? (
+        {entry.status === 'pending' && (
           <>
             <p className="type-caption tabular flex items-center gap-(--space-4) text-(--status-pending-fg)">
               <Clock aria-hidden="true" className="size-4 shrink-0" />
@@ -110,63 +93,65 @@ export const AppointmentDetails = (props: AppointmentDetailsProps) => {
                 : 'Prazo de confirmação encerrado'}
             </p>
             <div className="flex flex-col gap-(--space-8)">
-              <Button size="lg" className="w-full" onClick={() => onConfirm(entry.id)}>
+              <Button
+                size="lg"
+                className="w-full"
+                disabled={busy}
+                onClick={() => onAction('confirm', entry.id)}
+              >
                 Confirmar agendamento
               </Button>
-              <Button variant="secondary" className="w-full" onClick={() => onReject(entry.id)}>
+              <Button
+                variant="secondary"
+                className="w-full"
+                disabled={busy}
+                onClick={() => onAskConfirm('reject', entry.id)}
+              >
                 Recusar pedido
               </Button>
             </div>
           </>
-        ) : (
-          <section aria-labelledby="reschedule-title" className="flex flex-col gap-(--space-12)">
-            <div className="flex flex-col gap-(--space-2)">
-              <h3 id="reschedule-title" className="type-label text-(--text-strong)">
-                Remarcar
-              </h3>
-              {side === 'right' && (
-                <p className="type-caption text-(--text-muted)">
-                  Você também pode arrastar o bloco na agenda.
-                </p>
-              )}
-            </div>
-            {professionals.length > 1 && (
-              <SegmentedControl
-                label="Profissional"
-                options={professionals.map(({ id, name }) => ({
-                  value: id,
-                  label: firstName(name),
-                }))}
-                value={target.id}
-                onValueChange={(id) => {
-                  setTargetId(id)
-                  setTime(null)
-                }}
-              />
-            )}
-            {starts.length > 0 ? (
-              <TimeSlotGroup
-                label={`Horários livres com ${target.name}`}
-                slots={starts.map((start) => ({ time: start }))}
-                value={time}
-                onValueChange={setTime}
-              />
+        )}
+
+        {/* Remarcar não existe no backend (Onda 7A): cancela e o consumidor agenda de novo. */}
+        {entry.status === 'confirmed' && (
+          <div className="flex flex-col gap-(--space-8)">
+            {finished ? (
+              <>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => onAction('complete', entry.id)}
+                >
+                  Concluir atendimento
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => onAskConfirm('noShow', entry.id)}
+                >
+                  Marcar falta
+                </Button>
+              </>
             ) : (
               <p className="type-caption text-(--text-muted)">
-                Nenhum horário livre com {firstName(target.name)} neste dia.
+                Concluir e marcar falta ficam disponíveis depois das {toTime(entryEnd(entry))}.
               </p>
             )}
             <Button
-              size="lg"
+              variant="ghost"
               className="w-full"
-              disabled={time === null}
-              onClick={() =>
-                time && onMove({ entryId: entry.id, professionalId: target.id, start: time })
-              }
+              disabled={busy}
+              onClick={() => onAskConfirm('cancel', entry.id)}
             >
-              Remarcar {time ? `para ${time}` : ''}
+              Cancelar agendamento
             </Button>
-          </section>
+            <p className="type-caption text-(--text-muted)">
+              Para mudar o horário, cancele e peça ao consumidor que agende de novo.
+            </p>
+          </div>
         )}
       </SheetContent>
     </Sheet>

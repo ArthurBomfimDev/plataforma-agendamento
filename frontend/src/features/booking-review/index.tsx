@@ -1,17 +1,15 @@
 import { ChevronLeft, Clock } from 'lucide-react'
-import { MOCK_FREE_CANCELLATION_HOURS, NOTE_MAX_LENGTH } from './consts'
 import { addMinutes, format, parse } from 'date-fns'
 
 import type { BookingReviewScreenProps } from './types'
+import { BusinessIllustration } from '@global/images/defaults/business-illustration'
 import { Button } from '@components/button'
-import { MOCK_BUSINESSES } from '@features/business-detail/mock'
-import { MOCK_PROFESSIONALS } from '@features/choose-professional/mock'
-import { NotFoundScreen } from '@features/not-found'
+import { SmartImage } from '@components/smart-image'
+import { NOTE_MAX_LENGTH } from './consts'
 import { PageContainer } from '@components/page-container'
 import { TextAreaField } from '@components/text-area-field'
 import { VerifiedBadge } from '@components/card-establishment/components/VerifiedBadge'
 import { cn } from 'cn'
-import { getMockDaySlots } from '@features/availability/mock'
 import { priceFormat } from '@components/service-card/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { useState } from 'react'
@@ -50,22 +48,24 @@ const divider = <hr aria-hidden="true" className="h-px w-full border-0 bg-(--bor
  * Tela 06 · Confirmação do pedido (Figma, 390px; desktop: 06D, 1440px).
  */
 export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
-  const { businessId, serviceId, professionalId, date, time, today, onBack, onSubmit } = props
+  const {
+    business,
+    service,
+    professionalName,
+    date,
+    time,
+    cancellationWindowHours,
+    submitting,
+    onBack,
+    onSubmit,
+  } = props
 
   const [note, setNote] = useState('')
 
-  const business = MOCK_BUSINESSES[businessId]
-  const service = business?.services.find(({ id }) => id === serviceId)
-  const professional = MOCK_PROFESSIONALS[businessId]?.find(({ id }) => id === professionalId)
-  const slots = getMockDaySlots(date, today)
-  const slotIsFree = Object.values(slots ?? {})
-    .flat()
-    .some((slot) => slot.time === time && !slot.unavailable)
-
-  // Link montado à mão ou horário que deixou de existir: não há pedido para revisar.
-  if (!business || !service || (professionalId && !professional) || !slotIsFree) {
-    return <NotFoundScreen />
+  const submit = () => {
+    if (!submitting) onSubmit?.(note.trim())
   }
+  const submitLabel = submitting ? 'Enviando…' : 'Enviar pedido'
 
   return (
     <div className="min-h-dvh bg-(--bg-page) pb-[calc(9rem+env(safe-area-inset-bottom))] lg:pb-(--space-40)">
@@ -92,18 +92,16 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
             className="flex flex-col gap-(--space-8) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-16) lg:gap-(--space-12) lg:p-(--space-20)"
           >
             <div className="flex items-center gap-(--space-12)">
-              {business.coverUrl ? (
-                <img
-                  src={business.coverUrl}
-                  alt=""
-                  className="size-10 shrink-0 rounded-md object-cover lg:size-12"
-                />
-              ) : (
-                <div
-                  aria-hidden="true"
-                  className="size-10 shrink-0 rounded-md bg-(--bg-disabled) lg:size-12"
-                />
-              )}
+              {/* Logotipo (ou a capa); sem imagem, a ilustração da categoria, como no card da busca. */}
+              <SmartImage
+                image={business.image ?? null}
+                alt=""
+                sizes="48px"
+                width={1}
+                height={1}
+                fallback={<BusinessIllustration category={business.category ?? 'Beleza'} />}
+                className="size-10 shrink-0 rounded-md lg:size-12"
+              />
               <h2 className="type-body min-w-0 flex-1 text-(--text-strong) lg:text-(length:--size-heading)! lg:leading-(--line-height-heading)! lg:font-semibold!">
                 {business.name}
               </h2>
@@ -116,8 +114,8 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
               <SummaryRow label="Serviço" value={service.name} />
               <SummaryRow
                 label="Profissional"
-                value={professional?.name ?? 'Sem preferência'}
-                muted={!professional}
+                value={professionalName ?? 'Sem preferência'}
+                muted={!professionalName}
               />
               <SummaryRow
                 label="Data"
@@ -170,7 +168,7 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
               Política de cancelamento
             </h2>
             <p className="type-caption text-(--text-body) lg:text-(length:--size-body)! lg:leading-(--line-height-body)!">
-              Cancelamento gratuito até {MOCK_FREE_CANCELLATION_HOURS} h antes. Depois disso, só com
+              Cancelamento gratuito até {cancellationWindowHours} h antes. Depois disso, só com
               aprovação do estabelecimento.
             </p>
           </section>
@@ -183,8 +181,8 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
             <Button variant="ghost" size="lg" onClick={onBack}>
               Voltar
             </Button>
-            <Button size="lg" onClick={() => onSubmit?.(note.trim())}>
-              Enviar pedido
+            <Button size="lg" onClick={submit} disabled={submitting}>
+              {submitLabel}
             </Button>
           </div>
         </main>
@@ -192,8 +190,8 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
 
       {/* TODO(figma): a sombra para cima não tem token; o valor é o do Figma. */}
       <footer className="fixed inset-x-0 bottom-0 flex flex-col gap-(--space-8) border-t border-(--border-subtle) bg-(--bg-surface) px-(--space-16) md:px-[max(var(--space-16),calc((100%-40rem)/2+var(--space-16)))] pt-(--space-12) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_0_#1c1a1714] lg:hidden">
-        <Button onClick={() => onSubmit?.(note.trim())} size="lg" className="w-full">
-          Enviar pedido
+        <Button onClick={submit} disabled={submitting} size="lg" className="w-full">
+          {submitLabel}
         </Button>
         <p className="type-caption text-center text-(--text-muted)">
           O pedido fica pendente até a empresa aprovar. Você é avisado por e-mail e no app.

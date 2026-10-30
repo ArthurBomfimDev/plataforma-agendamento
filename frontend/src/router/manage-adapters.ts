@@ -1,0 +1,184 @@
+import type {
+  AffectedAppointmentResponse,
+  ProfessionalResponse,
+  SaveServiceRequest,
+  SaveWorkScheduleRequest,
+  ScheduleExceptionResponse,
+  ServiceResponse,
+  WorkScheduleResponse,
+} from '@lib/api/types'
+import type {
+  ExceptionDraft,
+  ExceptionItem,
+  ScheduleDraft,
+  ScheduleRow,
+} from '@features/panel-schedules/types'
+import type { PreviewHours, ServiceDraft } from '@features/service-form/types'
+import { dateKeyIn, instantIn, timeIn } from '@lib/api/time'
+
+import { CATEGORY_LABELS } from '@features/search-results/consts'
+import type { ServiceListItem } from '@features/panel-services/types'
+import type { TeamMember } from '@features/panel-team/types'
+import { shortDate } from '@features/panel-schedules/consts'
+import { workHoursOn } from './panel-adapters'
+
+/** Da API para as telas de gestão do painel (Onda 7D). */
+
+/** `Saude` exige tratamento de dado sensível (`BusinessCategory.RequiresSensitiveHandling`). */
+export const isSensitiveCategory = (category: string) => category === 'Saude'
+
+export const categoryLabel = (category: string) =>
+  CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] ?? category
+
+const addDays = (date: string, days: number) => {
+  const [y, m, d] = date.split('-').map(Number)
+  const next = new Date(Date.UTC(y!, m! - 1, d! + days))
+  return next.toISOString().slice(0, 10)
+}
+
+/**
+ * Expediente de exemplo para a pré-visualização do cadastro de serviço: o primeiro dia, a partir de
+ * hoje e dentro de uma semana, em que alguém da equipe trabalha — da primeira entrada à última saída.
+ * Sem jornada nenhuma, `null`: a tela pede para cadastrar a jornada em vez de inventar um horário.
+ */
+export const previewHoursOf = (
+  schedules: Map<string, WorkScheduleResponse[]>,
+  today: string,
+): PreviewHours | null => {
+  for (let offset = 0; offset < 7; offset++) {
+    const date = addDays(today, offset)
+    const hours = [...schedules.values()].flatMap((rules) => workHoursOn(rules, date) ?? [])
+    if (hours.length > 0) {
+      return {
+        start: hours.map(({ start }) => start).sort()[0]!,
+        end: hours
+          .map(({ end }) => end)
+          .sort()
+          .at(-1)!,
+      }
+    }
+  }
+  return null
+}
+
+export const toServiceListItem = (
+  service: ServiceResponse,
+  professionals: ProfessionalResponse[],
+): ServiceListItem => ({
+  id: service.id,
+  name: service.name,
+  durationMinutes: service.durationMinutes,
+  priceCents: service.priceCents,
+  isActive: service.isActive,
+  professionalNames: service.professionals.flatMap(
+    ({ professionalId }) =>
+      professionals.find(({ id }) => id === professionalId)?.displayName ?? [],
+  ),
+})
+
+/** O pedido de gravação a partir do formulário. O que a tela não edita (insumos, situação) fica como estava. */
+export const toSaveServiceRequest = (
+  draft: ServiceDraft,
+  existing: ServiceResponse | null,
+): SaveServiceRequest => ({
+  name: draft.name,
+  description: draft.description,
+  durationMinutes: draft.durationMinutes,
+  bufferBeforeMinutes: draft.bufferBeforeMinutes,
+  bufferAfterMinutes: draft.bufferAfterMinutes,
+  slotStepMinutes: draft.slotStepMinutes,
+  priceCents: draft.priceCents,
+  suppliesNote: existing?.suppliesNote ?? null,
+  isActive: existing?.isActive ?? true,
+})
+
+/** O mesmo serviço, só com a situação trocada: ativar e desativar usam a edição. */
+export const withActive = (service: ServiceResponse, isActive: boolean): SaveServiceRequest => ({
+  name: service.name,
+  description: service.description,
+  durationMinutes: service.durationMinutes,
+  bufferBeforeMinutes: service.bufferBeforeMinutes,
+  bufferAfterMinutes: service.bufferAfterMinutes,
+  slotStepMinutes: service.slotStepMinutes,
+  priceCents: service.priceCents,
+  suppliesNote: service.suppliesNote,
+  isActive,
+})
+
+/** Quem ligar e quem desligar para o serviço ficar com exatamente `wanted`. */
+export const professionalChanges = (current: string[], wanted: string[]) => ({
+  enable: wanted.filter((id) => !current.includes(id)),
+  disable: current.filter((id) => !wanted.includes(id)),
+})
+
+export const toTeamMember = (
+  professional: ProfessionalResponse,
+  services: ServiceResponse[],
+): TeamMember => ({
+  id: professional.id,
+  displayName: professional.displayName,
+  specialty: professional.specialty,
+  bio: professional.bio,
+  isActive: professional.isActive,
+  isPubliclyVisible: professional.isPubliclyVisible,
+  hasPublicProfileConsent: professional.hasPublicProfileConsent,
+  hasAccount: professional.membershipId !== null,
+  photo: professional.photo,
+  serviceIds: services
+    .filter((service) =>
+      service.professionals.some(({ professionalId }) => professionalId === professional.id),
+    )
+    .map(({ id }) => id),
+})
+
+export const toScheduleRow = (schedule: WorkScheduleResponse): ScheduleRow => ({
+  id: schedule.id,
+  dayOfWeek: schedule.dayOfWeek,
+  start: schedule.startTime.slice(0, 5),
+  end: schedule.endTime.slice(0, 5),
+  effectiveFrom: schedule.effectiveFrom,
+  effectiveTo: schedule.effectiveTo,
+})
+
+/** A API recebe `HH:mm:ss` (`TimeOnly`) e o dia como número. */
+export const toScheduleRequest = (draft: ScheduleDraft): SaveWorkScheduleRequest => ({
+  dayOfWeek: draft.dayOfWeek,
+  startTime: `${draft.start}:00`,
+  endTime: `${draft.end}:00`,
+  effectiveFrom: draft.effectiveFrom,
+  effectiveTo: draft.effectiveTo,
+})
+
+export const toExceptionItem = (
+  exception: ScheduleExceptionResponse,
+  timeZone: string,
+  nameOf: (id: string) => string,
+): ExceptionItem => ({
+  id: exception.id,
+  professionalName: exception.professionalId ? nameOf(exception.professionalId) : null,
+  kind: exception.kind,
+  startDate: dateKeyIn(exception.startsAt, timeZone),
+  startTime: timeIn(exception.startsAt, timeZone),
+  endDate: dateKeyIn(exception.endsAt, timeZone),
+  endTime: timeIn(exception.endsAt, timeZone),
+  reason: exception.reason,
+})
+
+/** O período digitado no relógio do estabelecimento, em instantes UTC (nunca o fuso do navegador). */
+export const exceptionPeriod = (draft: ExceptionDraft, timeZone: string) => ({
+  startsAt: instantIn(draft.startDate, draft.startTime, timeZone),
+  endsAt: instantIn(draft.endDate, draft.endTime, timeZone),
+})
+
+/** "03/11/2026, 09:00 · Corte · Ana · Marina": um agendamento na prévia do bloqueio. */
+export const affectedLabel = (
+  appointment: AffectedAppointmentResponse,
+  timeZone: string,
+  nameOf: (id: string) => string,
+) =>
+  [
+    `${shortDate(dateKeyIn(appointment.startsAt, timeZone))}, ${timeIn(appointment.startsAt, timeZone)}`,
+    appointment.serviceName,
+    appointment.attendeeName ?? 'Consumidor',
+    nameOf(appointment.professionalId),
+  ].join(' · ')

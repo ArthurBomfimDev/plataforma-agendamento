@@ -1,24 +1,23 @@
-import type { AgendaMove, BusinessAgendaScreenProps } from './types'
+import type { AgendaAction, BusinessAgendaScreenProps } from './types'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import {
+  ACTION_SUCCESS,
   COUNTER_BOOKING_LABEL,
   ICON_BUTTON,
   SLIDE,
   SWIPE_THRESHOLD,
-  confirmAppointment,
   dayLabel,
   findAppointment,
   firstName,
   fullDayLabel,
   initials,
-  moveAppointment,
-  rejectAppointment,
   shiftDay,
   summaryCards,
+  summarize,
   toMinutes,
 } from './consts'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
-import { MOCK_AGENDA_DATE, MOCK_BUSINESS, createMockAgendaDay } from './mock'
+import { ErrorState, LoadingState } from '@components/screen-state'
 import { useRef, useState } from 'react'
 
 import { AppointmentDetails } from './components/appointment-details'
@@ -36,52 +35,85 @@ import { toast } from '@lib/toast'
 import { useMediaQuery } from '@hooks/use-media-query'
 import { useNow } from '@hooks/use-now'
 
+/** Ações que pedem confirmação antes: o texto do diálogo de cada uma. */
+const ASK: Partial<
+  Record<AgendaAction, { title: string; confirmLabel: string; dismissLabel: string; tail: string }>
+> = {
+  reject: {
+    title: 'Recusar este pedido?',
+    confirmLabel: 'Recusar pedido',
+    dismissLabel: 'Manter pedido',
+    tail: 'O horário volta a ficar livre.',
+  },
+  noShow: {
+    title: 'Marcar falta?',
+    confirmLabel: 'Marcar falta',
+    dismissLabel: 'Voltar',
+    tail: 'Fica registrado que o consumidor não veio.',
+  },
+  cancel: {
+    title: 'Cancelar este agendamento?',
+    confirmLabel: 'Cancelar agendamento',
+    dismissLabel: 'Manter agendamento',
+    tail: 'O horário volta a ficar livre e o consumidor é avisado.',
+  },
+}
+
 /**
  * Tela 09 · Painel — Agenda do dia (Figma: 09, desktop; P01, 390px).
  *
- * Desktop: navegação lateral, indicadores e uma coluna por profissional, com arrastar para
- * remarcar. Celular: um profissional por vez, seletor horizontal no topo (ou deslizar o dedo) e o
- * dia como lista cronológica (PROJECT-CONTEXT §4.1). Nos dois, tocar num agendamento abre o detalhe.
+ * Desktop: navegação lateral, indicadores e uma coluna por profissional. Celular: um profissional
+ * por vez, seletor horizontal no topo (ou deslizar o dedo) e o dia como lista cronológica
+ * (PROJECT-CONTEXT §4.1). Nos dois, tocar num agendamento abre o detalhe.
  *
- * TODO: confirmar, recusar e remarcar dependem da API de Scheduling; por enquanto só mudam o
- * estado local. Remarcar um confirmado sem o aceite do consumidor é regra de domínio ainda aberta.
+ * Os dados vêm da API pela rota (`panel-agenda-route`). Remarcar não existe no backend (Onda 7A): o
+ * detalhe oferece cancelar, e o consumidor agenda de novo.
  */
 export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
-  const { onNavigate, onCounterBooking, onWeekView } = props
+  const {
+    businessName,
+    today,
+    date,
+    onDateChange,
+    agenda,
+    pendingRequests,
+    onAction,
+    onNavigate,
+    onCounterBooking,
+    toolbar,
+    filtered = false,
+  } = props
 
   const now = useNow()
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
-  const [agenda, setAgenda] = useState(() => createMockAgendaDay())
-  const [date, setDate] = useState(MOCK_AGENDA_DATE)
   const [dayDirection, setDayDirection] = useState(1)
-  const [selectedId, setSelectedId] = useState(agenda.professionals[0]?.id)
+  const [selectedId, setSelectedId] = useState<string>()
   const [professionalDirection, setProfessionalDirection] = useState(1)
   const [openId, setOpenId] = useState<string | null>(null)
-  const [rejectId, setRejectId] = useState<string | null>(null)
-  const [pendingMove, setPendingMove] = useState<AgendaMove | null>(null)
+  const [asking, setAsking] = useState<{ action: AgendaAction; entryId: string } | null>(null)
+  const [busy, setBusy] = useState(false)
   // Soltar o dedo depois de deslizar dispara um toque no card de baixo; esse toque é ignorado.
   const swiped = useRef(false)
 
-  // TODO: sem API, só o dia dos wireframes tem dados — e ele faz o papel de "hoje".
-  const professionals = date === agenda.date ? agenda.professionals : []
+  const day = agenda.status === 'ready' ? agenda.day : null
+  const professionals = day?.professionals ?? []
   const selectedIndex = Math.max(
     0,
     professionals.findIndex(({ id }) => id === selectedId),
   )
   const selected = professionals[selectedIndex]
-  const pendingRequests = agenda.professionals.reduce((sum, p) => sum + p.pendingRequests, 0)
-  const isToday = date === MOCK_AGENDA_DATE
+  const isToday = date === today
   const title = isToday ? 'Agenda de hoje' : 'Agenda do dia'
   const nowMinutes = isToday ? toMinutes(format(now, 'HH:mm')) : null
+  const summary = day?.summary ?? summarize([])
 
-  const opened = openId ? findAppointment(agenda, openId) : null
-  const rejecting = rejectId ? findAppointment(agenda, rejectId) : null
-  const moving = pendingMove ? findAppointment(agenda, pendingMove.entryId) : null
-  const moveTarget = professionals.find(({ id }) => id === pendingMove?.professionalId)
+  const opened = openId && day ? findAppointment(day, openId) : null
+  const askedFor = asking && day ? findAppointment(day, asking.entryId) : null
+  const askText = asking ? ASK[asking.action] : undefined
 
   const changeDay = (days: number) => {
     setDayDirection(days)
-    setDate((current) => shiftDay(current, days))
+    onDateChange(shiftDay(date, days))
   }
 
   const selectProfessional = (index: number) => {
@@ -91,30 +123,37 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
     setSelectedId(next.id)
   }
 
-  const confirm = (entryId: string) => {
-    setAgenda((current) => confirmAppointment(current, entryId))
-    setOpenId(null)
-    toast.success('Agendamento confirmado')
+  const run = async (action: AgendaAction, entryId: string) => {
+    setBusy(true)
+    try {
+      if (await onAction(action, entryId)) {
+        toast.success(ACTION_SUCCESS[action])
+        setOpenId(null)
+      }
+    } finally {
+      setBusy(false)
+      setAsking(null)
+    }
   }
 
-  const reject = () => {
-    if (!rejectId) return
-    setAgenda((current) => rejectAppointment(current, rejectId))
-    setRejectId(null)
-    setOpenId(null)
-    toast.success('Pedido recusado. O horário voltou a ficar livre.')
-  }
-
-  const move = (next: AgendaMove) => {
-    setAgenda((current) => moveAppointment(current, next))
-    setPendingMove(null)
-    setOpenId(null)
-    toast.success(`Agendamento remarcado para ${next.start}`)
-  }
-
-  const emptyDay = (
-    <p className="type-body text-(--text-muted)">Nenhum dado de agenda para este dia.</p>
+  const noAppointments = day !== null && summary.appointmentsCount === 0 && (
+    <p role="status" className="type-body text-(--text-muted)">
+      {filtered
+        ? 'Nenhum agendamento com esses filtros neste dia.'
+        : isToday
+          ? 'Nenhum agendamento hoje.'
+          : 'Nenhum agendamento neste dia.'}
+    </p>
   )
+
+  const emptyDay =
+    agenda.status === 'loading' ? (
+      <LoadingState label="Carregando a agenda…" />
+    ) : agenda.status === 'error' ? (
+      <ErrorState message={agenda.message} onRetry={agenda.onRetry} />
+    ) : (
+      <p className="type-body text-(--text-muted)">Nenhum profissional atende neste dia.</p>
+    )
 
   return (
     // Quem pediu menos movimento no sistema vê as trocas sem deslizar.
@@ -127,7 +166,7 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
             <div className="flex items-center gap-(--space-12)">
               <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
                 <h1 className="type-heading text-(--text-strong)">{title}</h1>
-                <p className="type-caption truncate text-(--text-muted)">{MOCK_BUSINESS.name}</p>
+                <p className="type-caption truncate text-(--text-muted)">{businessName}</p>
               </div>
               {/* TODO(figma): o ícone de relógio do P01 não tem rótulo; tratado como atalho de Pedidos. */}
               <button
@@ -222,7 +261,9 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
           )}
         </header>
 
-        <main className="px-(--space-16) py-(--space-12) md:mx-auto md:max-w-160">
+        <main className="flex flex-col gap-(--space-12) px-(--space-16) py-(--space-12) md:mx-auto md:max-w-160">
+          {toolbar}
+          {noAppointments}
           {selected ? (
             <AnimatePresence mode="popLayout" initial={false} custom={professionalDirection}>
               {/* Deslizar o dedo para os lados troca de profissional; na vertical, rola. */}
@@ -273,31 +314,35 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
             <h1 className="type-title text-(--text-strong)">{title}</h1>
             <p className="type-caption text-(--text-muted)">
-              {fullDayLabel(date)} · {MOCK_BUSINESS.name}
+              {fullDayLabel(date)} · {businessName}
             </p>
           </div>
-          <div role="group" aria-label="Visualização" className="flex gap-(--space-8)">
+          <div className="flex items-center gap-(--space-4)">
             <button
               type="button"
-              aria-pressed="true"
-              className="type-label min-h-(--size-touch-min) rounded-md border border-(--border-focus) bg-(--action-soft) px-(--space-16) py-(--space-8) text-(--text-link) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+              aria-label="Dia anterior"
+              onClick={() => changeDay(-1)}
+              className={cn(ICON_BUTTON, 'text-(--text-link)')}
             >
-              Dia
+              <ChevronLeft aria-hidden="true" className="size-5" />
             </button>
             <button
               type="button"
-              aria-pressed="false"
-              onClick={onWeekView}
-              className="type-label min-h-(--size-touch-min) rounded-md border border-(--border-interactive) bg-(--bg-surface) px-(--space-16) py-(--space-8) text-(--text-body) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+              aria-label="Próximo dia"
+              onClick={() => changeDay(1)}
+              className={cn(ICON_BUTTON, 'text-(--text-link)')}
             >
-              Semana
+              <ChevronRight aria-hidden="true" className="size-5" />
             </button>
           </div>
+          {/* Dia, Semana e Mês ficam na barra da agenda (`toolbar`, 7CF), junto dos filtros. */}
           <Button onClick={() => onCounterBooking?.()}>{COUNTER_BOOKING_LABEL}</Button>
         </div>
 
+        {toolbar}
+
         <ul className="grid grid-cols-4 gap-(--space-16)">
-          {summaryCards(agenda.summary, pendingRequests).map((card, index) => (
+          {summaryCards(summary, pendingRequests).map((card, index) => (
             <motion.li
               key={card.label}
               initial={{ opacity: 0, y: 8 }}
@@ -314,12 +359,13 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
           ))}
         </ul>
 
+        {noAppointments}
         {professionals.length > 0 ? (
           <DayGrid
             professionals={professionals}
             nowMinutes={nowMinutes}
             onOpen={setOpenId}
-            onMove={setPendingMove}
+            onMove={() => undefined}
             onFitIn={(professionalId, time) => onCounterBooking?.({ professionalId, date, time })}
           />
         ) : (
@@ -329,41 +375,26 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
 
       <AppointmentDetails
         selection={opened}
-        professionals={professionals}
         side={isDesktop ? 'right' : 'bottom'}
         now={now}
+        busy={busy}
         onClose={() => setOpenId(null)}
-        onConfirm={confirm}
-        onReject={setRejectId}
-        onMove={move}
+        onAction={(action, entryId) => void run(action, entryId)}
+        onAskConfirm={(action, entryId) => setAsking({ action, entryId })}
       />
 
       <ConfirmDialog
-        open={rejecting !== null}
-        onOpenChange={(open) => !open && setRejectId(null)}
-        title="Recusar este pedido?"
+        open={asking !== null}
+        onOpenChange={(open) => !open && setAsking(null)}
+        title={askText?.title ?? ''}
         description={
-          rejecting
-            ? `${rejecting.entry.serviceName} de ${rejecting.entry.customerName}, às ${rejecting.entry.start}. O horário volta a ficar livre.`
+          askedFor && askText
+            ? `${askedFor.entry.serviceName} de ${askedFor.entry.customerName}, às ${askedFor.entry.start}. ${askText.tail}`
             : ''
         }
-        confirmLabel="Recusar pedido"
-        dismissLabel="Manter pedido"
-        onConfirm={reject}
-      />
-
-      <ConfirmDialog
-        open={pendingMove !== null}
-        onOpenChange={(open) => !open && setPendingMove(null)}
-        title="Remarcar este agendamento?"
-        description={
-          moving && pendingMove
-            ? `${moving.entry.serviceName} de ${moving.entry.customerName} passa das ${moving.entry.start} para as ${pendingMove.start}${moveTarget && moveTarget.id !== moving.professional.id ? `, com ${moveTarget.name}` : ''}.`
-            : ''
-        }
-        confirmLabel="Remarcar"
-        dismissLabel="Manter horário"
-        onConfirm={() => pendingMove && move(pendingMove)}
+        confirmLabel={askText?.confirmLabel ?? ''}
+        dismissLabel={askText?.dismissLabel ?? ''}
+        onConfirm={() => asking && void run(asking.action, asking.entryId)}
       />
     </MotionConfig>
   )

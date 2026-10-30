@@ -7,7 +7,7 @@ import { cn } from 'cn'
 import { priceFormat } from './consts'
 
 export const ServiceCard = (props: ServiceCardProps) => {
-  const { name, durationMinutes, priceCents, onBook, className } = props
+  const { name, durationMinutes, priceCents, onBook, leading, className } = props
 
   return (
     <Card
@@ -17,6 +17,7 @@ export const ServiceCard = (props: ServiceCardProps) => {
       )}
     >
       <CardContent className="flex items-center gap-(--space-12) lg:gap-(--space-16) lg:px-(--space-20)">
+        {leading}
         <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
           <h3 className="type-body truncate text-(--text-strong)">{name}</h3>
           <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted)">

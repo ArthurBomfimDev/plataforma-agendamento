@@ -5,8 +5,11 @@ export type CustomerHistory = { appointments: number; noShows: number }
 export type PendingRequest = {
   id: string
   customerName: string
-  /** `null` = primeira vez neste estabelecimento. */
-  customerHistory: CustomerHistory | null
+  /**
+   * `null` = primeira vez neste estabelecimento. Ausente = a API ainda não informa o histórico
+   * (Onda 7A): a linha não aparece, em vez de afirmar "primeira vez" sem saber.
+   */
+  customerHistory?: CustomerHistory | null
   serviceName: string
   durationMinutes: number
   /** Em centavos. */
@@ -17,16 +20,28 @@ export type PendingRequest = {
   start: string
   /** `null` = "Sem preferência". */
   professionalName: string | null
-  /** Quando o pedido foi enviado. O prazo de resposta conta daqui. */
+  /** Quando o pedido foi enviado. */
   requestedAt: Date
+  /** Fim do prazo de resposta, vindo da API. Depois dele o pedido expira sozinho. */
+  expiresAt: Date
   /** Horário fora da jornada do profissional: marcador "Fora do horário". */
   outsideWorkingHours: boolean
 }
 
+/** A lista que a tela recebe: carregando, erro (com "Tentar de novo") ou pronta. */
+export type PendingRequestsData =
+  | { status: 'loading' }
+  | { status: 'error'; message: string; onRetry: () => void }
+  | { status: 'ready'; requests: PendingRequest[] }
+
 export type PendingRequestsScreenProps = {
-  requests: PendingRequest[]
-  onAccept?: (requestId: string) => void
-  onReject?: (requestId: string) => void
-  /** "Confirmação automática: desligada" leva à configuração. */
+  data: PendingRequestsData
+  /** Prazo de resposta do estabelecimento, em horas (política). */
+  expirationHours: number
+  autoConfirm: boolean
+  /** Resolvem `true` se deu certo; o erro, a rota já mostrou. */
+  onAccept?: (requestId: string) => Promise<boolean>
+  onReject?: (requestId: string) => Promise<boolean>
+  /** "Confirmação automática" leva à configuração. */
   onAutoConfirmSettings?: () => void
 }

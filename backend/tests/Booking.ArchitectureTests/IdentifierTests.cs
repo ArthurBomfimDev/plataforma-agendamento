@@ -1,6 +1,6 @@
 using Booking.ArchitectureTests.Rules;
 using Booking.ArchitectureTests.Support;
-using Booking.Domain.Base;
+using Booking.Domain.Entity.Base;
 
 namespace Booking.ArchitectureTests;
 
@@ -42,9 +42,9 @@ public sealed class IdentifierTests
         IReadOnlyList<string> violations = ReflectionRules.NonGuidIdentifiers(
             ReflectionRules.TypesOf([ArchitectureConventions.FixturesAssembly]));
 
-        Assert.Contains(violations, v => v.StartsWith("Booking.Domain.Module.People.LegacyCustomer.Id ", StringComparison.Ordinal));
-        Assert.Contains(violations, v => v.StartsWith("Booking.Domain.Module.People.LegacyCustomer.BusinessId ", StringComparison.Ordinal));
-        Assert.DoesNotContain(violations, v => v.StartsWith("Booking.Domain.Module.People.LegacyCustomer.PublicId ", StringComparison.Ordinal));
+        Assert.Contains(violations, v => v.StartsWith("Booking.Domain.Entity.Module.People.LegacyCustomer.Id ", StringComparison.Ordinal));
+        Assert.Contains(violations, v => v.StartsWith("Booking.Domain.Entity.Module.People.LegacyCustomer.BusinessId ", StringComparison.Ordinal));
+        Assert.DoesNotContain(violations, v => v.StartsWith("Booking.Domain.Entity.Module.People.LegacyCustomer.PublicId ", StringComparison.Ordinal));
     }
 
     private sealed class ProbeEntity : BaseEntity;

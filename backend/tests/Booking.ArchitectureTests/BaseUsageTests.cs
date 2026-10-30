@@ -26,12 +26,12 @@ public sealed class BaseUsageTests
     }
 
     [Fact]
-    public void Rule_catches_appointment_on_base_repository_and_allows_category()
+    public void Rule_catches_appointment_on_base_repository_and_allows_service()
     {
         IReadOnlyList<string> violations = ReflectionRules.ForbiddenBaseUsages(
             ReflectionRules.TypesOf([ArchitectureConventions.FixturesAssembly]));
 
-        Assert.Contains(violations, v => v.StartsWith("Booking.Domain.Module.Scheduling.IAppointmentRepository ", StringComparison.Ordinal));
-        Assert.DoesNotContain(violations, v => v.StartsWith("Booking.Domain.Module.Catalog.ICategoryRepository ", StringComparison.Ordinal));
+        Assert.Contains(violations, v => v.StartsWith("Booking.Domain.Entity.Module.Scheduling.Planted.IAppointmentRepository ", StringComparison.Ordinal));
+        Assert.DoesNotContain(violations, v => v.StartsWith("Booking.Domain.Entity.Module.Catalog.Planted.IServiceRepository ", StringComparison.Ordinal));
     }
 }

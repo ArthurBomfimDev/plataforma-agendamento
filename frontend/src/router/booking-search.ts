@@ -1,17 +1,31 @@
-import { isValid, parse } from 'date-fns'
-
 import { SEARCH_PARAMS } from './consts'
 
+const validInstant = (value: string | null) => {
+  if (!value) return null
+  const instant = new Date(value)
+  return Number.isNaN(instant.getTime()) ? null : instant
+}
+
 /**
- * Lê profissional, dia e horário da busca das telas de revisão e de pedido enviado.
- * `null` quando o dia ou o horário faltam ou são inválidos — link montado à mão.
+ * Lê profissional e início do horário da busca da tela de revisão.
+ * `null` quando faltam ou são inválidos — link montado à mão.
  */
 export const readBookingSearch = (searchParams: URLSearchParams) => {
-  const dateParam = searchParams.get(SEARCH_PARAMS.date) ?? ''
-  const date = parse(dateParam, 'yyyy-MM-dd', new Date())
-  const time = searchParams.get(SEARCH_PARAMS.time)
+  const professionalId = searchParams.get(SEARCH_PARAMS.professional)
+  const startsAtParam = searchParams.get(SEARCH_PARAMS.startsAt)
+  const startsAt = validInstant(startsAtParam)
 
-  if (!isValid(date) || !time) return null
+  if (!professionalId || !startsAt || !startsAtParam) return null
 
-  return { professionalId: searchParams.get(SEARCH_PARAMS.professional), date, dateParam, time }
+  return { professionalId, startsAt, startsAtParam }
+}
+
+/** Lê o agendamento criado e o instante do envio, da tela de pedido enviado. */
+export const readSentSearch = (searchParams: URLSearchParams) => {
+  const appointmentId = searchParams.get(SEARCH_PARAMS.appointment)
+  const sentAt = validInstant(searchParams.get(SEARCH_PARAMS.sentAt))
+
+  if (!appointmentId || !sentAt) return null
+
+  return { appointmentId, sentAt }
 }

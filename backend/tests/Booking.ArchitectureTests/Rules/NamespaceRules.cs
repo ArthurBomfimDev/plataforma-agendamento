@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using NetArchTest.Rules;
 
 namespace Booking.ArchitectureTests.Rules;
@@ -15,15 +16,30 @@ internal static class NamespaceRules
     /// <remarks>
     /// A superfície pública de um módulo fica fora de <c>Module</c>, em
     /// <c>Booking.Application.Contracts.Y</c> — por isso não entra na lista proibida.
+    ///
+    /// A lista proibida sai dos namespaces que existem nos assemblies, filtrados pelo mesmo
+    /// <see cref="ArchitectureConventions.ModuleNamespacePattern"/> que seleciona o módulo. Montar os
+    /// prefixos à mão deixava de fora as categorias (<c>Domain.Entity.Module</c>,
+    /// <c>Infrastructure.Persistence.Mapping.Module</c>) e a regra passava sem enxergar nada.
     /// </remarks>
     public static TestResult ModuleBoundary(IEnumerable<Assembly> assemblies, string module)
     {
-        string[] otherModulesInternals = ArchitectureConventions.Modules
+        Assembly[] scanned = assemblies.ToArray();
+
+        Regex[] otherModules = ArchitectureConventions.Modules
             .Where(other => other != module)
-            .SelectMany(other => ArchitectureConventions.Layers.Select(layer => $"Booking.{layer}.Module.{other}"))
+            .Select(other => new Regex(ArchitectureConventions.ModuleNamespacePattern(other)))
             .ToArray();
 
-        return Types.InAssemblies(assemblies)
+        string[] otherModulesInternals = scanned
+            .SelectMany(assembly => assembly.GetTypes())
+            .Select(type => type.Namespace)
+            .OfType<string>()
+            .Distinct()
+            .Where(ns => otherModules.Any(pattern => pattern.IsMatch(ns)))
+            .ToArray();
+
+        return Types.InAssemblies(scanned)
             .That()
             .ResideInNamespaceMatching(ArchitectureConventions.ModuleNamespacePattern(module))
             .Should()

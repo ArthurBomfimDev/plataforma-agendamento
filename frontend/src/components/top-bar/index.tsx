@@ -1,8 +1,10 @@
 import { Button } from '@components/button'
 import { Logotype } from '@components/logotype'
-import { MOCK_LOCATION } from './consts'
 import { MapPin } from 'lucide-react'
+import { locationReference } from './consts'
+import { SearchButton } from '@components/search-button'
 import { SearchField } from '@components/search-field'
+import { useState } from 'react'
 import { ThemeToggle } from '@components/theme-toggle'
 import type { TopBarProps } from './types'
 
@@ -14,7 +16,21 @@ import type { TopBarProps } from './types'
  * Em 1920px isso alinha a barra com a coluna larga das telas.
  */
 export const TopBar = (props: TopBarProps) => {
-  const { showSearch, onHome, onAppointments, onSignIn } = props
+  const {
+    showSearch,
+    onHome,
+    onAppointments,
+    onSignIn,
+    signedIn,
+    onSignOut,
+    locationLabel,
+    onChooseLocation,
+    onSearch,
+    accountMenu,
+    onOpenPanel,
+  } = props
+  const [term, setTerm] = useState('')
+  const inPanel = onOpenPanel !== undefined
 
   return (
     <header className="hidden border-b border-(--border-subtle) bg-(--bg-surface) lg:block">
@@ -30,29 +46,65 @@ export const TopBar = (props: TopBarProps) => {
           <Logotype tone="dark" alt="" className="hidden dark:block" />
         </button>
 
-        <p className="type-label flex shrink-0 items-center gap-(--space-4) text-(--text-link)">
-          <MapPin aria-hidden="true" className="size-4" />
-          {MOCK_LOCATION}
-        </p>
+        {!inPanel && (
+          <button
+            type="button"
+            onClick={onChooseLocation}
+            aria-haspopup="dialog"
+            className="type-label flex min-h-(--size-touch-min) max-w-64 shrink-0 items-center gap-(--space-4) rounded-md px-(--space-4) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+          >
+            <MapPin aria-hidden="true" className="size-4 shrink-0" />
+            <span className="truncate">{locationReference(locationLabel ?? null)}</span>
+            {locationLabel && <span className="sr-only">, trocar localização</span>}
+          </button>
+        )}
 
-        {showSearch ? (
-          <SearchField
-            label="Buscar"
-            placeholder="Buscar serviço, local ou profissional"
-            className="min-w-0 flex-1 rounded-(--radius-full) py-(--space-8)"
-          />
+        {showSearch && !inPanel ? (
+          <form
+            role="search"
+            className="min-w-0 flex-1"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (term.trim()) onSearch?.(term.trim())
+            }}
+          >
+            <SearchField
+              label="Buscar"
+              name="term"
+              enterKeyHint="search"
+              placeholder="Buscar serviço ou estabelecimento"
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              className="rounded-(--radius-full) py-(--space-4) pr-(--space-4)"
+              action={<SearchButton disabled={!term.trim()} className="rounded-(--radius-full)" />}
+            />
+          </form>
         ) : (
           <div className="flex-1" />
         )}
 
         <ThemeToggle />
-        <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
-          Meus agendamentos
-        </Button>
-        {/* TODO: logado, "Entrar" vira o avatar — depende da autenticação. */}
-        <Button className="shrink-0" onClick={onSignIn}>
-          Entrar
-        </Button>
+        {inPanel ? (
+          <Button variant="ghost" className="shrink-0" onClick={onOpenPanel}>
+            Voltar ao painel
+          </Button>
+        ) : (
+          <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
+            Meus agendamentos
+          </Button>
+        )}
+        {/* TODO(figma): logado, o Figma prevê o avatar com menu; o menu é o da conta, sem avatar. */}
+        {signedIn ? (
+          (accountMenu ?? (
+            <Button variant="secondary" className="shrink-0" onClick={onSignOut}>
+              Sair
+            </Button>
+          ))
+        ) : (
+          <Button className="shrink-0" onClick={onSignIn}>
+            Entrar
+          </Button>
+        )}
       </div>
     </header>
   )

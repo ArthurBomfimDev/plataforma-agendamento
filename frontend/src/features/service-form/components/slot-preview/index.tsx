@@ -17,9 +17,22 @@ export const SlotPreview = memo((props: SlotPreviewProps) => {
   const { hours, occupancy, step } = props
 
   const { slots, firstLeftOut } = useMemo(
-    () => previewSlots(hours, occupancy, step),
+    () => (hours ? previewSlots(hours, occupancy, step) : { slots: [], firstLeftOut: null }),
     [hours, occupancy, step],
   )
+
+  if (!hours) {
+    return (
+      <section aria-labelledby="slot-preview-title" className={SECTION_CARD}>
+        <h2 id="slot-preview-title" className="type-label text-(--text-strong)">
+          Horários que o consumidor verá
+        </h2>
+        <p className="type-caption text-(--text-body)">
+          Cadastre a jornada de quem executa o serviço para ver os horários.
+        </p>
+      </section>
+    )
+  }
 
   return (
     <section aria-labelledby="slot-preview-title" className={SECTION_CARD}>

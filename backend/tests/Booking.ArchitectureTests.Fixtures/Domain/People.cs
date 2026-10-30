@@ -1,4 +1,4 @@
-namespace Booking.Domain.Module.People;
+namespace Booking.Domain.Entity.Module.People;
 
 public sealed class LegacyCustomer
 {
