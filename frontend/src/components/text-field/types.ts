@@ -3,6 +3,8 @@ import type { ComponentProps } from 'react'
 export type TextFieldProps = Omit<ComponentProps<'input'>, 'id'> & {
   id: string
   label: string
+  /** Classes do rótulo — por exemplo, a legenda menor dos formulários compactos. */
+  labelClassName?: string
   /** Texto de ajuda abaixo do campo, ligado por `aria-describedby`. */
   helper?: string
   /** Classes do texto de ajuda — por exemplo, para mostrá-lo só no desktop. */
