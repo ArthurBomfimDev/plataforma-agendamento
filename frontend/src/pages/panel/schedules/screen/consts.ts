@@ -48,25 +48,14 @@ export const KIND_LABELS: Record<ScheduleExceptionKind, string> = {
   ExtraShift: 'Turno extra',
 }
 
-/** O que cada tipo faz, para o dono escolher sem adivinhar. */
-export const KIND_HELP: Record<ScheduleExceptionKind, string> = {
-  DayOff: 'Um dia sem atendimento.',
-  Vacation: 'Vários dias sem atendimento.',
-  Block: 'Tira o período da agenda (consulta médica, reforma).',
-  ExtraShift: 'Soma horário fora da jornada. Precisa de um profissional.',
-}
-
 export const KIND_OPTIONS: ReadonlyArray<SelectOption<ScheduleExceptionKind>> = (
   ['DayOff', 'Vacation', 'Block', 'ExtraShift'] as const
 ).map((value) => ({ value, label: KIND_LABELS[value] }))
 
-/** Valor do seletor "Para" que vale para o estabelecimento inteiro (`professionalId` nulo na API). */
-export const ALL_PROFESSIONALS = 'all'
-
-/** Um bloqueio novo: folga do profissional aberto, o dia inteiro. */
-export const newBlock = (target: string): BlockPeriodValues => ({
+/** Um bloqueio novo: folga do profissional aberto na tela, o dia inteiro. */
+export const newBlock = (): BlockPeriodValues => ({
   kind: 'DayOff',
-  target,
+  wholeBusiness: false,
   from: '',
   to: '',
   allDay: true,
@@ -179,9 +168,14 @@ export const exceptionWhenLabel = (
     ? `${shortDate(item.startDate)}, ${item.startTime} – ${item.endTime}`
     : `${shortDate(item.startDate)}, ${item.startTime} – ${shortDate(item.endDate)}, ${item.endTime}`
 
-/** "1 agendamento neste período", "3 agendamentos neste período". */
+/**
+ * "1 agendamento já marcado neste período". O Figma diz "já confirmados", mas a prévia da API traz também os pedidos
+ * pendentes — que o bloqueio com cancelamento recusa.
+ */
 export const conflictsTitle = (count: number) =>
-  count === 1 ? '1 agendamento neste período' : `${count} agendamentos neste período`
+  count === 1
+    ? '1 agendamento já marcado neste período'
+    : `${count} agendamentos já marcados neste período`
 
 /** O dia seguinte, `yyyy-MM-dd`: o fim exclusivo de um bloqueio de dia inteiro. */
 const nextDay = (date: string) =>
@@ -196,8 +190,8 @@ export const validateBlock = (values: BlockPeriodValues, today: string): BlockPe
   const errors: BlockPeriodErrors = {}
   const withHours = values.kind === 'ExtraShift' || !values.allDay
 
-  if (values.kind === 'ExtraShift' && values.target === ALL_PROFESSIONALS)
-    errors.target = 'Turno extra precisa de um profissional.'
+  if (values.kind === 'ExtraShift' && values.wholeBusiness)
+    errors.wholeBusiness = 'Turno extra precisa de um profissional.'
   if (!values.from) errors.from = 'Escolha o primeiro dia.'
   else if (values.from < today) errors.from = 'Não dá para bloquear o passado.'
   if (!values.to) errors.to = 'Escolha o último dia.'
@@ -221,10 +215,13 @@ export const validateBlock = (values: BlockPeriodValues, today: string): BlockPe
 }
 
 /** O formulário no formato da API. Dia inteiro vai de 00:00 do primeiro dia a 00:00 do dia seguinte ao último. */
-export const toExceptionDraft = (values: BlockPeriodValues): ExceptionDraft => {
+export const toExceptionDraft = (
+  values: BlockPeriodValues,
+  professionalId: string,
+): ExceptionDraft => {
   const allDay = values.allDay && values.kind !== 'ExtraShift'
   return {
-    professionalId: values.target === ALL_PROFESSIONALS ? null : values.target,
+    professionalId: values.wholeBusiness ? null : professionalId,
     kind: values.kind,
     startDate: values.from,
     startTime: allDay ? '00:00' : values.startTime,

@@ -1,5 +1,4 @@
 import {
-  ALL_PROFESSIONALS,
   applyRanges,
   easterSunday,
   hasSchedule,
@@ -71,16 +70,18 @@ describe('WorkScheduleScreen', () => {
     expect(html).toContain('05/10/2026, 13:00 – 18:00')
   })
 
-  it('oferece o estabelecimento inteiro e o turno extra no bloqueio', () => {
+  it('monta o bloqueio como no Figma, com as opções que a API aceita a mais', () => {
     const html = render()
 
+    expect(html).toMatch(/Tipo[\s\S]*De[\s\S]*Até[\s\S]*Motivo/)
     expect(html).toContain('Estabelecimento inteiro')
     expect(html).toContain('Dia inteiro')
     expect(html).toContain('Confirmar bloqueio')
+    expect(html).not.toContain('>Para<')
   })
 
-  it('avisa que as regras de feriado ainda não são salvas', () => {
-    expect(render()).toContain('As regras de feriado ainda não são salvas')
+  it('avisa no cartão de feriados que as regras especiais ainda não são salvas', () => {
+    expect(render()).toContain('As regras especiais ainda não são salvas')
   })
 
   it('trata carregando, erro e equipe vazia', () => {
@@ -168,9 +169,11 @@ describe('bloqueio de período', () => {
   })
 
   it('exige profissional e horário no turno extra, e motivo para cancelar', () => {
-    const extra = { ...MOCK_BLOCK_VALUES, kind: 'ExtraShift' as const, target: ALL_PROFESSIONALS }
+    const extra = { ...MOCK_BLOCK_VALUES, kind: 'ExtraShift' as const, wholeBusiness: true }
 
-    expect(validateBlock(extra, today).target).toBe('Turno extra precisa de um profissional.')
+    expect(validateBlock(extra, today).wholeBusiness).toBe(
+      'Turno extra precisa de um profissional.',
+    )
     expect(
       validateBlock(
         { ...MOCK_BLOCK_VALUES, allDay: false, to: '2026-09-21', endTime: '08:00' },
@@ -183,7 +186,7 @@ describe('bloqueio de período', () => {
   })
 
   it('manda o dia inteiro até 00:00 do dia seguinte ao último', () => {
-    expect(toExceptionDraft(MOCK_BLOCK_VALUES)).toEqual({
+    expect(toExceptionDraft(MOCK_BLOCK_VALUES, 'marina-souza')).toEqual({
       professionalId: 'marina-souza',
       kind: 'Vacation',
       startDate: '2026-09-21',
@@ -196,16 +199,19 @@ describe('bloqueio de período', () => {
 
   it('manda o horário escolhido e o estabelecimento inteiro como profissional nulo', () => {
     expect(
-      toExceptionDraft({
-        ...MOCK_BLOCK_VALUES,
-        kind: 'Block',
-        target: ALL_PROFESSIONALS,
-        allDay: false,
-        to: '2026-09-21',
-        startTime: '13:00',
-        endTime: '18:00',
-        reason: '  Reforma  ',
-      }),
+      toExceptionDraft(
+        {
+          ...MOCK_BLOCK_VALUES,
+          kind: 'Block',
+          wholeBusiness: true,
+          allDay: false,
+          to: '2026-09-21',
+          startTime: '13:00',
+          endTime: '18:00',
+          reason: '  Reforma  ',
+        },
+        'marina-souza',
+      ),
     ).toEqual({
       professionalId: null,
       kind: 'Block',

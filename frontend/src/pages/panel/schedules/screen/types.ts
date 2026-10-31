@@ -63,8 +63,8 @@ export type ExceptionDraft = {
   reason: string | null
 }
 
-/** Agendamento que cairia dentro do bloqueio, na prévia. */
-export type AffectedItem = { id: string; label: string }
+/** Agendamento que cairia dentro do bloqueio, na prévia: "22 set · 10:00" e "Ana Ribeiro · Corte feminino". */
+export type AffectedItem = { id: string; when: string; detail: string }
 
 /** A API mantém todos ou cancela todos — com motivo, que aparece para quem tinha horário. */
 export type ExceptionChoice = {
@@ -75,8 +75,8 @@ export type ExceptionChoice = {
 /** O que está no formulário de bloqueio. Datas `yyyy-MM-dd` e horas `HH:mm`; vazio = não escolhida. */
 export type BlockPeriodValues = {
   kind: ScheduleExceptionKind
-  /** Quem o bloqueio atinge: o id de um profissional, ou `ALL_PROFESSIONALS` para o estabelecimento inteiro. */
-  target: string
+  /** Vale para todos os profissionais (`professionalId` nulo na API), não só para o aberto na tela. */
+  wholeBusiness: boolean
   from: string
   to: string
   /** Dia inteiro: de 00:00 do primeiro dia a 00:00 do dia seguinte ao último. Turno extra sempre tem horário. */
@@ -89,7 +89,7 @@ export type BlockPeriodValues = {
 }
 
 export type BlockPeriodErrors = Partial<
-  Record<'target' | 'from' | 'to' | 'startTime' | 'endTime' | 'cancellationReason', string>
+  Record<'wholeBusiness' | 'from' | 'to' | 'startTime' | 'endTime' | 'cancellationReason', string>
 >
 
 export type Holiday = { date: string; name: string }

@@ -8,6 +8,7 @@ import type {
   WorkScheduleResponse,
 } from '@api/models'
 import type {
+  AffectedItem,
   ExceptionDraft,
   ExceptionItem,
   ScheduleDraft,
@@ -19,7 +20,7 @@ import {
   WEEKDAYS,
   emptyWeek,
   previousDay,
-  shortDate,
+  shortDateLabel,
   sortRanges,
   validityLabel,
 } from './schedules/screen/consts'
@@ -249,15 +250,21 @@ export const exceptionPeriod = (draft: ExceptionDraft, timeZone: string) => ({
   endsAt: instantIn(draft.endDate, draft.endTime, timeZone),
 })
 
-/** "03/11/2026, 09:00 · Corte · Ana · Marina": um agendamento na prévia do bloqueio. */
-export const affectedLabel = (
+/**
+ * Um agendamento na prévia do bloqueio, nas duas colunas do Figma: "22 set · 10:00" e "Ana · Corte feminino". No
+ * bloqueio do estabelecimento inteiro, o profissional entra no fim. Sem nome informado (só o balcão informa), "Consumidor".
+ */
+export const toAffectedItem = (
   appointment: AffectedAppointmentResponse,
   timeZone: string,
   nameOf: (id: string) => string,
-) =>
-  [
-    `${shortDate(dateKeyIn(appointment.startsAt, timeZone))}, ${timeIn(appointment.startsAt, timeZone)}`,
-    appointment.serviceName,
+  withProfessional: boolean,
+): AffectedItem => ({
+  id: appointment.id,
+  when: `${shortDateLabel(dateKeyIn(appointment.startsAt, timeZone))} · ${timeIn(appointment.startsAt, timeZone)}`,
+  detail: [
     appointment.attendeeName ?? 'Consumidor',
-    nameOf(appointment.professionalId),
-  ].join(' · ')
+    appointment.serviceName,
+    ...(withProfessional ? [nameOf(appointment.professionalId)] : []),
+  ].join(' · '),
+})

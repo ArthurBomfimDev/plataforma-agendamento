@@ -1,8 +1,6 @@
 import {
-  ALL_PROFESSIONALS,
   CARD,
   COMPACT_LABEL,
-  KIND_HELP,
   KIND_OPTIONS,
   conflictsTitle,
   newBlock,
@@ -15,12 +13,12 @@ import { type FormEvent, useState } from 'react'
 
 import type { BlockPeriodCardProps } from './types'
 import { Button } from '@components/button'
+import { Checkbox } from '@components/checkbox'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { DateField } from '@components/date-field'
 import { MenuSelectField } from '@components/menu-select-field'
 import type { RadioOption } from '@components/radio-option-group/types'
 import { RadioOptionGroup } from '@components/radio-option-group'
-import { SwitchField } from '@components/switch-field'
 import { TextField } from '@components/text-field'
 import { cn } from 'cn'
 
@@ -30,51 +28,45 @@ const focusField = (id: string) => document.getElementById(id)?.focus()
 const ANSWER_FIELDS = new Set<keyof BlockPeriodValues>(['conflictAction', 'cancellationReason'])
 
 /**
- * "Bloquear período" (tela 12): folga, férias, bloqueio ou turno extra, de um profissional ou do estabelecimento
- * inteiro, o dia todo ou com horário. Antes de gravar, a API mostra os agendamentos que caem no período e o Owner
- * decide se ficam todos ou se todos são cancelados, com motivo — bloquear nunca cancela nada em silêncio.
+ * "Bloquear período" (tela 12): folga, férias, bloqueio ou turno extra do profissional aberto, de um dia a outro.
+ * Antes de gravar, a API mostra os agendamentos que caem no período e o Owner decide se ficam todos ou se todos são
+ * cancelados, com motivo — bloquear nunca cancela nada em silêncio.
  *
- * Cancelar agendamentos é irreversível e avisa os consumidores: pede confirmação num diálogo. Turno extra soma
- * horário, então não tem prévia. A borda de 2px em `action/primary` do Figma é o estado com foco dentro do cartão.
+ * Fora do Figma, no padrão da caixa "Aplicar a todos os dias úteis" da mesma tela: "Dia inteiro" (desmarcada, pede
+ * início e fim) e "Estabelecimento inteiro" — o que a API aceita além do wireframe. Turno extra soma horário, então
+ * tem sempre horário e não tem prévia.
+ *
+ * Cancelar agendamentos é irreversível: pede confirmação num diálogo. A borda de 2px em `action/primary` do Figma é
+ * o estado com foco dentro do cartão.
  */
 export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
-  const { professionals, defaultTarget, today, onPreview, onConfirm, className } = props
+  const { professionalId, today, onPreview, onConfirm, className } = props
 
-  const [values, setValues] = useState(() => newBlock(defaultTarget))
+  const [values, setValues] = useState(newBlock)
   const [submitted, setSubmitted] = useState(false)
   const [affected, setAffected] = useState<AffectedItem[] | null>(null)
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
 
-  // Trocar de profissional na tela leva o "Para" junto enquanto o formulário não foi começado.
-  const [lastDefault, setLastDefault] = useState(defaultTarget)
-  if (defaultTarget !== lastDefault) {
-    setLastDefault(defaultTarget)
-    if (!values.from && !values.to) setValues((current) => ({ ...current, target: defaultTarget }))
-  }
-
   const errors = submitted ? validateBlock(values, today) : {}
-  const withHours = values.kind === 'ExtraShift' || !values.allDay
+  const extraShift = values.kind === 'ExtraShift'
+  const withHours = extraShift || !values.allDay
   const count = affected?.length ?? 0
 
   const setField = <Field extends keyof BlockPeriodValues>(
     field: Field,
     value: BlockPeriodValues[Field],
   ) => {
+    const answer = ANSWER_FIELDS.has(field)
     setValues((current) => ({
       ...current,
       [field]: value,
-      ...(ANSWER_FIELDS.has(field) ? {} : { conflictAction: 'keep', cancellationReason: '' }),
+      ...(answer ? {} : { conflictAction: 'keep', cancellationReason: '' }),
     }))
-    if (!ANSWER_FIELDS.has(field)) setAffected(null)
+    if (!answer) setAffected(null)
     setError(undefined)
   }
-
-  const targetOptions = [
-    ...professionals.map(({ id, name }) => ({ value: id, label: name })),
-    { value: ALL_PROFESSIONALS, label: 'Estabelecimento inteiro' },
-  ]
 
   const conflictOptions: ReadonlyArray<RadioOption<BlockPeriodValues['conflictAction']>> = [
     {
@@ -85,21 +77,21 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
     {
       value: 'cancel',
       label: count === 1 ? 'Cancelar o agendamento' : 'Cancelar todos',
-      description: `Cancela ${count === 1 ? 'o agendamento' : `os ${count}`} e avisa ${count === 1 ? 'o consumidor' : 'os consumidores'} com o motivo.`,
+      description: `Cancela ${count === 1 ? 'o agendamento' : `os ${count}`}, avisa ${count === 1 ? 'o consumidor' : 'os consumidores'} por e-mail e mostra o motivo no app.`,
     },
   ]
 
   const save = async (existingAppointments: 'Keep' | 'CancelAll') => {
     setConfirmingCancel(false)
     setBusy(true)
-    const failure = await onConfirm(toExceptionDraft(values), {
+    const failure = await onConfirm(toExceptionDraft(values, professionalId), {
       existingAppointments,
       cancellationReason:
         existingAppointments === 'CancelAll' ? values.cancellationReason.trim() : null,
     })
     setBusy(false)
     if (failure) return setError(failure)
-    setValues(newBlock(defaultTarget))
+    setValues(newBlock())
     setAffected(null)
     setSubmitted(false)
   }
@@ -111,10 +103,10 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
     const first = FOCUS_ORDER.find((field) => invalid[field])
     if (first) return focusField(BLOCK_FIELD_IDS[first])
 
-    if (affected === null && values.kind !== 'ExtraShift') {
+    if (affected === null && !extraShift) {
       setBusy(true)
       setError(undefined)
-      const result = await onPreview(toExceptionDraft(values))
+      const result = await onPreview(toExceptionDraft(values, professionalId))
       setBusy(false)
       if (typeof result === 'string') return setError(result)
       if (result.length > 0) return setAffected(result)
@@ -140,7 +132,7 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
           Bloquear período
         </h2>
 
-        <div className="grid grid-cols-1 items-start gap-(--space-8) sm:grid-cols-2">
+        <div className="grid grid-cols-2 items-start gap-(--space-8) sm:grid-cols-3">
           <MenuSelectField
             id={BLOCK_FIELD_IDS.kind}
             label="Tipo"
@@ -148,27 +140,8 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
             value={values.kind}
             options={KIND_OPTIONS}
             onValueChange={(kind) => setField('kind', kind)}
-            className="min-w-0"
+            className="col-span-2 min-w-0 sm:col-span-1"
           />
-          <div className="flex min-w-0 flex-col gap-(--space-4)">
-            <MenuSelectField
-              id={BLOCK_FIELD_IDS.target}
-              label="Para"
-              labelClassName={COMPACT_LABEL}
-              value={values.target}
-              options={targetOptions}
-              onValueChange={(target) => setField('target', target)}
-            />
-            {errors.target && (
-              <p role="alert" className="type-caption text-(--status-rejected-fg)">
-                {errors.target}
-              </p>
-            )}
-          </div>
-        </div>
-        <p className="type-caption -mt-(--space-4) text-(--text-muted)">{KIND_HELP[values.kind]}</p>
-
-        <div className="grid grid-cols-2 items-start gap-(--space-8)">
           <DateField
             id={BLOCK_FIELD_IDS.from}
             label="De"
@@ -195,15 +168,34 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
           />
         </div>
 
-        {values.kind !== 'ExtraShift' && (
-          <SwitchField
-            id={BLOCK_FIELD_IDS.allDay}
-            label="Dia inteiro"
-            description="Desligue para bloquear só algumas horas."
-            checked={values.allDay}
-            onCheckedChange={(allDay) => setField('allDay', allDay)}
-          />
-        )}
+        <div className="-my-(--space-4) flex flex-col">
+          <div className="flex flex-wrap gap-x-(--space-16)">
+            {!extraShift && (
+              <Checkbox
+                id={BLOCK_FIELD_IDS.allDay}
+                label="Dia inteiro"
+                checked={values.allDay}
+                onCheckedChange={(allDay) => setField('allDay', allDay)}
+              />
+            )}
+            <Checkbox
+              id={BLOCK_FIELD_IDS.wholeBusiness}
+              label="Estabelecimento inteiro"
+              checked={values.wholeBusiness}
+              onCheckedChange={(wholeBusiness) => setField('wholeBusiness', wholeBusiness)}
+              aria-describedby={errors.wholeBusiness ? 'block-whole-business-error' : undefined}
+            />
+          </div>
+          {errors.wholeBusiness && (
+            <p
+              id="block-whole-business-error"
+              role="alert"
+              className="type-caption text-(--status-rejected-fg)"
+            >
+              {errors.wholeBusiness}
+            </p>
+          )}
+        </div>
 
         {withHours && (
           <div className="grid grid-cols-2 items-start gap-(--space-8)">
@@ -247,8 +239,14 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
               </p>
               <ul aria-labelledby="block-conflicts-title" className="flex flex-col gap-(--space-8)">
                 {affected.map((appointment) => (
-                  <li key={appointment.id} className="type-caption tabular text-(--text-body)">
-                    {appointment.label}
+                  <li
+                    key={appointment.id}
+                    className="type-caption flex items-center gap-(--space-12)"
+                  >
+                    <span className="tabular w-26 shrink-0 text-(--text-body)">
+                      {appointment.when}
+                    </span>
+                    <span className="min-w-0 flex-1 text-(--text-muted)">{appointment.detail}</span>
                   </li>
                 ))}
               </ul>
@@ -268,7 +266,7 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
                 id={BLOCK_FIELD_IDS.cancellationReason}
                 label="Motivo do cancelamento"
                 labelClassName={COMPACT_LABEL}
-                helper="Aparece para quem tinha horário marcado."
+                helper="Vai no e-mail e aparece para quem tinha horário marcado."
                 value={values.cancellationReason}
                 error={errors.cancellationReason}
                 onChange={(event) => setField('cancellationReason', event.target.value)}
@@ -305,7 +303,7 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
         open={confirmingCancel}
         onOpenChange={setConfirmingCancel}
         title={count === 1 ? 'Cancelar o agendamento?' : `Cancelar os ${count} agendamentos?`}
-        description={`${count === 1 ? 'O consumidor será avisado' : 'Os consumidores serão avisados'} com o motivo. Isso não pode ser desfeito.`}
+        description={`${count === 1 ? 'O consumidor recebe' : 'Os consumidores recebem'} um e-mail com o motivo. Isso não pode ser desfeito.`}
         confirmLabel={count === 1 ? 'Bloquear e cancelar' : `Bloquear e cancelar os ${count}`}
         dismissLabel="Voltar ao bloqueio"
         onConfirm={() => void save('CancelAll')}

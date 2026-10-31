@@ -11,7 +11,7 @@ import { cn } from 'cn'
  * o editor do dia logo abaixo da linha. Um dia por vez em edição.
  */
 export const WeekScheduleCard = (props: WeekScheduleCardProps) => {
-  const { schedule, editingDay, onToggleDay, onEditDay, onCancelEdit, onSaveDay } = props
+  const { schedule, editingDay, onToggleDay, onEditDay, onCancelEdit, onSaveDay, footer } = props
 
   return (
     <section aria-labelledby="week-schedule-title" className={cn(CARD, 'gap-(--space-2)')}>
@@ -87,9 +87,12 @@ export const WeekScheduleCard = (props: WeekScheduleCardProps) => {
         })}
       </ul>
 
-      <p className="type-caption text-(--text-muted)">
-        A ausência de faixa é a pausa. Duas faixas no mesmo dia representam o almoço.
-      </p>
+      <div className="flex flex-col gap-(--space-8) sm:flex-row sm:items-end sm:gap-(--space-16)">
+        <p className="type-caption min-w-0 flex-1 text-(--text-muted)">
+          A ausência de faixa é a pausa. Duas faixas no mesmo dia representam o almoço.
+        </p>
+        {footer}
+      </div>
     </section>
   )
 }

@@ -13,7 +13,7 @@ const CLOSED = { kind: 'closed' } as const
  * Memorizado: a semana e o bloqueio mudam muito mais do que os feriados.
  */
 export const HolidaysCard = memo((props: HolidaysCardProps) => {
-  const { holidays, rules, onRuleChange } = props
+  const { holidays, rules, onRuleChange, note } = props
 
   return (
     <section aria-labelledby="holidays-title" className={cn(CARD, 'gap-(--space-8)')}>
@@ -22,6 +22,12 @@ export const HolidaysCard = memo((props: HolidaysCardProps) => {
       </h2>
       <p className="type-caption text-(--text-muted)">
         Calculados automaticamente. Padrão: fechado. O consumidor vê que a data é feriado.
+        {note && (
+          <>
+            <br />
+            {note}
+          </>
+        )}
       </p>
 
       <ul>

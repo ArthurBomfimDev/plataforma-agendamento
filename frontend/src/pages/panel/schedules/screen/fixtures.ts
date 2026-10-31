@@ -110,7 +110,7 @@ export const MOCK_HOLIDAY_RULES: Record<string, HolidayRule> = {
 /** As férias do wireframe, como o formulário as recebe. */
 export const MOCK_BLOCK_VALUES: BlockPeriodValues = {
   kind: 'Vacation',
-  target: 'marina-souza',
+  wholeBusiness: false,
   from: '2026-09-21',
   to: '2026-09-28',
   allDay: true,

@@ -8,11 +8,11 @@ import type {
   WeekSchedule,
 } from './screen/types'
 import {
-  affectedLabel,
   exceptionPeriod,
   scheduledChanges,
   toExceptionItem,
   toScheduleRequest,
+  toAffectedItem,
   toScheduleRow,
   toWeekSchedule,
   weekChanges,
@@ -144,10 +144,9 @@ export const PanelSchedulesRoute = () => {
             ...exceptionPeriod(draft, timeZone),
             professionalId: draft.professionalId,
           })
-          return result.items.map((appointment) => ({
-            id: appointment.id,
-            label: affectedLabel(appointment, timeZone, nameOf),
-          }))
+          return result.items.map((appointment) =>
+            toAffectedItem(appointment, timeZone, nameOf, draft.professionalId === null),
+          )
         } catch (error) {
           return errorMessage(error)
         }

@@ -8,6 +8,7 @@ import type {
   WorkScheduleScreenProps,
 } from './types'
 import {
+  COMPACT_LABEL,
   KIND_LABELS,
   WEEKDAYS,
   applyRanges,
@@ -230,14 +231,17 @@ const WorkScheduleEditor = (props: WorkScheduleScreenProps & { team: SchedulePro
             onEditDay={setEditingDay}
             onCancelEdit={() => setEditingDay(null)}
             onSaveDay={saveDay}
-          />
-          <DateField
-            id="schedule-effective-from"
-            label="Vale a partir de"
-            value={from}
-            fromDate={today}
-            onValueChange={setFrom}
-            className="sm:max-w-60"
+            footer={
+              <DateField
+                id="schedule-effective-from"
+                label="Vale a partir de"
+                labelClassName={COMPACT_LABEL}
+                value={from}
+                fromDate={today}
+                onValueChange={setFrom}
+                className="sm:w-44 sm:shrink-0"
+              />
+            }
           />
           {selected.changes.length > 0 && (
             <RemovableListCard
@@ -267,17 +271,17 @@ const WorkScheduleEditor = (props: WorkScheduleScreenProps & { team: SchedulePro
               }}
             />
           )}
-          <HolidaysCard holidays={holidays} rules={holidayRules} onRuleChange={changeHolidayRule} />
-          <p className="type-caption -mt-(--space-8) text-(--text-muted)">
-            As regras de feriado ainda não são salvas: valem só nesta tela até o sistema calcular os
-            feriados.
-          </p>
+          <HolidaysCard
+            holidays={holidays}
+            rules={holidayRules}
+            onRuleChange={changeHolidayRule}
+            note="As regras especiais ainda não são salvas: valem só nesta tela."
+          />
         </div>
 
         <div className="flex flex-col gap-(--space-12) xl:sticky xl:top-(--space-24) xl:w-110 xl:shrink-0">
           <BlockPeriodCard
-            professionals={team}
-            defaultTarget={selected.id}
+            professionalId={selected.id}
             today={today}
             onPreview={async (draft) => (await onPreviewBlock?.(draft)) ?? []}
             onConfirm={async (draft, choice) => (await onBlock?.(draft, choice)) ?? null}

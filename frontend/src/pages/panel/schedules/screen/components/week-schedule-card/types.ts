@@ -1,4 +1,5 @@
 import type { TimeRange, WeekSchedule, Weekday } from '../../types'
+import type { ReactNode } from 'react'
 
 export type WeekScheduleCardProps = {
   schedule: WeekSchedule
@@ -8,4 +9,6 @@ export type WeekScheduleCardProps = {
   onEditDay: (day: Weekday) => void
   onCancelEdit: () => void
   onSaveDay: (day: Weekday, ranges: TimeRange[], applyToWorkdays: boolean) => void
+  /** Ao lado da legenda, no pé do cartão (ex.: a data a partir da qual a semana vale). */
+  footer?: ReactNode
 }
