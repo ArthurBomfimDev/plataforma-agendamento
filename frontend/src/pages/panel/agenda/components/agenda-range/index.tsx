@@ -1,17 +1,18 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@assets/icons'
 import { ErrorState, LoadingState } from '@components/screen-state'
-import { PANEL_CARD, PanelPage } from '@components/panel-page'
-import { WEEKDAY_HEADERS, byDay, dayCountLabel, periodLabel, shortDayLabel } from './consts'
+import { byDay, periodLabel, shortDayLabel } from './consts'
 
+import { AgendaHeader } from '../agenda-header'
+import { MonthCalendar } from './components/month-calendar'
 import type { AgendaRangeScreenProps, RangeAppointment } from './types'
-import { ICON_BUTTON } from '@pages/panel/agenda/screen/consts'
+import { PANEL_CARD } from '@components/panel-page'
+import { PANEL_CONTENT_BOTTOM_PADDING_WITH_ACTION } from '@components/bottom-navigation/consts'
 import { StatusChip } from '@components/status-chip'
 import { cn } from 'cn'
 
 /**
- * Agenda da semana e do mês (Onda 7CF). Sem wireframe no Figma: a semana é uma lista por dia (o mesmo "um dia como
- * lista cronológica" do celular, CLAUDE.md §3.1), e o mês, uma grade com a contagem de cada dia, que abre o dia.
- * As cores e ícones de status são os do chip da agenda do dia.
+ * Agenda da semana e do mês (Onda 7CF). Sem wireframe no Figma: o cabeçalho é o da tela 09; a semana é uma lista por
+ * dia (o mesmo "um dia como lista cronológica" do celular, CLAUDE.md §3.1), e o mês, uma grade com a contagem de cada
+ * dia, que abre o dia. As cores e ícones de status são os do chip da agenda do dia.
  */
 export const AgendaRangeScreen = (props: AgendaRangeScreenProps) => {
   const {
@@ -21,10 +22,9 @@ export const AgendaRangeScreen = (props: AgendaRangeScreenProps) => {
     date,
     today,
     data,
-    toolbar,
+    controls,
     filtered,
-    onPrevious,
-    onNext,
+    onCounterBooking,
     onOpenDay,
   } = props
 
@@ -36,31 +36,18 @@ export const AgendaRangeScreen = (props: AgendaRangeScreenProps) => {
   const month = date.slice(0, 7)
 
   return (
-    <PanelPage
-      title={title}
-      subtitle={`${label} · ${businessName}`}
-      actions={
-        <div className="flex shrink-0 items-center gap-(--space-4)">
-          <button
-            type="button"
-            aria-label={view === 'week' ? 'Semana anterior' : 'Mês anterior'}
-            onClick={onPrevious}
-            className={cn(ICON_BUTTON, 'text-(--text-link)')}
-          >
-            <ChevronLeftIcon aria-hidden="true" className="size-5" />
-          </button>
-          <button
-            type="button"
-            aria-label={view === 'week' ? 'Próxima semana' : 'Próximo mês'}
-            onClick={onNext}
-            className={cn(ICON_BUTTON, 'text-(--text-link)')}
-          >
-            <ChevronRightIcon aria-hidden="true" className="size-5" />
-          </button>
-        </div>
-      }
+    <main
+      className={cn(
+        'flex flex-col gap-(--space-16) px-(--space-16) pt-[calc(var(--space-16)+env(safe-area-inset-top))] md:mx-auto md:max-w-160 lg:mx-0 lg:max-w-none lg:px-(--space-24) lg:pt-(--space-24)',
+        PANEL_CONTENT_BOTTOM_PADDING_WITH_ACTION,
+      )}
     >
-      {toolbar}
+      <AgendaHeader
+        title={title}
+        caption={`${label} · ${businessName}`}
+        controls={controls}
+        onCounterBooking={onCounterBooking}
+      />
 
       {data.status === 'loading' ? (
         <LoadingState label="Carregando a agenda…" />
@@ -131,66 +118,16 @@ export const AgendaRangeScreen = (props: AgendaRangeScreenProps) => {
               })}
             </ul>
           ) : (
-            // Menos respiro no celular: em 390 px, sete colunas precisam caber com 44 px cada.
-            <div className={cn(PANEL_CARD, 'px-(--space-8) md:px-(--space-16)')}>
-              <div
-                aria-hidden="true"
-                className="grid grid-cols-7 gap-(--space-2) md:gap-(--space-4)"
-              >
-                {WEEKDAY_HEADERS.map((weekday) => (
-                  <span key={weekday} className="type-caption text-center text-(--text-muted)">
-                    {weekday}
-                  </span>
-                ))}
-              </div>
-              <ul className="grid grid-cols-7 gap-(--space-2) md:gap-(--space-4)">
-                {days.map((day) => {
-                  const items = grouped.get(day) ?? []
-                  const pending = items.filter((item) => item.status === 'pending').length
-                  const outside = day.slice(0, 7) !== month
-                  return (
-                    <li key={day}>
-                      <button
-                        type="button"
-                        onClick={() => onOpenDay(day)}
-                        aria-label={`${shortDayLabel(day)}: ${items.length === 0 ? 'sem agendamento' : dayCountLabel(items)}`}
-                        className={cn(
-                          'flex min-h-(--size-touch-min) w-full flex-col items-center justify-center gap-(--space-2) rounded-md border px-(--space-2) py-(--space-4) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
-                          day === today
-                            ? 'border-2 border-(--border-focus)'
-                            : 'border-(--border-subtle)',
-                          outside
-                            ? 'bg-(--bg-page) text-(--text-muted)'
-                            : 'bg-(--bg-surface) text-(--text-strong)',
-                          'hover:bg-(--bg-surface-raised)',
-                        )}
-                      >
-                        <span className="type-label tabular">{Number(day.slice(8))}</span>
-                        {items.length > 0 && (
-                          <span
-                            className={cn(
-                              'type-caption tabular rounded-(--radius-full) px-(--space-4)',
-                              pending > 0
-                                ? 'border border-dashed border-(--status-pending-fg) bg-(--status-pending-bg) text-(--status-pending-fg)'
-                                : 'bg-(--status-confirmed-bg) text-(--status-confirmed-fg)',
-                            )}
-                          >
-                            {items.length}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-              <p className="type-caption text-(--text-muted)">
-                O número é a quantidade de agendamentos do dia; com borda tracejada, há pedido
-                pendente.
-              </p>
-            </div>
+            <MonthCalendar
+              days={days}
+              month={month}
+              today={today}
+              byDay={grouped}
+              onOpenDay={onOpenDay}
+            />
           )}
         </>
       )}
-    </PanelPage>
+    </main>
   )
 }

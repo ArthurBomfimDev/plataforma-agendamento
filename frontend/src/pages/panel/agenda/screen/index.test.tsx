@@ -6,6 +6,7 @@ import {
   durationLabel,
   freeLabel,
   placeableStarts,
+  occupancyOf,
   summaryCards,
   summarize,
   toMinutes,
@@ -28,7 +29,6 @@ const render = (overrides: Partial<BusinessAgendaScreenProps> = {}) =>
       date={FIXTURE_AGENDA_DATE}
       onDateChange={() => undefined}
       agenda={ready()}
-      pendingRequests={4}
       onAction={async () => true}
       {...overrides}
     />,
@@ -60,7 +60,10 @@ describe('BusinessAgendaScreen', () => {
       expect(html).toContain(`aria-label="${name}"`)
     }
     expect(html).toContain('sexta, 11 de setembro de 2026 · Estúdio Duartina')
-    expect(html).toContain('4 pedidos pendentes no total')
+    // Os três primeiros indicadores são os do Figma; o tempo de resposta não tem dado na API.
+    expect(html).toContain('Agendamentos hoje')
+    expect(html).toContain('Ocupação da agenda')
+    expect(html).toMatch(/\d+%/)
     expect(html).toContain('Confirmados')
     expect(html).toMatch(/R\$\s1\.240/)
   })
@@ -131,7 +134,36 @@ describe('agenda do dia', () => {
       pendingCount: 1,
       expectedRevenueCents: 10_000,
     })
-    expect(summaryCards(summary, 1)[0]?.caption).toBe('1 pedido pendente no total')
+    expect(summaryCards(summary, null, true)[0]?.caption).toBe('1 pendente')
+    expect(summaryCards(summary, null, false)[0]?.label).toBe('Agendamentos do dia')
+    expect(summaryCards(summary, 72, true)[2]?.value).toBe('72%')
+    expect(summaryCards(summary, null, true)[2]?.value).toBe('—')
+  })
+
+  it('calcula a ocupação sobre o expediente, sem contar os bloqueios', () => {
+    const professional = {
+      id: 'p1',
+      name: 'Marina Souza',
+      workStart: '09:00',
+      workEnd: '13:00',
+      pendingRequests: 0,
+      entries: [
+        { kind: 'block' as const, id: 'b1', start: '12:00', durationMinutes: 60, label: 'Almoço' },
+        {
+          kind: 'appointment' as const,
+          id: 'a1',
+          start: '09:00',
+          durationMinutes: 90,
+          serviceName: 'Corte',
+          customerName: 'Ana',
+          status: 'confirmed' as const,
+        },
+      ],
+    }
+
+    // 4 h de expediente − 1 h de almoço = 180 min; 90 agendados = 50%.
+    expect(occupancyOf([professional])).toBe(50)
+    expect(occupancyOf([{ ...professional, workStart: '00:00', workEnd: '00:00' }])).toBeNull()
   })
 
   it('tem mensagem de sucesso para cada ação', () => {

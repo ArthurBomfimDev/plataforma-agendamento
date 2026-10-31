@@ -1,6 +1,6 @@
 import type { PanelBottomItem } from '@components/bottom-navigation/types'
+import type { AgendaControls } from '../components/agenda-header/types'
 import type { PanelSection } from '@components/panel-sidebar/types'
-import type { ReactNode } from 'react'
 
 /** Agendamento na agenda do dia. Horários em `HH:mm`, no fuso do estabelecimento. */
 export type AgendaAppointment = {
@@ -86,18 +86,16 @@ export type BusinessAgendaScreenProps = {
   date: string
   onDateChange: (date: string) => void
   agenda: AgendaData
-  /** Pedidos pendentes de qualquer dia, para o indicador. */
-  pendingRequests: number
   /** Resolve `true` se a ação deu certo; o erro, a rota já mostrou. */
   onAction: (action: AgendaAction, entryId: string) => Promise<boolean>
   onNavigate?: (section: PanelSection | PanelBottomItem) => void
   /** "+ Marcação de balcão" (sem horário) ou "Encaixar" num intervalo livre (com horário). */
   onCounterBooking?: (slot?: CounterBookingSlot) => void
   /**
-   * Barra com Dia, Semana e Mês e os filtros (7CF): no celular, no topo da lista; no desktop, abaixo do título. Sem
-   * ela, a tela é só o dia.
+   * Dia, Semana e Mês, o período e os filtros (7CF), montados pela rota. No desktop, no cabeçalho; no celular, no topo
+   * da lista (o dia anda pelo seletor do cabeçalho). Sem eles, a tela é só o dia.
    */
-  toolbar?: ReactNode
+  controls?: AgendaControls
   /** Há filtro aplicado: o dia vazio diz isso, em vez de "nenhum agendamento". */
   filtered?: boolean
 }

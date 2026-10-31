@@ -41,10 +41,12 @@ const render = (overrides: Partial<AgendaRangeScreenProps> = {}) =>
           item({}),
         ],
       }}
-      toolbar={<p>barra</p>}
+      controls={{
+        viewSwitch: <p>visão</p>,
+        navigator: <p>período</p>,
+        filters: <p>filtros</p>,
+      }}
       filtered={false}
-      onPrevious={() => undefined}
-      onNext={() => undefined}
       onOpenDay={() => undefined}
       {...overrides}
     />,
@@ -61,17 +63,22 @@ describe('AgendaRangeScreen', () => {
     expect(html).toContain('Confirmado')
     expect(html.match(/Sem agendamento\./g)).toHaveLength(6)
     expect(html).toContain('· hoje')
-    expect(html).toContain('barra')
+    // O mesmo cabeçalho do dia: visão, período e filtros.
+    expect(html).toContain('visão')
+    expect(html).toContain('período')
+    expect(html).toContain('filtros')
   })
 
-  it('mês: grade com a contagem de cada dia, que abre o dia', () => {
+  it('mês: calendário com os agendamentos de cada dia, que abre o dia', () => {
     const days = daysOf('2026-10-26', '2026-12-06')
     const html = render({ view: 'month', days, date: '2026-11-15' })
 
     expect(html).toContain('Agenda do mês')
     expect(html).toContain('novembro de 2026')
     expect(html).toContain('aria-label="terça, 3 nov: 2 agendamentos, 1 pendente"')
-    expect(html.match(/<li><button/g)).toHaveLength(days.length)
+    expect(html.match(/<li class="[^"]*"><button/g)).toHaveLength(days.length)
+    // No desktop, a célula mostra os agendamentos do dia, com horário e nome.
+    expect(html).toContain('14:00 Bruno')
   })
 
   it('vazio com filtro diz que é o filtro; carregando e erro', () => {

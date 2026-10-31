@@ -30,32 +30,57 @@ export const SLIDE = {
 }
 
 /**
- * Indicadores do dia, no topo do desktop, somados da agenda. TODO(figma): ocupação e tempo médio de
- * resposta do wireframe saíram até existir dado medido; entraram confirmados e pendentes do dia.
+ * Parte do expediente do dia ocupada por agendamentos, de 0 a 100: minutos agendados sobre os minutos de jornada,
+ * descontados os bloqueios (almoço, folga). `null` sem expediente no dia. Somada da própria agenda — e, com filtro,
+ * só do que está no recorte.
  */
-export const summaryCards = (summary: AgendaSummary, pendingRequests: number) => [
+export const occupancyOf = (professionals: ReadonlyArray<AgendaProfessional>) => {
+  let available = 0
+  let booked = 0
+  for (const { workStart, workEnd, entries } of professionals) {
+    const work = toMinutes(workEnd) - toMinutes(workStart)
+    if (work <= 0) continue
+    const minutesOf = (kind: AgendaEntry['kind']) =>
+      entries
+        .filter((entry) => entry.kind === kind)
+        .reduce((sum, { durationMinutes }) => sum + durationMinutes, 0)
+    available += Math.max(work - minutesOf('block'), 0)
+    booked += minutesOf('appointment')
+  }
+  return available > 0 ? Math.min(100, Math.round((booked / available) * 100)) : null
+}
+
+/**
+ * Indicadores do dia, no topo do desktop (tela 09), somados da agenda: não há endpoint de indicadores. Os três
+ * primeiros são os do Figma. TODO(figma): o quarto do wireframe, tempo médio de resposta, precisa da hora em que o
+ * pedido foi respondido, que a API não informa; no lugar dele, os confirmados do dia.
+ */
+export const summaryCards = (
+  summary: AgendaSummary,
+  occupancy: number | null,
+  isToday: boolean,
+) => [
   {
-    label: 'Agendamentos do dia',
+    label: isToday ? 'Agendamentos hoje' : 'Agendamentos do dia',
     value: String(summary.appointmentsCount),
-    caption: `${pendingRequests} ${pendingRequests === 1 ? 'pedido pendente' : 'pedidos pendentes'} no total`,
-    captionClassName: 'text-(--status-pending-fg)',
-  },
-  {
-    label: 'Confirmados',
-    value: String(summary.confirmedCount),
-    caption: 'no dia',
-    captionClassName: 'text-(--status-confirmed-fg)',
-  },
-  {
-    label: 'Pendentes',
-    value: String(summary.pendingCount),
-    caption: 'aguardando sua resposta',
+    caption: summary.pendingCount === 1 ? '1 pendente' : `${summary.pendingCount} pendentes`,
     captionClassName: 'text-(--status-pending-fg)',
   },
   {
     label: 'Receita prevista',
     value: currencyFormat.format(summary.expectedRevenueCents / 100),
     caption: 'estimativa, não faturamento',
+  },
+  {
+    label: 'Ocupação da agenda',
+    value: occupancy === null ? '—' : `${occupancy}%`,
+    caption: 'do expediente do dia',
+  },
+  {
+    label: 'Confirmados',
+    value: String(summary.confirmedCount),
+    caption: 'prontos para atender',
+    captionClassName: 'text-(--status-confirmed-fg)',
   },
 ]
 

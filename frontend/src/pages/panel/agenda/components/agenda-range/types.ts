@@ -1,5 +1,5 @@
+import type { AgendaControls } from '../agenda-header/types'
 import type { AppointmentStatus } from '@components/status-chip/types'
-import type { ReactNode } from 'react'
 
 /** Um agendamento na semana ou no mês, já no fuso do estabelecimento. */
 export type RangeAppointment = {
@@ -29,12 +29,11 @@ export type AgendaRangeScreenProps = {
   date: string
   today: string
   data: RangeData
-  /** A barra com Dia/Semana/Mês e os filtros. */
-  toolbar: ReactNode
+  /** Dia/Semana/Mês, o período e os filtros, montados pela rota. */
+  controls?: AgendaControls
   /** Há filtro aplicado: o vazio diz isso, em vez de "nenhum agendamento". */
   filtered: boolean
-  onPrevious: () => void
-  onNext: () => void
+  onCounterBooking?: () => void
   /** Abre o dia na visão Dia. */
   onOpenDay: (date: string) => void
 }

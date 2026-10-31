@@ -2,7 +2,6 @@ import type { AgendaAction, BusinessAgendaScreenProps } from './types'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import {
   ACTION_SUCCESS,
-  COUNTER_BOOKING_LABEL,
   ICON_BUTTON,
   SLIDE,
   SWIPE_THRESHOLD,
@@ -11,6 +10,7 @@ import {
   firstName,
   fullDayLabel,
   initials,
+  occupancyOf,
   shiftDay,
   summaryCards,
   summarize,
@@ -20,9 +20,9 @@ import { ChevronLeftIcon, ChevronRightIcon, ScheduleIcon } from '@assets/icons'
 import { ErrorState, LoadingState } from '@components/screen-state'
 import { useRef, useState } from 'react'
 
+import { AgendaHeader } from '../components/agenda-header'
 import { AppointmentDetails } from './components/appointment-details'
 import { Avatar } from '@components/avatar'
-import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { DESKTOP_QUERY } from '@hooks/use-media-query/consts'
 import { DayGrid } from './components/day-grid'
@@ -76,11 +76,10 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
     date,
     onDateChange,
     agenda,
-    pendingRequests,
     onAction,
     onNavigate,
     onCounterBooking,
-    toolbar,
+    controls,
     filtered = false,
   } = props
 
@@ -257,7 +256,9 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
         </header>
 
         <main className="flex flex-col gap-(--space-12) px-(--space-16) py-(--space-12) md:mx-auto md:max-w-160">
-          {toolbar}
+          {/* O dia anda pelo seletor do cabeçalho; aqui, a visão e os filtros. */}
+          {controls?.viewSwitch}
+          {controls?.filters}
           {noAppointments}
           {selected ? (
             <AnimatePresence mode="popLayout" initial={false} custom={professionalDirection}>
@@ -305,39 +306,15 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
 
       {/* Desktop (09) */}
       <main className="hidden min-w-0 flex-1 flex-col gap-(--space-16) p-(--space-24) lg:flex">
-        <div className="flex items-center gap-(--space-16)">
-          <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
-            <h1 className="type-title text-(--text-strong)">{title}</h1>
-            <p className="type-caption text-(--text-muted)">
-              {fullDayLabel(date)} · {businessName}
-            </p>
-          </div>
-          <div className="flex items-center gap-(--space-4)">
-            <button
-              type="button"
-              aria-label="Dia anterior"
-              onClick={() => changeDay(-1)}
-              className={cn(ICON_BUTTON, 'text-(--text-link)')}
-            >
-              <ChevronLeftIcon aria-hidden="true" className="size-5" />
-            </button>
-            <button
-              type="button"
-              aria-label="Próximo dia"
-              onClick={() => changeDay(1)}
-              className={cn(ICON_BUTTON, 'text-(--text-link)')}
-            >
-              <ChevronRightIcon aria-hidden="true" className="size-5" />
-            </button>
-          </div>
-          {/* Dia, Semana e Mês ficam na barra da agenda (`toolbar`, 7CF), junto dos filtros. */}
-          <Button onClick={() => onCounterBooking?.()}>{COUNTER_BOOKING_LABEL}</Button>
-        </div>
-
-        {toolbar}
+        <AgendaHeader
+          title={title}
+          caption={`${fullDayLabel(date)} · ${businessName}`}
+          controls={controls}
+          onCounterBooking={() => onCounterBooking?.()}
+        />
 
         <ul className="grid grid-cols-4 gap-(--space-16)">
-          {summaryCards(summary, pendingRequests).map((card, index) => (
+          {summaryCards(summary, occupancyOf(professionals), isToday).map((card, index) => (
             <motion.li
               key={card.label}
               initial={{ opacity: 0, y: 8 }}
