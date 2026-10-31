@@ -81,7 +81,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<BookingDbContext>());
         services.AddSingleton(TimeProvider.System);
 
-        services.AddIdentityModule(configuration);
+        services.AddIdentityModule(configuration, isDevelopment);
         services.AddTenancyModule();
         services.AddPeopleModule();
         services.AddCatalogModule();
@@ -165,13 +165,16 @@ public static class DependencyInjection
 
     private static string EnsureTrailingSlash(string url) => url.EndsWith('/') ? url : url + "/";
 
-    private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
+    private static void AddIdentityModule(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
     {
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(
                 o => System.Text.Encoding.UTF8.GetByteCount(o.SigningKey) >= JwtOptions.MinSigningKeyBytes,
                 $"Jwt:SigningKey precisa ter ao menos {JwtOptions.MinSigningKeyBytes} bytes.")
+            .Validate(
+                o => isDevelopment || !JwtOptions.PublicSigningKeys.Contains(o.SigningKey.Trim()),
+                "Jwt:SigningKey é a chave de exemplo do repositório: fora de Development a API não sobe com ela (rode scripts/setup-env).")
             .Validate(o => o.AccessTokenMinutes is > 0 and <= 60, "Jwt:AccessTokenMinutes deve ficar entre 1 e 60.")
             .ValidateOnStart();
 
