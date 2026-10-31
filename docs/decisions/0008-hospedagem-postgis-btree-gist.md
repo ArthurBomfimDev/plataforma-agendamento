@@ -1,7 +1,7 @@
 # ADR-008 — Hospedagem com PostGIS e `btree_gist`
 
 - **Status:** Proposto — unidade de implantação decidida em 27/10; **provedor final em aberto**
-- **Data:** 2026-10-26 · revisada em 2026-10-27
+- **Data:** 2026-10-26 · revisada em 2026-10-27 e em 2026-10-31 (Onda 7H)
 - **Decisores:** Arthur Bomfim, Rafael Ernandes
 - **Módulos afetados:** infraestrutura; Tenancy (busca geográfica); Scheduling (constraint de exclusão)
 - **Substitui:** —
@@ -114,6 +114,26 @@ Critérios que a máquina escolhida precisa cumprir, nesta ordem:
 **Existe uma máquina, dentro do orçamento, que cumpre os quatro critérios até a defesa.** Nenhuma foi testada ainda.
 O crédito de estudante é o candidato natural; o tamanho de VM que ele paga até dezembro e as regiões permitidas não
 foram conferidos (⚠️ não verificado).
+
+### Revisão de 31/10 (Onda 7H) — o caminho da máquina própria existe
+
+**Fato.** A lista "antes de expor qualquer máquina" de Consequências foi implementada, e o caminho de última
+instância (máquina do Arthur + Cloudflare Tunnel) foi exercitado numa pilha isolada, com o túnel rápido
+(`trycloudflare.com`):
+
+- senha do seed: `SEED_PASSWORD` e `SEED_ADMIN_PASSWORD`; fora de Development o seed recusa a senha padrão, e o Admin
+  sem senha definida ganha uma aleatória;
+- API em `Production` na demonstração, recusando a chave JWT de exemplo;
+- `UseForwardedHeaders` com as redes confiáveis configuráveis (o limitador conta o IP real);
+- **uma origem só**: o nginx repassa `/api/` e `/media/`, o frontend chama a API por caminho relativo. Não é mais
+  preciso reconstruir o frontend com a URL pública nem ajustar o CORS — o item da lista ficou obsoleto.
+
+Guia: `docs/operacao/demo-publica.md`.
+
+**Interpretação.** Isso cumpre os critérios 1 e 3 **para a máquina do Arthur**, e só para ela. Não fecha a premissa:
+a disponibilidade dessa máquina continua sem garantia (ver Consequências), o critério 2 não foi rodado contra ela
+como alvo de implantação, e o túnel rápido muda de endereço a cada subida. A ADR **continua Proposto**: o provedor
+final segue em aberto.
 
 ## Como saber que erramos
 
