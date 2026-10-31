@@ -1,4 +1,13 @@
-import { CATEGORY_LABELS, PRICE_CEILINGS, priceCeilingLabel, resultsCount } from './consts'
+import { MAX_SEARCH_RADIUS_KM, distanceChipLabel } from '@lib/api/search'
+import {
+  CATEGORY_LABELS,
+  PRICE_CEILINGS,
+  areaLabel,
+  emptyAction,
+  hasNarrowingFilters,
+  priceCeilingLabel,
+  resultsCount,
+} from './consts'
 import { ChevronLeft, MapPin, X } from 'lucide-react'
 import { useState } from 'react'
 
@@ -13,12 +22,21 @@ import { locationReference } from '@components/top-bar/consts'
 
 /**
  * Tela 02 · Resultados da busca (Figma, 390px), ligada à API na Onda 6C. Só os filtros que o backend suporta:
- * categoria, termo, raio, preço máximo e ordenação. "Disponível hoje" e "★ 4,5+" saíram (trabalho futuro no
+ * categoria, termo, distância (Cidade ou 1 a 20 km, Onda 7C), preço máximo e ordenação. "Disponível hoje" e "★ 4,5+" saíram (trabalho futuro no
  * contrato §4.4). Os filtros aplicados aparecem como chips que se removem.
  */
 export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
-  const { filters, results, searching, locationLabel, onChange, onBack, onOpen, onChooseLocation } =
-    props
+  const {
+    filters,
+    results,
+    searching,
+    locationLabel,
+    cityName,
+    onChange,
+    onBack,
+    onOpen,
+    onChooseLocation,
+  } = props
   const [term, setTerm] = useState(filters.term ?? '')
   const [urlTerm, setUrlTerm] = useState(filters.term)
 
@@ -104,17 +122,30 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
             </ul>
           )}
 
+          {filters.distance === 'city' && !cityName && locationLabel && (
+            <p className="type-caption text-(--text-muted)">
+              Não sabemos a cidade desta localização: mostrando a até {MAX_SEARCH_RADIUS_KM} km.
+              Escolha a localização de novo para buscar só na cidade.
+            </p>
+          )}
+
           <div
             role="group"
             aria-label="Filtros"
             className="-mx-(--space-16) flex gap-(--space-8) overflow-x-auto px-(--space-16) lg:mx-0 lg:flex-wrap lg:px-0"
           >
-            <FilterChip
-              selected={filters.radiusKm === 5}
-              onClick={() => onChange?.({ radiusKm: filters.radiusKm === 5 ? 20 : 5 })}
-            >
-              Até 5 km
-            </FilterChip>
+            {/* A distância mora no seletor de endereço (7CF): aqui, só mostra e reabre o seletor. */}
+            {locationLabel && (
+              <FilterChip
+                selected
+                aria-haspopup="dialog"
+                aria-label={`Distância: ${distanceChipLabel(filters.distance, cityName)}. Trocar no seletor de endereço`}
+                onClick={onChooseLocation}
+              >
+                <MapPin aria-hidden="true" className="size-4" />
+                {distanceChipLabel(filters.distance, cityName)}
+              </FilterChip>
+            )}
             {PRICE_CEILINGS.map((cents) => (
               <FilterChip
                 key={cents}
@@ -183,9 +214,29 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
               {resultsCount(results.total)}
             </p>
             {results.items.length === 0 ? (
-              <p className="type-body text-(--text-muted)">
-                Nada encontrado com esses filtros. Tente remover um filtro ou aumentar a distância.
-              </p>
+              <div className="flex flex-col items-start gap-(--space-12)">
+                <p className="type-body text-(--text-muted)">
+                  Nenhum estabelecimento {areaLabel(filters.distance, cityName)}
+                  {hasNarrowingFilters(filters) ? ' com esses filtros' : ''}.
+                </p>
+                {emptyAction(filters) === 'widen' ? (
+                  <Button onClick={() => onChange?.({ distance: MAX_SEARCH_RADIUS_KM })}>
+                    Ampliar para {MAX_SEARCH_RADIUS_KM} km
+                  </Button>
+                ) : emptyAction(filters) === 'clear' ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => onChange?.({ term: null, category: null, maxPriceCents: null })}
+                  >
+                    Limpar filtros
+                  </Button>
+                ) : (
+                  <Button variant="secondary" onClick={onChooseLocation} aria-haspopup="dialog">
+                    <MapPin aria-hidden="true" className="size-4" />
+                    Trocar localização
+                  </Button>
+                )}
+              </div>
             ) : (
               <ul className="flex flex-col gap-(--space-12) md:grid md:grid-cols-2 lg:grid-cols-3">
                 {results.items.map((item) => (

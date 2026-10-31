@@ -24,6 +24,8 @@ const MESSAGES: Record<string, string> = {
   'auth.unauthenticated': 'Entre na sua conta para continuar.',
   'user.email_already_registered': 'Já existe uma conta com este e-mail.',
   'user.password_invalid_length': 'A senha precisa ter entre 8 e 128 caracteres.',
+  'user.current_password_invalid': 'A senha atual não confere.',
+  'user.full_name_required': 'Informe seu nome.',
   'email.invalid_format': 'Informe um e-mail válido.',
   'customer.profile_required': 'Complete seu cadastro de consumidor para agendar.',
   'compliance.consent_required':

@@ -48,11 +48,11 @@ public sealed class CachingGeocodingProvider(IGeocodingProvider inner, GeoCache 
             async () => await inner.GeocodeAsync(query, limit, ct),
             places => places is null || places.Count == 0) ?? [];
 
-    public Task<string?> ReverseAsync(double latitude, double longitude, CancellationToken ct = default)
+    public Task<GeoArea?> ReverseAsync(double latitude, double longitude, CancellationToken ct = default)
     {
         // A chave usa o ponto já arredondado: dois pontos no mesmo quarteirão dividem a resposta.
         string key = string.Create(CultureInfo.InvariantCulture, $"reverse:{GeoPrivacy.Round(latitude):0.000},{GeoPrivacy.Round(longitude):0.000}");
-        return cache.GetOrAddAsync(key, () => inner.ReverseAsync(latitude, longitude, ct), label => label is null);
+        return cache.GetOrAddAsync(key, () => inner.ReverseAsync(latitude, longitude, ct), area => area is null);
     }
 }
 

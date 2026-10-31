@@ -46,7 +46,7 @@ public sealed class SearchPlacesQuery(IGeocodingProvider geocoder)
         IReadOnlyList<GeoPlace> places = await geocoder.GeocodeAsync(text, MaxResults, ct);
         GeoPlaceResponse[] items =
         [
-            .. places.Take(MaxResults).Select(p => new GeoPlaceResponse(p.Label, p.Latitude, p.Longitude, p.Precision.ToString())),
+            .. places.Take(MaxResults).Select(p => new GeoPlaceResponse(p.Label, p.Latitude, p.Longitude, p.Precision.ToString(), p.City, p.State)),
         ];
 
         return new PagedResult<GeoPlaceResponse>(items, Page: 1, PageSize: MaxResults, TotalCount: items.Length);
@@ -65,9 +65,9 @@ public sealed class ReverseGeocodeQuery(IGeocodingProvider geocoder)
         }
 
         // Arredondado aqui, antes de qualquer adaptador: nenhum provedor recebe a coordenada exata.
-        string label = await geocoder.ReverseAsync(GeoPrivacy.Round(lat), GeoPrivacy.Round(lng), ct)
+        GeoArea area = await geocoder.ReverseAsync(GeoPrivacy.Round(lat), GeoPrivacy.Round(lng), ct)
             ?? throw new DomainException("place.not_found");
 
-        return new ReverseGeocodeResponse(label);
+        return new ReverseGeocodeResponse(area.Label, area.City, area.State);
     }
 }

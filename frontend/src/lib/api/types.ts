@@ -366,7 +366,10 @@ export type GeoPlaceResponse = {
   latitude: number
   longitude: number
   precision: LocationPrecision
+  /** Cidade e sigla da UF, quando o provedor informa (Onda 7C). */
+  city?: string | null
+  state?: string | null
 }
 
-/** `GET /api/geo/reverse?lat=&lng=`. */
-export type ReverseGeocodeResponse = { label: string }
+/** `GET /api/geo/reverse?lat=&lng=`. Cidade e UF quando o provedor informa (Onda 7C). */
+export type ReverseGeocodeResponse = { label: string; city?: string | null; state?: string | null }

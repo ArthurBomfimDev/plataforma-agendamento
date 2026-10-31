@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-29 (Onda 7D — gestão do estabelecimento no painel) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-29 (Onda 7CF — busca por raio e cidade, busca por termo, acabamento do painel) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -36,9 +36,9 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 
 | Módulo | Situação |
 |---|---|
-| Identity | ✅ `User`, `RefreshToken`, `UserToken`. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo. **Desde a 6A:** login e refresh exigem e-mail confirmado (`403 identity.email_not_confirmed`, `Identity__RequireEmailConfirmation`), reenvio sem enumeração (`resend-confirmation`, 1 por minuto por conta); contas anteriores confirmadas pela migration `ConfirmExistingAccounts`. Frontend: mostrar senha, "Confira seu e-mail", confirmar e-mail, esqueci e redefinir senha. **Desde a 7A:** `GET /api/users/me` traz `hasCustomerProfile` e os estabelecimentos da conta (seletor de contexto) |
-| Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar. **Localização (6B, ADR-022):** portas `IGeocodingProvider` e `IPostalCodeLookup`, adaptadores Nominatim e BrasilAPI/ViaCEP, rotas públicas `api/geo` (CEP, busca, reverso) com cache, limite por IP e coordenada arredondada a 3 casas antes de sair |
-| People | ✅ `Customer` (com `BirthDate`), `Professional` (consentimento de perfil público). **Imagens (6D, ADR-023):** logotipo e capa do `Business`, foto do `Professional` (pública só com perfil completo consentido); porta `IFileStorage` (disco no volume `media-data`), SkiaSharp (MIT) reencodando em WebP sem metadados, assinatura do arquivo conferida pelo conteúdo |
+| Identity | ✅ `User`, `RefreshToken`, `UserToken`. **Desde a 7CF:** trocar o nome e a senha (com a atual) em "Minha conta"; token encerrado sem substituto é inválido, não reuso. Argon2id, JWT, refresh rotativo com detecção de reuso, confirmação de e-mail, recuperação de senha, troca de contexto ativo. **Desde a 6A:** login e refresh exigem e-mail confirmado (`403 identity.email_not_confirmed`, `Identity__RequireEmailConfirmation`), reenvio sem enumeração (`resend-confirmation`, 1 por minuto por conta); contas anteriores confirmadas pela migration `ConfirmExistingAccounts`. Frontend: mostrar senha, "Confira seu e-mail", confirmar e-mail, esqueci e redefinir senha. **Desde a 7A:** `GET /api/users/me` traz `hasCustomerProfile` e os estabelecimentos da conta (seletor de contexto) |
+| Tenancy | ✅ `Business`, `BusinessMembership`. Cadastro, política de agendamento, endereço, ponto confirmado, submissão, busca com `ST_DWithin` (serviço em destaque com preço "a partir de", categoria, preço máximo, ordenação). **Admin da plataforma** (ADR-020): fila de análise, aprovar, recusar, suspender, reinstalar. **Localização (6B, ADR-022):** portas `IGeocodingProvider` e `IPostalCodeLookup`, adaptadores Nominatim e BrasilAPI/ViaCEP, rotas públicas `api/geo` (CEP, busca, reverso) com cache, limite por IP e coordenada arredondada a 3 casas antes de sair. **Desde a 7C:** busca com `City` opcional (cidade sem acento e sem caixa, entre os candidatos a até 50 km); busca de lugar e reverso devolvem cidade e UF |
+| People | ✅ `Customer` (com `BirthDate`), `Professional` (consentimento de perfil público; **desde a 7C**, desativar sempre esconde o perfil completo, mesmo pedido junto). **Imagens (6D, ADR-023):** logotipo e capa do `Business`, foto do `Professional` (pública só com perfil completo consentido); porta `IFileStorage` (disco no volume `media-data`), SkiaSharp (MIT) reencodando em WebP sem metadados, assinatura do arquivo conferida pelo conteúdo |
 | Catalog | ✅ `Service`, `ServiceProfessional` |
 | Availability | ✅ `WorkSchedule` (criar, **editar**, remover), `ScheduleException`, `Holiday`; `AvailabilityCalculator`; feriados pela Páscoa; calendário de vários dias; **bloqueio com agendamentos afetados**: prévia, manter ou cancelar todos, tudo ou nada |
 | Scheduling | ✅ `Appointment`, `AppointmentEvent`. Pedido, confirmar, recusar, cancelar, concluir, falta, balcão. **409 com horários alternativos**. **Desde a 7A:** token no contexto de estabelecimento não agenda como consumidor (`403 appointment.customer_context_required`) e o dono não agenda no próprio estabelecimento (`409 appointment.cannot_book_own_business`) |
@@ -49,7 +49,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 - **7 migrations** (`InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`, `AddOutbox`, `ConfirmExistingAccounts` — esta só de dado, `AddImages`). PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8).
 - Filtro global de tenant no EF Core. **RLS não implementado.**
-- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (130 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (92 casos, todos ativos — segurança I1–I3, painel J1–J4, log de token K1 em três ambientes, e-mail M1–M13, confirmação obrigatória N1–N5, localização L1–L7, imagens P1–P10 e contexto ao agendar Q1–Q3 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H4, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
+- Testes: `Booking.ArchitectureTests` (28 casos — regras da ADR-010, com fixtures de violação) e `Booking.UnitTests` (137 casos executados — os `[Theory]` rodam um caso por `InlineData`) e `Booking.IntegrationTests` (102 casos, todos ativos — segurança I1–I3, painel J1–J5, Minha conta U1–U2, log de token K1 em três ambientes, e-mail M1–M13, confirmação obrigatória N1–N5, localização L1–L7, imagens P1–P11, contexto ao agendar Q1–Q3 e visibilidade do profissional R1–R2 incluídos: concorrência A1–A8, isolamento B1–B7, idempotência e consentimento C1–C4, Admin E1–E6, jornada F1–F3, bloqueio G1–G5, busca H1–H8, subida da migration e 1 que só registra o ambiente). Os defeitos O e P revelados pelo A2 e pelo C2 foram corrigidos na branch `fix/concorrencia-reserva` (ADR-019). A integração roda a API real contra PostgreSQL + PostGIS em banco criado por execução; evidência em `docs/tcc/evidencias/`.
 - **Admin da plataforma** em `api/admin/businesses` (ADR-020). O papel só é concedido por SQL/seed, nunca por endpoint. O seed aprova pela API.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -89,8 +89,17 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
   as seções e volta para a agenda se digitar o endereço. **Menu sem item morto:** Avaliações e Relatórios saíram (não
   há backend), Fotos entrou, ícones do lucide; no celular, "Mais" (`#/panel/more`) lista as seções e a conta. Em
   Saúde, aviso de que nome e descrição do serviço vão para a vitrine. **Sem mudança no backend.** Contrato §4.7.
+- **Desde a 7CF (que absorveu a 7C, #26 fechado sem merge) — distância da busca no seletor de endereço:** "Cidade"
+  (padrão) e 1, 2, 5, 10 e 20 km, como no iFood, guardados junto do endereço e na URL (`radius=`; a URL vence quando
+  foi ela que mudou). A busca só mostra um chip que reabre o seletor. O seletor guarda cidade e UF com o ponto; sem
+  cidade conhecida, "Cidade" busca a até 20 km e avisa. Estado vazio com "Ampliar para 20 km", "Limpar filtros" ou
+  "Trocar localização". **Busca por termo** sem acento e com sinônimos (ADR-024). Contrato §4.4.
+- **Desde a 7CF — acabamento do painel:** logotipo na lateral e em "Revise seu pedido" (eram quadrados fixos) e cache
+  público invalidado depois de enviar; tempos do serviço por seletor, com aviso de minutos soltos; conta com um papel
+  só mostra o nome; agenda com Semana, Mês e filtros na URL; horizonte de 30, 60, 90 ou 180 dias; **Minha conta**
+  (`#/account`: nome, e-mail, troca de senha com a atual, sair). Contrato §4.8.
 - Ainda com mock: **lembretes** na tela de pedido enviado (`MOCK_REMINDER_HOURS` ainda mostra **24 h e 3 h**, a decisão vigente é 24 h e 1 h — §10) e o **prazo de avaliação** em meus agendamentos (`MOCK_REVIEW_WINDOW_DAYS`, 30 dias; só aparece com avaliação, que ainda não existe).
-- Testes do frontend: 263 casos em 40 arquivos (Vitest), sem jsdom — renderização em HTML de servidor.
+- Testes do frontend: 304 casos em 43 arquivos (Vitest), sem jsdom — renderização em HTML de servidor.
 - **Tema claro e escuro** implementados (tokens + alternador).
 - Do lado do estabelecimento existem a agenda do dia e os pedidos (7A) e a gestão (7D). **Não existem** onboarding
   (cadastro, endereço e envio para análise), preço e duração próprios por profissional, visão da semana, avaliações,
@@ -365,6 +374,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 021 | Envio de e-mail: SMTP genérico e outbox | 📝 Proposto (28/10) — complementa a 010 |
 | 022 | Provedores de geocodificação e CEP, limites e privacidade da coordenada | 📝 Proposto (28/10) — complementa a 016 |
 | 023 | Imagens: armazenamento de arquivos atrás de porta, processamento com SkiaSharp | 📝 Proposto (28/10) — ImageSharp rejeitado (chave de licença no Release) |
+| 024 | Busca por termo sem acento e com dicionário de sinônimos no código | 📝 Proposto (29/10) — sem `unaccent` nem migration; limites registrados |
 
 ---
 
@@ -397,7 +407,8 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 1. ✅ Ondas 1 a 3 mergeadas em `feat/integracao-front-back` (#14, #15, #16). Onda 4 em revisão.
 2. PR #11 `feat/integracao-front-back` → `main`, com a exceção de merge administrativo registrada na descrição.
 3. Aceitar as ADRs 019 e 020; decidir as pendências R, T e U. ✅ Branch `dashboard` do Rafael juntada na 7A.
-4. Painel do estabelecimento: ✅ agenda e pedidos (7A); ✅ gestão (7D, PR em revisão). Próximo: Ondas 7B (Bem-estar) e
-   7C (raio e cidade); depois, onboarding do estabelecimento e login de profissional (5D).
+4. Painel do estabelecimento: ✅ agenda e pedidos (7A); ✅ gestão (7D, #25 mergeado). Busca por raio, cidade e termo e
+   acabamento do painel: 7CF, PR em revisão (absorveu a 7C). Próximo: Onda 7B (Bem-estar); depois, 7E (onboarding do
+   estabelecimento) e login de profissional (5D).
 5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
 6. Responder F e E com a orientadora.

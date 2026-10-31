@@ -1,5 +1,6 @@
 import type { ChosenLocation } from '@lib/zustand/location/types'
 import type { GeoPlaceResponse } from '@lib/api/types'
+import type { SearchDistance } from '@lib/api/search'
 
 /**
  * Passos do seletor. Os de `device-*` são o caminho "Usar minha localização": aviso antes da permissão, espera,
@@ -38,4 +39,7 @@ export type LocationPickerPanelProps = {
   onUsePostalCodeMatch?: () => void
   onSubmitSearch?: (text: string) => void
   onPickResult?: (place: GeoPlaceResponse) => void
+  /** Distância da busca (7CF): escolhida aqui, junto do endereço. */
+  distance?: SearchDistance
+  onDistance?: (distance: SearchDistance) => void
 }

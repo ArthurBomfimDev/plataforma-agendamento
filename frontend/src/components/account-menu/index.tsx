@@ -1,4 +1,4 @@
-import { Check, ChevronDown, LogOut } from 'lucide-react'
+import { Check, ChevronDown, CircleUser, LogOut } from 'lucide-react'
 
 import type { AccountMenuProps } from './types'
 import { Menu } from '@base-ui/react/menu'
@@ -17,6 +17,7 @@ export const AccountMenu = (props: AccountMenuProps) => {
     currentLabel,
     items,
     onSelect,
+    onAccount,
     onSignOut,
     align = 'end',
     side = 'bottom',
@@ -58,6 +59,12 @@ export const AccountMenu = (props: AccountMenuProps) => {
                 ))}
                 <Menu.Separator className="my-(--space-4) h-px bg-(--border-subtle)" />
               </Menu.Group>
+            )}
+            {onAccount && (
+              <Menu.Item className={ITEM} onClick={onAccount}>
+                <CircleUser aria-hidden="true" className="size-4 shrink-0" />
+                Minha conta
+              </Menu.Item>
             )}
             <Menu.Item className={ITEM} onClick={onSignOut}>
               <LogOut aria-hidden="true" className="size-4 shrink-0" />

@@ -16,4 +16,6 @@ export type ChooseContextScreenProps = {
   switching: boolean
   onChoose: (id: string) => void
   onSignOut: () => void
+  /** Minha conta (7CF): nome, e-mail, senha. */
+  onAccount?: () => void
 }

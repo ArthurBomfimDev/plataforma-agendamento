@@ -1,6 +1,6 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A e 7D (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A, 7D, 7C e 7CF (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -32,6 +32,9 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `GET /api/businesses/current/work-schedules?professionalId=` | `panelApi.workSchedules` | ✅ desde a 7A |
 | `GET /api/businesses/current/services` | `panelApi.services` (marcação de balcão) | ✅ desde a 7A |
 | `GET /api/businesses/current/appointments?date=` | `panelApi.agenda` | ✅ desde a 7A |
+| `PUT /api/users/me` (novo na 7CF) | `authApi.updateMe` (só o nome) | ✅ — `user.full_name_required` se vazio (teste U1) |
+| `POST /api/users/me/password` (novo na 7CF) | `authApi.changePassword` | ✅ — pede a senha atual (400 `user.current_password_invalid`), encerra as outras sessões e devolve uma nova; 5 por 15 min por conta (teste U2) |
+| `GET …/appointments?date=&to=` (novo na 7CF) | `panelApi.agendaRange` (semana e mês, paginado) | ✅ — até 42 dias; fora disso, 400 `agenda.range_invalid` (teste J5) |
 | `GET /api/businesses/current/appointments/pending` | `panelApi.pending` | ✅ desde a 7A |
 | `POST …/appointments/{id}/confirm` · `reject` · `cancel` · `complete` · `no-show` | `panelApi.confirm` … `noShow` | ✅ desde a 7A |
 | `POST /api/businesses/current/appointments/counter` | `panelApi.counter` | ✅ desde a 7A |
@@ -94,6 +97,7 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `id`, `name`, `category`, `verified`, `district`, `city`, `distanceKm` | iguais | iguais | ✅ |
 | `serviceId`, `serviceName`, `durationMinutes`, `fromPriceCents` | nuláveis | `string \| null`, `number \| null` | ✅ desde a 6C — o card mostra ("a partir de") |
 | Parâmetros `category`, `maxPriceCents`, `sortBy` (`distance`\|`price`), `radiusKm`, `term` | existem | todos enviados desde a 6C | ✅ |
+| Parâmetro `city` (novo na 7C) | só a cidade, até 50 km do ponto, sem acento e sem caixa; ignora `radiusKm` | enviado na distância "Cidade" (§4.4) | ✅ |
 | `page`, `pageSize` | existem | não enviados (primeira página, 20) | ⚠️ sem "carregar mais" |
 
 Sem API na tela de resultados: foto, horários no próprio resultado (é uma consulta de disponibilidade por
@@ -218,8 +222,29 @@ Rotas públicas, limite de 30 por minuto por IP (`geo`), cache no servidor. ADR-
 - **Tiles da Home** (`features/home/consts.ts`, o `mock.ts` saiu): Beleza e Saúde mandam `category=Beleza|Saude`;
   Cabelo, Barbearia, Unhas e Sobrancelha mandam `term` (`corte`, `barba`, `unha`, `sobrancelha`, conferidos contra os
   serviços do seed).
-- **Filtros na tela:** categoria e termo como chips removíveis; "Até 5 km" (`radiusKm` 5 ou 20); "Até R$ 50/100/200"
+- **Filtros na tela:** categoria e termo como chips removíveis; distância (Onda 7C, abaixo); "Até R$ 50/100/200"
   (`maxPriceCents`); ordenar por "Mais perto" ou "Menor preço" (`sortBy`).
+- **Distância (Ondas 7C e 7CF, 29/10):** "Cidade" (padrão) e 1, 2, 5, 10 e 20 km (`lib/api/search.ts`).
+  - **Mora no seletor de endereço** da barra do topo (7CF, como no iFood): os chips ficam no mesmo painel do
+    endereço, e os dois são guardados juntos (`useLocationStore`, chave `vagoo-location`; o `persist` engole o
+    armazenamento bloqueado). A busca só lê e mostra um chip ("Cidade: Garça", "Até 5 km") que reabre o seletor. A
+    Home usa a mesma distância.
+  - Na URL: `radius=city|1|2|5|10|20`. Quem cede quando divergem é decidido por `distanceSync`: a URL vence quando
+    foi ela que mudou (link aberto, voltar no histórico) e o seletor recebe o valor; tocar num chip do seletor
+    atualiza a URL. Um link sem distância (as categorias da Home) usa a do seletor.
+  - "Cidade" manda `city` com a cidade da localização escolhida, e o backend ignora o raio (abaixo). Sem cidade
+    conhecida (localização guardada antes da 7C, ou o provedor não soube), busca a até 20 km, e a tela avisa.
+  - O seletor de localização guarda `city` e `state` junto do ponto: a do CEP vem dos Correios; a do aparelho e a da
+    busca, do Nominatim (`ReverseGeocodeResponse` e `GeoPlaceResponse` ganharam `city` e `state`, opcionais).
+  - **Estado vazio:** diz onde procurou. Abaixo de 20 km, "Ampliar para 20 km"; em 20 km ou em Cidade, "Limpar
+    filtros" quando há termo, categoria ou preço, e "Trocar localização" quando não há.
+- **`City` no backend (`SearchBusinessesRequest`):** com ela, os candidatos vêm de um raio de 50 km (o teto) e ficam
+  só os da cidade, comparada sem acento, sem diferença de maiúsculas e com espaços normalizados. O teto evita a
+  homônima de outro estado. Sem `City`, nada muda: `RadiusKm` com padrão 5, limitado a 0,1–50. Testes H5 e H6.
+- **Termo (7CF, ADR-024):** casa sem acento e sem caixa com o nome do serviço, do estabelecimento e da categoria, e
+  com um dicionário de sinônimos no código (`SearchText`: "cabelo" → Corte, Escova, Coloração, Hidratação,
+  barbearia; "unha" → Manicure, Pedicure, Pé e mão; "massagem" → relaxante, drenagem). Plural simples conta como o
+  singular. Em memória, sobre os candidatos do filtro geográfico; sem migration. Testes H7 e H8.
 - **Trabalho futuro (sem backend):** "Disponível hoje" (exigiria disponibilidade por resultado na busca) e "★ 4,5+"
   (módulo Reputation fora do recorte). Também: paginação ("carregar mais") e horários no card.
 - **Botão "Buscar":** `components/search-button` — `Button` primário do sistema, `type="submit"` dentro de
@@ -332,10 +357,33 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
   fora do recorte) em vez de ficarem com "Em breve". Fotos entrou. Ícones do lucide, iguais na lateral, nas abas e
   no "Mais".
 
+## 4.8 Acabamento do painel (Onda 7CF, 29/10)
+
+- **Imagens:** a lateral do painel e "Revise seu pedido" mostram o logotipo (sem ele, a ilustração da categoria); a
+  lista de Profissionais mostra a foto. Depois de enviar ou remover em Fotos, o cache do painel e o público
+  (`['businesses']`: vitrine, busca) são invalidados. O backend já gravava as três variantes antes de responder, com
+  nome novo a cada envio (teste P11), então o cache imutável de `/media` é seguro.
+- **Serviço:** duração, intervalos e passo por seletor (múltiplos do passo, limites do domínio) e aviso de minutos
+  soltos com a duração sugerida; preço com máscara em reais, em centavos.
+- **Conta:** com um contexto só, o botão mostra o nome da pessoa, e a tela de conta não lista "Entrar como".
+- **Agenda:** Dia, Semana e Mês, com filtros por profissional (só o dono), status, serviço e nome, na URL
+  (`#/panel?view=&pro=&status=&service=&q=`). Semana e mês leem `GET …/appointments?date=&to=`. Sem visão de ano:
+  não há agregado no backend.
+- **Minha conta** (`#/account`, exige sessão, qualquer contexto): trocar o nome, ver o e-mail, trocar a senha pedindo a
+  atual e sair. Entra pelo menu da conta e pela tela "Sua conta" (7A). Depois de trocar a senha, a sessão nova é
+  guardada e, com o painel aberto, o contexto é pedido de novo. **Fora:** telefone (o `User` não tem o campo; exigiria
+  migration e dado pessoal novo), trocar o e-mail e excluir a conta.
+- **Refresh depois de sair ou trocar a senha:** token encerrado sem substituto é só inválido (401
+  `auth.invalid_refresh_token`), não reuso. Antes, o outro aparelho, ao tentar renovar, derrubava a sessão nova. O
+  reuso de token rotacionado continua derrubando todas as sessões.
+- **Horizonte:** Configurações oferecem 30, 60, 90 ou 180 dias (a API aceita de 1 a 365). Um pedido para além do
+  horizonte é recusado pelo backend; marcar o Natal em outubro precisa de pelo menos 90 dias.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
 2. Traduzir `appointment.contention_try_again` (503: "tente de novo").
-3. Painel: bloqueios na agenda, visão da semana, histórico do consumidor no pedido e a remarcação (sem backend).
+3. Painel: bloqueios desenhados na grade da agenda, visão de ano (sem agregado no backend), histórico do consumidor
+   no pedido e a remarcação (sem backend).
 4. Gestão: preço e duração próprios por profissional no serviço; consentimento do perfil público pelo próprio
    profissional (depende do login de profissional, 5D); cadastro, endereço e envio para análise do estabelecimento.

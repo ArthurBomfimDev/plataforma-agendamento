@@ -57,6 +57,27 @@ public sealed class ImageTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task P11_when_the_upload_answers_every_variant_exists_and_the_panel_already_sees_the_new_logo()
+    {
+        // Onda 7CF: a barra lateral e a revisão do pedido pedem o logotipo logo depois do envio. Sem corrida: as
+        // três variantes são gravadas antes da resposta, e um logotipo novo ganha nome novo (cache imutável seguro).
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+
+        ImageSetResponse first = (await UploadOkAsync<BusinessDetailResponse>(
+            "/api/businesses/current/logo", TestImages.Png(300, 300), "a.png", "image/png", business.OwnerToken)).Logo!;
+        Assert.Equal(3, Files.PathsOf(KeyOf(first)).Count);
+
+        ImageSetResponse second = (await UploadOkAsync<BusinessDetailResponse>(
+            "/api/businesses/current/logo", TestImages.Png(300, 300), "b.png", "image/png", business.OwnerToken)).Logo!;
+        Assert.Equal(3, Files.PathsOf(KeyOf(second)).Count);
+        Assert.NotEqual(first.Small, second.Small);
+
+        BusinessDetailResponse panel = await _world.SendOkAsync<BusinessDetailResponse>(
+            HttpMethod.Get, "/api/businesses/current", null, business.OwnerToken);
+        Assert.Equal(second, panel.Logo);
+    }
+
+    [Fact]
     public async Task P2_replacing_the_cover_deletes_the_old_files_and_removing_clears_it()
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], approve: false);

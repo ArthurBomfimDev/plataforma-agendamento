@@ -106,6 +106,56 @@ export const validateService = (
   return errors
 }
 
+/** Passos oferecidos (7CF): de 5 min, o mínimo do domínio, a 1 h. */
+export const SLOT_STEP_OPTIONS = [5, 10, 15, 20, 30, 60] as const
+
+/** Intervalos antes e depois oferecidos, até o máximo do domínio (120 min). */
+export const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120] as const
+
+/**
+ * Durações oferecidas: múltiplos do passo, do próprio passo até 8 h. Um valor que já existia fora disso (serviço
+ * antigo, ou o passo mudou depois) continua na lista, para não sumir ao abrir a edição — o aviso explica o ajuste.
+ */
+export const durationOptions = (step: number, current: number | null) => {
+  const multiples =
+    step > 0
+      ? Array.from(
+          { length: Math.floor(SERVICE_LIMITS.maxDuration / step) },
+          (_, i) => (i + 1) * step,
+        )
+      : []
+  return current && current > 0 && !multiples.includes(current)
+    ? [...multiples, current].sort((a, b) => a - b)
+    : multiples
+}
+
+/** "1 h 30", "45 min", "2 h": o rótulo de cada opção de duração. */
+export const durationLabel = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (hours === 0) return `${rest} min`
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest}`
+}
+
+/**
+ * Minutos soltos: o serviço ocupa intervalos + duração na agenda, e os horários andam de passo em passo. Se a
+ * ocupação não fecha com o passo, sobra um pedaço que nenhum horário usa (45 min com passo de 30 deixa 15 min
+ * soltos). Devolve a sobra e a duração sugerida, a menor que fecha; nula se já fecha ou passa do limite.
+ */
+export const stepGap = (values: ServiceFormValues) => {
+  const { duration, bufferBefore, bufferAfter, slotStep } = timesOf(values)
+  if (duration <= 0 || slotStep <= 0) return null
+  const occupancy = bufferBefore + duration + bufferAfter
+  const leftover = occupancy % slotStep
+  if (leftover === 0) return null
+  const suggested = duration + (slotStep - leftover)
+  return {
+    occupancy,
+    leftover: slotStep - leftover,
+    suggested: suggested <= SERVICE_LIMITS.maxDuration ? suggested : null,
+  }
+}
+
 /** Serviço novo: vazio, com os padrões do domínio (sem intervalos, horários de 15 em 15 min). */
 export const EMPTY_SERVICE_VALUES: ServiceFormValues = {
   name: '',

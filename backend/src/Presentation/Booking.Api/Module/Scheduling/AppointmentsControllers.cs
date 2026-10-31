@@ -40,16 +40,21 @@ public sealed class AppointmentsController : ControllerBase
 [Authorize]
 public sealed class BusinessAppointmentsController : ControllerBase
 {
+    /// <summary>
+    /// Um dia (<c>date</c>) ou, com <c>to</c>, de <c>date</c> a <c>to</c> inclusive, até 42 dias (semana e mês).
+    /// Intervalo invertido ou maior: 400 <c>agenda.range_invalid</c>.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType<PagedResult<AppointmentResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Agenda(
         [FromQuery] DateOnly date,
         [FromServices] GetAgendaQuery query,
         CancellationToken ct,
+        [FromQuery] DateOnly? to = null,
         [FromQuery] Guid? professionalId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 100) =>
-        Ok(await query.ExecuteAsync(date, professionalId, new PageRequest(page, pageSize), ct));
+        Ok(await query.ExecuteAsync(date, professionalId, new PageRequest(page, pageSize), ct, to));
 
     /// <summary><c>professionalId</c> filtra para o proprietário; para o profissional, vale sempre o próprio.</summary>
     [HttpGet("pending")]

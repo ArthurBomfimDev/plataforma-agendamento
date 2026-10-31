@@ -1,9 +1,10 @@
 import {
-  DEFAULT_RADIUS_KM,
+  DEFAULT_DISTANCE,
   EMPTY_SEARCH,
   SEARCH_CATEGORIES,
-  SEARCH_RADII,
+  type SearchDistance,
   type SearchFilters,
+  parseDistance,
 } from '@lib/api/search'
 
 import type { BusinessRole } from '@lib/api/types'
@@ -49,6 +50,8 @@ export const ROUTES = {
    * Também é a escolha depois de entrar, para quem tem mais de um estabelecimento.
    */
   chooseContext: '/context',
+  /** Minha conta (Onda 7CF): nome, e-mail, trocar a senha, sair. */
+  account: '/account',
   // Os dois caminhos abaixo estão no e-mail ao dono (Onda 5B, `AppointmentNotifier`) e só redirecionam
   // para as rotas do painel: não mudar sem mudar o e-mail.
   emailPanelRequests: '/painel/pedidos',
@@ -182,25 +185,31 @@ export const signInPath = (redirect?: string) =>
 export const signUpPath = (redirect?: string | null) =>
   withSearch(ROUTES.signUp, { [SEARCH_PARAMS.redirect]: redirect ?? null })
 
+/**
+ * Link da busca. A distância (`radius=city|1|2|5|10|20`) só vai quando foi dada: um link sem ela (as categorias
+ * da Home) usa a última distância escolhida no aparelho; a tela de resultados sempre a escreve, e a URL vence.
+ */
 export const searchPath = (filters: Partial<SearchFilters>) => {
-  const { term, category, maxPriceCents, sortBy, radiusKm } = { ...EMPTY_SEARCH, ...filters }
+  const { term, category, maxPriceCents, sortBy } = { ...EMPTY_SEARCH, ...filters }
   return withSearch(ROUTES.search, {
     term: term?.trim() || null,
     category,
     maxPrice: maxPriceCents === null ? null : String(maxPriceCents),
     sort: sortBy === 'distance' ? null : sortBy,
-    radius: radiusKm === DEFAULT_RADIUS_KM ? null : String(radiusKm),
+    radius: filters.distance === undefined ? null : String(filters.distance),
   })
 }
 
 /**
  * Lê os filtros da URL. Valor que não existe no backend (link editado à mão) é ignorado, em vez de virar
- * erro 400 na tela.
+ * erro 400 na tela. Distância: a da URL; sem ela, a guardada no aparelho (`stored`); sem as duas, Cidade.
  */
-export const readSearchFilters = (params: URLSearchParams): SearchFilters => {
+export const readSearchFilters = (
+  params: URLSearchParams,
+  stored: SearchDistance | null = null,
+): SearchFilters => {
   const category = params.get('category')
   const maxPrice = Number(params.get('maxPrice'))
-  const radius = Number(params.get('radius'))
   const term = params.get('term')?.trim()
 
   return {
@@ -208,7 +217,7 @@ export const readSearchFilters = (params: URLSearchParams): SearchFilters => {
     category: SEARCH_CATEGORIES.find((c) => c === category) ?? null,
     maxPriceCents: Number.isInteger(maxPrice) && maxPrice > 0 ? maxPrice : null,
     sortBy: params.get('sort') === 'price' ? 'price' : 'distance',
-    radiusKm: SEARCH_RADII.find((r) => r === radius) ?? DEFAULT_RADIUS_KM,
+    distance: parseDistance(params.get('radius')) ?? stored ?? DEFAULT_DISTANCE,
   }
 }
 

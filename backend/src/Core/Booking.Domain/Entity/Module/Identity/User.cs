@@ -65,6 +65,17 @@ public sealed class User : AggregateRoot, IAuditable
         EmailConfirmedAt = now;
     }
 
+    /// <summary>A própria pessoa troca o nome em "Minha conta" (Onda 7CF).</summary>
+    public void ChangeFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            throw new DomainException("user.full_name_required");
+        }
+
+        FullName = fullName.Trim();
+    }
+
     public void ChangePassword(string newPasswordHash)
     {
         if (string.IsNullOrWhiteSpace(newPasswordHash))

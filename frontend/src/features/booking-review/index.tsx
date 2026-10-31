@@ -2,7 +2,9 @@ import { ChevronLeft, Clock } from 'lucide-react'
 import { addMinutes, format, parse } from 'date-fns'
 
 import type { BookingReviewScreenProps } from './types'
+import { BusinessIllustration } from '@global/images/defaults/business-illustration'
 import { Button } from '@components/button'
+import { SmartImage } from '@components/smart-image'
 import { NOTE_MAX_LENGTH } from './consts'
 import { PageContainer } from '@components/page-container'
 import { TextAreaField } from '@components/text-area-field'
@@ -90,18 +92,16 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
             className="flex flex-col gap-(--space-8) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-16) lg:gap-(--space-12) lg:p-(--space-20)"
           >
             <div className="flex items-center gap-(--space-12)">
-              {business.coverUrl ? (
-                <img
-                  src={business.coverUrl}
-                  alt=""
-                  className="size-10 shrink-0 rounded-md object-cover lg:size-12"
-                />
-              ) : (
-                <div
-                  aria-hidden="true"
-                  className="size-10 shrink-0 rounded-md bg-(--bg-disabled) lg:size-12"
-                />
-              )}
+              {/* Logotipo (ou a capa); sem imagem, a ilustração da categoria, como no card da busca. */}
+              <SmartImage
+                image={business.image ?? null}
+                alt=""
+                sizes="48px"
+                width={1}
+                height={1}
+                fallback={<BusinessIllustration category={business.category ?? 'Beleza'} />}
+                className="size-10 shrink-0 rounded-md lg:size-12"
+              />
               <h2 className="type-body min-w-0 flex-1 text-(--text-strong) lg:text-(length:--size-heading)! lg:leading-(--line-height-heading)! lg:font-semibold!">
                 {business.name}
               </h2>

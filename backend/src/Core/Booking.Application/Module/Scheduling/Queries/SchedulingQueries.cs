@@ -12,7 +12,10 @@ using Booking.Domain.Interface.Repository.Module.Scheduling;
 
 namespace Booking.Application.Module.Scheduling.Queries;
 
-/// <summary>Agenda do dia: o proprietário vê todos ou filtra; o profissional vê só a própria.</summary>
+/// <summary>
+/// Agenda do dia ou de um intervalo de dias (Onda 7CF: semana e mês, com <paramref name="to"/>, inclusivo, até
+/// <see cref="MaxRangeDays"/> dias). O proprietário vê todos ou filtra; o profissional vê só a própria.
+/// </summary>
 public sealed class GetAgendaQuery(
     IAppointmentRepository appointments,
     IBusinessDirectory businesses,
@@ -21,8 +24,19 @@ public sealed class GetAgendaQuery(
     IActorContext actor,
     IUnitOfWork unitOfWork)
 {
-    public async Task<PagedResult<AppointmentResponse>> ExecuteAsync(DateOnly date, Guid? professionalId, PageRequest page, CancellationToken ct = default)
+    /// <summary>Seis semanas: a grade de um mês inteiro, de segunda a domingo.</summary>
+    public const int MaxRangeDays = 42;
+
+    public async Task<PagedResult<AppointmentResponse>> ExecuteAsync(
+        DateOnly date, Guid? professionalId, PageRequest page, CancellationToken ct = default, DateOnly? to = null)
     {
+        DateOnly last = to ?? date;
+
+        if (last < date || last.DayNumber - date.DayNumber >= MaxRangeDays)
+        {
+            throw new DomainException("agenda.range_invalid");
+        }
+
         Guid businessId = actor.RequireBusinessId();
         Guid? own = await access.RestrictToProfessionalAsync(ct);
 
@@ -31,9 +45,9 @@ public sealed class GetAgendaQuery(
 
         TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(business.TimeZone);
         DateTimeOffset from = LocalMidnightUtc(date, zone);
-        DateTimeOffset to = LocalMidnightUtc(date.AddDays(1), zone);
+        DateTimeOffset until = LocalMidnightUtc(last.AddDays(1), zone);
 
-        PagedResult<Appointment> result = await appointments.ListInRangeAsync(from, to, own ?? professionalId, page, ct);
+        PagedResult<Appointment> result = await appointments.ListInRangeAsync(from, until, own ?? professionalId, page, ct);
         return await BusinessSideResponse.RespondAsync(result, "read_agenda", access, names, unitOfWork, ct);
     }
 

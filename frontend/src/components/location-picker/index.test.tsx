@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatDistance, formatPostalCode, postalCodeLabel, postalCodeQueries } from './consts'
 
+import { DEMO_LOCATION } from '@lib/zustand/location'
 import { LocationPickerPanel } from './panel'
 import type { LocationPickerPanelProps } from './types'
 import { renderToString } from 'react-dom/server'
@@ -25,6 +26,24 @@ describe('LocationPickerPanel', () => {
     })
 
     expect(page).toContain('Centro, Garça')
+  })
+
+  it('menu: a distância da busca mora aqui, com Cidade (a do endereço) e os raios (7CF)', () => {
+    const page = html({
+      step: 'menu',
+      current: { ...DEMO_LOCATION },
+      distance: 'city',
+      onDistance: () => undefined,
+    })
+    const group = page.match(/aria-label="Distância da busca".*?<\/div><\/div>/s)![0]
+
+    expect(
+      [...group.matchAll(/<button[^>]*>([^<]+)<\/button>/g)].map(([, label]) => label),
+    ).toEqual(['Cidade (Garça)', '1 km', '2 km', '5 km', '10 km', '20 km'])
+    expect(group).toMatch(/aria-pressed="true"[^>]*>Cidade \(Garça\)/)
+    expect(html({ step: 'menu', current: null, distance: 10 })).toMatch(
+      /aria-pressed="true"[^>]*>10 km/,
+    )
   })
 
   it('aviso antes da permissão: explica o porquê e o que fica guardado', () => {

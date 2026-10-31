@@ -1,3 +1,4 @@
+using Booking.Application.Common.Search;
 using Booking.Application.Contracts.Catalog;
 using Booking.Domain.Entity.Module.Catalog;
 using Booking.Infrastructure.Persistence.Context;
@@ -69,13 +70,13 @@ public sealed class ServiceCatalog(BookingDbContext context) : IServiceCatalog
             })
             .ToList();
 
-        string? wanted = string.IsNullOrWhiteSpace(term) ? null : term.Trim();
+        IReadOnlyList<string> wanted = string.IsNullOrWhiteSpace(term) ? [] : SearchText.Expand(term);
 
         return offers
             .GroupBy(o => o.BusinessId)
             .ToDictionary(
                 g => g.Key,
-                g => (wanted is null ? null : g.Where(o => o.Name.Contains(wanted, StringComparison.OrdinalIgnoreCase)).MinBy(o => o.FromPriceCents))
+                g => g.Where(o => SearchText.Matches(o.Name, wanted)).MinBy(o => o.FromPriceCents)
                     ?? g.MinBy(o => o.FromPriceCents)!);
     }
 
@@ -87,15 +88,15 @@ public sealed class ServiceCatalog(BookingDbContext context) : IServiceCatalog
             return new HashSet<Guid>();
         }
 
-        string pattern = $"%{term.Trim()}%";
-
-        // Busca entre estabelecimentos por natureza: filtra pela lista recebida, nunca devolve dado do serviço.
-        List<Guid> ids = await context.AcrossTenants<Service>()
-            .Where(s => businessIds.Contains(s.BusinessId) && s.IsActive && EF.Functions.ILike(s.Name, pattern))
-            .Select(s => s.BusinessId)
-            .Distinct()
+        // Sem acento e com sinônimos (ADR-024): a comparação é em memória, sobre os nomes dos serviços ativos dos
+        // candidatos que o filtro geográfico já cortou. Busca entre estabelecimentos por natureza: filtra pela lista
+        // recebida, nunca devolve dado do serviço.
+        IReadOnlyList<string> wanted = SearchText.Expand(term);
+        var names = await context.AcrossTenants<Service>().AsNoTracking()
+            .Where(s => businessIds.Contains(s.BusinessId) && s.IsActive)
+            .Select(s => new { s.BusinessId, s.Name })
             .ToListAsync(ct);
 
-        return ids.ToHashSet();
+        return names.Where(s => SearchText.Matches(s.Name, wanted)).Select(s => s.BusinessId).ToHashSet();
     }
 }

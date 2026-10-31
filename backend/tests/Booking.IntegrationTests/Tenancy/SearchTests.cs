@@ -69,6 +69,78 @@ public sealed class SearchTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task H5_city_filter_ignores_accent_case_and_spacing_and_drops_other_cities()
+    {
+        // Nome de cidade único por teste: com cidade, o raio é de 50 km e pegaria estabelecimentos de outros testes.
+        string suffix = Guid.NewGuid().ToString("N")[..8];
+        string city = $"São Tomé {suffix}";
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness inCity = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here, city: city);
+        // A 5 km, fora do raio de 1 km: com cidade, o raio pedido não vale.
+        TestBusiness farInCity = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here.North(5_000), city: city);
+        await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here.North(100), city: $"Outra {suffix}");
+
+        foreach (string query in new[] { $"são tomé {suffix}", $"SAO TOME {suffix}", $"  Sao   Tome {suffix} " })
+        {
+            PagedResult<BusinessSearchItemResponse> result = await SearchAsync(here, $"&city={Uri.EscapeDataString(query)}");
+            Assert.Equal([inCity.Id, farInCity.Id], result.Items.Select(i => i.Id));
+        }
+
+        Assert.Empty((await SearchAsync(here, $"&city={Uri.EscapeDataString($"São Tomás {suffix}")}")).Items);
+    }
+
+    [Fact]
+    public async Task H6_city_keeps_the_50_km_ceiling_and_combines_with_the_other_filters()
+    {
+        string suffix = Guid.NewGuid().ToString("N")[..8];
+        string city = $"Itaí {suffix}";
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness beauty = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here, city: city);
+        TestBusiness health = await _world.NewBusinessAsync(1, [new ServiceSpec(30)], category: "Saude", location: here.North(20_000), city: city);
+        // Homônima a 60 km: fora do teto de 50 km.
+        await _world.NewBusinessAsync(1, [new ServiceSpec(30)], location: here.North(60_000), city: city);
+
+        string byCity = $"&city={Uri.EscapeDataString(city)}";
+        Assert.Equal([beauty.Id, health.Id], (await SearchAsync(here, byCity)).Items.Select(i => i.Id));
+        Assert.Equal(health.Id, Assert.Single((await SearchAsync(here, byCity + "&category=Saude")).Items).Id);
+
+        // Sem cidade, vale o raio de antes (1 km nesta busca).
+        Assert.Equal(beauty.Id, Assert.Single((await SearchAsync(here)).Items).Id);
+    }
+
+    [Fact]
+    public async Task H7_cabelo_with_any_case_or_accent_and_corte_find_the_same_business()
+    {
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness haircut = await _world.NewBusinessAsync(1, [new ServiceSpec(30, Name: "Corte masculino")], location: here);
+        await _world.NewBusinessAsync(1, [new ServiceSpec(45, Name: "Manicure")], location: here.North(100));
+
+        foreach (string term in new[] { "cabelo", "Cabelo", "cabêlo", "CABELOS", "corte", "CÔRTE" })
+        {
+            BusinessSearchItemResponse found = Assert.Single((await SearchAsync(here, $"&term={Uri.EscapeDataString(term)}")).Items);
+            Assert.Equal(haircut.Id, found.Id);
+            Assert.Equal("Corte masculino", found.ServiceName);
+        }
+    }
+
+    [Fact]
+    public async Task H8_term_matches_synonyms_the_category_name_and_accented_service_names()
+    {
+        TestLocation here = TestLocation.Isolated();
+        TestBusiness nails = await _world.NewBusinessAsync(1, [new ServiceSpec(45, Name: "Pé e mão")], location: here);
+        TestBusiness hair = await _world.NewBusinessAsync(1, [new ServiceSpec(60, Name: "Hidratação")], location: here.North(100));
+        TestBusiness health = await _world.NewBusinessAsync(
+            1, [new ServiceSpec(50, Name: "Sessão de psicoterapia")], category: "Saude", location: here.North(200));
+
+        Assert.Equal(nails.Id, Assert.Single((await SearchAsync(here, "&term=unhas")).Items).Id);
+        Assert.Equal(hair.Id, Assert.Single((await SearchAsync(here, "&term=hidratacao")).Items).Id);
+        Assert.Equal(health.Id, Assert.Single((await SearchAsync(here, "&term=psicologa")).Items).Id);
+        // O nome da categoria também casa, sem acento.
+        Assert.Equal(health.Id, Assert.Single((await SearchAsync(here, "&term=saude")).Items).Id);
+        Assert.Empty((await SearchAsync(here, "&term=tatuagem")).Items);
+    }
+
+    [Fact]
     public async Task H4_invalid_sort_or_category_is_refused()
     {
         TestLocation here = TestLocation.Isolated();

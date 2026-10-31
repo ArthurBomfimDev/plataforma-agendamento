@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toPolicy, toPolicyValues, validatePolicy } from './consts'
+import { horizonLabel, horizonOptions, toPolicy, toPolicyValues, validatePolicy } from './consts'
 
 import type { SchedulingPolicyResponse } from '@lib/api/types'
 import { SettingsScreen } from '.'
@@ -32,7 +32,10 @@ describe('SettingsScreen', () => {
     expect(html).toContain('Cada pedido espera você aceitar ou recusar.')
     expect(html).toContain('>Desligada<')
     expect(html).toMatch(/id="settings-pendingExpirationHours"[^>]*value="12"/)
-    expect(html).toMatch(/id="settings-bookingHorizonDays"[^>]*value="60"/)
+    // Horizonte com opções claras (7CF): 30, 60, 90 e 180 dias.
+    expect(html).toMatch(/<select[^>]*id="settings-bookingHorizonDays"/)
+    expect(html).toContain('<option value="60" selected="">60 dias (cerca de 2 meses)</option>')
+    expect(html).toContain('<option value="180">180 dias (cerca de 6 meses)</option>')
     expect(html).toContain('America/Sao_Paulo')
   })
 
@@ -70,6 +73,13 @@ describe('política de agendamento', () => {
       bookingHorizonDays: 'De 1 a 365 dias.',
       cancellationWindowHours: 'De 0 a 48 horas.',
     })
+  })
+
+  it('o horizonte oferece 30, 60, 90 e 180 dias e não perde um valor antigo', () => {
+    expect(horizonOptions(60)).toEqual([30, 60, 90, 180])
+    expect(horizonOptions(45)).toEqual([30, 45, 60, 90, 180])
+    expect(horizonLabel(30)).toBe('30 dias (cerca de 1 mês)')
+    expect(horizonLabel(45)).toBe('45 dias')
   })
 
   it('converte o formulário de volta em números', () => {

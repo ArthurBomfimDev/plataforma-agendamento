@@ -192,6 +192,8 @@ const PanelShell = ({
     <div className="min-h-dvh bg-(--bg-page) lg:flex">
       <PanelSidebar
         businessName={business.name}
+        logo={business.logo}
+        category={business.category}
         activeSection={activeSection}
         pendingRequests={pendingCount}
         onNavigate={navigateTo}

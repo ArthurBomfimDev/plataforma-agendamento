@@ -1,9 +1,14 @@
 import {
+  BUFFER_OPTIONS,
   FIELD_IDS,
   SECTION_CARD,
-  normalizeMinutes,
+  SLOT_STEP_OPTIONS,
+  durationLabel,
+  durationOptions,
   maskPrice,
+  minutesLabel,
   sameValues,
+  stepGap,
   timesOf,
   toServiceDraft,
   validateService,
@@ -19,17 +24,14 @@ import { PANEL_CONTENT_BOTTOM_PADDING } from '@components/panel-bottom-navigatio
 import { PANEL_NOTICE } from '@components/panel-page'
 import { ShieldCheck } from 'lucide-react'
 import { ProfessionalPicker } from './components/professional-picker'
+import { SelectField } from '@components/select-field'
 import { SlotPreview } from './components/slot-preview'
 import { TextField } from '@components/text-field'
 import { cn } from 'cn'
 
-type TimeField = Extract<
-  ServiceFormField,
-  'durationMinutes' | 'bufferBeforeMinutes' | 'bufferAfterMinutes'
->
+type BufferField = Extract<ServiceFormField, 'bufferBeforeMinutes' | 'bufferAfterMinutes'>
 
-const TIME_FIELDS: ReadonlyArray<{ field: TimeField; label: string; helper: string }> = [
-  { field: 'durationMinutes', label: 'Duração', helper: 'Atendimento efetivo' },
+const BUFFER_FIELDS: ReadonlyArray<{ field: BufferField; label: string; helper: string }> = [
   { field: 'bufferBeforeMinutes', label: 'Buffer antes', helper: 'Preparo' },
   { field: 'bufferAfterMinutes', label: 'Buffer depois', helper: 'Limpeza e troca' },
 ]
@@ -84,6 +86,12 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
 
   const setField = (field: Exclude<ServiceFormField, 'professionalIds'>, value: string) =>
     setValues((current) => ({ ...current, [field]: value }))
+
+  /** Os seletores dão o número; o formulário guarda "30 min", como sempre guardou. */
+  const setMinutes = (field: Exclude<ServiceFormField, 'professionalIds'>, value: string) =>
+    setField(field, value === '' ? '' : minutesLabel(Number(value)))
+
+  const gap = stepGap(values)
 
   /** `mask` reescreve a cada tecla; `normalize`, ao sair do campo. */
   const textProps = (
@@ -218,26 +226,78 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
             </Section>
 
             <Section id="service-time" title="Tempo">
-              <div className="grid grid-cols-3 gap-(--space-12)">
-                {TIME_FIELDS.map(({ field, label, helper }) => (
-                  <TextField
+              {/* Seletores, não texto livre (7CF): só valores que o domínio aceita. O passo vem primeiro porque
+                  as durações oferecidas são múltiplos dele. */}
+              <SelectField
+                id={FIELD_IDS.slotStepMinutes}
+                label="Granularidade dos horários"
+                helper="De quanto em quanto tempo os horários aparecem para o consumidor"
+                value={slotStep > 0 ? String(slotStep) : ''}
+                error={errors.slotStepMinutes}
+                options={[
+                  ...(slotStep > 0 ? [] : [{ value: '', label: 'Escolha o passo' }]),
+                  ...SLOT_STEP_OPTIONS.map((step) => ({
+                    value: String(step),
+                    label: `De ${minutesLabel(step)} em ${minutesLabel(step)}`,
+                  })),
+                ]}
+                onChange={(event) => setMinutes('slotStepMinutes', event.target.value)}
+              />
+              <SelectField
+                id={FIELD_IDS.durationMinutes}
+                label="Duração"
+                helper="Atendimento efetivo, em múltiplos do passo"
+                value={duration > 0 ? String(duration) : ''}
+                error={errors.durationMinutes}
+                options={[
+                  ...(duration > 0 ? [] : [{ value: '', label: 'Escolha a duração' }]),
+                  ...durationOptions(slotStep, duration).map((minutes) => ({
+                    value: String(minutes),
+                    label: durationLabel(minutes),
+                  })),
+                ]}
+                onChange={(event) => setMinutes('durationMinutes', event.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-(--space-12)">
+                {BUFFER_FIELDS.map(({ field, label, helper }) => (
+                  <SelectField
                     key={field}
-                    {...textProps(field, { normalize: normalizeMinutes })}
+                    id={FIELD_IDS[field]}
                     label={label}
                     helper={helper}
-                    inputMode="numeric"
-                    autoComplete="off"
+                    value={String(
+                      timesOf(values)[
+                        field === 'bufferBeforeMinutes' ? 'bufferBefore' : 'bufferAfter'
+                      ],
+                    )}
+                    error={errors[field]}
+                    options={BUFFER_OPTIONS.map((minutes) => ({
+                      value: String(minutes),
+                      label: minutes === 0 ? 'Nenhum' : minutesLabel(minutes),
+                    }))}
+                    onChange={(event) => setMinutes(field, event.target.value)}
                     className="min-w-0"
                   />
                 ))}
               </div>
-              <TextField
-                {...textProps('slotStepMinutes', { normalize: normalizeMinutes })}
-                label="Granularidade dos horários"
-                helper="Define de quanto em quanto tempo os horários aparecem para o consumidor"
-                inputMode="numeric"
-                autoComplete="off"
-              />
+              {gap && (
+                <div role="status" className={cn(PANEL_NOTICE, 'flex-col items-start')}>
+                  <p>
+                    O serviço ocupa {minutesLabel(gap.occupancy)} na agenda e os horários andam de{' '}
+                    {minutesLabel(slotStep)} em {minutesLabel(slotStep)}: sobram{' '}
+                    {minutesLabel(gap.leftover)} soltos depois de cada atendimento.
+                  </p>
+                  {gap.suggested && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setMinutes('durationMinutes', String(gap.suggested))}
+                    >
+                      Ajustar a duração para {durationLabel(gap.suggested)}
+                    </Button>
+                  )}
+                </div>
+              )}
             </Section>
 
             <Section id="service-price" title="Preço e profissionais">

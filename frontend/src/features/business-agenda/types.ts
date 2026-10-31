@@ -1,5 +1,6 @@
 import type { PanelBottomItem } from '@components/panel-bottom-navigation/types'
 import type { PanelSection } from '@components/panel-sidebar/types'
+import type { ReactNode } from 'react'
 
 /** Agendamento na agenda do dia. Horários em `HH:mm`, no fuso do estabelecimento. */
 export type AgendaAppointment = {
@@ -92,8 +93,13 @@ export type BusinessAgendaScreenProps = {
   onNavigate?: (section: PanelSection | PanelBottomItem) => void
   /** "+ Marcação de balcão" (sem horário) ou "Encaixar" num intervalo livre (com horário). */
   onCounterBooking?: (slot?: CounterBookingSlot) => void
-  /** "Semana" no desktop. */
-  onWeekView?: () => void
+  /**
+   * Barra com Dia, Semana e Mês e os filtros (7CF): no celular, no topo da lista; no desktop, abaixo do título. Sem
+   * ela, a tela é só o dia.
+   */
+  toolbar?: ReactNode
+  /** Há filtro aplicado: o dia vazio diz isso, em vez de "nenhum agendamento". */
+  filtered?: boolean
 }
 
 /**

@@ -44,7 +44,12 @@ const BookingReview = () => {
 
   return (
     <BookingReviewScreen
-      business={{ name: business.name, verified: business.verified }}
+      business={{
+        name: business.name,
+        verified: business.verified,
+        category: business.category,
+        image: business.logo ?? business.cover,
+      }}
       service={service}
       professionalName={professional.name}
       date={date}
