@@ -1,9 +1,14 @@
-import { DEMO_LOCATION, mergePersistedLocation, useLocationStore } from '@lib/zustand/location'
-import { EMPTY_SEARCH, distanceChipLabel, distanceSync, searchArea } from '@lib/api/search'
+import { DEMO_LOCATION, mergePersistedLocation, useLocationStore } from '@store/location'
+import {
+  EMPTY_SEARCH,
+  distanceChipLabel,
+  distanceSync,
+  searchArea,
+} from '@api/services/business/search'
 import { describe, expect, it } from 'vitest'
-import { readSearchFilters, searchPath } from './consts'
+import { readSearchFilters, searchPath } from './paths'
 
-import { HOME_CATEGORIES } from '@features/home/consts'
+import { HOME_CATEGORIES } from '@pages/customer/home/screen/consts'
 
 describe('filtros da busca na URL', () => {
   it('omite o padrão e escreve só o que foi escolhido', () => {

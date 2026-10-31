@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns'
 
 import { Calendar } from '@components/ui/calendar'
 import type { DateFieldProps } from './types'
-import { X } from 'lucide-react'
+import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { useState } from 'react'
@@ -68,7 +68,7 @@ export const DateField = (props: DateFieldProps) => {
           id={errorId}
           className="type-caption flex items-center gap-(--space-4) text-(--status-rejected-fg)"
         >
-          <X aria-hidden="true" className="size-4 shrink-0" />
+          <CloseIcon aria-hidden="true" className="size-4 shrink-0" />
           {error}
         </p>
       )}

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { OWNER_ONLY_SECTIONS } from '@router/consts'
-import { PanelBottomNavigation } from '@components/panel-bottom-navigation'
+import { OWNER_ONLY_SECTIONS } from '@router/paths'
+import { BottomNavigation } from '@components/bottom-navigation'
+import { PANEL_NAVIGATION_ITEMS } from '@components/bottom-navigation/consts'
+import type { PanelBottomItem } from '@components/bottom-navigation/types'
 import { PanelSidebar } from '.'
 import { renderToString } from 'react-dom/server'
 
@@ -81,19 +83,24 @@ describe('PanelSidebar', () => {
   })
 })
 
-describe('PanelBottomNavigation', () => {
+const bottomNavigation = (activeItem: PanelBottomItem) => (
+  <BottomNavigation
+    items={PANEL_NAVIGATION_ITEMS}
+    label="Painel do estabelecimento"
+    variant="panel"
+    activeItem={activeItem}
+  />
+)
+
+describe('BottomNavigation do painel', () => {
   it('marca a aba atual', () => {
-    const html = renderToString(
-      <PanelBottomNavigation activeItem="agenda" pendingRequests={0} />,
-    ).replaceAll('<!-- -->', '')
+    const html = renderToString(bottomNavigation('agenda')).replaceAll('<!-- -->', '')
 
     expect(html).toMatch(/aria-current="page"[^>]*>.*?Agenda/)
   })
 
   it('tem Agenda, Pedidos e Mais, sem Relatórios', () => {
-    const html = renderToString(
-      <PanelBottomNavigation activeItem="more" pendingRequests={0} />,
-    ).replaceAll('<!-- -->', '')
+    const html = renderToString(bottomNavigation('more')).replaceAll('<!-- -->', '')
 
     expect(html).toContain('Mais')
     expect(html).not.toContain('Relatórios')

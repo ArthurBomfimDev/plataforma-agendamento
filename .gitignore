@@ -2,6 +2,10 @@
 .env
 .env.*
 !.env.example
+# Ajuste local do compose (pode carregar credencial, como o SMTP da demonstração pública).
+compose.override.yaml
+compose.override.yml
+docker-compose.override.yml
 *.pfx
 *.p12
 *.key

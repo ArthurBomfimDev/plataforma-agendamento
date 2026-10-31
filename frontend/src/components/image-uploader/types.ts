@@ -1,4 +1,4 @@
-import type { ImageSet } from '@lib/api/types'
+import type { ImageSet } from '@api/models'
 import type { ReactNode } from 'react'
 
 /** `idle`: nada em andamento. `uploading`: enviando, com progresso. `done`: acabou de enviar. */
@@ -17,7 +17,7 @@ export type ImageUploaderProps = {
   shape?: 'cover' | 'square' | 'round'
   /**
    * Envia o arquivo e devolve a imagem nova. A tela liga isto à rota certa — por exemplo
-   * `uploadFile('/api/businesses/current/logo', file, { onProgress })`.
+   * `managementService.uploadBusinessImage('logo', file, onProgress)`.
    */
   onUpload: (file: File, onProgress: (fraction: number) => void) => Promise<ImageSet | null>
   /** Remove a imagem. Ausente: sem botão de remover. */

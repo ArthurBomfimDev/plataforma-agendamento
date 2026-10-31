@@ -1,4 +1,4 @@
-import { Check, ChevronDown, CircleUser, LogOut } from 'lucide-react'
+import { AccountCircleIcon, CheckIcon, ChevronDownIcon, LogoutIcon } from '@assets/icons'
 
 import type { AccountMenuProps } from './types'
 import { Menu } from '@base-ui/react/menu'
@@ -34,7 +34,7 @@ export const AccountMenu = (props: AccountMenuProps) => {
       >
         <span className="sr-only">Conta: </span>
         <span className="truncate">{currentLabel}</span>
-        <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+        <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0" />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner side={side} align={align} sideOffset={8} className="z-50">
@@ -53,7 +53,10 @@ export const AccountMenu = (props: AccountMenuProps) => {
                   >
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {item.current && (
-                      <Check aria-hidden="true" className="size-4 shrink-0 text-(--text-link)" />
+                      <CheckIcon
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-(--text-link)"
+                      />
                     )}
                   </Menu.Item>
                 ))}
@@ -62,12 +65,12 @@ export const AccountMenu = (props: AccountMenuProps) => {
             )}
             {onAccount && (
               <Menu.Item className={ITEM} onClick={onAccount}>
-                <CircleUser aria-hidden="true" className="size-4 shrink-0" />
+                <AccountCircleIcon aria-hidden="true" className="size-4 shrink-0" />
                 Minha conta
               </Menu.Item>
             )}
             <Menu.Item className={ITEM} onClick={onSignOut}>
-              <LogOut aria-hidden="true" className="size-4 shrink-0" />
+              <LogoutIcon aria-hidden="true" className="size-4 shrink-0" />
               Sair
             </Menu.Item>
           </Menu.Popup>

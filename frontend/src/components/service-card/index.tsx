@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@components/ui/card'
 
 import { Button } from '@components/button'
-import { Clock } from 'lucide-react'
+import { ScheduleIcon } from '@assets/icons'
 import type { ServiceCardProps } from './types'
 import { cn } from 'cn'
 import { priceFormat } from './consts'
@@ -21,7 +21,7 @@ export const ServiceCard = (props: ServiceCardProps) => {
         <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
           <h3 className="type-body truncate text-(--text-strong)">{name}</h3>
           <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted)">
-            <Clock aria-hidden="true" className="size-4 shrink-0" />
+            <ScheduleIcon aria-hidden="true" className="size-4 shrink-0" />
             <span>{durationMinutes} min</span>
             {/* No desktop o preço sai da linha e vira destaque ao lado do botão. */}
             <span aria-hidden="true" className="lg:hidden">

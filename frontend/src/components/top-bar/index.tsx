@@ -1,6 +1,6 @@
 import { Button } from '@components/button'
 import { Logotype } from '@components/logotype'
-import { MapPin } from 'lucide-react'
+import { LocationIcon } from '@assets/icons'
 import { locationReference } from './consts'
 import { SearchButton } from '@components/search-button'
 import { SearchField } from '@components/search-field'
@@ -42,8 +42,7 @@ export const TopBar = (props: TopBarProps) => {
           onClick={onHome}
           className="flex min-h-(--size-touch-min) shrink-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
         >
-          <Logotype alt="" className="dark:hidden" />
-          <Logotype tone="dark" alt="" className="hidden dark:block" />
+          <Logotype tone="auto" alt="" />
         </button>
 
         {!inPanel && (
@@ -53,7 +52,7 @@ export const TopBar = (props: TopBarProps) => {
             aria-haspopup="dialog"
             className="type-label flex min-h-(--size-touch-min) max-w-64 shrink-0 items-center gap-(--space-4) rounded-md px-(--space-4) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
           >
-            <MapPin aria-hidden="true" className="size-4 shrink-0" />
+            <LocationIcon aria-hidden="true" className="size-4 shrink-0" />
             <span className="truncate">{locationReference(locationLabel ?? null)}</span>
             {locationLabel && <span className="sr-only">, trocar localização</span>}
           </button>

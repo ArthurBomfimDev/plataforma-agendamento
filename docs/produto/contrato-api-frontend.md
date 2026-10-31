@@ -1,6 +1,10 @@
 # Contrato API × frontend
 
-> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A, 7D, 7C e 7CF (29/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
+> ⚠️ **Desde a 7H (31/10), o lado do frontend mora em `frontend/src/api/`** (`base/`: cliente axios, interceptores,
+> erros; `services/`; `models/`), da refatoração do Rafael. Os caminhos `lib/api/…` citados nas seções antigas são os
+> de antes; o comportamento descrito continua valendo. Ver §4.9.
+>
+> **Data:** 2026-10-27, atualizado nas Ondas 5A, 5B, 6A, 6B, 6C, 6D (28/10), 7A, 7D, 7C, 7CF (29/10) e 7H (31/10). **Lado da API:** `backend/src/Core/Booking.Arguments` em `698fa2c` (Ondas 1 a 3
 > mergeadas) e o que este PR acrescenta. **Lado do frontend:** `frontend/src/lib/api/` (`types.ts`, `endpoints.ts`,
 > `queries.ts`, `client.ts`, `errors.ts`) na mesma revisão, e a tela da agenda do dia na branch `dashboard`
 > (`f09b048`). Até a 5B era só relatório; a partir da 6A o frontend do consumidor também muda (§4.2).
@@ -378,6 +382,25 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
   reuso de token rotacionado continua derrubando todas as sessões.
 - **Horizonte:** Configurações oferecem 30, 60, 90 ou 180 dias (a API aceita de 1 a 365). Um pedido para além do
   horizonte é recusado pelo backend; marcar o Natal em outubro precisa de pelo menos 90 dias.
+
+## 4.9 Uma origem só e demonstração pública (Onda 7H, 31/10)
+
+- **Base da API:** `VITE_API_BASE_URL` vazio é o padrão (Dockerfile e compose). O app chama `/api/…` e as imagens
+  `/media/…` na própria origem; o nginx do `web` repassa os dois para a API com `Host`, `X-Forwarded-For` e
+  `X-Forwarded-Proto`. Absoluta só para Capacitor, Tauri ou API em outro endereço (rebuild). No `bun run dev`, o Vite
+  repassa `/api` e `/media` para `DEV_API_PROXY` (padrão: a API do `dotnet run`). Teste: `api/base/same-origin.test.ts`.
+- **Mídia:** `mediaUrl` continua igual: caminho relativo ganha a base (vazia → fica relativo, servido pelo proxy);
+  URL absoluta passa direto.
+- **Saúde pelo mesmo endereço:** `GET /api/health` no nginx vai para o `/health` da API.
+- **Upload:** o nginx aceita até 6 MB por requisição (a API recusa acima de 5 MB de arquivo, como antes).
+- **CSP do site** (nginx): `connect-src 'self'` e `img-src 'self' data: blob:`; o script inline do tema no `index.html`
+  entra por hash — mudou o script, mude o hash no `nginx.conf` (o teste acusa). As respostas da API mantêm a CSP
+  fechada delas (`default-src 'none'`); o nginx não duplica cabeçalho em `/api/` e `/media/`.
+- **Atrás do proxy:** a API lê o IP real do `X-Forwarded-For` só das redes em `ForwardedHeaders:KnownNetworks`
+  (o limitador de login conta por pessoa) e o esquema do `X-Forwarded-Proto` (HSTS quando a origem foi HTTPS).
+- **CORS:** o site não precisa mais dele (mesma origem). A origem `http://localhost:8080` continua liberada para quem
+  chama a 8081 direto.
+- Sem mudança de rota nem de JSON. Guia de operação: `docs/operacao/demo-publica.md`.
 
 ## 5. Resumo para fechar o lado do frontend
 

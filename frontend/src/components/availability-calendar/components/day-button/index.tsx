@@ -2,8 +2,8 @@ import { DAY_STATUS_LABEL, HOLIDAY_LABEL } from '../../consts'
 
 import type { ComponentProps } from 'react'
 import { DayMarker } from '../day-marker'
-import { HolidayMarker } from '../holyday-marker'
-import { STATUSES } from './conts'
+import { HolidayMarker } from '../holiday-marker'
+import { STATUSES } from './consts'
 import { CalendarDayButton as UiCalendarDayButton } from '@components/ui/calendar'
 import { cn } from 'cn'
 

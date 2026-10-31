@@ -1,4 +1,4 @@
-import { PANEL_CONTENT_BOTTOM_PADDING } from '@components/panel-bottom-navigation/consts'
+import { PANEL_CONTENT_BOTTOM_PADDING } from '@components/bottom-navigation/consts'
 import type { PanelPageProps } from './types'
 import { cn } from 'cn'
 

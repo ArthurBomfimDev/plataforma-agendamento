@@ -1,6 +1,6 @@
-import type { ChosenLocation } from '@lib/zustand/location/types'
-import type { GeoPlaceResponse } from '@lib/api/types'
-import type { SearchDistance } from '@lib/api/search'
+import type { ChosenLocation } from '@store/location/types'
+import type { GeoPlaceResponse } from '@api/models'
+import type { SearchDistance } from '@api/services/business/search'
 
 /**
  * Passos do seletor. Os de `device-*` são o caminho "Usar minha localização": aviso antes da permissão, espera,

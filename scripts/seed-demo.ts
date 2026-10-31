@@ -27,13 +27,25 @@
  * lista de bairros da Página Amarela. Cada estabelecimento fica a até ~300 m do ponto do bairro — o ponto é
  * gerado, não é endereço real. Os 3 estabelecimentos originais mantêm o ponto do seed anterior.
  *
- * As senhas abaixo são credenciais de TESTE do ambiente local, sem valor fora dele.
+ * Senhas (Onda 7H). As contas usam `SEED_PASSWORD`; sem ela, a senha padrão de TESTE abaixo, que está no
+ * repositório e por isso só serve no ambiente local: com a API fora de Development (a demonstração pública), o seed
+ * se recusa a usá-la, salvo com `--permitir-senha-padrao`. O Admin usa `SEED_ADMIN_PASSWORD`; sem ela, uma senha
+ * aleatória gerada nesta execução e mostrada uma vez no fim.
  */
 
 const API = process.env.API_URL ?? 'http://localhost:8081'
-const DEMO_PASSWORD = process.env.SEED_PASSWORD ?? 'demo-12345678'
+const DEFAULT_PASSWORD = 'demo-12345678'
+const DEMO_PASSWORD = process.env.SEED_PASSWORD || DEFAULT_PASSWORD
+const ADMIN_PASSWORD_FROM_ENV = process.env.SEED_ADMIN_PASSWORD || null
+const ADMIN_PASSWORD = ADMIN_PASSWORD_FROM_ENV ?? randomPassword()
 const TIME_ZONE = 'America/Sao_Paulo'
 const WITH_HISTORY = process.argv.includes('--historico')
+const ALLOW_DEFAULT_PASSWORD = process.argv.includes('--permitir-senha-padrao')
+
+/** 24 caracteres de base64url (18 bytes do gerador seguro): passa em qualquer regra de senha da API. */
+function randomPassword() {
+  return Buffer.from(crypto.getRandomValues(new Uint8Array(18))).toString('base64url')
+}
 
 type Json = Record<string, unknown>
 
@@ -378,15 +390,15 @@ const ADMIN = { fullName: 'Admin de Demonstração', email: 'admin@example.com' 
 const today = new Date().toISOString().slice(0, 10)
 
 /** Cadastra e entra. `null` se a conta já existia — o seed já rodou. */
-async function registerAndLogin(fullName: string, email: string): Promise<string | null> {
+async function registerAndLogin(fullName: string, email: string, password = DEMO_PASSWORD): Promise<string | null> {
   try {
-    await call('POST', '/api/auth/register', { email, password: DEMO_PASSWORD, fullName })
+    await call('POST', '/api/auth/register', { email, password, fullName })
   } catch (error) {
     if (error instanceof ApiCallError && error.code === 'user.email_already_registered') return null
     throw error
   }
   confirmEmail(email)
-  const auth = await call<{ accessToken: string }>('POST', '/api/auth/login', { email, password: DEMO_PASSWORD })
+  const auth = await call<{ accessToken: string }>('POST', '/api/auth/login', { email, password })
   return auth.accessToken
 }
 
@@ -549,14 +561,23 @@ function confirmEmail(email: string) {
   psql(`UPDATE identity."user" SET email_confirmed_at = now() WHERE email = ${sqlText(email)} AND email_confirmed_at IS NULL;`)
 }
 
-/** O Admin de demonstração aprova pela API tudo o que estiver em análise. */
-async function approvePendingBusinesses() {
+/**
+ * O Admin de demonstração aprova pela API tudo o que estiver em análise. Devolve se a conta foi criada agora (só
+ * então a senha aleatória vale e é mostrada).
+ */
+async function approvePendingBusinesses(): Promise<boolean> {
   console.log(`• Admin ${ADMIN.email}`)
-  await registerAndLogin(ADMIN.fullName, ADMIN.email)
+  const created = (await registerAndLogin(ADMIN.fullName, ADMIN.email, ADMIN_PASSWORD)) !== null
   grantPlatformAdmin(ADMIN.email)
 
+  if (!created && !ADMIN_PASSWORD_FROM_ENV) {
+    // A senha aleatória desta execução não é a da conta que já existia; a dela não muda.
+    console.log('  já existia — a senha dele não mudou; para aprovar o que estiver em análise, defina SEED_ADMIN_PASSWORD')
+    return false
+  }
+
   // O token só carrega o papel depois de concedido: entra de novo.
-  const { accessToken } = await call<{ accessToken: string }>('POST', '/api/auth/login', { email: ADMIN.email, password: DEMO_PASSWORD })
+  const { accessToken } = await call<{ accessToken: string }>('POST', '/api/auth/login', { email: ADMIN.email, password: ADMIN_PASSWORD })
 
   const pending = await call<{ items: { id: string; name: string }[] }>(
     'GET',
@@ -568,6 +589,36 @@ async function approvePendingBusinesses() {
     await call('POST', `/api/admin/businesses/${business.id}/approve`, { note: 'Aprovado pelo seed de demonstração' }, accessToken)
   }
   console.log(pending.items.length === 0 ? '  nada em análise' : `  ${pending.items.length} aprovados`)
+  return created
+}
+
+/**
+ * O ambiente da API que vai receber os dados, lido do próprio contêiner. Sem conseguir ler, vale o mais restrito:
+ * fora de Development.
+ */
+function apiEnvironment(): string {
+  const result = Bun.spawnSync(['docker', 'compose', 'exec', '-T', 'api', 'printenv', 'ASPNETCORE_ENVIRONMENT'], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  return (result.exitCode === 0 && result.stdout.toString().trim()) || 'Production'
+}
+
+/** A senha padrão está no repositório: numa instância aberta, qualquer um entraria nas contas de demonstração. */
+function refuseDefaultPasswordOutsideDevelopment() {
+  const environment = apiEnvironment()
+  if (environment === 'Development' || ALLOW_DEFAULT_PASSWORD) return
+
+  const offending = [
+    DEMO_PASSWORD === DEFAULT_PASSWORD && 'SEED_PASSWORD',
+    ADMIN_PASSWORD === DEFAULT_PASSWORD && 'SEED_ADMIN_PASSWORD',
+  ].filter(Boolean)
+  if (offending.length > 0) {
+    throw new Error(
+      `A API está em ${environment}, e ${offending.join(' e ')} está com a senha padrão do repositório. ` +
+        'Defina uma senha própria (ver .env.example), ou rode com --permitir-senha-padrao sabendo que qualquer um entra.',
+    )
+  }
 }
 
 // --- Agenda de hoje e amanhã (sem --historico) --------------------------------------------------------
@@ -955,22 +1006,28 @@ async function main() {
   await call('GET', '/health').catch(() => {
     throw new Error(`A API não respondeu em ${API}. Rode "docker compose up" antes.`)
   })
+  refuseDefaultPasswordOutsideDevelopment()
 
   for (const business of BUSINESSES) {
     await seedBusiness(business)
   }
   await seedCustomer()
-  await approvePendingBusinesses()
+  const adminCreated = await approvePendingBusinesses()
 
   // O histórico já traz hoje e os próximos 14 dias; sem ele, uma agenda pequena para o painel não abrir vazio.
   if (WITH_HISTORY) seedHistory()
   else await seedTodayAgenda()
   printCounts()
 
-  console.log(`\nPronto. Contas de demonstração (senha: ${DEMO_PASSWORD}):`)
+  // A senha só aparece quando é a padrão (já pública) ou a aleatória do Admin, recém-criada; a de SEED_* é de quem
+  // a definiu e não vai para o log.
+  const demoPassword = DEMO_PASSWORD === DEFAULT_PASSWORD ? DEMO_PASSWORD : 'a de SEED_PASSWORD'
+  console.log(`\nPronto. Contas de demonstração (senha: ${demoPassword}):`)
   console.log(`  consumidor   ${CUSTOMER.email}`)
-  console.log(`  admin        ${ADMIN.email}`)
   console.log(`  donos        dono.<estabelecimento>@example.com — ${BUSINESSES.length} estabelecimentos, por exemplo ${BUSINESSES[0]!.owner.email}`)
+  if (ADMIN_PASSWORD_FROM_ENV) console.log(`  admin        ${ADMIN.email} (senha: a de SEED_ADMIN_PASSWORD)`)
+  else if (adminCreated) console.log(`  admin        ${ADMIN.email} (senha gerada agora, anote — não aparece de novo: ${ADMIN_PASSWORD})`)
+  else console.log(`  admin        ${ADMIN.email} (já existia; senha inalterada)`)
 }
 
 main().catch((error) => {

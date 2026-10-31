@@ -184,6 +184,10 @@
    * ELEVAÇÃO
    * ======================================================================== */
   --elevation-card: 0 1px 3px 0 #1c1a170f;
+  /* Barra fixa no rodapé (navegação inferior): a sombra sobe. */
+  --elevation-bar: 0 -2px 8px 0 #1c1a1714;
+  /* Campo que flutua sobre a capa (busca da Home no desktop). */
+  --elevation-floating: 0 2px 8px 0 #1c1a170f;
 
   /* ===========================================================================
    * ESPAÇAMENTO

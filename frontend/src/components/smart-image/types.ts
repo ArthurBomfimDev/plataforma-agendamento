@@ -1,4 +1,4 @@
-import type { ImageSet } from '@lib/api/types'
+import type { ImageSet } from '@api/models'
 import type { ReactNode } from 'react'
 
 export type SmartImageProps = {

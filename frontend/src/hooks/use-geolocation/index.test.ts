@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { failureOf } from '.'
-import { roundCoordinate } from '@lib/zustand/location'
+import { roundCoordinate } from '@store/location'
 
 describe('useGeolocation', () => {
   it('traduz os códigos do navegador para os três estados', () => {
