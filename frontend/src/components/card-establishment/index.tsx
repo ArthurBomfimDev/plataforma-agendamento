@@ -1,4 +1,4 @@
-import { Card, CardContent } from '../ui/card'
+import { Card, CardContent } from '@components/ui/card'
 import { MapPin, Star } from 'lucide-react'
 import { distanceFormat, ratingFormat } from './consts'
 
@@ -15,7 +15,8 @@ export const CardEstablishment = (props: CardEstablishmentProps) => {
     distanceKm,
     neighborhood,
     verified,
-    imageUrl,
+    image,
+    category,
     onClick,
     className,
   } = props
@@ -30,7 +31,7 @@ export const CardEstablishment = (props: CardEstablishmentProps) => {
       )}
     >
       <CardContent className="flex flex-col gap-(--space-8)">
-        <CardEstablishmentImage src={imageUrl} alt={`Foto de ${name}`} />
+        <CardEstablishmentImage image={image} category={category} />
 
         <div className="flex items-center gap-(--space-8)">
           <h3 className="type-heading min-w-0 flex-1 text-(--text-strong)">
@@ -51,14 +52,19 @@ export const CardEstablishment = (props: CardEstablishmentProps) => {
         </div>
 
         <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted)">
-          <Star aria-hidden="true" className="size-4" />
-          <span>
-            <span className="sr-only">Nota </span>
-            {ratingFormat.format(rating)} ({reviewCount})
-          </span>
+          {rating !== undefined && reviewCount ? (
+            <>
+              <Star aria-hidden="true" className="size-4" />
+              <span>
+                <span className="sr-only">Nota </span>
+                {ratingFormat.format(rating)} ({reviewCount})
+              </span>
+            </>
+          ) : null}
           <MapPin aria-hidden="true" className="size-4" />
           <span>
-            {distanceFormat.format(distanceKm)} km · {neighborhood}
+            {distanceKm !== undefined && `${distanceFormat.format(distanceKm)} km · `}
+            {neighborhood}
           </span>
         </p>
       </CardContent>

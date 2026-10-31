@@ -36,6 +36,12 @@ public sealed class ResetPasswordCommand(
         token.MarkAsUsed(now);
         user.ChangePassword(hasher.Hash(request.NewPassword));
 
+        // Quem abriu o link de redefinição provou que lê a caixa de entrada: vale como confirmação do e-mail.
+        if (user.EmailConfirmedAt is null)
+        {
+            user.ConfirmEmail(now);
+        }
+
         // Trocar a senha encerra todas as sessões: quem tinha o refresh token antigo perde o acesso.
         await refreshTokens.RevokeAllActiveAsync(user.Id, now, ct);
 

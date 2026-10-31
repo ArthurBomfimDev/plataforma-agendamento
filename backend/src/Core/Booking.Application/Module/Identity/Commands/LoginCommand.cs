@@ -14,7 +14,8 @@ public sealed class LoginCommand(
     IPasswordHasher hasher,
     SessionIssuer sessions,
     IUnitOfWork unitOfWork,
-    TimeProvider clock)
+    TimeProvider clock,
+    IdentityPolicy policy)
 {
     public async Task<AuthResponse> ExecuteAsync(LoginRequest request, CancellationToken ct = default)
     {
@@ -32,7 +33,7 @@ public sealed class LoginCommand(
 
         if (user is null)
         {
-
+            // Gasta o mesmo tempo de um login real, para não revelar por latência quais e-mails existem.
             hasher.Hash(request.Password ?? string.Empty);
             throw new DomainException("auth.invalid_credentials");
         }
@@ -42,9 +43,16 @@ public sealed class LoginCommand(
             throw new DomainException("auth.invalid_credentials");
         }
 
+        // Só vale depois da senha correta: quem erra a senha não descobre o estado da conta.
         if (user.Status != UserStatus.Active)
         {
             throw new DomainException("auth.account_not_active");
+        }
+
+        // Também só depois da senha correta: o 403 não serve para descobrir quais e-mails têm conta.
+        if (policy.RequireEmailConfirmation && user.EmailConfirmedAt is null)
+        {
+            throw new DomainException("identity.email_not_confirmed");
         }
 
         AuthResponse response = sessions.Open(user, clock.GetUtcNow());

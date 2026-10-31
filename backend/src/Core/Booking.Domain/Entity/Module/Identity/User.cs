@@ -13,6 +13,12 @@ public sealed class User : AggregateRoot, IAuditable
     public DateTimeOffset? EmailConfirmedAt { get; private set; }
     public UserStatus Status { get; private set; }
 
+    /// <summary>
+    /// Papel de Admin da plataforma (ADR-020). Independe do contexto de estabelecimento. Nunca é concedido por
+    /// endpoint: só por seed ou SQL direto no banco, para que conceder o papel exija acesso ao banco.
+    /// </summary>
+    public bool IsPlatformAdmin { get; private set; }
+
     private User()
     {
     }
@@ -38,6 +44,17 @@ public sealed class User : AggregateRoot, IAuditable
         };
     }
 
+    /// <summary>Só para seed e testes. Nenhum comando da aplicação chama isto (ADR-020).</summary>
+    public void GrantPlatformAdmin()
+    {
+        if (Status != UserStatus.Active)
+        {
+            throw new DomainException("user.not_active");
+        }
+
+        IsPlatformAdmin = true;
+    }
+
     public void ConfirmEmail(DateTimeOffset now)
     {
         if (Status == UserStatus.Deleted)
@@ -46,6 +63,17 @@ public sealed class User : AggregateRoot, IAuditable
         }
 
         EmailConfirmedAt = now;
+    }
+
+    /// <summary>A própria pessoa troca o nome em "Minha conta" (Onda 7CF).</summary>
+    public void ChangeFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            throw new DomainException("user.full_name_required");
+        }
+
+        FullName = fullName.Trim();
     }
 
     public void ChangePassword(string newPasswordHash)

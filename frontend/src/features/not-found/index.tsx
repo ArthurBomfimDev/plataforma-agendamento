@@ -1,4 +1,4 @@
-import { ROUTES } from '../../router/consts'
+import { ROUTES } from '@router/consts'
 import { useNavigate } from 'react-router'
 
 /**

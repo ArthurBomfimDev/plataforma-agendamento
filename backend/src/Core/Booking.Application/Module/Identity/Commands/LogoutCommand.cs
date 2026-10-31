@@ -12,6 +12,7 @@ public sealed class LogoutCommand(
     IUnitOfWork unitOfWork,
     TimeProvider clock)
 {
+    /// <summary>Idempotente: token desconhecido ou já revogado não é erro, o resultado final é o mesmo.</summary>
     public async Task ExecuteAsync(LogoutRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))

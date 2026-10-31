@@ -1,9 +1,9 @@
-using Booking.Domain.Entity.Module.Scheduling;
+using Booking.Domain.Entity.Module.Scheduling.Planted;
 using Booking.Infrastructure.Persistence.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Booking.Infrastructure.Module.Scheduling.Mapping;
+namespace Booking.Infrastructure.Persistence.Mapping.Module.Scheduling.Planted;
 
 /// <summary>✗ Decisão 5 — o EF mapeia a entidade de persistência, não a de domínio.</summary>
 public sealed class AppointmentRecordMapping : IEntityTypeConfiguration<AppointmentRecord>

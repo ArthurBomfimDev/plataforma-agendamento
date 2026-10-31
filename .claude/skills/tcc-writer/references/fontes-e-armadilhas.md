@@ -33,7 +33,7 @@ Vale o mais recente e mais específico. Em caso de dúvida, perguntar ao usuári
 | "Endereço geocodificável" | **Ponto confirmado pelo dono no mapa**; só entra na busca por raio quem confirmou |
 | Seis categorias; convênio funcional | Duas verticais (beleza/bem-estar + 1 estabelecimento de saúde); convênio é booleano informativo |
 | Uptime ≥ 99,8% | **Removido** — não é mensurável em free tier |
-| Primária `#0F6E83` / `#0B7690`; pendente `#96560A` | Primária **`#0C7D99`**, pendente **`#6B5A00`** (R3) |
+| Primária `#0F6E83` / `#0B7690` / `#0C7D99`; pendente `#96560A` / `#6B5A00` (R1–R4) | Marca **`#3B82F6`** (`primary/500`), botão **`#2563EB`** (`primary/600`), pendente **`#92400E`** sobre `#FEF3C7` (**R5**, `docs/design/eixo-paleta-tipografia.md`) |
 | Painel só no desktop | **Painel também em mobile** — decisão de inclusão (profissional autônomo só tem celular) |
 | Hipóteses de mercado (adesão, confiança, eficiência, descoberta) | **H1–H3 de usabilidade**; as de mercado vão para limitações |
 

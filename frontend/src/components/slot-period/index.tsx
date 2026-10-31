@@ -1,8 +1,8 @@
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible'
 
 import { ChevronRight } from 'lucide-react'
 import type { SlotPeriodProps } from './types'
-import { TimeSlotGroup } from '../time-slot-group'
+import { TimeSlotGroup } from '@components/time-slot-group'
 import { cn } from 'cn'
 
 const countLabel = (count: number) => `${count} ${count === 1 ? 'horário' : 'horários'}`

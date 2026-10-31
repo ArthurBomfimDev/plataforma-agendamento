@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { BookingSentScreen } from '.'
+import { MOCK_BUSINESSES } from '@features/business-detail/mock'
 import { MemoryRouter } from 'react-router'
+import { addHours } from 'date-fns'
 import { renderToString } from 'react-dom/server'
 
 // O React separa trechos de texto com `<!-- -->` no HTML do servidor; tiramos para comparar o texto.
@@ -10,15 +12,19 @@ const render = (element: React.ReactElement) =>
 
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000)
 
-const screen = (sentAt: Date, professionalId: string | null = null) =>
+const business = MOCK_BUSINESSES['estudio-duartina']!
+
+const screen = (sentAt: Date, professionalName: string | null = null) =>
   render(
     <BookingSentScreen
-      businessId="estudio-duartina"
-      serviceId="corte-masculino"
-      professionalId={professionalId}
+      businessName={business.name}
+      service={business.services[0]!}
+      professionalName={professionalName}
       date={new Date(2026, 8, 11)}
       time="09:30"
       sentAt={sentAt}
+      expiresAt={addHours(sentAt, 12)}
+      confirmationHours={12}
     />,
   )
 
@@ -33,7 +39,7 @@ describe('BookingSentScreen', () => {
     expect(html).toContain('24 h e 3 h antes')
   })
 
-  it('conta o prazo de confirmação a partir do envio', () => {
+  it('conta o prazo até a expiração do pedido', () => {
     expect(screen(minutesAgo(2))).toMatch(/Expira em 11 h 5\d min/)
     expect(screen(minutesAgo(13 * 60))).toContain('Prazo de confirmação encerrado')
   })
@@ -60,6 +66,6 @@ describe('BookingSentScreen', () => {
   })
 
   it('mostra o profissional quando houve escolha', () => {
-    expect(screen(minutesAgo(0), 'marina-souza')).toContain('Marina Souza')
+    expect(screen(minutesAgo(0), 'Marina Souza')).toContain('Marina Souza')
   })
 })
