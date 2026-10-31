@@ -2,7 +2,7 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-29 (Onda 7CF — busca por raio e cidade, busca por termo, acabamento do painel) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-10-31 (Onda 7H — refatoração do frontend do Rafael integrada; demonstração pública por Cloudflare Tunnel) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:
@@ -67,7 +67,13 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 
 ### Frontend — React 19 + TS + Vite, Bun, Tailwind v4, TanStack Query, Zustand
 
-- Camada única em `src/lib/api`: token em vez de cookie, renovação deduplicada, conversão de fuso pelo IANA do estabelecimento.
+- Camada única de acesso à API — **desde a 7H em `src/api`** (`base`: cliente axios, interceptores, erros; `services`;
+  `models`), não mais `src/lib/api`: token em vez de cookie, renovação deduplicada, conversão de fuso pelo IANA do
+  estabelecimento. ⚠️ O `CLAUDE.md` §3 ainda cita `src/lib/api` (a regra continua a mesma; só o caminho mudou).
+- **Desde a 7H — refatoração do Rafael** (`refactor/project`, mergeada sem squash): `src` reorganizado em `api`,
+  `pages` (`customer`, `auth`, `account`, `panel`), `layouts`, `store`, `assets`; Agenda e Jornadas alinhadas aos frames
+  do Figma (a tela de Jornadas da 7D deu lugar à dele, ligada à mesma API). **Uma origem só:** sem
+  `VITE_API_BASE_URL`, o app chama `/api` e `/media` na própria origem (nginx no Docker, proxy do Vite no `bun run dev`).
 - **Fluxo do consumidor integrado à API real**: home, estabelecimento, escolher profissional, calendário, revisão, pedido enviado, meus agendamentos, entrar, criar conta.
 - **Desde a 6C:** categorias da Home e resultados da busca (`#/search`) ligados à API, com categoria, termo, raio, preço
   máximo e ordenação; "Disponível hoje" e "★ 4,5+" saíram da tela (sem backend, trabalho futuro no contrato §4.4).
@@ -99,7 +105,7 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
   só mostra o nome; agenda com Semana, Mês e filtros na URL; horizonte de 30, 60, 90 ou 180 dias; **Minha conta**
   (`#/account`: nome, e-mail, troca de senha com a atual, sair). Contrato §4.8.
 - Ainda com mock: **lembretes** na tela de pedido enviado (`MOCK_REMINDER_HOURS` ainda mostra **24 h e 3 h**, a decisão vigente é 24 h e 1 h — §10) e o **prazo de avaliação** em meus agendamentos (`MOCK_REVIEW_WINDOW_DAYS`, 30 dias; só aparece com avaliação, que ainda não existe).
-- Testes do frontend: 304 casos em 43 arquivos (Vitest), sem jsdom — renderização em HTML de servidor.
+- Testes do frontend: 328 casos em 44 arquivos (Vitest, 7H), sem jsdom — renderização em HTML de servidor.
 - **Tema claro e escuro** implementados (tokens + alternador).
 - Do lado do estabelecimento existem a agenda do dia e os pedidos (7A) e a gestão (7D). **Não existem** onboarding
   (cadastro, endereço e envio para análise), preço e duração próprios por profissional, visão da semana, avaliações,
@@ -109,6 +115,14 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 ### Infra local
 
 `compose.yaml` com `postgis/postgis:17-3.5`, migrations, API e frontend. `scripts/seed-demo.ts` cria **30 estabelecimentos** (26 Beleza, 4 Saúde), a consumidora e o Admin de demonstração; os 3 primeiros ganham agenda de hoje e de amanhã (7A). Com `--historico`, 60 dias de passado e 14 de agenda futura — é o modo para ver o painel cheio (README).
+
+**Desde a 7H — demonstração pública** (`docs/operacao/demo-publica.md`): `scripts/demo-publica.ps1`/`.sh` sobem a pilha
+com a API em `Production` e o `cloudflared` (perfil `tunnel`, endereço `trycloudflare.com` que muda a cada subida),
+publicando só o `web`; API, banco e Mailpit seguem em `127.0.0.1` (o Mailpit nunca fica público). A API confia no
+`X-Forwarded-For` só das redes do Docker (limitador por IP real) e recusa a chave JWT de exemplo fora de Development;
+o seed recusa a senha padrão fora de Development (`SEED_PASSWORD`, `SEED_ADMIN_PASSWORD`, Admin com senha aleatória).
+SMTP lido do `.env` (bloco do Gmail no `.env.example`), com o Mailpit quando vazio; STARTTLS obrigatório na 587.
+**Não testado com Gmail real:** o `.env` ainda não tem a senha de app.
 
 ### Design (Figma `E2M0TJehjcrSk4uaXlHI0s`)
 
@@ -319,7 +333,8 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 |---|---|---|---|
 | **F** | **Comitê de Ética + aceitação do DSR + recorte etário de 18 anos** | Coleta com participantes | Orientadora |
 | **E** | **Confirmação do recorte de entrega** (§12) | Planejamento até a entrega | Orientadora + autores |
-| G | Hospedagem (ADR-008, revisada em 27/10): **Docker Compose como unidade de implantação**, banco em contêiner; VPS paga, VM do crédito de estudante ou máquina própria por Cloudflare Tunnel. Neon e Heroku descartados. **Provedor final em aberto** | Deploy da demonstração | Arthur |
+| G | Hospedagem (ADR-008, revisada em 27/10 e 31/10): **Docker Compose como unidade de implantação**, banco em contêiner; VPS paga, VM do crédito de estudante ou máquina própria por Cloudflare Tunnel. Neon e Heroku descartados. **7H:** o caminho da máquina própria com túnel rápido funciona (guia `docs/operacao/demo-publica.md`). **Provedor final em aberto** | Deploy da demonstração | Arthur |
+| V | **E-mail real pelo Gmail** (7H): compose e API prontos; falta preencher o bloco do Gmail no `.env` (senha de app) e repetir o teste de recuperação de senha conferindo `processed_at` | Cadastro novo pela demonstração pública | Arthur |
 | I | ✅ Conta Azure for Students criada (27/10): US$ 100 até 27/10/2027 | — | — |
 | **K** | **Nome técnico:** renomear repositório e `Booking.*` para Vagoo, ou manter neutro e registrar | Consistência | Ambos |
 | L | Colisão de marca: **Vagaro** (agendamento de salão) — registrar como risco ou consultar INPI | Uso comercial pós-TCC | Ambos |
@@ -361,7 +376,7 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 |---|---|---|
 | 001, 003, 004, 005, 006, 007, 009, 010, 011 | — | ✅ Aceitos |
 | 002 | Revogação do pitch | 📝 Proposto (26/10) |
-| 008 | Hospedagem, PostGIS, `btree_gist` | 📝 Proposto (26/10) — candidatos e critérios; provedor em aberto até o spike |
+| 008 | Hospedagem, PostGIS, `btree_gist` | 📝 Proposto (26/10) — candidatos e critérios; provedor em aberto. Revisão de 31/10: caminho da máquina própria com túnel exercitado |
 | 012 | Idade mínima de 18 anos e agendamento para terceiro | 📝 Proposto (26/10) |
 | 013 | CPF opcional e verificação de identidade como porta | 📝 Proposto (26/10) |
 | 014 | Avaliação do profissional e perfil público dividido | 📝 Proposto (26/10) |
@@ -408,7 +423,8 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 2. PR #11 `feat/integracao-front-back` → `main`, com a exceção de merge administrativo registrada na descrição.
 3. Aceitar as ADRs 019 e 020; decidir as pendências R, T e U. ✅ Branch `dashboard` do Rafael juntada na 7A.
 4. Painel do estabelecimento: ✅ agenda e pedidos (7A); ✅ gestão (7D, #25 mergeado). Busca por raio, cidade e termo e
-   acabamento do painel: 7CF, PR em revisão (absorveu a 7C). Próximo: Onda 7B (Bem-estar); depois, 7E (onboarding do
+   acabamento do painel: ✅ 7CF (#27). Refatoração do frontend do Rafael e demonstração pública: 7H, PR em revisão.
+   Próximo: preencher o Gmail no `.env` (pendência V); Onda 7B (Bem-estar); depois, 7E (onboarding do
    estabelecimento) e login de profissional (5D).
 5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
 6. Responder F e E com a orientadora.
