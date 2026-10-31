@@ -3,8 +3,8 @@
 #   1. Gere o .env:   ./scripts/setup-env.ps1   (Windows)   ou   ./scripts/setup-env.sh
 #   2. Suba tudo:     docker compose up --build
 #
-#   Frontend  http://localhost:8080
-#   API       http://localhost:8081      (OpenAPI em /openapi/v1.json)
+#   Frontend  http://localhost:8080      (e, atrás dele, a API em /api e a mídia em /media)
+#   API       http://localhost:8081      (direto, para depurar; OpenAPI em /openapi/v1.json em Development)
 #   Postgres  localhost:5433             (5433 para não colidir com um Postgres local na 5432)
 #   Mailpit   http://localhost:8025      (os e-mails de desenvolvimento chegam aqui)
 #
@@ -12,6 +12,10 @@
 #
 # As portas só escutam em 127.0.0.1: nada fica exposto na rede local, e evita o travamento do
 # Docker Desktop quando localhost resolve primeiro para IPv6 (::1).
+#
+# Demonstração pública (docs/operacao/demo-publica.md): o perfil `tunnel` sobe o cloudflared, que publica só o
+# `web` num endereço https://….trycloudflare.com. A API, o banco e o Mailpit continuam só em 127.0.0.1; o Mailpit
+# NUNCA vai para o túnel (mostra os e-mails de todo mundo, com links de confirmação). Use scripts/demo-publica.
 
 name: booking
 
@@ -53,19 +57,30 @@ services:
       target: runtime
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      # Development no uso local. A demonstração pública sobe em Production: HSTS, sem OpenAPI, e a API recusa a
+      # chave JWT de exemplo.
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-booking};Username=${POSTGRES_USER:-booking};Password=${POSTGRES_PASSWORD};Gss Encryption Mode=Disable
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?defina JWT_SIGNING_KEY no .env (rode scripts/setup-env)}
+      # O site chama a API pela mesma origem (proxy do nginx); CORS só para quem chama a 8081 direto (dotnet run + Vite).
       Cors__AllowedOrigins__0: http://localhost:${WEB_PORT:-8080}
-      # E-mail de desenvolvimento: tudo vai para o Mailpit (http://localhost:8025), nada sai da máquina.
-      # Em produção estas variáveis apontam para o SMTP do provedor (ADR-021), com credencial só no .env.
-      Email__Smtp__Host: mailpit
-      Email__Smtp__Port: "1025"
-      Email__Smtp__UseSsl: "false"
-      Email__From: nao-responda@example.com
-      Email__FromName: ${APP_BRAND_NAME:-Vagoo}
+      # Quem pode dizer o IP real de quem chamou (X-Forwarded-For): o nginx e o cloudflared, na rede do compose.
+      # Sem isso o limitador de força bruta veria todo mundo com o IP do nginx.
+      ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
+      ForwardedHeaders__KnownNetworks__1: 192.168.0.0/16
+      ForwardedHeaders__KnownNetworks__2: 10.0.0.0/8
+      # E-mail: sem nada no .env, tudo vai para o Mailpit (http://localhost:8025) e nada sai da máquina. Com o
+      # bloco do Gmail preenchido no .env (ver .env.example), sai de verdade (ADR-021). A senha fica só no .env.
+      Email__Smtp__Host: ${Email__Smtp__Host:-mailpit}
+      Email__Smtp__Port: ${Email__Smtp__Port:-1025}
+      Email__Smtp__UseSsl: ${Email__Smtp__UseSsl:-false}
+      Email__Smtp__User: ${Email__Smtp__Username:-}
+      Email__Smtp__Password: ${Email__Smtp__Password:-}
+      Email__From: ${Email__From:-nao-responda@example.com}
+      Email__FromName: ${Email__FromName:-${APP_BRAND_NAME:-Vagoo}}
       App__BrandName: ${APP_BRAND_NAME:-Vagoo}
-      App__PublicBaseUrl: http://localhost:${WEB_PORT:-8080}
+      # Base dos links dos e-mails. O scripts/demo-publica troca pelo endereço do túnel e recria só a API.
+      App__PublicBaseUrl: ${APP_PUBLIC_BASE_URL:-http://localhost:${WEB_PORT:-8080}}
       # Imagens (ADR-023): o volume é o armazenamento, não o disco do contêiner. Backup junto com o do banco.
       Storage__Root: /app/media-data
     volumes:
@@ -87,16 +102,39 @@ services:
       # SMTP também no host: a API rodando com `dotnet run` (Development) usa localhost:1025 por padrão.
       - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
 
+  # Sem VITE_API_BASE_URL: o site chama /api na própria origem e o nginx repassa para a API (frontend/nginx.conf).
   web:
     build:
       context: ./frontend
-      args:
-        VITE_API_BASE_URL: http://localhost:${API_PORT:-8081}
     restart: unless-stopped
     ports:
       - "127.0.0.1:${WEB_PORT:-8080}:80"
     depends_on:
       - api
+
+  # Demonstração pública, modo rápido: `docker compose --profile tunnel up -d`. Endereço novo a cada subida, no log
+  # ("https://….trycloudflare.com"); quem tiver o link entra. Só o web é publicado, de dentro da rede do compose.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0
+    profiles: [tunnel]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://web:80
+    depends_on:
+      - web
+
+  # Túnel nomeado (endereço fixo num domínio seu): `--profile tunnel-named`, com TUNNEL_TOKEN no .env. O destino
+  # (http://web:80) é configurado no painel da Cloudflare, no próprio túnel.
+  cloudflared-named:
+    image: cloudflare/cloudflared:2026.10.0
+    profiles: [tunnel-named]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      # Sem `:?`: o compose interpola o arquivo inteiro, e exigir aqui quebraria todo `up` sem o perfil. Vazio, o
+      # cloudflared para e diz que falta o token.
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - web
 
 volumes:
   db-data:
