@@ -1,8 +1,8 @@
-import type { LucideIcon } from 'lucide-react'
+import { type IconComponent } from '@assets/icons'
 
 export type CategoryCardProps = {
   label: string
-  icon: LucideIcon
+  icon: IconComponent
   onClick?: () => void
   className?: string
 }

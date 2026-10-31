@@ -1,7 +1,7 @@
-import type { ResolvedTheme } from '@lib/zustand/theme/types'
+import type { ResolvedTheme } from '@store/theme/types'
 import { useEffect } from 'react'
 import { usePrefersDark } from './consts'
-import { useThemeStore } from '@lib/zustand/theme'
+import { useThemeStore } from '@store/theme'
 
 /** O tema que está de fato na tela: a escolha salva ou, em `system`, a do sistema operacional. */
 export const useResolvedTheme = (): ResolvedTheme => {

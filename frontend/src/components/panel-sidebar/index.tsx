@@ -1,12 +1,13 @@
-import { PENDING_BADGE, SECTIONS } from './consts'
+import { PendingBadge } from '@components/pending-badge'
+import { SECTIONS } from './consts'
 
-import { BusinessIllustration } from '@global/images/defaults/business-illustration'
+import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { PanelSidebarProps } from './types'
 import { SmartImage } from '@components/smart-image'
 
 /**
  * Navegação lateral do painel do estabelecimento, só no desktop (tela 09). No celular quem navega
- * é a `PanelBottomNavigation`.
+ * é a `BottomNavigation` (variante `panel`).
  */
 export const PanelSidebar = (props: PanelSidebarProps) => {
   const {
@@ -53,10 +54,7 @@ export const PanelSidebar = (props: PanelSidebarProps) => {
                 <Icon aria-hidden="true" className="size-5 shrink-0" />
                 <span className="min-w-0 flex-1">{label}</span>
                 {id === 'requests' && pendingRequests > 0 && (
-                  <span className={PENDING_BADGE}>
-                    {pendingRequests}
-                    <span className="sr-only"> pendentes</span>
-                  </span>
+                  <PendingBadge count={pendingRequests} />
                 )}
               </button>
             </li>

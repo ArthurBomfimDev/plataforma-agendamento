@@ -1,4 +1,4 @@
-import type { PostalCodeResponse } from '@lib/api/types'
+import type { PostalCodeResponse } from '@api/models'
 
 /** `17400000` ou `17400-0` → `17400-000`/`17400-0`, enquanto a pessoa digita. Só dígitos, no máximo 8. */
 export const formatPostalCode = (value: string) => {

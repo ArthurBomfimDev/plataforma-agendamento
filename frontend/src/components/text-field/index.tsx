@@ -2,7 +2,7 @@ import { FIELD_BOX_CLASSES, FIELD_LABEL_CLASSES } from './consts'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import type { TextFieldProps } from './types'
-import { X } from 'lucide-react'
+import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 
 /**
@@ -40,7 +40,7 @@ export const TextField = (props: TextFieldProps) => {
           id={helperId}
           className="type-caption flex items-center gap-(--space-4) text-(--status-rejected-fg)"
         >
-          <X aria-hidden="true" className="size-4 shrink-0" />
+          <CloseIcon aria-hidden="true" className="size-4 shrink-0" />
           {error}
         </p>
       ) : (

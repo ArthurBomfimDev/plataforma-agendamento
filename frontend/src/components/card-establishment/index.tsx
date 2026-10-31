@@ -1,10 +1,10 @@
 import { Card, CardContent } from '@components/ui/card'
-import { MapPin, Star } from 'lucide-react'
+import { LocationIcon, StarIcon } from '@assets/icons'
 import { distanceFormat, ratingFormat } from './consts'
 
-import { CardEstablishmentImage } from './components/CardEstablishmentImage'
+import { CardEstablishmentImage } from './components/card-establishment-image'
 import type { CardEstablishmentProps } from './types'
-import { VerifiedBadge } from './components/VerifiedBadge'
+import { VerifiedBadge } from './components/verified-badge'
 import { cn } from 'cn'
 
 export const CardEstablishment = (props: CardEstablishmentProps) => {
@@ -54,14 +54,14 @@ export const CardEstablishment = (props: CardEstablishmentProps) => {
         <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted)">
           {rating !== undefined && reviewCount ? (
             <>
-              <Star aria-hidden="true" className="size-4" />
+              <StarIcon aria-hidden="true" className="size-4" />
               <span>
                 <span className="sr-only">Nota </span>
                 {ratingFormat.format(rating)} ({reviewCount})
               </span>
             </>
           ) : null}
-          <MapPin aria-hidden="true" className="size-4" />
+          <LocationIcon aria-hidden="true" className="size-4" />
           <span>
             {distanceKm !== undefined && `${distanceFormat.format(distanceKm)} km · `}
             {neighborhood}

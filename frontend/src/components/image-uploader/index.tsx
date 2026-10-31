@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 
 import { ImageUploaderView } from './view'
 import { SmartImage } from '@components/smart-image'
-import { errorMessage } from '@lib/api/errors'
+import { errorMessage } from '@api/base'
 import { useObjectUrl } from '@hooks/use-object-url'
 
 /**

@@ -4,13 +4,17 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@api/*": ["./src/api/*"],
+      "@assets/*": ["./src/assets/*"],
       "@components/*": ["./src/components/*"],
-      "@features/*": ["./src/features/*"],
-      "@global/*": ["./src/global/*"],
       "@hooks/*": ["./src/hooks/*"],
+      "@layouts/*": ["./src/layouts/*"],
       "@lib/*": ["./src/lib/*"],
+      "@pages/*": ["./src/pages/*"],
       "@router/*": ["./src/router/*"],
+      "@store/*": ["./src/store/*"],
       "@styles/*": ["./src/styles/*"],
+      "@utils/*": ["./src/utils/*"],
       "@/*": ["./src/*"]
     },
     "ignoreDeprecations": "6.0"

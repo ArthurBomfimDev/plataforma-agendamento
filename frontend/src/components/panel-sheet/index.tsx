@@ -2,7 +2,7 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle } from '@
 
 import { DESKTOP_QUERY } from '@hooks/use-media-query/consts'
 import type { PanelSheetProps } from './types'
-import { X } from 'lucide-react'
+import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 import { useMediaQuery } from '@hooks/use-media-query'
 
@@ -41,7 +41,7 @@ export const PanelSheet = (props: PanelSheetProps) => {
             aria-label="Fechar"
             className="flex size-(--size-touch-min) shrink-0 items-center justify-center rounded-md text-(--text-muted) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
           >
-            <X aria-hidden="true" className="size-5" />
+            <CloseIcon aria-hidden="true" className="size-5" />
           </SheetClose>
         </div>
         {children}
