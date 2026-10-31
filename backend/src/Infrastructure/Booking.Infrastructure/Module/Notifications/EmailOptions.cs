@@ -20,7 +20,7 @@ public sealed class SmtpOptions
     public string? User { get; set; }
     public string? Password { get; set; }
 
-    /// <summary>Com TLS: implícito na 465, STARTTLS nas demais. Sem: texto puro (só o Mailpit local).</summary>
+    /// <summary>Com TLS: implícito na 465, STARTTLS obrigatório nas demais. Sem: texto puro (só o Mailpit local).</summary>
     public bool UseSsl { get; set; }
 }
 
