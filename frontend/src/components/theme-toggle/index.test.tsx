@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { ThemeToggle } from '.'
 import { renderToString } from 'react-dom/server'
-import { useThemeStore } from '@lib/zustand/theme'
+import { useThemeStore } from '@store/theme'
 
 describe('ThemeToggle', () => {
   it('começa seguindo o sistema, que sem janela conta como claro', () => {

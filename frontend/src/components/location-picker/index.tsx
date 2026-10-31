@@ -1,16 +1,16 @@
-import { DEMO_LOCATION, useLocationStore } from '@lib/zustand/location'
+import { DEMO_LOCATION, useLocationStore } from '@store/location'
 import { POOR_ACCURACY_METERS, useGeolocation } from '@hooks/use-geolocation'
 import { postalCodeLabel, postalCodeQueries } from './consts'
 import { useEffect, useState } from 'react'
 
-import type { ChosenLocation } from '@lib/zustand/location/types'
+import type { ChosenLocation } from '@store/location/types'
 import { Dialog } from '@base-ui/react/dialog'
-import type { GeoPlaceResponse } from '@lib/api/types'
+import type { GeoPlaceResponse } from '@api/models'
 import { LocationPickerPanel } from './panel'
 import type { PickerStep } from './types'
-import { X } from 'lucide-react'
-import { errorMessage } from '@lib/api/errors'
-import { geoApi } from '@lib/api/endpoints'
+import { CloseIcon } from '@assets/icons'
+import { errorMessage } from '@api/base'
+import { geoService } from '@api/services/geo'
 
 const TITLES: Record<PickerStep, string> = {
   menu: 'Onde você quer agendar?',
@@ -76,7 +76,7 @@ export const LocationPicker = () => {
     const { latitude, longitude, accuracyMeters } = device.position
     let cancelled = false
 
-    void geoApi
+    void geoService
       .reverse(latitude, longitude)
       // Sem rótulo do provedor, a busca ainda funciona com o ponto (em "Cidade", pelo maior raio).
       .catch(() => ({ label: 'Sua localização', city: null, state: null }))
@@ -119,11 +119,11 @@ export const LocationPicker = () => {
   const submitPostalCode = (postalCode: string) =>
     run(async () => {
       setPostalCodeMatch(null)
-      const address = await geoApi.postalCode(postalCode)
+      const address = await geoService.postalCode(postalCode)
 
       // O CEP não traz o ponto: procura do endereço mais preciso ao mais largo.
       for (const text of postalCodeQueries(address)) {
-        const place = (await geoApi.search(text)).items[0]
+        const place = (await geoService.search(text)).items[0]
         if (place) {
           setPostalCodeMatch({
             label: postalCodeLabel(address),
@@ -143,7 +143,7 @@ export const LocationPicker = () => {
 
   const submitSearch = (text: string) =>
     run(async () => {
-      setResults((await geoApi.search(text)).items)
+      setResults((await geoService.search(text)).items)
     })
 
   return (
@@ -159,7 +159,7 @@ export const LocationPicker = () => {
               aria-label="Fechar"
               className="-m-(--space-8) flex size-(--size-touch-min) shrink-0 items-center justify-center rounded-(--radius-full) text-(--text-muted) hover:text-(--text-strong) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
             >
-              <X aria-hidden="true" className="size-5" />
+              <CloseIcon aria-hidden="true" className="size-5" />
             </Dialog.Close>
           </div>
           <Dialog.Description className="sr-only">

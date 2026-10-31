@@ -5,7 +5,7 @@ import { Button } from '@components/button'
 import { LoadingState } from '@components/screen-state'
 import type { CounterBookingDialogProps } from './types'
 import { TextField } from '@components/text-field'
-import { X } from 'lucide-react'
+import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 
 const SELECT =
@@ -89,7 +89,7 @@ export const CounterBookingDialog = (props: CounterBookingDialogProps) => {
             aria-label="Fechar"
             className="flex size-(--size-touch-min) shrink-0 items-center justify-center rounded-md text-(--text-muted) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
           >
-            <X aria-hidden="true" className="size-5" />
+            <CloseIcon aria-hidden="true" className="size-5" />
           </SheetClose>
         </div>
 

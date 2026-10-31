@@ -1,4 +1,4 @@
-import { mediaUrl, srcSetOf } from '@lib/api/media'
+import { mediaUrl, srcSetOf } from '@api/services/media'
 import { useState } from 'react'
 
 import type { SmartImageProps } from './types'

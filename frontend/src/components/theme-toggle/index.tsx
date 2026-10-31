@@ -1,10 +1,10 @@
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
-import { Moon, Sun } from 'lucide-react'
+import { DarkModeIcon, LightModeIcon } from '@assets/icons'
 
 import type { ThemeToggleProps } from './types'
 import { cn } from 'cn'
 import { useResolvedTheme } from '@hooks/use-theme'
-import { useThemeStore } from '@lib/zustand/theme'
+import { useThemeStore } from '@store/theme'
 
 /**
  * Liga e desliga o tema escuro. TODO(figma): não há wireframe do controle; é um botão de ícone
@@ -45,9 +45,9 @@ export const ThemeToggle = (props: ThemeToggleProps) => {
             className="flex"
           >
             {isDark ? (
-              <Moon aria-hidden className="size-5" strokeWidth={2} />
+              <DarkModeIcon aria-hidden className="size-5" />
             ) : (
-              <Sun aria-hidden className="size-5" strokeWidth={2} />
+              <LightModeIcon aria-hidden className="size-5" />
             )}
           </motion.span>
         </AnimatePresence>

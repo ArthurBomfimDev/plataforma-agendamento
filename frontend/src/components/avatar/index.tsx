@@ -1,7 +1,7 @@
 import { AvatarFallback, AvatarImage, Avatar as UiAvatar } from '@components/ui/avatar'
 
 import type { AvatarProps } from './types'
-import { User } from 'lucide-react'
+import { PersonIcon } from '@assets/icons'
 import { cn } from 'cn'
 
 const SIZE_CLASSES: Record<NonNullable<AvatarProps['size']>, string> = {
@@ -31,7 +31,7 @@ export const Avatar = (props: AvatarProps) => {
         </AvatarFallback>
       ) : (
         <AvatarFallback className="bg-(--bg-disabled)">
-          <User aria-hidden="true" className="size-5 text-(--text-muted)" />
+          <PersonIcon aria-hidden="true" className="size-5 text-(--text-muted)" />
         </AvatarFallback>
       )}
     </UiAvatar>

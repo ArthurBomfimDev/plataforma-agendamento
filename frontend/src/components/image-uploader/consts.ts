@@ -1,4 +1,4 @@
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@lib/api/media'
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@api/services/media'
 
 /**
  * Conferência no aparelho, antes de gastar o envio. É só conforto: a defesa real é o backend, que confere a
