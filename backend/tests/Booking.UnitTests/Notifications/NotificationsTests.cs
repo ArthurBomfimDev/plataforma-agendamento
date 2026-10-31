@@ -48,6 +48,19 @@ public sealed class NotificationsTests
         Assert.Equal(expected, SmtpEmailSender.SecurityFor(new SmtpOptions { UseSsl = useSsl, Port = port }));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Smtp_certificate_revocation_check_reaches_the_client_and_defaults_to_on(bool enabled)
+    {
+        Assert.True(new SmtpOptions().CheckCertificateRevocation);
+
+        using var client = new MailKit.Net.Smtp.SmtpClient();
+        SmtpEmailSender.Configure(client, new SmtpOptions { CheckCertificateRevocation = enabled });
+
+        Assert.Equal(enabled, client.CheckCertificateRevocation);
+    }
+
     [Fact]
     public void Smtp_login_refused_is_described_with_host_port_and_user_and_never_the_password()
     {
