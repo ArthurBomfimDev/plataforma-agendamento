@@ -74,6 +74,7 @@ services:
       Email__Smtp__Host: ${Email__Smtp__Host:-mailpit}
       Email__Smtp__Port: ${Email__Smtp__Port:-1025}
       Email__Smtp__UseSsl: ${Email__Smtp__UseSsl:-false}
+      Email__Smtp__CheckCertificateRevocation: ${Email__Smtp__CheckCertificateRevocation:-true}
       Email__Smtp__User: ${Email__Smtp__Username:-}
       Email__Smtp__Password: ${Email__Smtp__Password:-}
       Email__From: ${Email__From:-nao-responda@example.com}

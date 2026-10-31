@@ -80,6 +80,13 @@ Adotamos **C**, com SMTP genérico (MailKit).
   `App__PublicBaseUrl` para os links. **Sem SMTP configurado, a API não sobe fora de Development** (`ValidateOnStart`):
   nunca cai em silêncio para "só log" em produção. Em Development, o padrão é o Mailpit local (`localhost:1025`), que
   está no `compose.yaml`.
+- **Revogação do certificado (31/10).** `Email__Smtp__CheckCertificateRevocation` (padrão `true`) vai para
+  `SmtpClient.CheckCertificateRevocation`. Observado no Gmail: o MailKit tenta baixar a CRL do certificado
+  (`c.pki.goog`) e, quando o DNS da rede não a resolve, o handshake falha com "unable to get certificate CRL". Com
+  `false`, a cadeia e o nome do servidor continuam validados e o STARTTLS segue obrigatório; só a consulta de
+  revogação é dispensada. **Trade-off:** perde-se a garantia contra certificado revogado, aceitável numa demonstração
+  com servidor conhecido. Em produção real, libere a saída para a CRL e mantenha `true`. Diagnóstico em
+  `docs/operacao/demo-publica.md`.
 - **Saúde.** Assunto e prévia (`Preheader`) **não citam serviço, categoria nem o nome do estabelecimento**. O corpo, para
   o próprio titular ou para a equipe que o atende, traz os detalhes. No `.ics`, o título é "Atendimento — {nome}", sem
   o serviço.

@@ -22,6 +22,7 @@ public sealed class SmtpEmailSender(IOptions<EmailOptions> options) : IEmailSend
     {
         using MimeMessage mime = Build(message, deliveryId);
         using var client = new SmtpClient();
+        Configure(client, _options.Smtp);
 
         await client.ConnectAsync(Host, _options.Smtp.Port, SecurityFor(_options.Smtp), ct);
 
@@ -41,6 +42,13 @@ public sealed class SmtpEmailSender(IOptions<EmailOptions> options) : IEmailSend
         await client.SendAsync(mime, ct);
         await client.DisconnectAsync(quit: true, ct);
     }
+
+    /// <summary>
+    /// Em <c>CheckCertificateRevocation = false</c> o MailKit não baixa CRL nem consulta OCSP, mas continua validando a
+    /// cadeia e o nome do servidor. É o que destrava a saída que não alcança a CRL (ADR-021).
+    /// </summary>
+    public static void Configure(SmtpClient client, SmtpOptions smtp) =>
+        client.CheckCertificateRevocation = smtp.CheckCertificateRevocation;
 
     /// <summary>
     /// Com TLS: implícito na 465, STARTTLS obrigatório nas demais (a 587 do Gmail). Obrigatório, e não "se o servidor
