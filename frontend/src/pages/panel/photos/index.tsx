@@ -38,6 +38,7 @@ export const PanelPhotosRoute = () => {
           professionals: professionals.map((professional) => ({
             id: professional.id,
             name: professional.displayName,
+            specialty: professional.specialty,
             photo: professional.photo,
             isPubliclyVisible: professional.isPubliclyVisible,
           })),
