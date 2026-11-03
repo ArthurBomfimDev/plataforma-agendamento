@@ -15,7 +15,6 @@ import {
   toTeamMember,
   toWeekSchedule,
   weekChanges,
-  withActive,
 } from './manage-adapters'
 import { applyRanges, toggleDay } from './schedules/screen/consts'
 
@@ -75,20 +74,6 @@ describe('seções do painel', () => {
 })
 
 describe('serviços', () => {
-  it('troca só a situação, sem perder insumos e intervalos', () => {
-    expect(withActive(service, false)).toEqual({
-      name: 'Corte',
-      description: null,
-      durationMinutes: 30,
-      bufferBeforeMinutes: 5,
-      bufferAfterMinutes: 10,
-      slotStepMinutes: 15,
-      priceCents: 4_500,
-      suppliesNote: 'Navalha descartável',
-      isActive: false,
-    })
-  })
-
   it('grava o formulário mantendo o que a tela não edita', () => {
     const draft = {
       name: 'Corte novo',
@@ -99,14 +84,15 @@ describe('serviços', () => {
       slotStepMinutes: 20,
       priceCents: 5_000,
       professionalIds: ['p1'],
+      isActive: false,
     }
 
     expect(toSaveServiceRequest(draft, service)).toMatchObject({
       name: 'Corte novo',
       suppliesNote: 'Navalha descartável',
-      isActive: true,
+      isActive: false,
     })
-    expect(toSaveServiceRequest(draft, null)).toMatchObject({ suppliesNote: null, isActive: true })
+    expect(toSaveServiceRequest(draft, null)).toMatchObject({ suppliesNote: null, isActive: false })
   })
 
   it('calcula quem ligar e quem desligar', () => {
@@ -133,6 +119,7 @@ describe('serviços', () => {
     ])
 
     expect(item.professionalNames).toEqual(['Marina'])
+    expect(item.blockedMinutes).toBe(45)
   })
 
   it('pré-visualiza no primeiro dia com jornada, da primeira entrada à última saída', () => {

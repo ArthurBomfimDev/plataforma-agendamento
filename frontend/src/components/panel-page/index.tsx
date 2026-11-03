@@ -10,13 +10,18 @@ import { cn } from 'cn'
  * TODO(figma): não há wireframe das telas de gestão; seguem os tokens e o desenho das telas 10 e 11.
  */
 export const PanelPage = (props: PanelPageProps) => {
-  const { title, subtitle, actions, children } = props
+  const { title, subtitle, actions, children, wide = false } = props
 
   return (
     <>
       {/* Celular e tablet */}
       <header className="sticky top-0 z-10 border-b border-(--border-subtle) bg-(--bg-surface) pt-[calc(var(--space-16)+env(safe-area-inset-top))] pb-(--space-12) lg:hidden">
-        <div className="flex items-center gap-(--space-12) px-(--space-16) md:mx-auto md:max-w-160">
+        <div
+          className={cn(
+            'flex items-center gap-(--space-12) px-(--space-16)',
+            !wide && 'md:mx-auto md:max-w-160',
+          )}
+        >
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
             <h1 className="type-heading text-(--text-strong)">{title}</h1>
             {subtitle && <p className="type-caption text-(--text-muted)">{subtitle}</p>}
@@ -27,7 +32,8 @@ export const PanelPage = (props: PanelPageProps) => {
 
       <main
         className={cn(
-          'flex flex-col gap-(--space-16) px-(--space-16) pt-(--space-12) md:mx-auto md:max-w-160 lg:mx-0 lg:max-w-200 lg:px-(--space-24) lg:pt-(--space-24)',
+          'flex flex-col gap-(--space-16) px-(--space-16) pt-(--space-12) lg:px-(--space-24) lg:pt-(--space-24)',
+          !wide && 'md:mx-auto md:max-w-160 lg:mx-0 lg:max-w-200',
           PANEL_CONTENT_BOTTOM_PADDING,
         )}
       >

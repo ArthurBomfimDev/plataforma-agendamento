@@ -12,6 +12,8 @@ export type ServiceFormValues = {
   slotStepMinutes: string
   price: string
   professionalIds: string[]
+  /** Situação do serviço: pausado sai da vitrine, mas o histórico fica. Só a edição mostra o campo. */
+  isActive: boolean
 }
 
 export type ServiceFormField = keyof ServiceFormValues
@@ -30,6 +32,7 @@ export type ServiceDraft = {
   /** Em centavos. */
   priceCents: number
   professionalIds: string[]
+  isActive: boolean
 }
 
 export type ServiceProfessionalOption = { id: string; name: string }

@@ -78,6 +78,9 @@ export const toServiceListItem = (
   id: service.id,
   name: service.name,
   durationMinutes: service.durationMinutes,
+  description: service.description,
+  blockedMinutes:
+    service.bufferBeforeMinutes + service.durationMinutes + service.bufferAfterMinutes,
   priceCents: service.priceCents,
   isActive: service.isActive,
   professionalNames: service.professionals.flatMap(
@@ -86,7 +89,7 @@ export const toServiceListItem = (
   ),
 })
 
-/** O pedido de gravação a partir do formulário. O que a tela não edita (insumos, situação) fica como estava. */
+/** O pedido de gravação a partir do formulário. O que a tela não edita (insumos) fica como estava. */
 export const toSaveServiceRequest = (
   draft: ServiceDraft,
   existing: ServiceResponse | null,
@@ -99,20 +102,7 @@ export const toSaveServiceRequest = (
   slotStepMinutes: draft.slotStepMinutes,
   priceCents: draft.priceCents,
   suppliesNote: existing?.suppliesNote ?? null,
-  isActive: existing?.isActive ?? true,
-})
-
-/** O mesmo serviço, só com a situação trocada: ativar e desativar usam a edição. */
-export const withActive = (service: ServiceResponse, isActive: boolean): SaveServiceRequest => ({
-  name: service.name,
-  description: service.description,
-  durationMinutes: service.durationMinutes,
-  bufferBeforeMinutes: service.bufferBeforeMinutes,
-  bufferAfterMinutes: service.bufferAfterMinutes,
-  slotStepMinutes: service.slotStepMinutes,
-  priceCents: service.priceCents,
-  suppliesNote: service.suppliesNote,
-  isActive,
+  isActive: draft.isActive,
 })
 
 /** Quem ligar e quem desligar para o serviço ficar com exatamente `wanted`. */
