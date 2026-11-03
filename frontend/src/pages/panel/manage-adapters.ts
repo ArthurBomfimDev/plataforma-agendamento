@@ -111,9 +111,39 @@ export const professionalChanges = (current: string[], wanted: string[]) => ({
   disable: current.filter((id) => !wanted.includes(id)),
 })
 
+/**
+ * A jornada em uma linha, a que vale hoje: "Seg a sáb · 09:00–18:00". Dias seguidos (três ou mais) viram
+ * intervalo; o horário vai da primeira entrada à última saída. Nula: sem jornada, o profissional não
+ * tem horário para agendar.
+ */
+export const workSummaryOf = (schedules: WorkScheduleResponse[], today: string): string | null => {
+  const rows = schedules.map(toScheduleRow).filter((row) => activeOn(row, today))
+  if (rows.length === 0) return null
+
+  const days = WEEKDAYS.filter(({ day }) => rows.some((row) => row.dayOfWeek === day))
+  const short = (label: string) => label.slice(0, 3)
+  const consecutive = days.every(
+    (day, index) => index === 0 || WEEKDAYS.indexOf(day) === WEEKDAYS.indexOf(days[index - 1]!) + 1,
+  )
+  const dayLabel =
+    days.length >= 3 && consecutive
+      ? `${short(days[0]!.label)} a ${days.at(-1)!.label.slice(0, 3).toLowerCase()}`
+      : days
+          .map(({ label }, index) => (index === 0 ? short(label) : short(label).toLowerCase()))
+          .join(', ')
+  const start = rows.map(({ start }) => start).toSorted()[0]!
+  const end = rows
+    .map(({ end }) => end)
+    .toSorted()
+    .at(-1)!
+  return `${dayLabel} · ${start}–${end}`
+}
+
 export const toTeamMember = (
   professional: ProfessionalResponse,
   services: ServiceResponse[],
+  schedules: WorkScheduleResponse[] = [],
+  today = '',
 ): TeamMember => ({
   id: professional.id,
   displayName: professional.displayName,
@@ -124,6 +154,7 @@ export const toTeamMember = (
   hasPublicProfileConsent: professional.hasPublicProfileConsent,
   hasAccount: professional.membershipId !== null,
   photo: professional.photo,
+  workSummary: workSummaryOf(schedules, today),
   serviceIds: services
     .filter((service) =>
       service.professionals.some(({ professionalId }) => professionalId === professional.id),

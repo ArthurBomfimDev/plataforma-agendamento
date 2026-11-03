@@ -1,31 +1,33 @@
-import { ACTIVE_BADGE, BADGE } from '@pages/panel/services/screen/consts'
 import { ErrorState, LoadingState } from '@components/screen-state'
-import { PANEL_CARD, PanelPage } from '@components/panel-page'
 import type { TeamMember, TeamScreenProps } from './types'
-import { byActiveThenName, servicesLabel, visibilityLabel } from './consts'
+import { byActiveThenName, subtitleOf } from './consts'
 
-import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
+import { MemberDetail } from './components/member-detail'
 import { NewMemberSheet } from './components/new-member-sheet'
+import { PanelPage } from '@components/panel-page'
+import { TeamList } from './components/team-list'
 import { TeamMemberSheet } from './components/team-member-sheet'
 import { cn } from 'cn'
-import { initials } from '@pages/panel/agenda/screen/consts'
-import { mediaUrl } from '@api/services/media'
 import { notify } from '@components/toaster/notify'
 import { useState } from 'react'
 
 /**
- * Painel — Profissionais (Onda 7D): a equipe, com editar, ativar e desativar e os serviços de cada um.
- * Só o dono (`RequireOwner`). Sem convite por e-mail: o profissional cadastrado aqui não tem login
- * (o convite é a Onda 5D).
+ * Painel — Profissionais (Onda 7D, Figma 17): a equipe à esquerda e a ficha do selecionado à direita, com
+ * editar, desativar e os serviços de cada um. Só o dono (`RequireOwner`). Sem convite por e-mail: o
+ * profissional cadastrado aqui não tem login (o convite é a Onda 5D).
+ *
+ * No celular e no tablet a tela mostra uma coluna por vez: a lista e, ao escolher alguém, a ficha dele.
  *
  * O perfil completo na vitrine depende do consentimento do próprio profissional (decisões de 22/09
  * §3): o dono vê o estado, mas não consegue ligar sem ele.
  */
 export const TeamScreen = (props: TeamScreenProps) => {
-  const { data, businessName, onCreate, onSave } = props
+  const { data, businessName, onCreate, onSave, onOpenSchedules } = props
 
+  const [selectedId, setSelectedId] = useState<string>()
+  const [showDetail, setShowDetail] = useState(false)
   const [editing, setEditing] = useState<TeamMember | null>(null)
   const [creating, setCreating] = useState(false)
   const [deactivating, setDeactivating] = useState<TeamMember | null>(null)
@@ -33,7 +35,8 @@ export const TeamScreen = (props: TeamScreenProps) => {
 
   const members = data.status === 'ready' ? data.members.toSorted(byActiveThenName) : []
   const services = data.status === 'ready' ? data.services : []
-  const active = members.filter(({ isActive }) => isActive).length
+  // Sem escolha (ou com o escolhido fora da lista), o primeiro da equipe fica aberto no desktop.
+  const selected = members.find(({ id }) => id === selectedId) ?? members[0]
 
   const setActive = async (member: TeamMember, isActive: boolean) => {
     setBusyId(member.id)
@@ -55,23 +58,15 @@ export const TeamScreen = (props: TeamScreenProps) => {
 
   return (
     <PanelPage
+      wide
       title="Profissionais"
-      subtitle={
-        data.status === 'ready'
-          ? `${active} ${active === 1 ? 'ativo' : 'ativos'} de ${members.length} · ${businessName}`
-          : businessName
-      }
-      actions={
-        <Button className="shrink-0" onClick={() => setCreating(true)}>
-          Novo profissional
-        </Button>
-      }
+      subtitle={data.status === 'ready' ? subtitleOf(members, businessName) : businessName}
     >
       {data.status === 'loading' ? (
         <LoadingState label="Carregando a equipe…" />
       ) : data.status === 'error' ? (
         <ErrorState message={data.message} onRetry={data.onRetry} />
-      ) : members.length === 0 ? (
+      ) : !selected ? (
         <div className="flex flex-col items-start gap-(--space-8)">
           <p role="status" className="type-body text-(--text-muted)">
             Nenhum profissional cadastrado. Sem profissional, nenhum serviço tem horário.
@@ -81,50 +76,32 @@ export const TeamScreen = (props: TeamScreenProps) => {
           </Button>
         </div>
       ) : (
-        <ul className="flex flex-col gap-(--space-12)">
-          {members.map((member) => (
-            <li key={member.id} className={PANEL_CARD}>
-              <div className="flex items-start gap-(--space-12)">
-                <Avatar
-                  alt=""
-                  src={member.photo ? mediaUrl(member.photo.small) : undefined}
-                  initials={initials(member.displayName)}
-                  size="md"
-                />
-                <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
-                  <h2 className="type-label text-(--text-strong)">{member.displayName}</h2>
-                  {member.specialty && (
-                    <p className="type-caption text-(--text-body)">{member.specialty}</p>
-                  )}
-                  <p className="type-caption text-(--text-muted)">{visibilityLabel(member)}</p>
-                </div>
-                <span className={cn(BADGE, ACTIVE_BADGE[`${member.isActive}`])}>
-                  {member.isActive ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
-              <p className="type-caption text-(--text-muted)">{servicesLabel(member, services)}</p>
-              <div className="flex flex-wrap gap-(--space-8)">
-                <Button
-                  variant="secondary"
-                  aria-label={`Editar ${member.displayName}`}
-                  onClick={() => setEditing(member)}
-                >
-                  Editar
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={busyId === member.id}
-                  aria-label={`${member.isActive ? 'Desativar' : 'Ativar'} ${member.displayName}`}
-                  onClick={() =>
-                    member.isActive ? setDeactivating(member) : void setActive(member, true)
-                  }
-                >
-                  {busyId === member.id ? 'Salvando…' : member.isActive ? 'Desativar' : 'Ativar'}
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-(--space-24) lg:flex-row lg:items-start">
+          <div className={cn('lg:w-80 lg:shrink-0', showDetail && 'hidden lg:block')}>
+            <TeamList
+              members={members}
+              services={services}
+              selectedId={selected.id}
+              onSelect={(id) => {
+                setSelectedId(id)
+                setShowDetail(true)
+              }}
+              onNew={() => setCreating(true)}
+            />
+          </div>
+          <div className={cn('min-w-0 lg:flex-1', !showDetail && 'hidden lg:block')}>
+            <MemberDetail
+              member={selected}
+              services={services}
+              busy={busyId === selected.id}
+              onBack={() => setShowDetail(false)}
+              onEdit={() => setEditing(selected)}
+              onOpenSchedules={onOpenSchedules}
+              onDeactivate={() => setDeactivating(selected)}
+              onActivate={() => void setActive(selected, true)}
+            />
+          </div>
+        </div>
       )}
 
       <TeamMemberSheet
@@ -152,14 +129,14 @@ export const TeamScreen = (props: TeamScreenProps) => {
       <ConfirmDialog
         open={deactivating !== null}
         onOpenChange={(open) => !open && setDeactivating(null)}
-        title="Desativar este profissional?"
+        title="Remover da equipe?"
         description={
           deactivating
-            ? `${deactivating.displayName} sai da agenda e da vitrine, e não recebe pedidos novos. Os agendamentos já feitos continuam.`
+            ? `${deactivating.displayName} sai da agenda e da vitrine, e não recebe pedidos novos. Os agendamentos já feitos continuam e o histórico fica nos relatórios.`
             : ''
         }
-        confirmLabel="Desativar profissional"
-        dismissLabel="Manter ativo"
+        confirmLabel="Remover da equipe"
+        dismissLabel="Manter na equipe"
         onConfirm={() => {
           if (deactivating) void setActive(deactivating, false)
           setDeactivating(null)

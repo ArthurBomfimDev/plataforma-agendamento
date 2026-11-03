@@ -1,6 +1,6 @@
 import type { TeamData, TeamMember, TeamScreenProps } from './types'
 import { describe, expect, it } from 'vitest'
-import { draftOf, optional, servicesLabel, visibilityLabel } from './consts'
+import { draftOf, listCaption, optional, roleLabel, servicesLabel, subtitleOf } from './consts'
 
 import { TeamScreen } from '.'
 import { renderToString } from 'react-dom/server'
@@ -15,6 +15,7 @@ const member = (fields: Partial<TeamMember>): TeamMember => ({
   hasPublicProfileConsent: false,
   hasAccount: false,
   serviceIds: ['s1'],
+  workSummary: null,
   ...fields,
 })
 
@@ -38,17 +39,39 @@ const render = (overrides: Partial<TeamScreenProps> = {}) =>
   ).replaceAll('<!-- -->', '')
 
 describe('TeamScreen', () => {
-  it('lista a equipe com os ativos primeiro, a situação em texto e os serviços', () => {
+  it('lista a equipe com os ativos primeiro e abre a ficha do primeiro', () => {
     const html = render()
 
-    expect(html).toContain('1 ativo de 2 · Estúdio Duartina')
+    expect(html).toContain('1 na equipe · 1 inativo · Estúdio Duartina')
     expect(html.indexOf('Marina Souza')).toBeLessThan(html.indexOf('Carla Nunes'))
-    expect(html).toContain('Cabeleireira')
-    expect(html).toContain('Perfil completo na vitrine')
-    expect(html).toContain('Nenhum serviço: não aparece para agendar.')
-    expect(html).toContain('aria-label="Desativar Marina Souza"')
-    expect(html).toContain('aria-label="Ativar Carla Nunes"')
+    expect(html).toContain('Cabeleireira · 1 serviço')
+    expect(html).toContain('sem jornada')
+    expect(html).toContain('Inativo')
     expect(html).toContain('Novo profissional')
+    // a ficha é a do primeiro (Marina): perfil público, controles e a saída da equipe
+    expect(html).toContain('Editar nome')
+    expect(html).toContain('Perfil completo visível')
+    expect(html).toContain('Ligado')
+    expect(html).toContain('Consentimento dado pelo próprio profissional')
+    expect(html).toContain('Jornada e bloqueios')
+    expect(html).toContain('Remover da equipe')
+    expect(html).not.toContain('Voltar para a equipe')
+  })
+
+  it('mostra a jornada quando ela existe, sem o aviso de sem jornada', () => {
+    const html = render({
+      data: ready([member({ workSummary: 'Seg a sáb · 09:00–18:00' })]),
+    })
+
+    expect(html).toContain('Seg a sáb · 09:00–18:00')
+    expect(html).not.toContain('sem jornada')
+  })
+
+  it('quem está fora da equipe pode voltar', () => {
+    const html = render({ data: ready([member({ isActive: false })]) })
+
+    expect(html).toContain('Voltar para a equipe')
+    expect(html).not.toContain('>Remover da equipe<')
   })
 
   it('sem profissional, convida a cadastrar', () => {
@@ -67,10 +90,19 @@ describe('TeamScreen', () => {
 })
 
 describe('equipe do painel', () => {
-  it('diz o que a vitrine mostra, conforme o consentimento', () => {
-    expect(visibilityLabel(member({ isPubliclyVisible: true }))).toBe('Perfil completo na vitrine')
-    expect(visibilityLabel(member({ hasPublicProfileConsent: true }))).toBe('Só o nome na vitrine')
-    expect(visibilityLabel(member({}))).toContain('sem consentimento')
+  it('resume a linha da lista e o subtítulo', () => {
+    expect(listCaption(member({ serviceIds: ['s1', 's2'] }), services)).toBe(
+      'Cabeleireira · 2 serviços',
+    )
+    expect(listCaption(member({ specialty: null, serviceIds: [] }), services)).toBe(
+      'Profissional · 0 serviços',
+    )
+    expect(subtitleOf([member({})], 'Estúdio')).toBe('1 na equipe · Estúdio')
+  })
+
+  it('diz o papel conforme o profissional tenha login', () => {
+    expect(roleLabel(member({ hasAccount: true }))).toContain('não edita serviço')
+    expect(roleLabel(member({ hasAccount: false }))).toContain('Sem login')
   })
 
   it('lista os serviços pelo nome, em ordem', () => {

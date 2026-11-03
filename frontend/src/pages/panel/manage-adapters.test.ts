@@ -13,6 +13,7 @@ import {
   toScheduleRow,
   toServiceListItem,
   toTeamMember,
+  workSummaryOf,
   toWeekSchedule,
   weekChanges,
 } from './manage-adapters'
@@ -157,6 +158,19 @@ describe('equipe', () => {
     expect(member.serviceIds).toEqual(['s1'])
     expect(member.hasAccount).toBe(true)
     expect(member.hasPublicProfileConsent).toBe(true)
+  })
+
+  it('resume a jornada de hoje: dias seguidos viram intervalo e o horário vai da entrada à saída', () => {
+    const days = (list: number[], fields: Partial<WorkScheduleResponse> = {}) =>
+      list.map((dayOfWeek) => schedule({ id: `d${dayOfWeek}`, dayOfWeek, ...fields }))
+
+    expect(workSummaryOf(days([1, 2, 3, 4, 5, 6]), '2026-11-03')).toBe('Seg a sáb · 09:00–18:00')
+    expect(workSummaryOf(days([1, 3, 5]), '2026-11-03')).toBe('Seg, qua, sex · 09:00–18:00')
+    expect(workSummaryOf(days([2]), '2026-11-03')).toBe('Ter · 09:00–18:00')
+    // faixa que ainda não começou ou já acabou não conta; sem nada vigente, não há jornada
+    expect(workSummaryOf(days([1], { effectiveFrom: '2027-01-01' }), '2026-11-03')).toBeNull()
+    expect(workSummaryOf(days([1], { effectiveTo: '2026-10-01' }), '2026-11-03')).toBeNull()
+    expect(workSummaryOf([], '2026-11-03')).toBeNull()
   })
 })
 
