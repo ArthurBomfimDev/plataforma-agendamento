@@ -55,6 +55,7 @@ export const PanelServicesRoute = () => {
     <ServicesScreen
       data={data}
       businessName={business.name}
+      categoryName={categoryLabel(detail.data?.category ?? '')}
       sensitive={isSensitiveCategory(detail.data?.category ?? '')}
       onNew={() => navigate(ROUTES.panelNewService)}
       onEdit={(serviceId) => navigate(editServicePath(serviceId))}

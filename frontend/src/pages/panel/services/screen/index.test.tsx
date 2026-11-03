@@ -38,6 +38,7 @@ const render = (overrides: Partial<ServicesScreenProps> = {}) =>
     <ServicesScreen
       data={ready()}
       businessName="Estúdio Duartina"
+      categoryName="Beleza"
       sensitive={false}
       {...overrides}
     />,
@@ -82,8 +83,10 @@ describe('ServicesScreen', () => {
   it('sem serviço, convida a cadastrar o primeiro', () => {
     const html = render({ data: ready([]) })
 
-    expect(html).toContain('Nenhum serviço cadastrado.')
-    expect(html).toContain('Cadastrar o primeiro serviço')
+    expect(html).toContain('Nenhum serviço cadastrado ainda')
+    expect(html).toContain('Criar o primeiro serviço')
+    expect(html).toContain('Estúdio Duartina · Beleza')
+    expect(html).not.toContain('Novo serviço')
   })
 
   it('mostra o carregando e o erro com "Tentar de novo"', () => {
@@ -94,7 +97,7 @@ describe('ServicesScreen', () => {
     })
     expect(html).toContain('Sem conexão com o servidor.')
     expect(html).toContain('Tentar de novo')
-    expect(html).not.toContain('Nenhum serviço cadastrado.')
+    expect(html).not.toContain('Nenhum serviço cadastrado')
   })
 })
 

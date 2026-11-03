@@ -19,6 +19,8 @@ export type ServicesData =
 export type ServicesScreenProps = {
   data: ServicesData
   businessName: string
+  /** Categoria do estabelecimento ("Beleza"), no subtítulo do estado vazio. */
+  categoryName?: string
   /** Estabelecimento de saúde (`RequiresSensitiveHandling`): avisa o que vai para a vitrine. */
   sensitive: boolean
   onNew?: () => void

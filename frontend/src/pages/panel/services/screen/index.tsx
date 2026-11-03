@@ -9,6 +9,7 @@ import { ErrorState, LoadingState } from '@components/screen-state'
 import { PANEL_NOTICE, PanelPage } from '@components/panel-page'
 
 import { Button } from '@components/button'
+import { EmptyServices } from './components/empty-services'
 import { ServiceCards } from './components/service-cards'
 import type { ServicesScreenProps } from './types'
 import { ServicesTable } from './components/services-table'
@@ -23,20 +24,30 @@ import { VerifiedUserIcon } from '@assets/icons'
  * descrição vão para a vitrine pública.
  */
 export const ServicesScreen = (props: ServicesScreenProps) => {
-  const { data, businessName, sensitive, onNew, onEdit } = props
+  const { data, businessName, categoryName, sensitive, onNew, onEdit } = props
 
   const services = data.status === 'ready' ? data.services.toSorted(byActiveThenName) : []
   const unassigned = withoutProfessional(services).map(({ name }) => name)
+  // Sem serviço, o botão do cabeçalho some: o convite está no estado vazio (Figma 18b).
+  const empty = data.status === 'ready' && services.length === 0
 
   return (
     <PanelPage
       wide
       title="Serviços"
-      subtitle={data.status === 'ready' ? subtitleOf(services, businessName) : businessName}
+      subtitle={
+        empty
+          ? [businessName, categoryName].filter(Boolean).join(' · ')
+          : data.status === 'ready'
+            ? subtitleOf(services, businessName)
+            : businessName
+      }
       actions={
-        <Button className="shrink-0" onClick={onNew}>
-          Novo serviço
-        </Button>
+        empty ? undefined : (
+          <Button className="shrink-0" onClick={onNew}>
+            Novo serviço
+          </Button>
+        )
       }
     >
       {sensitive && (
@@ -58,14 +69,7 @@ export const ServicesScreen = (props: ServicesScreenProps) => {
       ) : data.status === 'error' ? (
         <ErrorState message={data.message} onRetry={data.onRetry} />
       ) : services.length === 0 ? (
-        <div className="flex flex-col items-start gap-(--space-8)">
-          <p role="status" className="type-body text-(--text-muted)">
-            Nenhum serviço cadastrado. Sem serviço ativo, ninguém consegue agendar.
-          </p>
-          <Button variant="secondary" onClick={onNew}>
-            Cadastrar o primeiro serviço
-          </Button>
-        </div>
+        <EmptyServices onNew={onNew} />
       ) : (
         <>
           <div className="lg:hidden">
