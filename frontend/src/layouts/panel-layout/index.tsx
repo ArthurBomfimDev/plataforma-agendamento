@@ -18,7 +18,7 @@ import {
   usePanelPending,
   usePanelProfessionals,
   usePanelServices,
-  usePanelWorkSchedules,
+  usePanelWorkScheduleMap,
 } from '@api/services/panel/hooks'
 
 import { AccountMenu } from '@components/account-menu'
@@ -31,22 +31,37 @@ import { DESKTOP_QUERY } from '@hooks/use-media-query/consts'
 import type { PanelBottomItem } from '@components/bottom-navigation/types'
 import { BottomNavigation } from '@components/bottom-navigation'
 import { PANEL_NAVIGATION_ITEMS } from '@components/bottom-navigation/consts'
+import { PageTransition } from '@components/page-transition'
 import { PendingBadge } from '@components/pending-badge'
 import type { PanelSection } from '@components/panel-sidebar/types'
 import { PanelSidebar } from '@components/panel-sidebar'
 import type { PendingRequestsData } from '@pages/panel/requests/screen/types'
 import { dateKeyIn, instantIn } from '@utils/time-zone'
 import { errorMessage } from '@api/base'
+import { prefetchPanelPages } from '@router/panel-pages'
 import { panelAccess } from './guard'
 import { performPanelAction } from './actions'
 import { toPendingRequest } from '@pages/panel/adapters'
 import { notify } from '@components/toaster/notify'
 import { useAccountMenu } from '@hooks/use-account-menu'
 import { useMediaQuery } from '@hooks/use-media-query'
-import { Suspense, useState } from 'react'
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+} from 'react'
 import { useSessionStore } from '@store/session'
 
 const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests']
+
+// Referências fixas para o que ainda não chegou: um `[]` novo a cada render desfaria o `useMemo` do contexto.
+const NO_PROFESSIONALS: PanelContext['professionals'] = []
+const NO_PENDING: PanelContext['pendingItems'] = []
+const NO_SECTIONS: ReadonlyArray<PanelSection> = []
 
 /**
  * Moldura do painel do estabelecimento: navegação lateral no desktop, inferior no celular, e a
@@ -114,79 +129,118 @@ const PanelShell = ({
   const [counterError, setCounterError] = useState<string>()
 
   const professionals = usePanelProfessionals(businessId)
-  const professionalIds = (professionals.data ?? []).map(({ id }) => id)
-  const scheduleQueries = usePanelWorkSchedules(businessId, professionalIds)
-  const schedules = new Map(
-    professionalIds.flatMap((id, index) => {
-      const data = scheduleQueries[index]?.data
-      return data ? [[id, data] as const] : []
-    }),
-  )
+  const professionalList = professionals.data ?? NO_PROFESSIONALS
+  const professionalIds = useMemo(() => professionalList.map(({ id }) => id), [professionalList])
+  const schedules = usePanelWorkScheduleMap(businessId, professionalIds)
   const pending = usePanelPending(businessId)
   const services = usePanelServices(businessId, counter.open)
   const action = usePanelAction(businessId)
   const counterBooking = useCounterBooking(businessId)
 
-  const nameOf = (id: string) =>
-    professionals.data?.find((professional) => professional.id === id)?.displayName ?? null
-
-  const pendingItems = pending.data?.items ?? []
-  const pendingData: PendingRequestsData = pending.isError
-    ? {
+  const { refetch: refetchPending } = pending
+  const pendingItems = pending.data?.items ?? NO_PENDING
+  const pendingData = useMemo<PendingRequestsData>(() => {
+    if (pending.isError) {
+      return {
         status: 'error',
         message: errorMessage(pending.error),
-        onRetry: () => void pending.refetch(),
+        onRetry: () => void refetchPending(),
       }
-    : pending.data
-      ? {
-          status: 'ready',
-          requests: pendingItems.map((appointment) =>
-            toPendingRequest(appointment, {
-              timeZone: business.timeZone,
-              professionalName: nameOf,
-              schedules,
-            }),
-          ),
-        }
-      : { status: 'loading' }
+    }
+    if (!pending.data) return { status: 'loading' }
+    const nameOf = (id: string) =>
+      professionalList.find((professional) => professional.id === id)?.displayName ?? null
+    return {
+      status: 'ready',
+      requests: pendingItems.map((appointment) =>
+        toPendingRequest(appointment, {
+          timeZone: business.timeZone,
+          professionalName: nameOf,
+          schedules,
+        }),
+      ),
+    }
+  }, [
+    pending.data,
+    pending.isError,
+    pending.error,
+    refetchPending,
+    pendingItems,
+    professionalList,
+    schedules,
+    business.timeZone,
+  ])
   const pendingCount = pending.data?.totalCount ?? 0
 
-  const hidden = canManageBusiness(context.role) ? [] : OWNER_ONLY_SECTIONS
-  const section = panelSectionOf(pathname)
+  const hidden = canManageBusiness(context.role) ? NO_SECTIONS : OWNER_ONLY_SECTIONS
+  // `section` otimista: o item do menu acende no toque, antes de a tela nova (e seu chunk) chegar.
+  const [section, setOptimisticSection] = useOptimistic(panelSectionOf(pathname))
+  const [, startTransition] = useTransition()
   const activeSection = section === 'more' ? null : section
   const activeItem = BOTTOM_ITEMS.find((item) => item === section) ?? 'more'
 
-  const navigateTo = (target: PanelSection | PanelBottomItem) => {
-    if (target !== 'more' && hidden.includes(target)) {
-      notify.info('Só o dono do estabelecimento altera esta seção.')
-      return
-    }
-    navigate(PANEL_PATHS[target])
-  }
+  // Telas do painel baixam em segundo plano, para a primeira visita a cada seção não esperar a rede.
+  useEffect(() => prefetchPanelPages(), [])
 
-  const openCounterBooking = (slot?: CounterBookingSlot) => {
+  const navigateTo = useCallback(
+    (target: PanelSection | PanelBottomItem) => {
+      if (target !== 'more' && hidden.includes(target)) {
+        notify.info('Só o dono do estabelecimento altera esta seção.')
+        return
+      }
+      // Em transição, a tela atual fica até a nova estar pronta: sem trocar o conteúdo por um "Carregando…".
+      startTransition(() => {
+        setOptimisticSection(target)
+        navigate(PANEL_PATHS[target])
+      })
+    },
+    [hidden, navigate, setOptimisticSection],
+  )
+
+  const openCounterBooking = useCallback((slot?: CounterBookingSlot) => {
     setCounterError(undefined)
     setCounter({ open: true, slot })
-  }
+  }, [])
 
-  const runAction: PanelContext['runAction'] = (kind, appointmentId) =>
-    performPanelAction(() => action.mutateAsync({ action: kind, appointmentId }))
+  const { mutateAsync: mutateAction } = action
+  const runAction = useCallback<PanelContext['runAction']>(
+    (kind, appointmentId) =>
+      performPanelAction(() => mutateAction({ action: kind, appointmentId })),
+    [mutateAction],
+  )
 
-  const outlet: PanelContext = {
-    context,
-    business,
-    today,
-    date,
-    setDate,
-    professionals: professionals.data ?? [],
-    schedules,
-    pending: pendingData,
-    pendingItems,
-    pendingCount,
-    navigateTo,
-    openCounterBooking,
-    runAction,
-  }
+  // Estável entre renders: abrir a gaveta de balcão ou digitar nela não refaz a tela aberta.
+  const outlet = useMemo<PanelContext>(
+    () => ({
+      context,
+      business,
+      today,
+      date,
+      setDate,
+      professionals: professionalList,
+      schedules,
+      pending: pendingData,
+      pendingItems,
+      pendingCount,
+      navigateTo,
+      openCounterBooking,
+      runAction,
+    }),
+    [
+      context,
+      business,
+      today,
+      date,
+      professionalList,
+      schedules,
+      pendingData,
+      pendingItems,
+      pendingCount,
+      navigateTo,
+      openCounterBooking,
+      runAction,
+    ],
+  )
 
   const counterDate = counter.slot?.date ?? date
 
@@ -215,7 +269,9 @@ const PanelShell = ({
             </div>
           }
         >
-          <Outlet context={outlet} />
+          <PageTransition transitionKey={pathname}>
+            <Outlet context={outlet} />
+          </PageTransition>
         </Suspense>
       </div>
 

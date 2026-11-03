@@ -6,6 +6,8 @@ import type { BusinessContext } from '@store/session/types'
 import { businessService } from '../business'
 import { panelService } from '.'
 import { queryKeys } from '../query-keys'
+import type { WorkScheduleResponse } from '@api/models'
+import { useCallback } from 'react'
 import { useQueries } from '@tanstack/react-query'
 
 /** A agenda e os pedidos se atualizam sozinhos neste intervalo, sem recarregar a página. */
@@ -69,6 +71,31 @@ export const usePanelWorkSchedules = (businessId: string, professionalIds: strin
         (await panelService.workSchedules(professionalId, signal)).items,
     })),
   })
+
+/**
+ * Jornadas por profissional, já num `Map` de referência estável: só muda quando algum dado chega. O painel entrega o
+ * `Map` às telas pelo contexto, então um `Map` novo a cada render refaria todas elas.
+ */
+export const usePanelWorkScheduleMap = (businessId: string, professionalIds: string[]) => {
+  const combine = useCallback(
+    (results: Array<{ data: WorkScheduleResponse[] | undefined }>) =>
+      new Map(
+        professionalIds.flatMap((id, index) => {
+          const data = results[index]?.data
+          return data ? [[id, data] as const] : []
+        }),
+      ),
+    [professionalIds],
+  )
+  return useQueries({
+    queries: professionalIds.map((professionalId) => ({
+      queryKey: queryKeys.panelSchedules(businessId, professionalId),
+      queryFn: async ({ signal }: { signal: AbortSignal }) =>
+        (await panelService.workSchedules(professionalId, signal)).items,
+    })),
+    combine,
+  })
+}
 
 export const usePanelAgenda = (businessId: string, date: string) =>
   useService({

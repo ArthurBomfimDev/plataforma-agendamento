@@ -1,4 +1,5 @@
 import './styles/tokens.css'
+import './styles/motion.css'
 import './index.css'
 import 'react-toastify/dist/ReactToastify.css'
 import './styles/toast.css'

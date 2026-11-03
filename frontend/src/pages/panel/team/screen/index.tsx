@@ -6,6 +6,7 @@ import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { MemberDetail } from './components/member-detail'
 import { NewMemberSheet } from './components/new-member-sheet'
+import { PageTransition } from '@components/page-transition'
 import { PanelPage } from '@components/panel-page'
 import { TeamList } from './components/team-list'
 import { TeamMemberSheet } from './components/team-member-sheet'
@@ -90,16 +91,18 @@ export const TeamScreen = (props: TeamScreenProps) => {
             />
           </div>
           <div className={cn('min-w-0 lg:flex-1', !showDetail && 'hidden lg:block')}>
-            <MemberDetail
-              member={selected}
-              services={services}
-              busy={busyId === selected.id}
-              onBack={() => setShowDetail(false)}
-              onEdit={() => setEditing(selected)}
-              onOpenSchedules={onOpenSchedules}
-              onDeactivate={() => setDeactivating(selected)}
-              onActivate={() => void setActive(selected, true)}
-            />
+            <PageTransition transitionKey={selected.id}>
+              <MemberDetail
+                member={selected}
+                services={services}
+                busy={busyId === selected.id}
+                onBack={() => setShowDetail(false)}
+                onEdit={() => setEditing(selected)}
+                onOpenSchedules={onOpenSchedules}
+                onDeactivate={() => setDeactivating(selected)}
+                onActivate={() => void setActive(selected, true)}
+              />
+            </PageTransition>
           </div>
         </div>
       )}
