@@ -51,6 +51,7 @@ const ForgotPasswordRoute = lazyPage(
   'ForgotPasswordRoute',
 )
 const HomeRoute = lazyPage(() => import('@pages/customer/home'), 'HomeRoute')
+const InvitationRoute = lazyPage(() => import('@pages/auth/invitation'), 'InvitationRoute')
 const MyAccountRoute = lazyPage(() => import('@pages/account'), 'MyAccountRoute')
 const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
 const PanelLayout = lazyPage(() => import('@layouts/panel-layout'), 'PanelLayout')
@@ -99,6 +100,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.forgotPassword} element={<ForgotPasswordRoute />} />
         <Route path={ROUTES.confirmEmail} element={<ConfirmEmailRoute />} />
         <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
+        <Route path={ROUTES.invitation} element={<InvitationRoute />} />
         <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
         <Route path={ROUTES.account} element={<MyAccountRoute />} />
         <Route path={ROUTES.registerBusiness} element={<RegisterBusinessRoute />} />

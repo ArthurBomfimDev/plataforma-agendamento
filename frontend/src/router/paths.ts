@@ -54,6 +54,8 @@ export const ROUTES = {
   account: '/account',
   /** Cadastrar meu estabelecimento (ondas finais, Fase 3). `?retomar=1` volta ao rascunho que já existe. */
   registerBusiness: '/cadastrar-estabelecimento',
+  /** Link do e-mail de convite de equipe (ADR-029): `#/convite?token=`. Não mudar sem mudar o e-mail. */
+  invitation: '/convite',
   /** Administração da plataforma: estabelecimentos e denúncias. Só o Admin (guard na tela e no servidor). */
   adminBusinesses: '/admin/estabelecimentos',
   // Os dois caminhos abaixo estão no e-mail ao dono (Onda 5B, `AppointmentNotifier`) e só redirecionam
@@ -101,6 +103,10 @@ export const panelSectionOf = (pathname: string): PanelSection | 'more' => {
 
 /** Só o dono gere o estabelecimento (matriz de permissões); o profissional opera a própria agenda. */
 export const canManageBusiness = (role: BusinessRole) => role === 'Owner'
+
+/** Dono e atendente operam a agenda de todos os profissionais (ADR-030); o profissional, só a própria. */
+export const canOperateWholeAgenda = (role: BusinessRole) =>
+  role === 'Owner' || role === 'Attendant'
 
 export const editServicePath = (serviceId: string) =>
   `${ROUTES.panelServices}/${encodeURIComponent(serviceId)}`
@@ -196,6 +202,10 @@ export const returnPathFor = (pathname: string, search = '') => {
 /** O assistente de cadastro. Com `resume`, continua o rascunho do estabelecimento atual em vez de começar outro. */
 export const registerBusinessPath = (resume = false) =>
   withSearch(ROUTES.registerBusiness, { retomar: resume ? '1' : null })
+
+/** O link do convite, com o token; serve de `redirect` depois de entrar. */
+export const invitationPath = (token: string) =>
+  withSearch(ROUTES.invitation, { [SEARCH_PARAMS.token]: token })
 
 export const signInPath = (redirect?: string) =>
   withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })

@@ -22,6 +22,22 @@ const MESSAGES: Record<string, string> = {
     'Confirme seu e-mail para entrar. Enviamos o link quando você criou a conta.',
   'user_token.invalid': 'Este link expirou ou já foi usado.',
   'auth.unauthenticated': 'Entre na sua conta para continuar.',
+  // Convites de equipe (ADR-029).
+  'invitation.not_found': 'Este convite não existe ou o link está incompleto.',
+  'invitation.expired': 'Este convite expirou. Peça ao estabelecimento para reenviar.',
+  'invitation.revoked': 'Este convite foi cancelado pelo estabelecimento.',
+  'invitation.already_used': 'Este convite já foi usado.',
+  'invitation.email_mismatch':
+    'Este convite é para outro e-mail. Entre com a conta do e-mail do convite.',
+  'invitation.account_exists': 'Já existe uma conta com este e-mail. Entre para aceitar o convite.',
+  'invitation.terms_required': 'Aceite o termo do profissional para continuar.',
+  'invitation.already_pending': 'Já existe um convite pendente para este e-mail.',
+  'invitation.already_member': 'Esta pessoa já faz parte da equipe.',
+  'invitation.role_invalid': 'Escolha se o convite é para profissional ou atendente.',
+  'invitation.professional_not_linkable':
+    'Este profissional não pode ser ligado a uma conta: já tem conta ou foi desativado.',
+  'business.seat_limit_reached':
+    'A equipe chegou ao limite de vagas. Revogue um convite ou remova alguém.',
   'user.email_already_registered': 'Já existe uma conta com este e-mail.',
   'user.password_invalid_length': 'A senha precisa ter entre 8 e 128 caracteres.',
   'user.current_password_invalid': 'A senha atual não confere.',
