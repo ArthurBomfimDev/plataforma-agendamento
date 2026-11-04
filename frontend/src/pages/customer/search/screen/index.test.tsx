@@ -30,6 +30,7 @@ const ready: SearchResultsScreenProps['results'] = {
       image: null,
       cover: null,
       service: { name: 'Corte masculino', durationMinutes: 30, fromPriceCents: 4500 },
+      rating: { average: 4.8, count: 12 },
     },
     {
       id: 'b2',
@@ -41,6 +42,7 @@ const ready: SearchResultsScreenProps['results'] = {
       image: null,
       cover: null,
       service: null,
+      rating: { average: null, count: 1 },
     },
   ],
 }
@@ -73,6 +75,23 @@ describe('SearchResultsScreen', () => {
     expect(page).toMatch(/aria-pressed="true"[^>]*>Até R\$ 100/)
     expect(page).toMatch(/aria-pressed="true"[^>]*>Menor preço/)
     expect(page).toMatch(/aria-pressed="false"[^>]*>Mais perto/)
+  })
+
+  it('ordenar por nota: "Melhor avaliados" existe e fica marcado quando a URL pede', () => {
+    const off = html()
+    const on = html({ filters: { ...EMPTY_SEARCH, sortBy: 'rating' } })
+
+    expect(off).toMatch(/aria-pressed="false"[^>]*>Melhor avaliados/)
+    expect(on).toMatch(/aria-pressed="true"[^>]*>Melhor avaliados/)
+    expect(on).toMatch(/aria-pressed="false"[^>]*>Mais perto/)
+  })
+
+  it('a nota aparece no card: média com contagem, e "Novo" quando ainda não há média', () => {
+    const page = html({ results: ready })
+
+    expect(page).toContain('4,8 (12)')
+    expect(page).toContain('Nota 4,8 de 5, 12 avaliações')
+    expect(page).toContain('Novo')
   })
 
   it('resultados: total, "a partir de" e o card inteiro abre o estabelecimento', () => {

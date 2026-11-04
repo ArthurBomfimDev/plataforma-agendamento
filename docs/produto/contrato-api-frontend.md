@@ -565,6 +565,20 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - **Limitações registradas:** o dono não responde; o consumidor não apaga a avaliação.
 - Migration `AddReputation` (não aplicada): `reputation.review` e `reputation.rating_summary`.
 
+### 4.17.2 Telas das avaliações (Fase 8, fatia 3 de 5) — **frontend escrito sem navegador, não verificado**
+
+- **Componentes novos:** `StarRatingInput` (grupo de opções `role="radiogroup"`, 5 estrelas de 44 px, setas trocam a nota),
+  `RatingLabel` ("★ 4,8 (12)" ou **"Novo"**), `ReviewsSection` (nota, distribuição e lista paginada, com carregando, erro,
+  vazio e sucesso) e `ReviewDrawer` (gaveta "Avaliar atendimento" / "Editar avaliação").
+- **Meus agendamentos:** concluído e dentro de 30 dias → **Avaliar atendimento**; já avaliado e ainda editável (edição única,
+  7 dias) → "Você avaliou: N de 5" e **Editar avaliação**. O formulário avisa que a avaliação é pública e, em Saúde, para não
+  escrever dado de saúde.
+- **Busca:** chip **Melhor avaliados** (`sort=rating` na URL); o cartão mostra a nota ou "Novo".
+- **Página do estabelecimento:** o cabeçalho mostra a nota ou "Novo"; a aba **Avaliações** traz a nota, a distribuição e a lista
+  paginada. **Página do profissional:** o espaço da nota passou a aparecer e há a seção "Avaliações de NOME".
+- O filtro `minRating` existe no backend e **não tem controle na tela** (cortado de propósito nesta rodada).
+- Erros traduzidos: `review.*` em `api/base/errors.ts`.
+
 ### 4.17.1 Busca por nota (Fase 8, fatia 2 de 5) — **escrito sem Docker, não verificado**
 
 | Parâmetro / campo | Detalhe |

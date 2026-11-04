@@ -25,6 +25,8 @@ export type SearchResultCardProps = {
   availability?: SearchResultAvailability | null
   /** O preço é o menor dos profissionais: o card escreve "a partir de". */
   priceFrom?: boolean
+  /** Nota do estabelecimento. `average` nula = "Novo". Ausente = o card não diz nada sobre nota. */
+  rating?: { average: number | null; count: number }
   onSelectSlot?: (slot: string) => void
   /** Abre o estabelecimento. A área de toque é o card inteiro, sem aninhar bloco em botão. */
   onOpen?: () => void

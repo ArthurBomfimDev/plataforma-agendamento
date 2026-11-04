@@ -14,6 +14,8 @@ export type SearchResult = {
   /** Para o card largo (sem serviço em destaque): a capa, ou o logotipo. */
   cover: ImageSet | null
   service: { name: string; durationMinutes: number; fromPriceCents: number } | null
+  /** `average` nula = "Novo" (menos de 3 avaliações). */
+  rating: { average: number | null; count: number }
 }
 
 export type SearchResultsState =

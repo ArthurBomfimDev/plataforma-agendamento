@@ -5,7 +5,9 @@ import { initials } from '@pages/panel/agenda/screen/consts'
 import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
 import { PageContainer } from '@components/page-container'
+import { RatingLabel } from '@components/rating-label'
 import { RequestProfileRemoval } from '@components/request-profile-removal'
+import { ReviewsSection } from '@components/reviews-section'
 import { ServiceIcon } from '@components/image-defaults/service-icon'
 import { SmartImage } from '@components/smart-image'
 import type { ProfessionalPageScreenProps } from './types'
@@ -17,7 +19,7 @@ import { mediaUrl } from '@api/services/media'
  * profissional ativo aparece (senão a rota responde 404). Em Saúde, o registro profissional aparece discreto, se informado.
  */
 export const ProfessionalPageScreen = (props: ProfessionalPageScreenProps) => {
-  const { data, onBook, onOpenBusiness, onRequestRemoval } = props
+  const { data, onBook, onOpenBusiness, onRequestRemoval, reviews } = props
 
   if (data.status === 'loading') return <LoadingScreen label="Carregando o perfil…" />
   if (data.status === 'error') return <ErrorScreen message={data.message} onRetry={data.onRetry} />
@@ -47,10 +49,10 @@ export const ProfessionalPageScreen = (props: ProfessionalPageScreenProps) => {
               </p>
             )}
             {professional.rating && (
-              <p className="type-caption text-(--text-body)">
-                Nota {professional.rating.average.toFixed(1).replace('.', ',')} ·{' '}
-                {professional.rating.count} avaliações
-              </p>
+              <RatingLabel
+                average={professional.rating.average}
+                count={professional.rating.count}
+              />
             )}
           </div>
         </header>
@@ -135,6 +137,14 @@ export const ProfessionalPageScreen = (props: ProfessionalPageScreenProps) => {
               </p>
             )}
           </section>
+        )}
+
+        {reviews && (
+          <ReviewsSection
+            title={`Avaliações de ${firstName}`}
+            summary={reviews.summary}
+            list={reviews.list}
+          />
         )}
 
         <section aria-labelledby="professional-business" className="flex flex-col gap-(--space-8)">

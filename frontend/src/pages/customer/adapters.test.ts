@@ -3,7 +3,7 @@ import { groupSlots, toCustomerAppointment } from './adapters'
 import { safeRedirect } from '@router/paths'
 import { readBookingSearch, readSentSearch } from './booking/booking-search'
 
-import type { AppointmentResponse } from '@api/models'
+import type { AppointmentResponse, MyReviewResponse, PublicBusinessResponse } from '@api/models'
 
 describe('groupSlots', () => {
   it('converte o instante UTC para o fuso do estabelecimento antes de agrupar', () => {
@@ -51,6 +51,92 @@ describe('toCustomerAppointment', () => {
     expect(toCustomerAppointment(appointment, undefined, 'America/Sao_Paulo').status).toBe(
       'cancelled',
     )
+  })
+
+  describe('avaliação (ADR-032)', () => {
+    const completed: AppointmentResponse = { ...appointment, status: 'Completed' }
+    const endsAt = new Date(completed.endsAt).getTime()
+    const day = 24 * 60 * 60 * 1000
+    const reviewOf = (appointmentId: string): MyReviewResponse => ({
+      id: 'r1',
+      appointmentId,
+      businessId: 'b1',
+      professionalId: 'p1',
+      rating: 5,
+      professionalRating: null,
+      comment: null,
+      serviceName: null,
+      reviewedAt: '2026-11-04T12:00:00Z',
+      editedAt: null,
+      canEdit: true,
+    })
+
+    it('concluído, sem avaliação e dentro de 30 dias é avaliável', () => {
+      const result = toCustomerAppointment(
+        completed,
+        undefined,
+        'America/Sao_Paulo',
+        null,
+        new Date(endsAt + day),
+      )
+
+      expect(result.reviewable).toBe(true)
+      expect(result.review).toBeNull()
+    })
+
+    it('a janela fecha 30 dias depois do fim do atendimento', () => {
+      const lastDay = toCustomerAppointment(
+        completed,
+        undefined,
+        'America/Sao_Paulo',
+        null,
+        new Date(endsAt + 30 * day),
+      )
+      const after = toCustomerAppointment(
+        completed,
+        undefined,
+        'America/Sao_Paulo',
+        null,
+        new Date(endsAt + 30 * day + 1),
+      )
+
+      expect(lastDay.reviewable).toBe(true)
+      expect(after.reviewable).toBe(false)
+    })
+
+    it('já avaliado deixa de ser avaliável e leva a avaliação junto', () => {
+      const review = reviewOf(completed.id)
+      const result = toCustomerAppointment(
+        completed,
+        undefined,
+        'America/Sao_Paulo',
+        review,
+        new Date(endsAt + day),
+      )
+
+      expect(result.reviewable).toBe(false)
+      expect(result.review).toBe(review)
+    })
+
+    it('só o concluído é avaliável', () => {
+      const confirmed = toCustomerAppointment(
+        { ...appointment, status: 'Confirmed' },
+        undefined,
+        'America/Sao_Paulo',
+        null,
+        new Date(endsAt + day),
+      )
+
+      expect(confirmed.reviewable).toBe(false)
+    })
+
+    it('em estabelecimento de Saúde marca o atendimento como sensível', () => {
+      const health = { category: 'Saude', address: {} } as PublicBusinessResponse
+      const beauty = { category: 'Beleza', address: {} } as PublicBusinessResponse
+
+      expect(toCustomerAppointment(completed, health, 'America/Sao_Paulo').sensitive).toBe(true)
+      expect(toCustomerAppointment(completed, beauty, 'America/Sao_Paulo').sensitive).toBe(false)
+    })
   })
 })
 

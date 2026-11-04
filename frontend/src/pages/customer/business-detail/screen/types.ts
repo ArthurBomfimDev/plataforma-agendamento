@@ -1,5 +1,6 @@
 import type { BusinessProfessional } from '@pages/customer/booking/choose-professional/screen/types'
 import type { ImageSet } from '@api/models'
+import type { ReviewsSectionProps } from '@components/reviews-section'
 import type { ServiceCardProps } from '@components/service-card/types'
 
 export type BusinessService = Pick<ServiceCardProps, 'name' | 'durationMinutes' | 'priceCents'> & {
@@ -13,6 +14,7 @@ export type BusinessDetail = {
   name: string
   /** Nota média, de 0 a 5. Ausente = ainda sem avaliações; a nota não aparece. */
   rating?: number
+  /** Presente = a nota foi lida: sem `rating` ela é "Novo". Ausente = ainda carregando; a tela não afirma nada. */
   reviewCount?: number
   verified?: boolean
   street: string
@@ -40,6 +42,8 @@ export type BusinessDetailScreenProps = {
   /** Equipe ativa (ADR-031): cada cartão leva à página do profissional. Ausente = a aba mostra "carregando". */
   professionals?: BusinessProfessional[]
   onOpenProfessional?: (professionalId: string) => void
+  /** Nota e lista de avaliações (ADR-032). Ausente = a aba mostra "Em breve". */
+  reviews?: Pick<ReviewsSectionProps, 'summary' | 'list'>
   /** "Denunciar este estabelecimento": `null` se enviou, senão a mensagem de erro. Sem a prop, o botão não aparece. */
   onReport?: (reason: string) => Promise<string | null>
 }

@@ -11,6 +11,7 @@ import { NotFoundScreen } from '@pages/not-found'
 import { addDays } from 'date-fns'
 import { chooseProfessionalPath, professionalPath } from '@router/paths'
 import { toBusinessDetail, toProfessional } from '../adapters'
+import { useBusinessReviewsState } from '../reviews-state'
 
 /** Quantos horários o card "Agendar agora" do desktop mostra, e em quantos dias procura. */
 const NEXT_SLOTS_SHOWN = 3
@@ -24,6 +25,7 @@ export const BusinessDetailRoute = () => {
   const services = useServices(businessId)
   const report = useReportBusiness()
   const professionals = useProfessionals(businessId)
+  const reviews = useBusinessReviewsState(businessId)
 
   // "Próximos horários livres" do desktop: o horário depende do serviço, então usa o primeiro
   // serviço e o primeiro profissional dele — é uma vitrine, a escolha de verdade vem depois.
@@ -66,7 +68,13 @@ export const BusinessDetailRoute = () => {
 
   return (
     <BusinessDetailScreen
-      business={toBusinessDetail(business.data, services.data)}
+      business={{
+        ...toBusinessDetail(business.data, services.data),
+        // Média só com 3 avaliações ou mais; antes disso a tela diz "Novo". Sem leitura da nota, não afirma nada.
+        rating: reviews.rating?.average ?? undefined,
+        reviewCount: reviews.rating?.count,
+      }}
+      reviews={{ summary: reviews.summary, list: reviews.list }}
       nextFreeSlots={nextFreeSlots}
       professionals={professionals.data?.map(toProfessional)}
       onOpenProfessional={(professionalId) => navigate(professionalPath(professionalId))}
