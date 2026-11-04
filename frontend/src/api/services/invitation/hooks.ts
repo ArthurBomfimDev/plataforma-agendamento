@@ -15,6 +15,32 @@ export const useInvitationPreview = (token: string | null) =>
     staleTime: Infinity,
   })
 
+/** Convites pendentes e vagas, do dono. Moram sob o painel: trocar de contexto não mistura estabelecimentos. */
+export const usePanelInvitations = (businessId: string, enabled: boolean) =>
+  useService({
+    queryKey: queryKeys.panelInvitations(businessId),
+    service: async (signal) => (await invitationService.list(signal)).items,
+    enabled,
+  })
+
+export const usePanelSeats = (businessId: string, enabled: boolean) =>
+  useService({
+    queryKey: queryKeys.panelSeats(businessId),
+    service: (signal) => invitationService.seats(signal),
+    enabled,
+  })
+
+/** Uma escrita nos convites: depois dela (também no erro), pendentes e vagas são buscados de novo. */
+export const useInvitationMutation = <TVariables, TResult>(
+  businessId: string,
+  service: (variables: TVariables) => Promise<TResult>,
+) =>
+  useServiceMutation({
+    service,
+    invalidates: [queryKeys.panelInvitations(businessId), queryKeys.panelSeats(businessId)],
+    invalidateOn: 'settled',
+  })
+
 export type AcceptInput =
   | {
       kind: 'new-account'

@@ -3,6 +3,13 @@
  * A prévia e o aceite com conta nova são anônimos; o aceite de quem já tem conta exige login.
  */
 export const invitationEndpoints = {
+  // Do dono, no contexto do estabelecimento.
+  list: '/api/businesses/current/invitations',
+  seats: '/api/businesses/current/seats',
+  one: (invitationId: string) =>
+    `/api/businesses/current/invitations/${encodeURIComponent(invitationId)}`,
+  resend: (invitationId: string) =>
+    `/api/businesses/current/invitations/${encodeURIComponent(invitationId)}/resend`,
   preview: '/api/invitations/preview',
   accept: '/api/invitations/accept',
   acceptNewAccount: '/api/invitations/accept-new-account',

@@ -22,7 +22,7 @@ import { useState } from 'react'
  * a apresentação exige a declaração do dono de que tem a autorização da pessoa; quem tem login controla os próprios dados.
  */
 export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
-  const { member, services, onOpenChange, onSave } = props
+  const { member, services, showRegistration = false, onOpenChange, onSave } = props
 
   const [draft, setDraft] = useState<TeamMemberDraft | null>(member && draftOf(member))
   const [lastId, setLastId] = useState(member?.id)
@@ -75,6 +75,7 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
               displayName: draft.displayName.trim(),
               specialty: optional(draft.specialty ?? ''),
               bio: optional(draft.bio ?? ''),
+              registration: optional(draft.registration ?? ''),
               authorizationDeclared: declarable && draft.authorizationDeclared,
             })
             setSaving(false)
@@ -102,6 +103,17 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
             value={draft.bio ?? ''}
             onChange={(event) => set({ bio: event.target.value })}
           />
+          {showRegistration && (
+            <TextField
+              id="team-member-registration"
+              label="Registro profissional (opcional)"
+              helper="Ex.: CRP 06/123456. Aparece na página pública."
+              autoComplete="off"
+              maxLength={40}
+              value={draft.registration ?? ''}
+              onChange={(event) => set({ registration: event.target.value })}
+            />
+          )}
           {declarable && (
             <div className="flex flex-col gap-(--space-4)">
               <Checkbox

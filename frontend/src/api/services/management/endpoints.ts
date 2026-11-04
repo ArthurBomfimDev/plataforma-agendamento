@@ -12,6 +12,8 @@ export const managementEndpoints = {
   serviceProfessional: (serviceId: string, professionalId: string) =>
     `${service(serviceId)}/professionals/${enc(professionalId)}`,
   professionals: `${PANEL_PATH}/professionals`,
+  /** O perfil de profissional da própria conta ("Meu perfil"). */
+  myProfile: `${PANEL_PATH}/professionals/me`,
   professional,
   professionalPhoto: (professionalId: string) => `${professional(professionalId)}/photo`,
   workSchedules: `${PANEL_PATH}/work-schedules`,

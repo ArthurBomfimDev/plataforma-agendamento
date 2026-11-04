@@ -18,6 +18,7 @@ export const draftOf = (member: TeamMember): TeamMemberDraft => ({
   bio: member.bio,
   isActive: member.isActive,
   authorizationDeclared: member.authorizationDeclared,
+  registration: member.registration,
   serviceIds: member.serviceIds,
 })
 
@@ -38,6 +39,16 @@ export const listCaption = (member: TeamMember, services: TeamService[]) => {
 
 export const workLabel = (member: TeamMember) =>
   member.workSummary ?? 'Sem jornada: não tem horário para agendar.'
+
+/** Validação de formato só para avisar antes de enviar; quem decide é o servidor (`email.invalid_format`). */
+export const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+
+/** "3 de 15 vagas ocupadas". Vaga ocupada = conta ativa + convite pendente. */
+export const seatsLabel = (seats: { used: number; limit: number }) =>
+  `${seats.used} de ${seats.limit} ${seats.limit === 1 ? 'vaga ocupada' : 'vagas ocupadas'}`
+
+export const seatsFull = (seats: { used: number; limit: number } | null) =>
+  seats !== null && seats.used >= seats.limit
 
 /** O texto do checkbox do dono (ADR-031). Mudou o texto, muda a versão em `Professional.AuthorizationDeclarationTextVersion`. */
 export const DECLARATION_TEXT =

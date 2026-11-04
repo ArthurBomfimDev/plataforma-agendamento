@@ -2,12 +2,35 @@ import type {
   AcceptInvitationNewAccountRequest,
   AcceptedInvitationResponse,
   InvitationPreviewResponse,
+  InvitationResponse,
+  InviteMemberRequest,
+  PagedResult,
+  SeatsResponse,
 } from '@api/models'
 import { authRequest, request } from '@api/base'
 
 import { invitationEndpoints } from './endpoints'
 
 export const invitationService = {
+  /** Pendentes do estabelecimento (só o dono). */
+  list: (signal?: AbortSignal) =>
+    authRequest<PagedResult<InvitationResponse>>({
+      url: invitationEndpoints.list,
+      params: { pageSize: 50 },
+      signal,
+    }),
+  seats: (signal?: AbortSignal) =>
+    authRequest<SeatsResponse>({ url: invitationEndpoints.seats, signal }),
+  invite: (data: InviteMemberRequest) =>
+    authRequest<InvitationResponse>({ method: 'POST', url: invitationEndpoints.list, data }),
+  /** Token novo e prazo novo: o link antigo deixa de valer. */
+  resend: (invitationId: string) =>
+    authRequest<InvitationResponse>({
+      method: 'POST',
+      url: invitationEndpoints.resend(invitationId),
+    }),
+  revoke: (invitationId: string) =>
+    authRequest<void>({ method: 'DELETE', url: invitationEndpoints.one(invitationId) }),
   preview: (token: string, signal?: AbortSignal) =>
     request<InvitationPreviewResponse>({
       method: 'POST',

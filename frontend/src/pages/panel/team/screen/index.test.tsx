@@ -3,11 +3,14 @@ import { describe, expect, it } from 'vitest'
 import {
   DECLARATION_TEXT,
   draftOf,
+  isValidEmail,
   listCaption,
   needsDeclaration,
   optional,
   publicBasisLabel,
   roleLabel,
+  seatsFull,
+  seatsLabel,
   servicesLabel,
   subtitleOf,
 } from './consts'
@@ -22,6 +25,7 @@ const member = (fields: Partial<TeamMember>): TeamMember => ({
   bio: null,
   isActive: true,
   authorizationDeclared: false,
+  registration: null,
   hasAccount: false,
   serviceIds: ['s1'],
   workSummary: null,
@@ -100,6 +104,101 @@ describe('TeamScreen', () => {
   })
 })
 
+const invite = {
+  id: 'i1',
+  name: 'Ana Souza',
+  email: 'ana@example.com',
+  roleLabel: 'Atendente',
+  validUntil: '11/11/2026',
+}
+
+describe('TeamScreen — convites (ADR-029)', () => {
+  it('sem a prop de convites, a tela não mostra a seção', () => {
+    expect(render()).not.toContain('Convites')
+  })
+
+  it('carregando: avisa que está carregando os convites', () => {
+    const html = render({ invites: { status: 'loading' } })
+
+    expect(html).toContain('Convites')
+    expect(html).toContain('Carregando os convites')
+  })
+
+  it('erro: mostra a mensagem e "Tentar de novo"', () => {
+    const html = render({
+      invites: {
+        status: 'error',
+        message: 'Sem conexão com o servidor.',
+        onRetry: () => undefined,
+      },
+    })
+
+    expect(html).toContain('Sem conexão com o servidor.')
+    expect(html).toContain('Tentar de novo')
+  })
+
+  it('vazio: explica o convite e deixa convidar', () => {
+    const html = render({
+      invites: { status: 'ready', invites: [], seats: { used: 2, limit: 15 } },
+    })
+
+    expect(html).toContain('Nenhum convite pendente')
+    expect(html).toContain('2 de 15 vagas ocupadas')
+    expect(html).toMatch(/<button[^>]*>Convidar<\/button>/)
+    expect(html).not.toContain('A equipe está completa')
+  })
+
+  it('sucesso: lista o pendente com o papel, o e-mail, a validade e as ações', () => {
+    const html = render({
+      invites: { status: 'ready', invites: [invite], seats: { used: 3, limit: 15 } },
+    })
+
+    expect(html).toContain('Ana Souza · Atendente')
+    expect(html).toContain('ana@example.com · vale até 11/11/2026')
+    expect(html).toContain('Reenviar')
+    expect(html).toContain('Revogar')
+    expect(html).toContain('3 de 15 vagas ocupadas')
+  })
+
+  it('equipe completa: desliga o convite e explica', () => {
+    const html = render({
+      invites: { status: 'ready', invites: [invite], seats: { used: 15, limit: 15 } },
+    })
+
+    expect(html).toContain('A equipe está completa')
+    expect(html).toMatch(/<button[^>]*disabled[^>]*>Convidar<\/button>/)
+  })
+
+  it('as vagas que ainda não chegaram não escondem a lista', () => {
+    const html = render({ invites: { status: 'ready', invites: [invite], seats: null } })
+
+    expect(html).toContain('Ana Souza · Atendente')
+    expect(html).not.toContain('vagas ocupadas')
+  })
+})
+
+describe('convites e registro: regras da tela', () => {
+  it('valida o e-mail só no formato, quem decide é o servidor', () => {
+    expect(isValidEmail('ana@example.com')).toBe(true)
+    expect(isValidEmail(' ana@example.com ')).toBe(true)
+    expect(isValidEmail('ana@example')).toBe(false)
+    expect(isValidEmail('ana example.com')).toBe(false)
+    expect(isValidEmail('')).toBe(false)
+  })
+
+  it('conta as vagas no singular e no plural e sabe quando está cheio', () => {
+    expect(seatsLabel({ used: 1, limit: 1 })).toBe('1 de 1 vaga ocupada')
+    expect(seatsLabel({ used: 3, limit: 15 })).toBe('3 de 15 vagas ocupadas')
+    expect(seatsFull({ used: 15, limit: 15 })).toBe(true)
+    expect(seatsFull({ used: 14, limit: 15 })).toBe(false)
+    expect(seatsFull(null)).toBe(false)
+  })
+
+  it('o rascunho de edição leva o registro profissional', () => {
+    expect(draftOf(member({ registration: 'CRP 06/123456' })).registration).toBe('CRP 06/123456')
+  })
+})
+
 describe('equipe do painel', () => {
   it('resume a linha da lista e o subtítulo', () => {
     expect(listCaption(member({ serviceIds: ['s1', 's2'] }), services)).toBe(
@@ -150,6 +249,7 @@ describe('equipe do painel', () => {
       bio: null,
       isActive: true,
       authorizationDeclared: true,
+      registration: null,
       serviceIds: ['s1'],
     })
     expect(optional('   ')).toBeNull()
