@@ -18,7 +18,7 @@ public static class SearchText
     private static readonly string[][] _groups =
     [
         ["BARBEIRO", "BARBEARIA", "BARBA", "CORTE MASCULINO"],
-        ["MANICURE", "PEDICURE", "UNHA", "ESMALTERIA"],
+        ["MANICURE", "PEDICURE", "UNHA", "ESMALTERIA", "PE E MAO"],
         ["MASSAGISTA", "MASSAGEM", "MASSOTERAPIA", "MASSOTERAPEUTA"],
         ["PERSONAL", "TREINO", "TREINAMENTO", "PERSONAL TRAINER"],
         ["PSICOLOGO", "PSICOLOGA", "PSICOLOGIA", "PSICOTERAPIA"],

@@ -58,6 +58,10 @@ public sealed class SearchTextTests
     [InlineData("manicuri", "Manicure e pedicure")]
     [InlineData("manicure", "Esmalteria Rosa")]
     [InlineData("unha", "Manicure")]
+    [InlineData("unhas", "Pé e mão")] // serviço do seed; a regressão do dicionário antigo
+    [InlineData("hidratacao", "Hidratação")]
+    [InlineData("saude", "Saúde")]
+    [InlineData("cabelo", "Corte masculino")]
     [InlineData("massagista", "Massagem relaxante")]
     [InlineData("massagem", "Massoterapia")]
     [InlineData("psicologa", "Psicólogo Silva")]
