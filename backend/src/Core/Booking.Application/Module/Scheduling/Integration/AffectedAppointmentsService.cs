@@ -13,8 +13,8 @@ using Booking.Domain.Interface.Repository.Module.Scheduling;
 namespace Booking.Application.Module.Scheduling.Integration;
 
 /// <summary>
-/// Implementa <see cref="IAffectedAppointments"/> com as regras do próprio Scheduling: só o proprietário resolve o
-/// bloqueio, e o cancelamento passa pela máquina de estados do agendamento (grava <c>AppointmentEvent</c>).
+/// Implementa <see cref="IAffectedAppointments"/> com as regras do próprio Scheduling: só o proprietário e o atendente
+/// resolvem o bloqueio, e o cancelamento passa pela máquina de estados do agendamento (grava <c>AppointmentEvent</c>).
 /// </summary>
 public sealed class AffectedAppointmentsService(
     IAppointmentRepository appointments,
@@ -30,7 +30,7 @@ public sealed class AffectedAppointmentsService(
     public async Task<PagedResult<AffectedAppointment>> ListAsync(
         Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc, PageRequest page, CancellationToken ct = default)
     {
-        actor.RequireOwner();
+        actor.RequireAgendaOperator();
 
         PagedResult<Appointment> result = await appointments.ListActiveInRangeAsync(professionalId, fromUtc, toUtc, page, ct);
 
@@ -51,7 +51,7 @@ public sealed class AffectedAppointmentsService(
     public async Task<int> StageCancellationAsync(
         Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc, string reason, CancellationToken ct = default)
     {
-        actor.RequireOwner();
+        actor.RequireAgendaOperator();
 
         IReadOnlyList<Appointment> affected =
             await appointments.ListActiveInRangeForUpdateAsync(professionalId, fromUtc, toUtc, MaxCancelledAtOnce + 1, ct);

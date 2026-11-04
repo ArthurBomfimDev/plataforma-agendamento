@@ -6,6 +6,7 @@ public static class ActorContextExtensions
 {
     public const string OwnerRole = "Owner";
     public const string ProfessionalRole = "Professional";
+    public const string AttendantRole = "Attendant";
 
     public static Guid RequireUserId(this IActorContext actor) =>
         actor.UserId ?? throw new DomainException("auth.unauthenticated");
@@ -27,6 +28,26 @@ public static class ActorContextExtensions
     }
 
     public static bool IsOwner(this IActorContext actor) => actor.BusinessRole == OwnerRole;
+
+    /// <summary>
+    /// Opera a agenda e os pedidos de <b>todos</b> os profissionais: o dono e o atendente. O profissional só opera os
+    /// próprios. Serviços, equipe, jornadas, fotos, convites e configurações continuam só do dono (<see cref="RequireOwner"/>).
+    /// </summary>
+    public static bool OperatesWholeAgenda(this IActorContext actor) =>
+        actor.BusinessRole is OwnerRole or AttendantRole;
+
+    /// <summary>Exige contexto de estabelecimento com papel de dono ou de atendente.</summary>
+    public static Guid RequireAgendaOperator(this IActorContext actor)
+    {
+        Guid businessId = actor.RequireBusinessId();
+
+        if (!actor.OperatesWholeAgenda())
+        {
+            throw new DomainException("auth.forbidden");
+        }
+
+        return businessId;
+    }
 
     /// <summary>
     /// Segunda trava do Admin: a policy <c>PlatformAdmin</c> já barra no controller; o comando confere de novo,

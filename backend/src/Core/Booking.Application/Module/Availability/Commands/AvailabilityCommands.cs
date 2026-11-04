@@ -13,7 +13,10 @@ using Booking.Domain.ValueObject;
 
 namespace Booking.Application.Module.Availability.Commands;
 
-/// <summary>Jornada, bloqueios e férias: só o proprietário edita (matriz de permissões).</summary>
+/// <summary>
+/// Jornada: só o proprietário edita (matriz de permissões). Bloqueios e férias: o proprietário e o atendente, de todos
+/// os profissionais.
+/// </summary>
 public sealed class AddWorkScheduleCommand(
     IWorkScheduleRepository schedules,
     IPeopleDirectory people,
@@ -103,7 +106,7 @@ public sealed class AddScheduleExceptionCommand(
 {
     public async Task<ScheduleExceptionResponse> ExecuteAsync(AddScheduleExceptionRequest r, CancellationToken ct = default)
     {
-        Guid businessId = actor.RequireOwner();
+        Guid businessId = actor.RequireAgendaOperator();
 
         if (!System.Enum.TryParse(r.Kind, ignoreCase: true, out ScheduleExceptionKind kind))
         {
@@ -153,7 +156,7 @@ public sealed class RemoveScheduleExceptionCommand(IScheduleExceptionRepository 
 {
     public async Task ExecuteAsync(Guid exceptionId, CancellationToken ct = default)
     {
-        actor.RequireOwner();
+        actor.RequireAgendaOperator();
 
         ScheduleException exception = await exceptions.GetByIdAsync(exceptionId, ct)
             ?? throw new DomainException("schedule_exception.not_found");
