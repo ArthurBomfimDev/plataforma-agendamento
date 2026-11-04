@@ -105,6 +105,10 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
             .Select(b =>
             {
                 ServiceHighlight? h = highlights.GetValueOrDefault(b.Id);
+
+                // Em Saúde o serviço diz a condição da pessoa: o resultado público mostra o estabelecimento e o "a partir de",
+                // nunca qual serviço casou (LGPD, Art. 11). O termo ainda filtra, mas o nome do serviço não volta.
+                ServiceHighlight? shown = b.Category.RequiresSensitiveHandling() ? null : h;
                 return new BusinessSearchItemResponse(
                     b.Id,
                     b.Name,
@@ -113,9 +117,9 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
                     b.District,
                     b.City,
                     Math.Round(DistanceKm(center, b.Location!), 2),
-                    h?.ServiceId,
-                    h?.Name,
-                    h?.DurationMinutes,
+                    shown?.ServiceId,
+                    shown?.Name,
+                    shown?.DurationMinutes,
                     h?.FromPriceCents,
                     images.For(b.LogoImageKey),
                     images.For(b.CoverImageKey));

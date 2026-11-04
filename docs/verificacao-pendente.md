@@ -50,7 +50,17 @@ Esperado: tudo verde. **Se algum teste de integração novo falhar, é o primeir
 | 9 | `dono.duartina@example.com` entra | abre o painel direto; "Meu painel" aparece no menu quando está como consumidor |
 | 10 | Painel no celular, tela **Mais** | linha "Tema escuro" com o botão de 44 px |
 
-### Fechamento da casca mobile (este PR)
+### Busca tolerante (Fase 6, bloco 1)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `dotnet test Booking.slnx` — testes H7 e H8 de busca (contra PostgreSQL) | verdes; se algum quebrar, é o ajuste do radical |
+| 2 | Na busca (Garça, raio de cidade): "barbeiro", "barbearia", "barba" | mesmas barbearias nos três |
+| 3 | "manicuri", "unha", "massagista", "psicologa" | acham manicure, unha, massagem e psicologia, se houver no seed (o seed ainda não tem todos) |
+| 4 | "advogado" | estado vazio |
+| 5 | Resultado de um estabelecimento de **Saúde** | cartão do estabelecimento, sem nome de serviço e sem duração |
+
+### Fechamento da casca mobile (#34)
 
 | # | Passo | Esperado |
 |---|---|---|
