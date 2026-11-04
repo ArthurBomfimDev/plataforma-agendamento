@@ -9,8 +9,8 @@ using Booking.Domain.Interface.Repository.Module.Scheduling;
 namespace Booking.Application.Module.Scheduling.Commands;
 
 /// <summary>
-/// Regras de acesso do lado do estabelecimento (matriz de permissões): o proprietário opera a agenda toda;
-/// o profissional, só a própria. Leitura de agendamento sensível sempre deixa registro (LGPD, Art. 11).
+/// Regras de acesso do lado do estabelecimento (matriz de permissões): o proprietário e o atendente operam a agenda
+/// toda; o profissional, só a própria. Leitura de agendamento sensível sempre deixa registro (LGPD, Art. 11).
 /// </summary>
 public sealed class AppointmentAccess(
     IAppointmentRepository appointments,
@@ -20,12 +20,12 @@ public sealed class AppointmentAccess(
     IActorContext actor,
     TimeProvider clock)
 {
-    /// <summary>Nulo para o proprietário (vê todos); o id do próprio profissional, para o papel Professional.</summary>
+    /// <summary>Nulo para o proprietário e o atendente (veem todos); o id do próprio profissional, para o papel Professional.</summary>
     public async Task<Guid?> RestrictToProfessionalAsync(CancellationToken ct)
     {
         Guid businessId = actor.RequireBusinessId();
 
-        if (actor.IsOwner())
+        if (actor.OperatesWholeAgenda())
         {
             return null;
         }

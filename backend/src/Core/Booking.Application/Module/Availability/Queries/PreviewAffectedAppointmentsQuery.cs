@@ -15,7 +15,7 @@ public sealed class PreviewAffectedAppointmentsQuery(IAffectedAppointments affec
     public async Task<PagedResult<AffectedAppointmentResponse>> ExecuteAsync(
         Guid? professionalId, DateTimeOffset startsAt, DateTimeOffset endsAt, PageRequest page, CancellationToken ct = default)
     {
-        actor.RequireOwner();
+        actor.RequireAgendaOperator();
         TimeRange period = TimeRange.Of(startsAt, endsAt);
 
         PagedResult<AffectedAppointment> result = await affected.ListAsync(professionalId, period.Start, period.End, page, ct);

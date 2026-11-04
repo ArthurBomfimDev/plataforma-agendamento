@@ -456,6 +456,25 @@ Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca 
 - **E-mail** pelo outbox, link `#/convite?token=`. O texto cita o estabelecimento e o papel, nunca categoria nem serviço.
 - **Migration `AddBusinessInvitation`** (não aplicada): tabela `tenancy.business_invitation` e `seat_limit` 1 → 15.
 
+## 4.12 Papel Atendente (Fase 4, bloco 2, 04/11) — **backend escrito sem Docker, não verificado**
+
+Regra: ADR-030. O token de contexto passa a levar `ctx: "Attendant"` (o `switch-context` devolve `role: "Attendant"`).
+
+| Rota (todas em `/api/businesses/current/…`) | Dono | Atendente | Profissional |
+|---|---|---|---|
+| `appointments` (agenda do dia), `appointments/pending`, `confirm`, `reject`, `cancel`, `complete`, `no-show`, `counter` | todos | **todos** | só os próprios |
+| `schedule-exceptions` (bloqueios, férias), `schedule-exceptions/affected-appointments` | sim | **sim**, de todos | **403** (por ora) |
+| `professionals` e `services` (GET), `work-schedules` (GET), `schedule-exceptions` (GET) | sim | sim | sim |
+| `work-schedules` (POST/PUT/DELETE), `services` (POST/PUT e vínculo com profissional), `professionals` (POST/PUT) | sim | **403** | 403 |
+| `professionals/{id}/photo` | sim | **403** | só a própria |
+| `GET current`, `checklist`, `scheduling-policy`, `address`, `location`, `logo`, `cover`, `submit`, `publish`, `terms`, `responsible` | sim | **403** | 403 |
+| `invitations`, `seats` | sim | **403** | 403 |
+| `/api/admin/*` | 403 | 403 | 403 |
+
+- O atendente **não** agenda como consumidor no contexto do painel (`appointment.customer_context_required`, 403).
+- **Para o frontend:** o painel do atendente não pode chamar `GET current` nem `checklist` (403). Para o nome do
+  estabelecimento use `GET /api/users/me`.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
