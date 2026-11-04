@@ -43,6 +43,10 @@ export const ROUTES = {
   panelSchedules: '/panel/schedules',
   panelPhotos: '/panel/photos',
   panelSettings: '/panel/settings',
+  /** Folgas e bloqueios de atendente (todos os profissionais) e de profissional (os próprios). */
+  panelBlocks: '/panel/blocks',
+  /** "Meu perfil" do profissional com conta: bio, foto e registro. */
+  panelProfile: '/panel/profile',
   /** "Mais", no celular: as seções que não cabem nas abas, e a conta. */
   panelMore: '/panel/more',
   /**
@@ -73,6 +77,8 @@ export const PANEL_PATHS: Record<PanelSection | PanelBottomItem, string> = {
   schedules: ROUTES.panelSchedules,
   photos: ROUTES.panelPhotos,
   settings: ROUTES.panelSettings,
+  blocks: ROUTES.panelBlocks,
+  profile: ROUTES.panelProfile,
   // No celular, "Mais" lista as outras seções e leva à conta (trocar de contexto e sair).
   more: ROUTES.panelMore,
 }
@@ -88,6 +94,17 @@ export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
   'photos',
   'settings',
 ]
+
+/**
+ * O que cada papel não vê no menu. O dono não tem "Folgas e bloqueios" (está em Jornadas) nem "Meu perfil"; o atendente
+ * não gere o estabelecimento nem tem perfil; o profissional não gere, mas tem folgas próprias e perfil.
+ */
+export const hiddenSectionsFor = (role: BusinessRole): ReadonlyArray<PanelSection> =>
+  role === 'Owner'
+    ? ['blocks', 'profile']
+    : role === 'Attendant'
+      ? [...OWNER_ONLY_SECTIONS, 'profile']
+      : OWNER_ONLY_SECTIONS
 
 /**
  * Seção do menu de um endereço do painel. Subpáginas contam como a seção ("Novo serviço" é Serviços);

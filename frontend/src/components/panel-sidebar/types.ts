@@ -3,7 +3,16 @@ import type { ReactNode } from 'react'
 
 /** Seções do painel do estabelecimento. O celular mostra só parte delas; o resto fica em "Mais". */
 export type PanelSection =
-  'agenda' | 'requests' | 'services' | 'professionals' | 'schedules' | 'photos' | 'settings'
+  | 'agenda'
+  | 'requests'
+  | 'services'
+  | 'professionals'
+  | 'schedules'
+  | 'photos'
+  | 'settings'
+  // Do atendente e do profissional (ADR-030): o dono tem as jornadas; o profissional, o próprio perfil.
+  | 'blocks'
+  | 'profile'
 
 export type PanelSidebarProps = {
   businessName: string
