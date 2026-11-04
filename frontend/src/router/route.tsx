@@ -11,6 +11,14 @@ import { ROUTES } from './paths'
 import { RequireOwner } from './guards/require-owner'
 
 // Moldura do consumidor e 404 vão no chunk inicial (são a porta de entrada); o painel inteiro e cada página, não.
+const AdminBusinessesRoute = lazyPage(
+  () => import('@pages/admin/businesses'),
+  'AdminBusinessesRoute',
+)
+const RegisterBusinessRoute = lazyPage(
+  () => import('@pages/onboarding/register'),
+  'RegisterBusinessRoute',
+)
 const AppointmentsRoute = lazyPage(
   () => import('@pages/customer/appointments'),
   'AppointmentsRoute',
@@ -93,6 +101,8 @@ export const AppRoutes = () => {
         <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
         <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
         <Route path={ROUTES.account} element={<MyAccountRoute />} />
+        <Route path={ROUTES.registerBusiness} element={<RegisterBusinessRoute />} />
+        <Route path={ROUTES.adminBusinesses} element={<AdminBusinessesRoute />} />
         <Route
           path={ROUTES.emailPanelRequests}
           element={<Navigate to={ROUTES.panelRequests} replace />}

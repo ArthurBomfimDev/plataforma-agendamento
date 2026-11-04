@@ -52,6 +52,10 @@ export const ROUTES = {
   chooseContext: '/context',
   /** Minha conta (Onda 7CF): nome, e-mail, trocar a senha, sair. */
   account: '/account',
+  /** Cadastrar meu estabelecimento (ondas finais, Fase 3). `?retomar=1` volta ao rascunho que já existe. */
+  registerBusiness: '/cadastrar-estabelecimento',
+  /** Administração da plataforma: estabelecimentos e denúncias. Só o Admin (guard na tela e no servidor). */
+  adminBusinesses: '/admin/estabelecimentos',
   // Os dois caminhos abaixo estão no e-mail ao dono (Onda 5B, `AppointmentNotifier`) e só redirecionam
   // para as rotas do painel: não mudar sem mudar o e-mail.
   emailPanelRequests: '/painel/pedidos',
@@ -188,6 +192,10 @@ export const returnPathFor = (pathname: string, search = '') => {
   const entry: string[] = [ROUTES.home, ROUTES.signIn, ROUTES.signUp, ROUTES.checkEmail]
   return entry.includes(pathname) ? undefined : safeRedirect(here) === null ? undefined : here
 }
+
+/** O assistente de cadastro. Com `resume`, continua o rascunho do estabelecimento atual em vez de começar outro. */
+export const registerBusinessPath = (resume = false) =>
+  withSearch(ROUTES.registerBusiness, { retomar: resume ? '1' : null })
 
 export const signInPath = (redirect?: string) =>
   withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })

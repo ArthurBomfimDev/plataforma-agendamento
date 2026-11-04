@@ -51,6 +51,16 @@ export const MyAccountScreen = (props: MyAccountScreenProps) => {
               Meu painel
             </Button>
           )}
+          {props.onRegisterBusiness && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={props.onRegisterBusiness}
+            >
+              Cadastrar meu estabelecimento
+            </Button>
+          )}
           {onSwitchContext && (
             <Button variant="secondary" size="lg" className="w-full" onClick={onSwitchContext}>
               Trocar de contexto

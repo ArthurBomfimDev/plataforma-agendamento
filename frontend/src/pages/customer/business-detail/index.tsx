@@ -2,6 +2,7 @@ import { ErrorScreen, LoadingScreen } from '@components/screen-state'
 import { errorMessage, isNotFound } from '@api/base'
 import { keyFromDay, timeIn, todayIn } from '@utils/time-zone'
 import { useAvailabilityCalendars, useDaySlots } from '@api/services/availability/hooks'
+import { useReportBusiness } from '@api/services/onboarding/hooks'
 import { useBusiness, useServices } from '@api/services/business/hooks'
 import { useNavigate, useParams } from 'react-router'
 
@@ -21,6 +22,7 @@ export const BusinessDetailRoute = () => {
 
   const business = useBusiness(businessId)
   const services = useServices(businessId)
+  const report = useReportBusiness()
 
   // "Próximos horários livres" do desktop: o horário depende do serviço, então usa o primeiro
   // serviço e o primeiro profissional dele — é uma vitrine, a escolha de verdade vem depois.
@@ -66,6 +68,14 @@ export const BusinessDetailRoute = () => {
       business={toBusinessDetail(business.data, services.data)}
       nextFreeSlots={nextFreeSlots}
       onBookService={(serviceId) => navigate(chooseProfessionalPath(businessId, serviceId))}
+      onReport={async (reason) => {
+        try {
+          await report.mutateAsync({ businessId, reason })
+          return null
+        } catch (error) {
+          return errorMessage(error)
+        }
+      }}
     />
   )
 }

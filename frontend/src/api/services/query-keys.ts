@@ -23,6 +23,14 @@ export const queryKeys = {
   appointments: ['appointments'] as const,
   myAppointments: ['appointments', 'mine'] as const,
   me: ['me'] as const,
+  // Cadastro do estabelecimento. A visão do dono mora sob o painel (trocar de contexto não mistura); o Admin, sob `admin`.
+  ownerBusiness: (businessId: string) => ['panel', businessId, 'owner'] as const,
+  ownerChecklist: (businessId: string) => ['panel', businessId, 'owner', 'checklist'] as const,
+  admin: ['admin'] as const,
+  adminBusinesses: (status: string, category: string | null) =>
+    ['admin', 'businesses', status, category] as const,
+  adminBusiness: (businessId: string) => ['admin', 'business', businessId] as const,
+  adminReports: (status: string) => ['admin', 'reports', status] as const,
   // O painel inteiro mora sob `['panel', businessId]`: trocar de contexto não mistura estabelecimentos.
   allPanels: ['panel'] as const,
   panel: (businessId: string) => ['panel', businessId] as const,

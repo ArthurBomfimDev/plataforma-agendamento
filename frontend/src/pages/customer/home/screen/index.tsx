@@ -1,4 +1,4 @@
-import { NAVIGATION_PATHS, businessPath, searchPath } from '@router/paths'
+import { NAVIGATION_PATHS, businessPath, registerBusinessPath, searchPath } from '@router/paths'
 
 import { HOME_CATEGORIES } from './consts'
 
@@ -147,6 +147,21 @@ export const HomeScreen = (props: HomeScreenProps) => {
                 ))}
               </ul>
             )}
+          </section>
+
+          <section
+            aria-labelledby="home-business"
+            className="flex flex-col items-start gap-(--space-8) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-16)"
+          >
+            <h2 id="home-business" className="type-heading text-(--text-strong)">
+              Tem um negócio?
+            </h2>
+            <p className="type-body text-(--text-muted)">
+              Cadastre seu estabelecimento e receba agendamentos pela Vagoo.
+            </p>
+            <Button variant="secondary" onClick={() => navigate(registerBusinessPath())}>
+              Tenho um negócio
+            </Button>
           </section>
         </main>
       </PageContainer>

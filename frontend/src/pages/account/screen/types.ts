@@ -13,4 +13,6 @@ export type MyAccountScreenProps = {
   onSwitchContext?: () => void
   /** A conta é dona ou profissional de algum estabelecimento e está no contexto de consumidor: "Meu painel". */
   onOpenPanel?: () => void
+  /** "Cadastrar meu estabelecimento" (Fase 3). */
+  onRegisterBusiness?: () => void
 }

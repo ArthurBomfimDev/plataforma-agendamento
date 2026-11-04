@@ -2,7 +2,8 @@ import { useBusinessContext, useMe, useSignOut, useSwitchContext } from '@api/se
 
 import type { AccountMenuProps } from '@components/account-menu/types'
 import type { CurrentUserResponse } from '@api/models'
-import { ROUTES } from '@router/paths'
+import { ROUTES, registerBusinessPath } from '@router/paths'
+import { hasPlatformAdminRole } from '@utils/jwt'
 import { notify } from '@components/toaster/notify'
 import { useNavigate } from 'react-router'
 import { useSessionStore } from '@store/session'
@@ -86,6 +87,7 @@ export const useContextSwitch = () => {
 /** Props do `AccountMenu`, ou `null` sem sessão. */
 export const useAccountMenu = (): AccountMenuProps | null => {
   const signedIn = useSessionStore((state) => state.session !== null)
+  const accessToken = useSessionStore((state) => state.session?.accessToken ?? null)
   const navigate = useNavigate()
   const { me, context, choose, leave } = useContextSwitch()
   if (!signedIn) return null
@@ -102,6 +104,11 @@ export const useAccountMenu = (): AccountMenuProps | null => {
       : undefined
   return {
     onOpenPanel,
+    onRegisterBusiness: () => navigate(registerBusinessPath()),
+    // Só aparece para o Admin; o servidor recusa com 403 quem não for (a leitura do token aqui é só conveniência).
+    onOpenAdmin: hasPlatformAdminRole(accessToken)
+      ? () => navigate(ROUTES.adminBusinesses)
+      : undefined,
     currentLabel: accountTriggerLabel(me.data, currentBusinessId, context?.businessName ?? null),
     items: me.data ? contextItems(me.data, currentBusinessId) : [],
     onSelect: choose,

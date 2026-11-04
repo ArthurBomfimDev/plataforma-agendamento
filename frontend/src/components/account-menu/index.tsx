@@ -21,6 +21,8 @@ export const AccountMenu = (props: AccountMenuProps) => {
     onSelect,
     onAccount,
     onOpenPanel,
+    onRegisterBusiness,
+    onOpenAdmin,
     onSignOut,
     align = 'end',
     side = 'bottom',
@@ -71,6 +73,16 @@ export const AccountMenu = (props: AccountMenuProps) => {
               {onOpenPanel && (
                 <Menu.Item className={ITEM} onClick={onOpenPanel}>
                   Meu painel
+                </Menu.Item>
+              )}
+              {onRegisterBusiness && (
+                <Menu.Item className={ITEM} onClick={onRegisterBusiness}>
+                  Cadastrar meu estabelecimento
+                </Menu.Item>
+              )}
+              {onOpenAdmin && (
+                <Menu.Item className={ITEM} onClick={onOpenAdmin}>
+                  Administração
                 </Menu.Item>
               )}
               {onAccount && (
