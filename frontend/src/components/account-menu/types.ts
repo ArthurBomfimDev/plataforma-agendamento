@@ -9,6 +9,8 @@ export type AccountMenuProps = {
   onSelect: (id: string) => void
   /** "Minha conta" (7CF): nome, e-mail, senha. */
   onAccount?: () => void
+  /** "Meu painel": só para quem tem estabelecimento e está como consumidor. */
+  onOpenPanel?: () => void
   onSignOut: () => void
   /** Lado do botão em que o menu abre. Padrão: `end`. */
   align?: 'start' | 'end'
