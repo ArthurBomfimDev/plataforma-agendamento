@@ -7,6 +7,7 @@ import type {
   ChecklistItemResponse,
   ConfirmLocationRequest,
   OwnerBusinessResponse,
+  PagedResult,
   RegisterBusinessRequest,
   SetResponsibleRequest,
   UpdateAddressRequest,
@@ -28,7 +29,11 @@ export const onboardingService = {
   current: (signal?: AbortSignal) =>
     authRequest<OwnerBusinessResponse>({ url: onboardingEndpoints.current, signal }),
   checklist: (signal?: AbortSignal) =>
-    authRequest<ChecklistItemResponse[]>({ url: onboardingEndpoints.checklist, signal }),
+    // O servidor devolve uma página só (ADR-010, decisão 4); a tela quer a lista.
+    authRequest<PagedResult<ChecklistItemResponse>>({
+      url: onboardingEndpoints.checklist,
+      signal,
+    }).then((page) => page.items),
   updateAddress: (data: UpdateAddressRequest) =>
     authRequest<OwnerBusinessResponse>({ method: 'PUT', url: onboardingEndpoints.address, data }),
   confirmLocation: (data: ConfirmLocationRequest) =>

@@ -8,4 +8,10 @@ public static class RateLimits
 
     /// <summary>Denunciar na página pública: 5 por hora por IP (a rota é anônima).</summary>
     public const string Report = "report";
+
+    /// <summary>Enviar ou reenviar convite de equipe: 30 por hora por conta.</summary>
+    public const string InvitationSend = "invitation-send";
+
+    /// <summary>Prévia e aceite do convite, rotas do link: 20 por hora por IP.</summary>
+    public const string InvitationLink = "invitation-link";
 }

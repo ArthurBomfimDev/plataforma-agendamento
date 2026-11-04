@@ -52,6 +52,15 @@ builder.Services.AddRateLimiter(limiter =>
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
 
+    // Convites (Fase 4): o dono envia no máximo 30 por hora (e-mail custa e abre porta para spam); as rotas públicas do
+    // link (prévia e aceite) são por IP, 20 por hora, porque o aceite cria conta com senha.
+    limiter.AddPolicy(RateLimits.InvitationSend, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromHours(1) }));
+    limiter.AddPolicy(RateLimits.InvitationLink, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+
     // Trocar a senha (Onda 7CF): quem tem um token roubado não pode testar senhas atuais à vontade. 5 por 15 minutos
     // por conta, que é o que importa aqui (o IP muda; a conta, não).
     limiter.AddPolicy("password", context => RateLimitPartition.GetFixedWindowLimiter(

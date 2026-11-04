@@ -45,6 +45,33 @@ public sealed class BusinessMembership : BaseEntity, IAuditable, ITenantScoped
         };
     }
 
+    /// <summary>Convite aceito: o vínculo nasce já ativo, no papel convidado.</summary>
+    public static BusinessMembership CreateAccepted(Guid businessId, Guid userId, BusinessMembershipRole role, DateTimeOffset now)
+    {
+        BusinessMembership membership = Invite(businessId, userId, role);
+        membership.Accept(now);
+        return membership;
+    }
+
+    /// <summary>Quem saiu ou foi removido volta por um novo convite, no papel convidado. O histórico do vínculo é reaproveitado.</summary>
+    public void Rejoin(BusinessMembershipRole role, DateTimeOffset now)
+    {
+        if (Status != BusinessMembershipStatus.Removed)
+        {
+            throw new DomainException("business_membership.cannot_rejoin_from_current_status");
+        }
+
+        if (role == BusinessMembershipRole.Owner)
+        {
+            throw new DomainException("business_membership.cannot_invite_as_owner");
+        }
+
+        Role = role;
+        Status = BusinessMembershipStatus.Active;
+        AcceptedAt = now;
+        RemovedAt = null;
+    }
+
     public void Accept(DateTimeOffset now)
     {
         if (Status != BusinessMembershipStatus.Invited)

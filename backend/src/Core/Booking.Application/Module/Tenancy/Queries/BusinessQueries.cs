@@ -21,12 +21,17 @@ public sealed class GetCurrentBusinessQuery(CurrentBusinessLoader loader, IImage
 
 /// <summary>
 /// O que falta para enviar ou publicar, para o painel do dono mostrar a checklist e a faixa de status. Só o Owner lê;
-/// é a mesma checklist que o servidor confere em <c>submit</c> e <c>publish</c>.
+/// é a mesma checklist que o servidor confere em <c>submit</c> e <c>publish</c>. Devolve uma página só com todos os
+/// itens (a lista é pequena e fixa): a regra de paginação da ADR-010 vale para toda consulta, sem exceção.
 /// </summary>
 public sealed class GetCurrentChecklistQuery(CurrentBusinessLoader loader, ActivationChecklist checklist)
 {
-    public async Task<IReadOnlyList<ChecklistItemResponse>> ExecuteAsync(CancellationToken ct = default) =>
-        await checklist.EvaluateAsync(await loader.LoadForOwnerAsync(ct), ct);
+    public async Task<PagedResult<ChecklistItemResponse>> ExecuteAsync(CancellationToken ct = default)
+    {
+        IReadOnlyList<ChecklistItemResponse> items = await checklist.EvaluateAsync(await loader.LoadForOwnerAsync(ct), ct);
+
+        return new PagedResult<ChecklistItemResponse>(items, 1, Math.Max(items.Count, 1), items.Count);
+    }
 }
 
 /// <summary>Vitrine: só estabelecimento ativo aparece para o público.</summary>

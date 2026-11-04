@@ -133,6 +133,30 @@ Escrito sem navegador: só teste de componente com API simulada. **Visual, 390 p
 | 19 | Página pública de um estabelecimento ativo (sem login): **Denunciar este estabelecimento** → motivo com menos de 5 caracteres | erro no campo; com motivo válido, "Recebemos a sua denúncia…". Abrir o mesmo formulário 6 vezes seguidas do mesmo IP: a 6ª mostra o erro de limite (429) |
 | 20 | Admin → aba **Denúncias** (depois de `POST .../reports` pelo curl) | denúncia aberta (anônima ou "conta identificada"); **Resolver denúncia** a move para "Resolvidas" |
 
+### Convite de equipe, backend (Fase 4, bloco 1 — migration `AddBusinessInvitation`)
+
+Escrito sem Docker. Pilha isolada (seção 0), seed rodado. Conta do dono: `dono.duartina@example.com`.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | A migration sobe com a pilha. No `psql`: `SELECT column_name FROM information_schema.columns WHERE table_schema='tenancy' AND table_name='business_invitation' ORDER BY ordinal_position;` | id, business_id, email, invitee_name, role, professional_id, invited_by_user_id, token_hash, expires_at, last_sent_at, accepted_at, accepted_user_id, revoked_at, terms_version, terms_accepted_at, created_at, updated_at |
+| 2 | `SELECT DISTINCT seat_limit FROM tenancy.business;` | só `15` (o 1 antigo virou 15) |
+| 3 | `dotnet test Booking.slnx --filter FullyQualifiedName~InvitationTests` (I1 a I5, escritos sem Docker) | verdes. Se I1 falhar, olhar primeiro o link do e-mail (`#/convite?token=`) |
+| 4 | Como dono: `POST /api/businesses/current/invitations` `{ "name":"Teste", "email":"teste@example.com", "role":"Attendant" }` | 201 com `state: "Pending"`; no Mailpit (`http://localhost:8095`) chega o e-mail "Convite para a equipe de …" com o botão "Ver o convite" |
+| 5 | `SELECT token_hash FROM tenancy.business_invitation;` | só o hash (64 caracteres hexadecimais); o token do link **não** aparece na tabela |
+| 6 | `GET /api/businesses/current/seats` | `used` conta o dono + o convite pendente; `limit: 15` |
+| 7 | Repetir o passo 4 com o mesmo e-mail | 409 `invitation.already_pending` |
+| 8 | `POST /api/invitations/preview` `{ "token":"<do e-mail>" }`, sem token de login | 200 com `businessName`, `email`, `role`, `accountExists: false` |
+| 9 | `POST /api/invitations/accept-new-account` com o token, nome e senha de 8+ caracteres | 200 `{ businessId, businessName, role: "Attendant" }`. `SELECT email_confirmed_at FROM identity."user" WHERE email='teste@example.com';` não é nulo |
+| 10 | Repetir o passo 9 com o mesmo token | 409 `invitation.already_used` |
+| 11 | Convidar de novo, **reenviar** (`POST …/{id}/resend`) e abrir o link do **primeiro** e-mail | 404 `invitation.not_found` (o link velho morreu); o do segundo e-mail funciona |
+| 12 | Convidar e **revogar** (`DELETE …/{id}`); abrir o link | 410 `invitation.revoked` |
+| 13 | Entrar com a conta do atendente criado e `GET /api/businesses/current/invitations` | 403 (só o dono) |
+| 14 | Dono de **outro** estabelecimento: `DELETE …/invitations/{id}` de um convite deste | 404 |
+| 15 | Convite de `Professional`, aceitar **sem** `acceptTerms` | 400 `invitation.terms_required`; nada é criado. Com `acceptTerms: true` o `SELECT terms_version, terms_accepted_at FROM tenancy.business_invitation;` mostra a versão `profissional-2026-11-rascunho` e a data |
+| 16 | Aceitar logado com uma conta de **outro** e-mail (`POST /api/invitations/accept`) | 403 `invitation.email_mismatch` |
+| 17 | Enviar 31 convites em uma hora, ou abrir a prévia 21 vezes do mesmo IP | 429 |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |

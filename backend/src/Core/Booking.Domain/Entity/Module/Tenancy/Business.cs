@@ -12,6 +12,9 @@ public sealed class Business : AggregateRoot, IAuditable
     /// <summary>Freio contra abuso: estabelecimentos que uma conta pode ter como dona.</summary>
     public const int MaxPerAccount = 3;
 
+    /// <summary>Vagas da equipe (contas Active + Invited, inclusive o dono). Só o Admin altera.</summary>
+    public const int DefaultSeatLimit = 15;
+
     public string Name { get; private set; } = null!;
     public Document Document { get; private set; } = null!;
     public BusinessCategory Category { get; private set; }
@@ -83,7 +86,7 @@ public sealed class Business : AggregateRoot, IAuditable
             Category = category,
             Status = BusinessStatus.Draft,
             VerificationLevel = VerificationLevel.Unverified,
-            SeatLimit = 1,
+            SeatLimit = DefaultSeatLimit,
         };
     }
 
