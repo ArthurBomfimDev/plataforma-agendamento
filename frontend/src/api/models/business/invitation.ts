@@ -16,6 +16,31 @@ export type InvitationPreviewResponse = {
   termsRequired: boolean
 }
 
+/** `Pending` é o único estado que a lista do dono devolve (expirado, aceito e revogado saem dela). */
+export type InvitationState = 'Pending' | 'Accepted' | 'Revoked' | 'Expired'
+
+/** `POST /api/businesses/current/invitations` (só o dono). `professionalId`: liga o convite a um perfil já cadastrado. */
+export type InviteMemberRequest = {
+  name: string
+  email: string
+  role: InvitationRole
+  professionalId?: string | null
+}
+
+export type InvitationResponse = {
+  id: string
+  name: string
+  email: string
+  role: InvitationRole
+  professionalId: string | null
+  state: InvitationState
+  expiresAt: string
+  lastSentAt: string
+}
+
+/** Vagas da equipe: contas ativas + convites pendentes contra o limite do estabelecimento. */
+export type SeatsResponse = { used: number; limit: number }
+
 export type AcceptInvitationNewAccountRequest = {
   token: string
   fullName: string

@@ -9,6 +9,8 @@ export type TeamMember = {
   isActive: boolean
   /** O dono já declarou ter a autorização desta pessoa para exibir os dados dela (só vale sem login). */
   authorizationDeclared: boolean
+  /** Registro profissional (Saúde), exibido na página pública. */
+  registration: string | null
   /** Tem login (vínculo com uma conta). Sem login, o dono cadastrou e opera por ele. */
   hasAccount: boolean
   serviceIds: string[]
@@ -33,6 +35,7 @@ export type TeamMemberDraft = {
   isActive: boolean
   /** O checkbox "Declaro ter autorização desta pessoa para exibir estes dados publicamente." */
   authorizationDeclared: boolean
+  registration: string | null
   serviceIds: string[]
 }
 
@@ -44,7 +47,40 @@ export type NewTeamMemberDraft = {
   isMe: boolean
 }
 
+/** Um convite pendente na lista do dono. */
+export type PendingInvite = {
+  id: string
+  name: string
+  email: string
+  /** `Profissional` ou `Atendente`. */
+  roleLabel: string
+  /** "dd/MM/aaaa": quando o link deixa de valer. */
+  validUntil: string
+}
+
+export type InviteDraft = {
+  name: string
+  email: string
+  role: 'Professional' | 'Attendant'
+  /** Perfil de profissional já cadastrado a ligar à conta; nulo: o perfil é criado quando a pessoa aceita. */
+  professionalId: string | null
+}
+
+/** Convites pendentes e vagas da equipe (ADR-029). `seats` nulo: as vagas ainda não chegaram. */
+export type InvitesData =
+  | { status: 'loading' }
+  | { status: 'error'; message: string; onRetry: () => void }
+  | { status: 'ready'; invites: PendingInvite[]; seats: { used: number; limit: number } | null }
+
 export type TeamScreenProps = {
+  /** Mostra o campo "Registro profissional": só em estabelecimento de Saúde. */
+  showRegistration?: boolean
+  /** Ausente: a tela não mostra convites (só o dono tem esta seção; o servidor recusa o resto com 403). */
+  invites?: InvitesData
+  /** Gravam na API. Resolvem `null` se deu certo, senão a mensagem de erro, já em português. */
+  onInvite?: (draft: InviteDraft) => Promise<string | null>
+  onResendInvite?: (inviteId: string) => Promise<string | null>
+  onRevokeInvite?: (inviteId: string) => Promise<string | null>
   data: TeamData
   businessName: string
   /** Abre a tela de jornadas e bloqueios. */

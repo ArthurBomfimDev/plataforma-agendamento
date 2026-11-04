@@ -500,6 +500,21 @@ Decisão e justificativa: ADR-031. **Quebra de contrato** (o frontend desta bran
   `authorization_declaration_version` e `registration`. **Efeito de dados:** depois dela, todo profissional ativo, com ou sem
   consentimento antigo, passa a aparecer completo na vitrine.
 
+## 4.14 Telas da equipe (Fase 4, 04/11) — **frontend escrito sem navegador, não verificado**
+
+Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já documentam:
+
+| Tela | Rota do frontend | Quem | API |
+|---|---|---|---|
+| Convidar, pendentes, reenviar, revogar, vagas | seção **Convites** em `#/panel/professionals` | Owner | `invitations`, `invitations/{id}/resend`, `DELETE invitations/{id}`, `seats` |
+| Folgas e bloqueios | `#/panel/blocks` | Attendant (todos e estabelecimento inteiro) e Professional (só os próprios) | `schedule-exceptions`, `…/affected-appointments` |
+| Meu perfil | `#/panel/profile` | Professional | `professionals/me` (GET/PUT) e `professionals/{id}/photo` |
+| Registro profissional | Editar (dono) e Meu perfil, só em Saúde | Owner e Professional | campo `registration` |
+
+- O menu esconde por papel (`hiddenSectionsFor`): o dono não vê "Folgas e bloqueios" (tem Jornadas) nem "Meu perfil".
+- O profissional descobre o próprio id por `professionals/me` e filtra a lista de bloqueios por ele no cliente; o servidor
+  recusa o resto com 403.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

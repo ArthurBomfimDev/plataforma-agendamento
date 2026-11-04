@@ -1,4 +1,6 @@
 import {
+  BlockIcon,
+  PersonIcon,
   CalendarMonthIcon,
   EventUpcomingIcon,
   GroupIcon,
@@ -23,6 +25,9 @@ export const SECTIONS = [
   { id: 'schedules', label: 'Jornadas e bloqueios', icon: EventUpcomingIcon },
   { id: 'photos', label: 'Fotos', icon: ImageIcon },
   { id: 'settings', label: 'Configurações', icon: SettingsIcon },
+  // Só atendente e profissional (o dono tem "Jornadas e bloqueios"); "Meu perfil" é só do profissional.
+  { id: 'blocks', label: 'Folgas e bloqueios', icon: BlockIcon },
+  { id: 'profile', label: 'Meu perfil', icon: PersonIcon },
 ] as const satisfies ReadonlyArray<{
   id: PanelSection
   label: string

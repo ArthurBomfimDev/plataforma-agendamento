@@ -5,6 +5,8 @@ import { byActiveThenName, subtitleOf } from './consts'
 import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { MemberDetail } from './components/member-detail'
+import { InviteSheet } from './components/invite-sheet'
+import { InvitesCard } from './components/invites-card'
 import { NewMemberSheet } from './components/new-member-sheet'
 import { PageTransition } from '@components/page-transition'
 import { PanelPage } from '@components/panel-page'
@@ -26,7 +28,9 @@ import { useState } from 'react'
  */
 export const TeamScreen = (props: TeamScreenProps) => {
   const { data, businessName, onCreate, onSave, onOpenSchedules } = props
+  const { invites, onInvite, onResendInvite, onRevokeInvite, showRegistration = false } = props
 
+  const [inviting, setInviting] = useState(false)
   const [selectedId, setSelectedId] = useState<string>()
   const [showDetail, setShowDetail] = useState(false)
   const [editing, setEditing] = useState<TeamMember | null>(null)
@@ -49,6 +53,7 @@ export const TeamScreen = (props: TeamScreenProps) => {
         isActive,
         // Desativado sai da vitrine na hora. A declaração já registrada não se refaz ao ativar ou desativar.
         authorizationDeclared: false,
+        registration: member.registration,
         serviceIds: member.serviceIds,
       })
       if (failure) notify.error(failure)
@@ -107,9 +112,32 @@ export const TeamScreen = (props: TeamScreenProps) => {
         </div>
       )}
 
+      {invites && data.status === 'ready' && (
+        <InvitesCard
+          data={invites}
+          onInvite={() => setInviting(true)}
+          onResend={async (id) => (await onResendInvite?.(id)) ?? null}
+          onRevoke={async (id) => (await onRevokeInvite?.(id)) ?? null}
+        />
+      )}
+
+      <InviteSheet
+        open={inviting}
+        onOpenChange={setInviting}
+        linkable={members
+          .filter((member) => member.isActive && !member.hasAccount)
+          .map(({ id, displayName }) => ({ id, name: displayName }))}
+        onInvite={async (draft) => {
+          const error = (await onInvite?.(draft)) ?? null
+          if (!error) setInviting(false)
+          return error
+        }}
+      />
+
       <TeamMemberSheet
         member={editing}
         services={services}
+        showRegistration={showRegistration}
         onOpenChange={(open) => !open && setEditing(null)}
         onSave={async (draft) => {
           if (!editing) return 'Escolha um profissional.'

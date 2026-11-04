@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { OWNER_ONLY_SECTIONS } from '@router/paths'
+import type { PanelSection } from '@components/panel-sidebar/types'
+import { hiddenSectionsFor } from '@router/paths'
 import { PanelMoreScreen } from '.'
 import { renderToString } from 'react-dom/server'
 
-const render = (hidden: typeof OWNER_ONLY_SECTIONS = []) =>
+const render = (hidden: ReadonlyArray<PanelSection> = hiddenSectionsFor('Owner')) =>
   renderToString(
     <PanelMoreScreen
       businessName="Estúdio Duartina"
@@ -33,13 +34,23 @@ describe('PanelMoreScreen', () => {
     expect(html).not.toContain('Relatórios')
   })
 
-  it('para o profissional, a conta e o tema', () => {
-    const html = render(OWNER_ONLY_SECTIONS)
+  it('para o profissional, as folgas, o perfil, a conta e o tema', () => {
+    const html = render(hiddenSectionsFor('Professional'))
 
+    expect(html).toContain('Folgas e bloqueios')
+    expect(html).toContain('Meu perfil')
     expect(html).toContain('Conta: trocar de contexto ou sair')
     expect(html).toContain('aria-label="Tema escuro"')
-    // Nenhuma seção de gestão para o profissional: só a conta e o botão do tema.
-    expect(html.match(/<button/g)).toHaveLength(2)
+    // Nenhuma seção de gestão para o profissional: folgas, perfil, conta e o botão do tema.
+    expect(html.match(/<button/g)).toHaveLength(4)
+  })
+
+  it('para o atendente, as folgas, a conta e o tema (sem perfil)', () => {
+    const html = render(hiddenSectionsFor('Attendant'))
+
+    expect(html).toContain('Folgas e bloqueios')
+    expect(html).not.toContain('Meu perfil')
+    expect(html.match(/<button/g)).toHaveLength(3)
   })
 
   it('oferece o alternar tema no celular, onde o painel não tem barra superior', () => {

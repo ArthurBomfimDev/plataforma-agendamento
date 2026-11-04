@@ -1,4 +1,4 @@
-import { OWNER_ONLY_SECTIONS, ROUTES, canManageBusiness } from '@router/paths'
+import { ROUTES, hiddenSectionsFor } from '@router/paths'
 
 import { PanelMoreScreen } from './screen'
 import { useNavigate } from 'react-router'
@@ -12,7 +12,7 @@ export const PanelMoreRoute = () => {
   return (
     <PanelMoreScreen
       businessName={business.name}
-      hiddenSections={canManageBusiness(context.role) ? [] : OWNER_ONLY_SECTIONS}
+      hiddenSections={hiddenSectionsFor(context.role)}
       onNavigate={navigateTo}
       onAccount={() => navigate(ROUTES.chooseContext)}
     />

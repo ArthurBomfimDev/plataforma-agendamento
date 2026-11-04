@@ -1,9 +1,8 @@
 import {
   type ChooseContextState,
-  OWNER_ONLY_SECTIONS,
   PANEL_PATHS,
   ROUTES,
-  canManageBusiness,
+  hiddenSectionsFor,
   panelSectionOf,
   signInPath,
 } from '@router/paths'
@@ -62,7 +61,6 @@ const BOTTOM_ITEMS: ReadonlyArray<PanelBottomItem> = ['agenda', 'requests']
 // Referências fixas para o que ainda não chegou: um `[]` novo a cada render desfaria o `useMemo` do contexto.
 const NO_PROFESSIONALS: PanelContext['professionals'] = []
 const NO_PENDING: PanelContext['pendingItems'] = []
-const NO_SECTIONS: ReadonlyArray<PanelSection> = []
 
 /**
  * Moldura do painel do estabelecimento: navegação lateral no desktop, inferior no celular, e a
@@ -173,7 +171,7 @@ const PanelShell = ({
   ])
   const pendingCount = pending.data?.totalCount ?? 0
 
-  const hidden = canManageBusiness(context.role) ? NO_SECTIONS : OWNER_ONLY_SECTIONS
+  const hidden = hiddenSectionsFor(context.role)
   // `section` otimista: o item do menu acende no toque, antes de a tela nova (e seu chunk) chegar.
   const [section, setOptimisticSection] = useOptimistic(panelSectionOf(pathname))
   const [, startTransition] = useTransition()

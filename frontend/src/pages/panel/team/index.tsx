@@ -1,4 +1,18 @@
-import type { NewTeamMemberDraft, TeamData, TeamMember, TeamMemberDraft } from './screen/types'
+import type {
+  InviteDraft,
+  InvitesData,
+  NewTeamMemberDraft,
+  TeamData,
+  TeamMember,
+  TeamMemberDraft,
+} from './screen/types'
+import {
+  useInvitationMutation,
+  usePanelInvitations,
+  usePanelSeats,
+} from '@api/services/invitation/hooks'
+import { invitationService } from '@api/services/invitation'
+import { toPendingInvite } from '../manage-adapters'
 import { professionalChanges, toTeamMember } from '../manage-adapters'
 import { usePanelMutation, usePanelServices, usePanelTeam } from '@api/services/panel/hooks'
 
@@ -31,6 +45,7 @@ export const PanelTeamRoute = () => {
         specialty: draft.specialty,
         bio: draft.bio,
         isActive: draft.isActive,
+        registration: draft.registration,
         authorizationDeclared: draft.authorizationDeclared,
       })
       if (draft.isActive) {
@@ -47,6 +62,41 @@ export const PanelTeamRoute = () => {
       return saved
     },
   )
+
+  const pending = usePanelInvitations(context.businessId, true)
+  const seats = usePanelSeats(context.businessId, true)
+  const invite = useInvitationMutation(context.businessId, (draft: InviteDraft) =>
+    invitationService.invite(draft),
+  )
+  const resend = useInvitationMutation(context.businessId, (id: string) =>
+    invitationService.resend(id),
+  )
+  const revoke = useInvitationMutation(context.businessId, (id: string) =>
+    invitationService.revoke(id),
+  )
+  const attempt = async (task: () => Promise<unknown>) => {
+    try {
+      await task()
+      return null
+    } catch (error) {
+      return errorMessage(error)
+    }
+  }
+
+  const invites: InvitesData = pending.isError
+    ? {
+        status: 'error',
+        message: errorMessage(pending.error),
+        onRetry: () => void pending.refetch(),
+      }
+    : pending.data
+      ? {
+          status: 'ready',
+          invites: pending.data.map(toPendingInvite),
+          // As vagas são um complemento: se não chegarem, a lista de convites continua útil.
+          seats: seats.data ?? null,
+        }
+      : { status: 'loading' }
 
   const failed = team.isError ? team : services.isError ? services : null
   const data: TeamData = failed
@@ -72,6 +122,16 @@ export const PanelTeamRoute = () => {
     <TeamScreen
       data={data}
       businessName={business.name}
+      showRegistration={business.category === 'Saude'}
+      invites={invites}
+      onInvite={(draft) =>
+        attempt(async () => {
+          const sent = await invite.mutateAsync(draft)
+          notify.success(`Convite enviado para ${sent.email}.`)
+        })
+      }
+      onResendInvite={(id) => attempt(() => resend.mutateAsync(id))}
+      onRevokeInvite={(id) => attempt(() => revoke.mutateAsync(id))}
       onOpenSchedules={() => navigate(ROUTES.panelSchedules)}
       onCreate={async (draft) => {
         try {

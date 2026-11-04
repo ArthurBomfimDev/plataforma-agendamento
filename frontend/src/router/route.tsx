@@ -9,6 +9,7 @@ import { NotFoundScreen } from '@pages/not-found'
 import { PANEL_PAGE_LOADERS } from './panel-pages'
 import { ROUTES } from './paths'
 import { RequireOwner } from './guards/require-owner'
+import { RequireRoles } from './guards/require-roles'
 
 // Moldura do consumidor e 404 vão no chunk inicial (são a porta de entrada); o painel inteiro e cada página, não.
 const AdminBusinessesRoute = lazyPage(
@@ -54,6 +55,8 @@ const HomeRoute = lazyPage(() => import('@pages/customer/home'), 'HomeRoute')
 const InvitationRoute = lazyPage(() => import('@pages/auth/invitation'), 'InvitationRoute')
 const MyAccountRoute = lazyPage(() => import('@pages/account'), 'MyAccountRoute')
 const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
+const PanelBlocksRoute = lazyPage(PANEL_PAGE_LOADERS.blocks, 'PanelBlocksRoute')
+const PanelProfileRoute = lazyPage(PANEL_PAGE_LOADERS.profile, 'PanelProfileRoute')
 const PanelLayout = lazyPage(() => import('@layouts/panel-layout'), 'PanelLayout')
 const PanelMoreRoute = lazyPage(PANEL_PAGE_LOADERS.more, 'PanelMoreRoute')
 const PanelPhotosRoute = lazyPage(PANEL_PAGE_LOADERS.photos, 'PanelPhotosRoute')
@@ -115,6 +118,13 @@ export const AppRoutes = () => {
           <Route index element={<PanelAgendaRoute />} />
           <Route path={ROUTES.panelRequests} element={<PanelRequestsRoute />} />
           <Route path={ROUTES.panelMore} element={<PanelMoreRoute />} />
+          {/* Atendente e profissional (o dono tem Jornadas); o servidor recusa o resto com 403. */}
+          <Route element={<RequireRoles allow={['Attendant', 'Professional']} />}>
+            <Route path={ROUTES.panelBlocks} element={<PanelBlocksRoute />} />
+          </Route>
+          <Route element={<RequireRoles allow={['Professional']} />}>
+            <Route path={ROUTES.panelProfile} element={<PanelProfileRoute />} />
+          </Route>
           {/* Gestão do estabelecimento (Onda 7D): só o dono. */}
           <Route element={<RequireOwner />}>
             <Route path={ROUTES.panelServices} element={<PanelServicesRoute />} />

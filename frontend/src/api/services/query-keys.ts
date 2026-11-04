@@ -46,6 +46,9 @@ export const queryKeys = {
     ['panel', businessId, 'work-schedules', professionalId] as const,
   panelServices: (businessId: string) => ['panel', businessId, 'services'] as const,
   panelBusinessDetail: (businessId: string) => ['panel', businessId, 'business-detail'] as const,
+  panelInvitations: (businessId: string) => ['panel', businessId, 'invitations'] as const,
+  panelSeats: (businessId: string) => ['panel', businessId, 'seats'] as const,
+  panelMyProfile: (businessId: string) => ['panel', businessId, 'my-profile'] as const,
   panelExceptions: (businessId: string) => ['panel', businessId, 'schedule-exceptions'] as const,
 }
 

@@ -9,6 +9,7 @@ import type {
   SaveWorkScheduleRequest,
   ScheduleExceptionResponse,
   ServiceResponse,
+  UpdateMyProfessionalProfileRequest,
   UpdateProfessionalRequest,
   UpdateSchedulingPolicyRequest,
   WorkScheduleResponse,
@@ -69,6 +70,15 @@ export const managementService = {
     authRequest<ProfessionalResponse>({
       method: 'POST',
       url: managementEndpoints.professionals,
+      data: request,
+    }),
+  /** "Meu perfil": quem não tem perfil de profissional ligado à conta recebe 403. */
+  myProfile: (signal?: AbortSignal) =>
+    authRequest<ProfessionalResponse>({ url: managementEndpoints.myProfile, signal }),
+  updateMyProfile: (request: UpdateMyProfessionalProfileRequest) =>
+    authRequest<ProfessionalResponse>({
+      method: 'PUT',
+      url: managementEndpoints.myProfile,
       data: request,
     }),
   updateProfessional: (professionalId: string, request: UpdateProfessionalRequest) =>

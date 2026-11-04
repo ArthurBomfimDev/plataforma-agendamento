@@ -47,12 +47,13 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
 
 ## Equipe, convites e papéis (Fase 4)
 
-- **Sem tela do dono para convidar.** O convite, o reenvio, a revogação e a lista de pendentes existem na API (ADR-029)
-  e têm testes, mas a tela "Convidar" em Profissionais **não foi feita**. Quem convida hoje usa a API.
-- **Sem tela de bloqueios para o atendente** e **sem tela para o profissional registrar folgas** ou editar a própria bio
-  e foto. A API já aceita (ADR-030: `schedule-exceptions` com escopo e `professionals/me`). A tela de Jornadas e bloqueios
-  continua só do dono.
+- As telas de **Convidar** (em Profissionais), **Folgas e bloqueios** (atendente e profissional) e **Meu perfil**
+  (profissional) existem, mas **nenhuma foi vista num navegador** (`docs/verificacao-pendente.md`).
+- O **registro profissional** (Saúde) é gravado pelo dono (Editar) e pelo profissional (Meu perfil), mas **ainda não
+  aparece** na vitrine do consumidor: a exibição vem com a página pública do profissional.
+- A jornada semanal continua só do dono: atendente e profissional bloqueiam e folgam, mas não mudam a jornada.
 - O painel do atendente não pode depender de `GET /api/businesses/current` (403); ele usa o nome do `GET /api/users/me`.
+  Não há tela de **Sair do estabelecimento** para quem tem conta.
 - Quem volta à equipe (`Rejoin`) e tinha o perfil desativado precisa ser reativado pelo dono; o aceite não reativa.
 - Aceite simultâneo do mesmo link por duas requisições: protegido só pelo índice único do vínculo.
 - O termo do profissional é **rascunho, sem revisão jurídica**.

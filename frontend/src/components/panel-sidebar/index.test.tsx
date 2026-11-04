@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { OWNER_ONLY_SECTIONS } from '@router/paths'
+import type { PanelSection } from './types'
+import { hiddenSectionsFor } from '@router/paths'
 import { BottomNavigation } from '@components/bottom-navigation'
 import { PANEL_NAVIGATION_ITEMS } from '@components/bottom-navigation/consts'
 import type { PanelBottomItem } from '@components/bottom-navigation/types'
 import { PanelSidebar } from '.'
 import { renderToString } from 'react-dom/server'
 
-const sidebar = (hidden: typeof OWNER_ONLY_SECTIONS = []) =>
+const sidebar = (hidden: ReadonlyArray<PanelSection> = []) =>
   renderToString(
     <PanelSidebar
       businessName="Estúdio Duartina"
@@ -30,7 +31,7 @@ describe('PanelSidebar', () => {
   })
 
   it('para o profissional, esconde catálogo, equipe, jornadas, fotos e configurações', () => {
-    const html = sidebar(OWNER_ONLY_SECTIONS)
+    const html = sidebar(hiddenSectionsFor('Professional'))
 
     for (const label of [
       'Serviços',
@@ -43,6 +44,35 @@ describe('PanelSidebar', () => {
     }
     expect(html).toContain('Agenda')
     expect(html).toContain('Pedidos')
+    // As folgas e o perfil são do profissional.
+    expect(html).toContain('Folgas e bloqueios')
+    expect(html).toContain('Meu perfil')
+  })
+
+  it('para o atendente, a agenda e as folgas de todos, sem gestão e sem perfil', () => {
+    const html = sidebar(hiddenSectionsFor('Attendant'))
+
+    expect(html).toContain('Agenda')
+    expect(html).toContain('Pedidos')
+    expect(html).toContain('Folgas e bloqueios')
+    for (const label of [
+      'Serviços',
+      'Profissionais',
+      'Jornadas e bloqueios',
+      'Fotos',
+      'Configurações',
+      'Meu perfil',
+    ]) {
+      expect(html).not.toContain(label)
+    }
+  })
+
+  it('para o dono, as Jornadas já têm os bloqueios e ele não tem perfil de profissional', () => {
+    const html = sidebar(hiddenSectionsFor('Owner'))
+
+    expect(html).toContain('Jornadas e bloqueios')
+    expect(html).not.toContain('Folgas e bloqueios')
+    expect(html).not.toContain('Meu perfil')
   })
 
   it('mostra o logotipo enviado; sem ele, a ilustração da categoria, nunca o quadrado cinza', () => {
@@ -75,7 +105,7 @@ describe('PanelSidebar', () => {
   })
 
   it('não tem item sem tela: Avaliações e Relatórios saíram (Onda 7D)', () => {
-    const html = sidebar()
+    const html = sidebar(hiddenSectionsFor('Owner'))
 
     expect(html).not.toContain('Avaliações')
     expect(html).not.toContain('Relatórios')

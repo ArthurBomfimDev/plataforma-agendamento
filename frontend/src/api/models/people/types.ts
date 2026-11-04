@@ -36,12 +36,23 @@ export type CreateProfessionalRequest = {
   bio: string | null
   /** O dono também atende: liga o profissional à própria conta. */
   isMe: boolean
+  /** Registro profissional (Saúde), opcional. */
+  registration?: string | null
+}
+
+/** `PUT professionals/me`: o profissional com conta edita a própria especialidade, bio e registro. */
+export type UpdateMyProfessionalProfileRequest = {
+  specialty: string | null
+  bio: string | null
+  registration: string | null
 }
 
 export type UpdateProfessionalRequest = {
   displayName: string
   specialty: string | null
   bio: string | null
+  /** Registro profissional (Saúde), opcional. */
+  registration?: string | null
   isActive: boolean
   /** "Declaro ter autorização desta pessoa para exibir estes dados publicamente." Obrigatória para salvar a bio de quem não tem conta. */
   authorizationDeclared: boolean
