@@ -163,6 +163,26 @@ public sealed class Business : AggregateRoot, IAuditable
         Status = BusinessStatus.PendingReview;
     }
 
+    /// <summary>
+    /// Publicação direta: rascunho → ativo, sem análise humana. Só para categoria não sensível (Beleza, e Bem-estar
+    /// quando existir); Saúde passa por <see cref="Submit"/> e pela decisão do Admin. A checklist é conferida pela
+    /// Application antes.
+    /// </summary>
+    public void Publish()
+    {
+        if (Category.RequiresSensitiveHandling())
+        {
+            throw new DomainException("business.requires_review");
+        }
+
+        if (Status != BusinessStatus.Draft)
+        {
+            throw new DomainException("business.cannot_publish_from_current_status");
+        }
+
+        Status = BusinessStatus.Active;
+    }
+
     public void Approve()
     {
         if (Status != BusinessStatus.PendingReview)

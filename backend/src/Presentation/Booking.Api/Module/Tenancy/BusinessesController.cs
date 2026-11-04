@@ -94,6 +94,12 @@ public sealed class BusinessesController : ControllerBase
     public async Task<IActionResult> Submit([FromServices] SubmitBusinessCommand command, CancellationToken ct) =>
         Ok(await command.ExecuteAsync(ct));
 
+    /// <summary>Publica na hora (Beleza), com a checklist completa. Saúde responde <c>business.requires_review</c>.</summary>
+    [HttpPost("current/publish")]
+    [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Publish([FromServices] PublishBusinessCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(ct));
+
     [HttpGet("{businessId:guid}")]
     [AllowAnonymous]
     [ProducesResponseType<PublicBusinessResponse>(StatusCodes.Status200OK)]
