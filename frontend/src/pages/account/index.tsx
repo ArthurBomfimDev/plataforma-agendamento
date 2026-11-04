@@ -10,10 +10,20 @@ import { useNavigate } from 'react-router'
 
 const MyAccount = () => {
   const navigate = useNavigate()
-  const { me, context, leave } = useContextSwitch()
+  const { me, context, choose, leave } = useContextSwitch()
   const updateMe = useUpdateMe()
   const changePassword = useChangePassword()
   const several = me.data ? contextItems(me.data, context?.businessId ?? null).length > 1 : false
+
+  // "Meu painel": só para quem tem estabelecimento e está como consumidor. Com um só, abre direto; com vários, escolhe.
+  const businesses = me.data?.businesses ?? []
+  const onOpenPanel =
+    businesses.length > 0 && !context
+      ? () =>
+          businesses.length === 1
+            ? choose(businesses[0].businessId)
+            : navigate(ROUTES.chooseContext)
+      : undefined
 
   const attempt = async (task: () => Promise<unknown>) => {
     try {
@@ -38,6 +48,7 @@ const MyAccount = () => {
         attempt(() => changePassword.mutateAsync({ current, next }))
       }
       onSignOut={leave}
+      onOpenPanel={onOpenPanel}
       onSwitchContext={several ? () => navigate(ROUTES.chooseContext) : undefined}
     />
   )

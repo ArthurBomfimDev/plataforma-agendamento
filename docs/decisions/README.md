@@ -65,6 +65,7 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [025](0025-camada-de-api-do-frontend-axios-e-useservice.md) | Camada de API do frontend: Axios, `base`/`models`/`services` e `useService` sobre o TanStack Query | 📝 Proposto | 2026-10-30 |
 | [026](0026-icones-material-symbols-em-svg.md) | Ícones: Material Symbols em SVG, gerados no build, num registro único | 📝 Proposto | 2026-10-30 |
 | [027](0027-estrutura-do-frontend-e-carregamento-por-pagina.md) | Estrutura do frontend por responsabilidade e carregamento sob demanda por página | 📝 Proposto | 2026-10-30 |
+| [028](0028-ciclo-de-status-do-estabelecimento-e-publicar-x-receber.md) | Ciclo de status do estabelecimento, publicação por categoria e publicar × receber | 📝 Proposto | 2026-11-04 |
 
 ### Notas sobre a fila
 

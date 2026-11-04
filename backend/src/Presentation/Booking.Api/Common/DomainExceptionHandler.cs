@@ -45,7 +45,8 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
             or "compliance.consent_required" or "appointment.customer_context_required" => StatusCodes.Status403Forbidden,
         "user.email_already_registered" or "business.document_already_registered"
             or "appointment.slot_no_longer_available" or "customer.already_registered"
-            or "work_schedule.overlaps" => StatusCodes.Status409Conflict,
+            or "work_schedule.overlaps" or "business.requires_review" or "business.account_limit_reached"
+            => StatusCodes.Status409Conflict,
         "appointment.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
         "image.too_large" => StatusCodes.Status413PayloadTooLarge,
         "image.unsupported_type" => StatusCodes.Status415UnsupportedMediaType,

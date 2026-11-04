@@ -201,7 +201,7 @@ public sealed class TestWorld(IntegrationFixture fixture)
 
     public async Task<TestBusiness> NewBusinessAsync(
         int professionals, ServiceSpec[] services, string category = "Beleza", bool approve = true, TestLocation? location = null,
-        string city = "Garça")
+        string city = "Garça", bool submit = true)
     {
         TestUser owner = await NewUserAsync("Dono de teste");
         string name = $"Estabelecimento {Guid.NewGuid():N}"[..40];
@@ -262,9 +262,21 @@ public sealed class TestWorld(IntegrationFixture fixture)
             }
         }
 
-        await SendOkAsync(HttpMethod.Post, "/api/businesses/current/submit", null, token);
+        // Termos aceitos e, em Saúde, o responsável: itens da checklist de envio (Fase 3).
+        await SendOkAsync(HttpMethod.Post, "/api/businesses/current/terms", new AcceptTermsRequest("2026-11"), token);
+        if (category == "Saude")
+        {
+            await SendOkAsync(HttpMethod.Put, "/api/businesses/current/responsible",
+                new SetResponsibleRequest("Dra. Teste", "Crm", "12345", "SP"), token);
+        }
 
-        if (approve)
+        // `submit: false` deixa o estabelecimento em rascunho com a checklist completa: é o ponto de partida de "Publicar".
+        if (submit)
+        {
+            await SendOkAsync(HttpMethod.Post, "/api/businesses/current/submit", null, token);
+        }
+
+        if (submit && approve)
         {
             TestUser admin = await NewAdminAsync();
             await SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/approve", new AdminDecisionRequest("Aprovado no teste"), admin.Token);

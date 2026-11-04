@@ -39,5 +39,11 @@ public sealed record SearchBusinessesRequest(
     string? SortBy = null,
     string? City = null);
 
-/// <summary>Decisão do Admin sobre um estabelecimento. Na recusa, a nota é obrigatória.</summary>
+/// <summary>Profissional responsável e registro no conselho (Saúde). <c>Council</c>: Crm, Crp, Crefito, Crn, Crefono ou Cro.</summary>
+public sealed record SetResponsibleRequest(string Name, string Council, string CouncilNumber, string CouncilState);
+
+/// <summary>Aceite dos termos pelo dono. <c>Version</c> é a versão do texto exibido.</summary>
+public sealed record AcceptTermsRequest(string Version);
+
+/// <summary>Decisão do Admin sobre um estabelecimento. Na recusa e na suspensão, a nota (o motivo) é obrigatória.</summary>
 public sealed record AdminDecisionRequest(string? Note);

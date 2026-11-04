@@ -3,9 +3,11 @@ import type { MyAccountScreenProps } from './types'
 import { type PasswordErrors, validatePasswordChange } from './consts'
 
 import { Button } from '@components/button'
+import { ConfirmDialog } from '@components/confirm-dialog'
 import { LogoutIcon } from '@assets/icons'
 import { PasswordField } from '@components/password-field'
 import { TextField } from '@components/text-field'
+import { ThemeToggle } from '@components/theme-toggle'
 import { useState } from 'react'
 
 const CARD =
@@ -19,7 +21,8 @@ const CARD =
  * Fora do recorte: telefone (o cadastro não tem o campo), trocar o e-mail e excluir a conta.
  */
 export const MyAccountScreen = (props: MyAccountScreenProps) => {
-  const { data, onSignOut, onSwitchContext } = props
+  const { data, onSignOut, onSwitchContext, onOpenPanel } = props
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false)
 
   return (
     <main className="min-h-dvh bg-(--bg-page) px-(--space-16) pt-[calc(var(--space-24)+env(safe-area-inset-top))] pb-[calc(var(--space-24)+env(safe-area-inset-bottom))]">
@@ -37,18 +40,43 @@ export const MyAccountScreen = (props: MyAccountScreenProps) => {
           </>
         )}
 
+        <div className={`${CARD} flex-row items-center justify-between`}>
+          <p className="type-label text-(--text-strong)">Tema escuro</p>
+          <ThemeToggle />
+        </div>
+
         <div className="flex flex-col gap-(--space-8)">
+          {onOpenPanel && (
+            <Button size="lg" className="w-full" onClick={onOpenPanel}>
+              Meu painel
+            </Button>
+          )}
           {onSwitchContext && (
             <Button variant="secondary" size="lg" className="w-full" onClick={onSwitchContext}>
               Trocar de contexto
             </Button>
           )}
-          <Button variant="ghost" size="lg" className="w-full" onClick={onSignOut}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="w-full"
+            onClick={() => setConfirmingSignOut(true)}
+          >
             <LogoutIcon aria-hidden="true" className="size-4" />
             Sair
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmingSignOut}
+        onOpenChange={setConfirmingSignOut}
+        title="Sair da conta?"
+        description="Você precisará entrar de novo para ver seus agendamentos."
+        confirmLabel="Sair"
+        dismissLabel="Continuar na conta"
+        onConfirm={onSignOut}
+      />
     </main>
   )
 }

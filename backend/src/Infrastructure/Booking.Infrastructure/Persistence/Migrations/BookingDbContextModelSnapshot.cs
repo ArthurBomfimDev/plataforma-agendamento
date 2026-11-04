@@ -1020,6 +1020,26 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("postal_code");
 
+                    b.Property<string>("ResponsibleCouncil")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("responsible_council");
+
+                    b.Property<string>("ResponsibleCouncilNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("responsible_council_number");
+
+                    b.Property<string>("ResponsibleCouncilState")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("responsible_council_state");
+
+                    b.Property<string>("ResponsibleName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("responsible_name");
+
                     b.Property<int>("SeatLimit")
                         .HasColumnType("integer")
                         .HasColumnName("seat_limit");
@@ -1044,6 +1064,28 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("street_number");
+
+                    b.Property<DateTimeOffset?>("SuspendedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("suspended_at");
+
+                    b.Property<Guid?>("SuspendedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("suspended_by_user_id");
+
+                    b.Property<string>("SuspensionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("suspension_reason");
+
+                    b.Property<DateTimeOffset?>("TermsAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("terms_accepted_at");
+
+                    b.Property<string>("TermsVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("terms_version");
 
                     b.Property<string>("TimeZone")
                         .IsRequired()

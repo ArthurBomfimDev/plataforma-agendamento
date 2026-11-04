@@ -91,7 +91,17 @@ export const useAccountMenu = (): AccountMenuProps | null => {
   if (!signedIn) return null
 
   const currentBusinessId = context?.businessId ?? null
+  const businesses = me.data?.businesses ?? []
+  // "Meu painel" só aparece para quem tem estabelecimento e está como consumidor (no painel, já está lá).
+  const onOpenPanel =
+    businesses.length > 0 && currentBusinessId === null
+      ? () =>
+          businesses.length === 1
+            ? choose(businesses[0].businessId)
+            : navigate(ROUTES.chooseContext)
+      : undefined
   return {
+    onOpenPanel,
     currentLabel: accountTriggerLabel(me.data, currentBusinessId, context?.businessName ?? null),
     items: me.data ? contextItems(me.data, currentBusinessId) : [],
     onSelect: choose,

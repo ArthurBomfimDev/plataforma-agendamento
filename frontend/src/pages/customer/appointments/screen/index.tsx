@@ -2,6 +2,7 @@ import type { AppointmentsScreenProps, CustomerAppointment } from './types'
 import { HourglassIcon, LocationIcon, StarIcon } from '@assets/icons'
 import { addMinutes, differenceInMinutes, format, parse } from 'date-fns'
 
+import { AddToCalendarMenu } from '@components/add-to-calendar-menu'
 import { AppointmentCard } from '@components/appointment-card'
 import { BottomNavigation } from '@components/bottom-navigation'
 import { Button } from '@components/button'
@@ -12,7 +13,7 @@ import { PageContainer } from '@components/page-container'
 import { TabBar } from '@components/tab-bar'
 import { distanceFormat } from '@components/card-establishment/consts'
 import { ptBR } from 'date-fns/locale/pt-BR'
-import { useAddToCalendar } from '@hooks/use-add-to-calendar'
+import { calendarTitle, useAddToCalendar } from '@hooks/use-add-to-calendar'
 import { useNow } from '@hooks/use-now'
 import { useState } from 'react'
 
@@ -145,23 +146,24 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
               >
                 Cancelar
               </Button>
-              <Button
-                variant="secondary"
+              <AddToCalendarMenu
                 className={`min-w-0 flex-1 lg:flex-none ${PRIMARY_ON_DESKTOP}`}
-                onClick={() =>
-                  addToCalendar({
-                    id,
-                    title: `${serviceName} — ${businessName}`,
-                    location: address,
-                    date: appointment.date,
-                    time: appointment.time,
-                    durationMinutes,
-                    timeZone: appointment.timeZone,
-                  })
+                onSelect={(target) =>
+                  addToCalendar(
+                    {
+                      id,
+                      // TODO: em Saúde o título deve levar só o estabelecimento; falta a categoria no agendamento.
+                      title: calendarTitle({ serviceName, businessName }),
+                      location: address,
+                      date: appointment.date,
+                      time: appointment.time,
+                      durationMinutes,
+                      timeZone: appointment.timeZone,
+                    },
+                    target,
+                  )
                 }
-              >
-                Adicionar à agenda
-              </Button>
+              />
             </div>
           }
         />

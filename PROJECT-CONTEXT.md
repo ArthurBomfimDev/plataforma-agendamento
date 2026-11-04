@@ -2,7 +2,9 @@
 
 > Contexto compartilhado entre sessões (Claude, Claude Code, Figma).
 > Leia este arquivo primeiro; só abra os documentos longos se a tarefa exigir.
-> **Última atualização:** 2026-10-31 (Onda 7H — refatoração do frontend do Rafael integrada; demonstração pública por Cloudflare Tunnel) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+> **Última atualização:** 2026-11-04 (ondas finais, fases 0–2: refatoração das telas do Rafael mergeada; túnel e e-mail robustos; casca mobile com tema, entrar e sair em toda tela pública) · Fase: **implementação — integração front/back** (branch `feat/integracao-front-back`)
+>
+> **Ondas finais (prompt mestre de 04/11):** Fase 0 feita (merge de `refactor/project` do Rafael, 336 testes); Fase 1 em PR (#30, scripts do túnel, diagnóstico do outbox, opção de CRL); Fase 2 em PR (barra superior mobile, Perfil → Minha conta, "Meu painel", confirmação ao sair). **Verificação no navegador e em 390 px pendente** (Docker indisponível na rodada). Fase 3 aguarda a regra de cadastro.
 >
 > Substitui todas as versões anteriores (03/09, 04/09, 08/09, 10/09). Existe **um** `PROJECT-CONTEXT.md`, na raiz.
 > **Este arquivo é índice e retrato do estado, não a fonte de verdade.** Em caso de conflito:

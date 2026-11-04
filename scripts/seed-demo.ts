@@ -505,6 +505,17 @@ async function seedBusiness(demo: DemoBusiness) {
     }
   }
 
+  // A checklist de envio exige os termos aceitos e, em Saúde, o responsável (Fase 3). Dados fictícios da demonstração.
+  await call('POST', '/api/businesses/current/terms', { version: '2026-11' }, token)
+  if (demo.category === 'Saude') {
+    await call(
+      'PUT',
+      '/api/businesses/current/responsible',
+      { name: 'Responsável de demonstração', council: 'Crm', councilNumber: '123456', councilState: 'SP' },
+      token,
+    )
+  }
+
   await call('POST', '/api/businesses/current/submit', undefined, token)
   console.log('  criado e enviado para revisão')
 }

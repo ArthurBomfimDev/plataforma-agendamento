@@ -45,6 +45,38 @@ no texto normalizado. A mesma normalização compara a cidade do filtro `City` (
 O dicionário é mantido no código, revisado em PR como qualquer regra. As entradas de cabelo, unha, sobrancelha,
 pele e saúde cobrem os serviços do seed; a de massagem veio do pedido da onda e ainda não tem serviço no seed.
 
+## Revisão de 04/11/2026 — radical, grupos de sinônimos e Saúde
+
+**Fato (defeito observado):** buscar "barbeiro" em Garça devolvia 0 resultado, embora existam barbearias no seed. O
+termo só casava se aparecesse inteiro no texto, e as barbearias se chamam "Barbearia …" ou têm o serviço "Barba".
+
+**Decisão (continua Proposto):** além da normalização e do dicionário, `SearchText` passa a comparar por **radical
+simples do português** e por **grupos de sinônimos**.
+
+- **Radical** (`SearchText.Stem`): tira o plural, um sufixo de profissão ou lugar (-eiro, -eira, -aria, -ista, -or,
+  -ora) e a vogal final. "barbeiro", "barbearia" e "barba" dão `BARB`; "manicuri" e "manicure", `MANICUR`. Palavra
+  curta (até 4 letras) não perde nada, porque um radical curto casaria com palavra demais.
+- **Grupos** (troca de igual para igual): barbeiro/barbearia/barba/corte masculino · manicure/pedicure/unha/esmalteria ·
+  massagista/massagem/massoterapia · personal/treino/treinamento · psicólogo/psicóloga/psicologia/psicoterapia ·
+  nutricionista/nutrição · fisioterapeuta/fisioterapia · fonoaudiólogo/fonoaudiologia/fono. O grupo casa pelo radical do
+  que foi digitado, então "barbeiros" e "barbearia" caem no mesmo. Frase de várias palavras ("corte masculino") casa
+  inteira. O dicionário antigo (cabelo, sobrancelha, pele, massagem → serviços) continua para a "necessidade → serviço".
+- **Saúde não vaza serviço no resultado público:** o termo ainda filtra, mas `BusinessSearchItemResponse` de um
+  estabelecimento de Saúde sai sem `ServiceId`, `ServiceName` e `DurationMinutes` (fica o "a partir de"). O nome do
+  serviço diz a condição da pessoa (LGPD, Art. 11). A tela cai no cartão do estabelecimento.
+
+**Limites novos:**
+
+- Radical curto traz ruído: `BARB` também casa "Studio Bárbara". A comparação continua por trecho do texto, como antes.
+- O radical não resolve tudo: "psicologia" só acha "psicólogo" porque os dois estão no mesmo grupo; palavra fora dos
+  grupos e do dicionário cai na comparação simples.
+- Continua em memória, sobre até 500 candidatos. Sem migration.
+
+**Prova:** `SearchTextTests` (radical, grupos, termo sem relação) e `SearchBusinessesQueryTests` (a busca de ponta a
+ponta com repositório e catálogo falsos: as mesmas barbearias para "barbeiro", "barbearia" e "barba"; "manicuri" e
+"unha"; "advogado" não traz nada; Saúde sem serviço no resultado, Beleza com serviço). O comportamento contra o banco
+real (H7, H8) não foi rodado nesta rodada.
+
 ## Consequências
 
 - **Positivas:** sem extensão nem migration; o mesmo comportamento em qualquer PostgreSQL. Testável sem banco
@@ -53,7 +85,7 @@ pele e saúde cobrem os serviços do seed; a de massagem veio do pedido da onda 
   - Escala: a comparação roda sobre até 500 candidatos e todos os serviços ativos deles. Cabe no recorte
     (30 estabelecimentos no seed, RNF-01 medido em `docs/tcc/evidencias/rnf-01-busca.md`), mas uma cidade grande
     precisaria levar o filtro de texto para o banco (alternativa 1 ou 2).
-  - Sem radical: "cortes" vira "corte" pelo plural simples, mas "cortando" não casa.
+  - Radical simples (revisão de 04/11): "cortando" ainda não casa com "corte"; não há lematização completa.
   - Sinônimo é manual: termo fora do dicionário só casa pelo texto. Um sinônimo largo demais traz ruído; "salão"
     em "cabelo", por exemplo, também traz o salão que só faz unha.
   - Não há "nicho" do estabelecimento no domínio (só a categoria, ADR-015). O nome do estabelecimento faz esse

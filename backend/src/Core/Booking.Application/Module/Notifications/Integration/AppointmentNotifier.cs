@@ -94,9 +94,16 @@ public sealed class AppointmentNotifier(
 
         List<EmailDetail> details = Details(a, business, when, professional, includeAddress: change is AppointmentChange.Confirmed);
 
-        EmailAttachment? ics = change is AppointmentChange.Confirmed
-            ? new EmailAttachment("agendamento.ics", IcsCalendar.ContentType, Ics(a, business, professional, mapUrl))
-            : null;
+        // Confirmado: o evento (SEQUENCE 0). Cancelado pelo estabelecimento: o mesmo UID com SEQUENCE maior e METHOD:CANCEL,
+        // para a agenda do consumidor remover o evento já salvo em vez de deixá-lo lá.
+        EmailAttachment? ics = change switch
+        {
+            AppointmentChange.Confirmed =>
+                new EmailAttachment("agendamento.ics", IcsCalendar.ContentType, Ics(a, business, professional, mapUrl)),
+            AppointmentChange.CancelledByBusiness =>
+                new EmailAttachment("cancelamento.ics", IcsCalendar.CancelContentType, IcsCancel(a, business)),
+            _ => null,
+        };
 
         outbox.Enqueue(EmailLayout.Build(
             settings,
@@ -203,6 +210,17 @@ public sealed class AppointmentNotifier(
 
         return IcsCalendar.Request(
             new IcsEvent(a.AppointmentId, a.StartsAt, a.EndsAt, summary, business.AddressLine, string.Join("\n", description), Sequence: 0),
+            settings.BrandName,
+            clock.GetUtcNow());
+    }
+
+    // O SEQUENCE do cancelamento é 1: a confirmação saiu com 0 e o agendamento só muda de estado uma vez depois dela.
+    private string IcsCancel(AppointmentFacts a, BusinessContactInfo business)
+    {
+        string summary = a.IsSensitive ? $"Atendimento — {business.Name}" : $"{a.ServiceName} — {business.Name}";
+
+        return IcsCalendar.Cancel(
+            new IcsEvent(a.AppointmentId, a.StartsAt, a.EndsAt, summary, Location: null, Description: null, Sequence: 1),
             settings.BrandName,
             clock.GetUtcNow());
     }

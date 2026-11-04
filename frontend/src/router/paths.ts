@@ -105,8 +105,8 @@ export const editServicePath = (serviceId: string) =>
 export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {
   search: ROUTES.home,
   appointments: ROUTES.appointments,
-  // "Perfil" ainda não tem tela própria: leva à conta, com a troca de contexto e o sair.
-  profile: ROUTES.chooseContext,
+  // "Perfil" é a Minha conta (nome, senha, tema, meu painel e sair). Sem sessão, o guard leva a "Entrar" e volta.
+  profile: ROUTES.account,
 }
 
 /** Estado da navegação para a tela de conta: por que a pessoa caiu nela. */
@@ -178,6 +178,16 @@ export const bookingSentPath = (
  */
 export const safeRedirect = (value: string | null) =>
   value && value.startsWith('/') && !value.startsWith('//') ? value : null
+
+/**
+ * Para onde "Entrar" e "Criar conta" devolvem a pessoa: a tela em que ela estava. A Home e as telas de entrada
+ * não precisam de retorno (a Home é o destino padrão); o resultado passa por `safeRedirect` ao voltar.
+ */
+export const returnPathFor = (pathname: string, search = '') => {
+  const here = `${pathname}${search}`
+  const entry: string[] = [ROUTES.home, ROUTES.signIn, ROUTES.signUp, ROUTES.checkEmail]
+  return entry.includes(pathname) ? undefined : safeRedirect(here) === null ? undefined : here
+}
 
 export const signInPath = (redirect?: string) =>
   withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })

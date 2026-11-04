@@ -34,6 +34,39 @@ public sealed class TenancyAndCatalogDomainTests
         Assert.Throws<DomainException>(() => Document.Of(raw));
     }
 
+    // CNPJ alfanumérico (IN RFB 2.229/2024): o exemplo oficial da Receita é 12.ABC.345/01DE-35.
+    [Theory]
+    [InlineData("12.ABC.345/01DE-35", "12ABC34501DE35")]
+    [InlineData("12abc34501de35", "12ABC34501DE35")]
+    [InlineData(" 12ABC34501DE35 ", "12ABC34501DE35")]
+    [InlineData("AB12CD34EF5602", "AB12CD34EF5602")]
+    public void Valid_alphanumeric_cnpj_keeps_its_letters_in_uppercase(string raw, string expected)
+    {
+        Document document = Document.Of(raw);
+
+        Assert.Equal(DocumentKind.Cnpj, document.Kind);
+        Assert.Equal(expected, document.Number);
+    }
+
+    [Theory]
+    [InlineData("12.ABC.345/01DE-36")] // dígito verificador errado
+    [InlineData("12ABC34501DEAB")] // letra nas posições dos dígitos verificadores
+    [InlineData("AAAAAAAAAAAAAA")] // caracteres repetidos
+    [InlineData("12ABC34501DE3")] // 13 caracteres
+    [InlineData("12ABC34501DE355")] // 15 caracteres
+    [InlineData("12ABC34501D!35")] // símbolo no corpo
+    [InlineData("ABC.982.247-25")] // CPF não aceita letra
+    public void Invalid_alphanumeric_document_is_rejected(string raw)
+    {
+        Assert.Throws<DomainException>(() => Document.Of(raw));
+    }
+
+    [Fact]
+    public void Numeric_cnpj_still_validates_through_the_same_routine()
+    {
+        Assert.Equal("11222333000181", Document.Of("11.222.333/0001-81").Number);
+    }
+
     [Fact]
     public void Business_lifecycle_follows_draft_review_active()
     {
@@ -46,6 +79,124 @@ public sealed class TenancyAndCatalogDomainTests
 
         Assert.Equal(BusinessStatus.Active, business.Status);
         Assert.True(business.IsBookable);
+    }
+
+    [Fact]
+    public void Beauty_business_publishes_straight_to_active_without_review()
+    {
+        Business business = NewBusiness();
+
+        business.Publish();
+
+        Assert.Equal(BusinessStatus.Active, business.Status);
+        Assert.True(business.IsBookable);
+        Assert.Throws<DomainException>(business.Publish); // já ativo: não publica de novo
+    }
+
+    [Fact]
+    public void Health_business_never_publishes_directly_and_only_goes_live_after_the_admin_approves()
+    {
+        var business = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+
+        DomainException blocked = Assert.Throws<DomainException>(business.Publish);
+
+        Assert.Equal("business.requires_review", blocked.Message);
+        Assert.Equal(BusinessStatus.Draft, business.Status);
+        Assert.False(business.IsBookable);
+
+        business.Submit();
+        Assert.False(business.IsBookable); // em análise: configurável, mas não agendável
+
+        business.Approve();
+        Assert.True(business.IsBookable);
+    }
+
+    [Fact]
+    public void Suspended_business_cannot_be_published_again_and_a_rejected_one_returns_to_draft_with_the_reason()
+    {
+        Business suspended = NewBusiness();
+        suspended.Publish();
+        suspended.Suspend(Guid.NewGuid(), "Denúncia procedente.", _now);
+        Assert.Throws<DomainException>(suspended.Publish);
+
+        var admin = Guid.NewGuid();
+        var clinic = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+        clinic.Submit();
+        clinic.RejectVerification(admin, "Registro do conselho não confere.", _now);
+        clinic.ReturnToDraft();
+
+        Assert.Equal(BusinessStatus.Draft, clinic.Status);
+        Assert.Equal(VerificationLevel.Rejected, clinic.VerificationLevel);
+        Assert.Equal("Registro do conselho não confere.", clinic.VerificationNote);
+        Assert.Equal(admin, clinic.VerifiedByUserId);
+        clinic.Submit(); // o dono corrige e reenvia
+        Assert.Equal(BusinessStatus.PendingReview, clinic.Status);
+    }
+
+    [Fact]
+    public void Suspension_requires_a_reason_and_records_who_decided_and_when()
+    {
+        Business business = NewBusiness();
+        business.Publish();
+        var admin = Guid.NewGuid();
+
+        Assert.Equal("business.suspension_requires_reason", Assert.Throws<DomainException>(() => business.Suspend(admin, "  ", _now)).Message);
+        Assert.Equal(BusinessStatus.Active, business.Status);
+
+        business.Suspend(admin, "  Denúncia procedente.  ", _now);
+
+        Assert.Equal(BusinessStatus.Suspended, business.Status);
+        Assert.Equal("Denúncia procedente.", business.SuspensionReason);
+        Assert.Equal(admin, business.SuspendedByUserId);
+        Assert.Equal(_now, business.SuspendedAt);
+        Assert.False(business.IsBookable);
+
+        business.Reactivate();
+        Assert.True(business.IsBookable);
+    }
+
+    [Fact]
+    public void Health_responsible_keeps_only_the_council_number_chars_and_an_uppercase_state()
+    {
+        var clinic = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+        Assert.False(clinic.HasResponsible);
+
+        clinic.SetResponsible("  Dra. Ana Lima ", ProfessionalCouncil.Crp, "06/12345", "sp");
+
+        Assert.True(clinic.HasResponsible);
+        Assert.Equal("Dra. Ana Lima", clinic.ResponsibleName);
+        Assert.Equal(ProfessionalCouncil.Crp, clinic.ResponsibleCouncil);
+        Assert.Equal("0612345", clinic.ResponsibleCouncilNumber);
+        Assert.Equal("SP", clinic.ResponsibleCouncilState);
+    }
+
+    [Theory]
+    [InlineData("", "123", "SP", "business.responsible_incomplete")]
+    [InlineData("Ana", "///", "SP", "business.responsible_incomplete")]
+    [InlineData("Ana", "123", "S", "business.responsible_state_invalid")]
+    [InlineData("Ana", "123", "S1", "business.responsible_state_invalid")]
+    [InlineData("Ana", "123", "SPP", "business.responsible_state_invalid")]
+    public void Health_responsible_with_missing_or_malformed_data_is_refused(string name, string number, string state, string code)
+    {
+        var clinic = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+
+        DomainException failure = Assert.Throws<DomainException>(() => clinic.SetResponsible(name, ProfessionalCouncil.Crm, number, state));
+
+        Assert.Equal(code, failure.Message);
+        Assert.False(clinic.HasResponsible);
+    }
+
+    [Fact]
+    public void Terms_record_the_version_and_the_moment()
+    {
+        Business business = NewBusiness();
+
+        Assert.Throws<DomainException>(() => business.AcceptTerms(" ", _now));
+
+        business.AcceptTerms("2026-11", _now);
+
+        Assert.Equal("2026-11", business.TermsVersion);
+        Assert.Equal(_now, business.TermsAcceptedAt);
     }
 
     [Fact]
