@@ -74,6 +74,42 @@ public static class IcsCalendar
         return ics.ToString();
     }
 
+    public const string CancelContentType = "text/calendar; charset=utf-8; method=CANCEL";
+
+    /// <summary>
+    /// Cancelamento (<c>METHOD:CANCEL</c>): o mesmo <c>UID</c> do evento já salvo e um <c>SEQUENCE</c> maior, para a
+    /// agenda do consumidor remover o evento em vez de duplicá-lo. Sem alarme: o evento deixa de existir.
+    /// </summary>
+    public static string Cancel(IcsEvent e, string brandName, DateTimeOffset now)
+    {
+        var lines = new List<string>
+        {
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            $"PRODID:-//{Escape(brandName)}//Agendamento//PT-BR",
+            "CALSCALE:GREGORIAN",
+            "METHOD:CANCEL",
+            "BEGIN:VEVENT",
+            $"UID:{Uid(e.AppointmentId)}",
+            $"DTSTAMP:{Utc(now)}",
+            $"DTSTART:{Utc(e.StartsAt)}",
+            $"DTEND:{Utc(e.EndsAt)}",
+            $"SEQUENCE:{e.Sequence.ToString(CultureInfo.InvariantCulture)}",
+            "STATUS:CANCELLED",
+            $"SUMMARY:{Escape(e.Summary)}",
+            "END:VEVENT",
+            "END:VCALENDAR",
+        };
+
+        var ics = new StringBuilder();
+        foreach (string line in lines)
+        {
+            AppendFolded(ics, line);
+        }
+
+        return ics.ToString();
+    }
+
     private static string Utc(DateTimeOffset value) => value.UtcDateTime.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
 
     /// <summary>Escape de texto do RFC 5545 (§3.3.11).</summary>

@@ -81,6 +81,18 @@ cd backend; dotnet test tests/Booking.IntegrationTests --filter "FullyQualifiedN
 | 6 | Admin abre o detalhe de uma Saúde | vê `responsible`; o dono vê só `responsibleInformed: true`; a resposta pública nunca traz |
 | 7 | **Seed** (`bun scripts/seed-demo.ts`) | conclui sem erro: o seed agora chama `POST current/terms` (e `PUT current/responsible` nas de Saúde) antes do `submit`. Não foi executado |
 
+### Integração com a agenda (Fase 5, bloco 4, parcial)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `dotnet test` — `EmailTests.M6` (caso `cancel`, ajustado) | o e-mail de cancelamento leva `cancelamento.ics` com `METHOD:CANCEL`, `STATUS:CANCELLED`, mesmo `UID` e `SEQUENCE:1` |
+| 2 | "Meus agendamentos" → agendamento confirmado → **Adicionar à agenda** | menu com Google Agenda, Outlook e "Apple e outros (arquivo .ics)" |
+| 3 | Google Agenda | abre `calendar.google.com` com título, data e hora **no horário certo** (conferir o fuso), local e o link do mapa |
+| 4 | Outlook | abre `outlook.live.com` com os mesmos dados |
+| 5 | Apple e outros | baixa o `.ics`; abrir no celular/Calendário: evento com lembrete 1 h antes, endereço e mapa; baixar de novo **não duplica** |
+| 6 | Receber o e-mail de cancelamento e abrir o `.ics` na agenda | o evento salvo antes **some** |
+| 7 | Menu em 390 px, claro e escuro | alvo de toque ≥ 44 px, abre para cima sem sair da tela |
+
 ### Fechamento da casca mobile (#34)
 
 | # | Passo | Esperado |

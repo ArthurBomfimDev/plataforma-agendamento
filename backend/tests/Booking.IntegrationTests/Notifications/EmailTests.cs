@@ -151,7 +151,22 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
 
         EmailMessage message = _world.Emails.To(customer.Email).Single(m => m.Subject.StartsWith(subjectPrefix, StringComparison.Ordinal));
         Assert.Contains("Motivo informado: Profissional em curso", message.TextBody);
-        Assert.Null(message.Attachment);
+
+        if (action == "cancel")
+        {
+            // Cancelado depois de confirmado: o .ics de cancelamento remove o evento já salvo na agenda (mesmo UID,
+            // SEQUENCE maior, METHOD:CANCEL). Recusar um pedido não tem evento para remover.
+            Assert.NotNull(message.Attachment);
+            Assert.StartsWith("text/calendar", message.Attachment.ContentType);
+            Assert.Contains("METHOD:CANCEL", message.Attachment.Content);
+            Assert.Contains("STATUS:CANCELLED", message.Attachment.Content);
+            Assert.Contains($"UID:appointment-{appointment.Id}@booking", message.Attachment.Content);
+            Assert.Contains("SEQUENCE:1", message.Attachment.Content);
+        }
+        else
+        {
+            Assert.Null(message.Attachment);
+        }
     }
 
     [Fact]
