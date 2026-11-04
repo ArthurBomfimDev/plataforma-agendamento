@@ -179,6 +179,16 @@ export const bookingSentPath = (
 export const safeRedirect = (value: string | null) =>
   value && value.startsWith('/') && !value.startsWith('//') ? value : null
 
+/**
+ * Para onde "Entrar" e "Criar conta" devolvem a pessoa: a tela em que ela estava. A Home e as telas de entrada
+ * não precisam de retorno (a Home é o destino padrão); o resultado passa por `safeRedirect` ao voltar.
+ */
+export const returnPathFor = (pathname: string, search = '') => {
+  const here = `${pathname}${search}`
+  const entry: string[] = [ROUTES.home, ROUTES.signIn, ROUTES.signUp, ROUTES.checkEmail]
+  return entry.includes(pathname) ? undefined : safeRedirect(here) === null ? undefined : here
+}
+
 export const signInPath = (redirect?: string) =>
   withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })
 

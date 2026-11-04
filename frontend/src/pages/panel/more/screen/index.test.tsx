@@ -33,10 +33,16 @@ describe('PanelMoreScreen', () => {
     expect(html).not.toContain('Relatórios')
   })
 
-  it('para o profissional, só a conta', () => {
+  it('para o profissional, a conta e o tema', () => {
     const html = render(OWNER_ONLY_SECTIONS)
 
-    expect(html.match(/<button/g)).toHaveLength(1)
     expect(html).toContain('Conta: trocar de contexto ou sair')
+    expect(html).toContain('aria-label="Tema escuro"')
+    // Nenhuma seção de gestão para o profissional: só a conta e o botão do tema.
+    expect(html.match(/<button/g)).toHaveLength(2)
+  })
+
+  it('oferece o alternar tema no celular, onde o painel não tem barra superior', () => {
+    expect(render()).toContain('aria-label="Tema escuro"')
   })
 })

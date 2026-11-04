@@ -5,7 +5,7 @@ import { Suspense } from 'react'
 import { AccountMenu } from '@components/account-menu'
 import { LocationPicker } from '@components/location-picker'
 import { MobileTopBar } from '@components/mobile-top-bar'
-import { ROUTES, searchPath, signInPath, signUpPath } from '@router/paths'
+import { ROUTES, returnPathFor, searchPath, signInPath, signUpPath } from '@router/paths'
 import { TopBar } from '@components/top-bar'
 import { useAccountMenu } from '@hooks/use-account-menu'
 import { useBusinessContext } from '@api/services/auth/hooks'
@@ -20,8 +20,7 @@ export const AppLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
   // Depois de entrar ou criar conta, a pessoa volta à tela em que estava (a Home é o destino padrão: sem parâmetro).
-  const here = `${location.pathname}${location.search}`
-  const returnTo = location.pathname === ROUTES.home ? undefined : here
+  const returnTo = returnPathFor(location.pathname, location.search)
   const isHome = useMatch(ROUTES.home) !== null
   // Home e resultados têm a busca no próprio cabeçalho: na barra, ela seria repetida.
   const isSearch = useMatch(ROUTES.search) !== null

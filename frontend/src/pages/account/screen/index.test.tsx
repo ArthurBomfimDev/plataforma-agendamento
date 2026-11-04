@@ -32,6 +32,22 @@ describe('MyAccountScreen', () => {
     expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled=""[^>]*>Salvar nome/)
   })
 
+  it('oferece o tema escuro e "Meu painel" só para quem tem estabelecimento', () => {
+    const without = render()
+    expect(without).toContain('Tema escuro')
+    expect(without).toContain('aria-label="Tema escuro"')
+    expect(without).not.toContain('Meu painel')
+
+    expect(render({ onOpenPanel: () => undefined })).toContain('Meu painel')
+  })
+
+  it('"Sair" só pede confirmação quando tocado: o diálogo começa fechado', () => {
+    const html = render()
+
+    expect(html).toContain('Sair')
+    expect(html).not.toContain('Sair da conta?')
+  })
+
   it('"Trocar de contexto" só com mais de um contexto', () => {
     expect(render()).not.toContain('Trocar de contexto')
     expect(render({ onSwitchContext: () => undefined })).toContain('Trocar de contexto')
