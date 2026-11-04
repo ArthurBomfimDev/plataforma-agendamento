@@ -58,7 +58,7 @@ public sealed class RolePolicyTests
     [
         "GetAgendaQuery", "ListPendingAppointmentsQuery", "CreateCounterAppointmentCommand", "ManageAppointmentCommand",
         "ListProfessionalsQuery", "ListServicesQuery", "ListWorkSchedulesQuery", "ListScheduleExceptionsQuery",
-        "ProfessionalPhotoCommand", "SetPublicProfileConsentCommand",
+        "ProfessionalPhotoCommand",
         // "Meu perfil": só quem tem perfil de profissional ligado à conta (provado em MyProfessionalProfileTests).
         "GetMyProfessionalProfileQuery", "UpdateMyProfessionalProfileCommand",
     ];

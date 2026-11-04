@@ -45,19 +45,6 @@ public sealed class ProfessionalsController : ControllerBase
         Guid professionalId, UpdateProfessionalRequest request, [FromServices] UpdateProfessionalCommand command, CancellationToken ct) =>
         Ok(await command.ExecuteAsync(professionalId, request, ct));
 
-    /// <summary>Dado pelo próprio profissional, nunca pelo dono.</summary>
-    [HttpPut("{professionalId:guid}/public-profile-consent")]
-    [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GrantConsent(
-        Guid professionalId, [FromServices] SetPublicProfileConsentCommand command, CancellationToken ct) =>
-        Ok(await command.ExecuteAsync(professionalId, granted: true, ct));
-
-    [HttpDelete("{professionalId:guid}/public-profile-consent")]
-    [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> RevokeConsent(
-        Guid professionalId, [FromServices] SetPublicProfileConsentCommand command, CancellationToken ct) =>
-        Ok(await command.ExecuteAsync(professionalId, granted: false, ct));
-
     /// <summary>Foto: o dono, ou o próprio profissional. <c>multipart/form-data</c>, campo <c>file</c>, até 5 MB.</summary>
     [HttpPut("{professionalId:guid}/photo")]
     [Consumes("multipart/form-data")]

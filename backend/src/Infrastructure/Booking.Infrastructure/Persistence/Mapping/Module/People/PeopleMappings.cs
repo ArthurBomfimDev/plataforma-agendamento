@@ -16,6 +16,8 @@ public sealed class ProfessionalMapping : BaseMapping<Professional>
         builder.Property(x => x.Specialty).HasMaxLength(100);
         builder.Property(x => x.Bio).HasMaxLength(1000);
         builder.Property(x => x.PhotoImageKey).HasMaxLength(ImageKey.MaxLength);
+        builder.Property(x => x.Registration).HasMaxLength(Professional.MaxRegistrationLength);
+        builder.Property(x => x.AuthorizationDeclarationVersion).HasMaxLength(60);
 
         // Sem FK para tenancy.business_membership: chave estrangeira não atravessa módulo (ADR-007, regra 3).
         builder.HasIndex(x => x.BusinessMembershipId).IsUnique().HasFilter("business_membership_id IS NOT NULL");

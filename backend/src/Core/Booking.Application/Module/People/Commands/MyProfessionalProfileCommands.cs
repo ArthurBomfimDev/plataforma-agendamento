@@ -45,6 +45,7 @@ public sealed class UpdateMyProfessionalProfileCommand(
         Professional professional = await new OwnProfessionalLoader(professionals, businesses, actor).LoadAsync(ct);
 
         professional.UpdateProfile(professional.DisplayName, request.Specialty, request.Bio);
+        professional.SetRegistration(request.Registration);
 
         await unitOfWork.SaveChangesAsync(ct);
         return PeopleConverter.ToResponse(professional, images);
