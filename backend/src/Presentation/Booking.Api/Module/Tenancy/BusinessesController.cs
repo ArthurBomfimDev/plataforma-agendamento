@@ -15,6 +15,7 @@ namespace Booking.Api.Module.Tenancy;
 public sealed class BusinessesController : ControllerBase
 {
     [HttpPost]
+    [EnableRateLimiting(RateLimits.BusinessCreate)]
     [ProducesResponseType<BusinessResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Register(
         RegisterBusinessRequest request, [FromServices] RegisterBusinessCommand command, CancellationToken ct)
@@ -112,6 +113,21 @@ public sealed class BusinessesController : ControllerBase
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Publish([FromServices] PublishBusinessCommand command, CancellationToken ct) =>
         Ok(await command.ExecuteAsync(ct));
+
+    /// <summary>
+    /// "Denunciar" na página pública. Sem login; limite de taxa por IP. Cai na fila do Admin e responde 204; só se
+    /// denuncia estabelecimento ativo (os outros respondem 404).
+    /// </summary>
+    [HttpPost("{businessId:guid}/reports")]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimits.Report)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Report(
+        Guid businessId, ReportBusinessRequest request, [FromServices] ReportBusinessCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(businessId, request, ct);
+        return NoContent();
+    }
 
     [HttpGet("{businessId:guid}")]
     [AllowAnonymous]

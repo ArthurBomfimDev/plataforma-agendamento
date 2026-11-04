@@ -272,6 +272,25 @@ const slug = (text: string) =>
     .replace(/[^a-z0-9]+/g, '.')
     .replace(/^\.|\.$/g, '')
 
+/**
+ * Um estabelecimento de Saúde que fica EM ANÁLISE de propósito, para demonstrar a aprovação do Admin. O seed o cria e o
+ * envia, mas NUNCA o aprova (a aprovação automática o pula) e ele não entra em `BUSINESSES`: não aparece na busca nem
+ * entra nas contagens, na agenda de hoje ou no histórico, então os estabelecimentos visíveis ficam como estavam.
+ */
+const PENDING_REVIEW_DEMO: DemoBusiness = {
+  owner: { fullName: 'Novo Dono', email: 'dono.novo@example.com' },
+  name: 'Clínica Nova Esperança',
+  cnpjRoot: '998887770001',
+  category: 'Saude',
+  autoConfirm: false,
+  address: { street: 'Rua Dr. Baeta Neves', streetNumber: '250', district: 'Centro', city: 'Garça', state: 'SP', postalCode: '17400000' },
+  location: { latitude: -22.2118, longitude: -49.6571 },
+  professionals: [
+    { displayName: 'Dra. Carla Nunes', specialty: 'Psicóloga', bio: 'Atendimento clínico de adultos.', isMe: true, pattern: 0 },
+  ],
+  services: [{ name: 'Sessão de psicoterapia', description: 'Sessão individual.', durationMinutes: 50, priceCents: 16000, bufferAfterMinutes: 10 }],
+}
+
 /** Os 3 estabelecimentos do seed anterior, mantidos (com mais profissionais) para o script seguir idempotente. */
 const ORIGINAL: DemoBusiness[] = [
   {
@@ -596,10 +615,12 @@ async function approvePendingBusinesses(): Promise<boolean> {
     undefined,
     accessToken,
   )
-  for (const business of pending.items) {
+  // O de Saúde pendente fica como está: é o que a demonstração do Admin aprova ao vivo.
+  const toApprove = pending.items.filter((business) => business.name !== PENDING_REVIEW_DEMO.name)
+  for (const business of toApprove) {
     await call('POST', `/api/admin/businesses/${business.id}/approve`, { note: 'Aprovado pelo seed de demonstração' }, accessToken)
   }
-  console.log(pending.items.length === 0 ? '  nada em análise' : `  ${pending.items.length} aprovados`)
+  console.log(toApprove.length === 0 ? '  nada em análise' : `  ${toApprove.length} aprovados`)
   return created
 }
 
@@ -1022,6 +1043,7 @@ async function main() {
   for (const business of BUSINESSES) {
     await seedBusiness(business)
   }
+  await seedBusiness(PENDING_REVIEW_DEMO)
   await seedCustomer()
   const adminCreated = await approvePendingBusinesses()
 
@@ -1036,6 +1058,7 @@ async function main() {
   console.log(`\nPronto. Contas de demonstração (senha: ${demoPassword}):`)
   console.log(`  consumidor   ${CUSTOMER.email}`)
   console.log(`  donos        dono.<estabelecimento>@example.com — ${BUSINESSES.length} estabelecimentos, por exemplo ${BUSINESSES[0]!.owner.email}`)
+  console.log(`  em análise   ${PENDING_REVIEW_DEMO.owner.email} — ${PENDING_REVIEW_DEMO.name} (Saúde), para o Admin aprovar`)
   if (ADMIN_PASSWORD_FROM_ENV) console.log(`  admin        ${ADMIN.email} (senha: a de SEED_ADMIN_PASSWORD)`)
   else if (adminCreated) console.log(`  admin        ${ADMIN.email} (senha gerada agora, anote — não aparece de novo: ${ADMIN_PASSWORD})`)
   else console.log(`  admin        ${ADMIN.email} (já existia; senha inalterada)`)

@@ -42,6 +42,16 @@ builder.Services.AddRateLimiter(limiter =>
         context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
 
+    // Cadastro de estabelecimento (Fase 3): criar custa pouco e abre porta para abuso. 5 por hora por conta.
+    limiter.AddPolicy(RateLimits.BusinessCreate, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
+
+    // Denúncia na página pública (Fase 3): rota anônima, então por IP. 5 por hora. O IP real vem do proxy confiável.
+    limiter.AddPolicy(RateLimits.Report, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
+
     // Trocar a senha (Onda 7CF): quem tem um token roubado não pode testar senhas atuais à vontade. 5 por 15 minutos
     // por conta, que é o que importa aqui (o IP muda; a conta, não).
     limiter.AddPolicy("password", context => RateLimitPartition.GetFixedWindowLimiter(

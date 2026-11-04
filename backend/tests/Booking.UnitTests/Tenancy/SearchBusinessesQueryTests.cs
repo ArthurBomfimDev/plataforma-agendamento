@@ -114,7 +114,7 @@ public sealed class SearchBusinessesQueryTests
 
         public Task<bool> ExistsByDocumentAsync(Document document, CancellationToken ct = default) => throw new NotSupportedException();
 
-        public Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, PageRequest page, CancellationToken ct = default) =>
+        public Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, BusinessCategory? category, PageRequest page, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
         public void Add(Business business) => throw new NotSupportedException();

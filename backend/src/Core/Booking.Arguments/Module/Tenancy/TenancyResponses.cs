@@ -102,5 +102,18 @@ public sealed record AdminBusinessDetailResponse(
     DateTimeOffset? TermsAcceptedAt = null,
     string? TermsVersion = null);
 
+/// <summary>Uma denúncia na fila do Admin. Sem IP nem dado do aparelho; <c>ReporterUserId</c> só se a pessoa estava logada.</summary>
+public sealed record BusinessReportResponse(
+    Guid Id,
+    Guid BusinessId,
+    string BusinessName,
+    string Reason,
+    string Status,
+    DateTimeOffset ReportedAt,
+    Guid? ReporterUserId,
+    Guid? ResolvedByUserId,
+    DateTimeOffset? ResolvedAt,
+    string? Resolution);
+
 /// <summary>Responsável de Saúde e registro no conselho. Só o Admin recebe; nunca é público nem vai para log.</summary>
 public sealed record ResponsibleResponse(string Name, string Council, string CouncilNumber, string CouncilState);

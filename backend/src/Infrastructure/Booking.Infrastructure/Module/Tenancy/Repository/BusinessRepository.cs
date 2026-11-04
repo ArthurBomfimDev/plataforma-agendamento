@@ -35,9 +35,10 @@ public sealed class BusinessRepository(BookingDbContext context) : IBusinessRepo
             .ToListAsync(ct);
 
     // Ordem por id: Guid v7 cresce com o tempo, então o mais antigo na fila aparece primeiro.
-    public Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, PageRequest page, CancellationToken ct = default) =>
+    public Task<PagedResult<Business>> ListByStatusAsync(
+        BusinessStatus status, BusinessCategory? category, PageRequest page, CancellationToken ct = default) =>
         context.Set<Business>().AsNoTracking()
-            .Where(x => x.Status == status)
+            .Where(x => x.Status == status && (category == null || x.Category == category))
             .OrderBy(x => x.Id)
             .ToPagedAsync(page, ct);
 

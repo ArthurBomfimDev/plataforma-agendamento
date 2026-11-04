@@ -81,6 +81,26 @@ cd backend; dotnet test tests/Booking.IntegrationTests --filter "FullyQualifiedN
 | 6 | Admin abre o detalhe de uma Saúde | vê `responsible`; o dono vê só `responsibleInformed: true`; a resposta pública nunca traz |
 | 7 | **Seed** (`bun scripts/seed-demo.ts`) | conclui sem erro: o seed agora chama `POST current/terms` (e `PUT current/responsible` nas de Saúde) antes do `submit`. Não foi executado |
 
+### Cadastro, backend — denúncia, e-mails de status e seed (migration `AddBusinessReport`)
+
+```powershell
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\d tenancy.business_report"'
+# esperado: id, business_id, reason, reporter_user_id, reported_at, status, resolved_by_user_id, resolved_at, resolution, created_at, updated_at
+cd backend; dotnet test tests/Booking.IntegrationTests --filter "FullyQualifiedName~ReportAndAdminQueue"
+```
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | Testes R1 a R5 (denúncia anônima e logada, fila só do Admin, rascunho não se denuncia, resolver uma vez, filtro de categoria, e-mails de status) | verdes |
+| 2 | `curl -X POST http://localhost:8091/api/businesses/<id ativo>/reports -H "Content-Type: application/json" -d '{"reason":"teste de denúncia"}'` | 204 |
+| 3 | O mesmo 6 vezes seguidas, do mesmo IP | a 6ª responde **429** |
+| 4 | `GET /api/admin/businesses/reports` como Admin | lista a denúncia, sem IP |
+| 5 | `bun scripts/seed-demo.ts` e abrir `http://localhost:8090/#/search` | a **Clínica Nova Esperança** (`dono.novo@example.com`) **não** aparece; os demais estabelecimentos são os mesmos de antes |
+| 6 | Admin: `GET /api/admin/businesses?status=PendingReview&category=Saude` | traz a Clínica Nova Esperança, e só ela entre as de Saúde pendentes |
+| 7 | Aprovar a Clínica Nova Esperança | ela passa a aparecer na busca; o dono recebe o e-mail "Seu estabelecimento foi aprovado" no Mailpit (`http://localhost:8095`) |
+| 8 | Reprovar com motivo | e-mail "Seu cadastro precisa de ajustes" com "Motivo: …"; o **assunto não cita o nome da clínica** |
+| 9 | Criar o 4º estabelecimento da mesma conta | 409 `business.account_limit_reached` |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
