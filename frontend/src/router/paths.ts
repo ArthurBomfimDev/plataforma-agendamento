@@ -105,8 +105,8 @@ export const editServicePath = (serviceId: string) =>
 export const NAVIGATION_PATHS: Partial<Record<NavigationItemId, string>> = {
   search: ROUTES.home,
   appointments: ROUTES.appointments,
-  // "Perfil" ainda não tem tela própria: leva à conta, com a troca de contexto e o sair.
-  profile: ROUTES.chooseContext,
+  // "Perfil" é a Minha conta (nome, senha, tema, meu painel e sair). Sem sessão, o guard leva a "Entrar" e volta.
+  profile: ROUTES.account,
 }
 
 /** Estado da navegação para a tela de conta: por que a pessoa caiu nela. */

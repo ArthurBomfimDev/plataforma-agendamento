@@ -11,4 +11,6 @@ export type MyAccountScreenProps = {
   onSignOut: () => void
   /** A conta tem mais de um contexto: leva à troca (tela da 7A). */
   onSwitchContext?: () => void
+  /** A conta é dona ou profissional de algum estabelecimento e está no contexto de consumidor: "Meu painel". */
+  onOpenPanel?: () => void
 }

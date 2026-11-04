@@ -1,10 +1,11 @@
-import { Outlet, useMatch, useNavigate } from 'react-router'
+import { Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import { LoadingScreen } from '@components/screen-state'
 import { Suspense } from 'react'
 
 import { AccountMenu } from '@components/account-menu'
 import { LocationPicker } from '@components/location-picker'
-import { ROUTES, searchPath } from '@router/paths'
+import { MobileTopBar } from '@components/mobile-top-bar'
+import { ROUTES, searchPath, signInPath, signUpPath } from '@router/paths'
 import { TopBar } from '@components/top-bar'
 import { useAccountMenu } from '@hooks/use-account-menu'
 import { useBusinessContext } from '@api/services/auth/hooks'
@@ -12,11 +13,15 @@ import { useLocationStore } from '@store/location'
 import { useSessionStore } from '@store/session'
 
 /**
- * Moldura comum às telas do consumidor: a barra superior do desktop. No celular ela não aparece.
- * No contexto de estabelecimento, a barra perde o que é de consumidor e oferece voltar ao painel.
+ * Moldura comum às telas do consumidor: a barra superior do desktop e, no celular, a barra enxuta com tema, entrar e
+ * conta. No contexto de estabelecimento, a barra do desktop perde o que é de consumidor e oferece voltar ao painel.
  */
 export const AppLayout = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Depois de entrar ou criar conta, a pessoa volta à tela em que estava (a Home é o destino padrão: sem parâmetro).
+  const here = `${location.pathname}${location.search}`
+  const returnTo = location.pathname === ROUTES.home ? undefined : here
   const isHome = useMatch(ROUTES.home) !== null
   // Home e resultados têm a busca no próprio cabeçalho: na barra, ela seria repetida.
   const isSearch = useMatch(ROUTES.search) !== null
@@ -28,6 +33,13 @@ export const AppLayout = () => {
 
   return (
     <>
+      <MobileTopBar
+        signedIn={signedIn}
+        onHome={() => navigate(ROUTES.home)}
+        onSignIn={() => navigate(signInPath(returnTo))}
+        onSignUp={() => navigate(signUpPath(returnTo))}
+        accountMenu={accountMenu && <AccountMenu {...accountMenu} className="max-w-40" />}
+      />
       <TopBar
         showSearch={!isHome && !isSearch}
         onSearch={(term) => navigate(searchPath({ term }))}
@@ -36,7 +48,7 @@ export const AppLayout = () => {
         onChooseLocation={openPicker}
         onHome={() => navigate(ROUTES.home)}
         onAppointments={() => navigate(ROUTES.appointments)}
-        onSignIn={() => navigate(ROUTES.signIn)}
+        onSignIn={() => navigate(signInPath(returnTo))}
         onSignOut={accountMenu?.onSignOut}
         accountMenu={accountMenu && <AccountMenu {...accountMenu} />}
         onOpenPanel={context ? () => navigate(ROUTES.panelRequests) : undefined}
