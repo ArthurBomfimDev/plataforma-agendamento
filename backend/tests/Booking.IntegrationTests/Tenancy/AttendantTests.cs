@@ -1,4 +1,5 @@
 using System.Net;
+using Booking.Arguments.Module.Availability;
 using Booking.Arguments.Module.Scheduling;
 using Booking.IntegrationTests.Infrastructure;
 
@@ -116,6 +117,54 @@ public sealed class AttendantTests(IntegrationFixture fixture)
             new CounterAppointmentRequest(service.Id, business.ProfessionalIds[1], TestCalendar.At(14), "Cliente de balcão", null, null),
             attendant.Token);
         Assert.Equal(HttpStatusCode.Created, counter.StatusCode);
+    }
+
+    [Fact]
+    public async Task T5_the_attendant_blocks_any_professional_and_the_whole_business()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(2, [new ServiceSpec(60)]);
+        TestUser attendant = await _world.NewAttendantAsync(business);
+
+        foreach (Guid? target in new Guid?[] { business.ProfessionalIds[0], business.ProfessionalIds[1], null })
+        {
+            using HttpResponseMessage response = await _world.SendAsync(
+                HttpMethod.Post, "/api/businesses/current/schedule-exceptions",
+                new AddScheduleExceptionRequest(target, "Block", TestCalendar.At(9), TestCalendar.At(10), "Reunião", null, null), attendant.Token);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task T6_the_professional_blocks_only_the_own_agenda_and_edits_only_the_own_profile()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(2, [new ServiceSpec(60)]);
+        TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
+        Guid own = business.ProfessionalIds[0];
+        Guid other = business.ProfessionalIds[1];
+
+        AddScheduleExceptionRequest Block(Guid? professionalId) =>
+            new(professionalId, "Block", TestCalendar.At(9), TestCalendar.At(10), "Folga", null, null);
+
+        using (HttpResponseMessage mine = await _world.SendAsync(
+            HttpMethod.Post, "/api/businesses/current/schedule-exceptions", Block(own), staff.Token))
+        {
+            Assert.Equal(HttpStatusCode.Created, mine.StatusCode);
+        }
+
+        foreach (Guid? target in new Guid?[] { other, null })
+        {
+            using HttpResponseMessage refused = await _world.SendAsync(
+                HttpMethod.Post, "/api/businesses/current/schedule-exceptions", Block(target), staff.Token);
+            Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        }
+
+        // "Meu perfil": o profissional lê e edita o próprio; o atendente e o dono sem perfil ligado recebem 403.
+        using HttpResponseMessage profile = await _world.SendAsync(HttpMethod.Get, "/api/businesses/current/professionals/me", null, staff.Token);
+        Assert.Equal(HttpStatusCode.OK, profile.StatusCode);
+
+        TestUser attendant = await _world.NewAttendantAsync(business);
+        using HttpResponseMessage noProfile = await _world.SendAsync(HttpMethod.Get, "/api/businesses/current/professionals/me", null, attendant.Token);
+        Assert.Equal(HttpStatusCode.Forbidden, noProfile.StatusCode);
     }
 
     [Fact]
