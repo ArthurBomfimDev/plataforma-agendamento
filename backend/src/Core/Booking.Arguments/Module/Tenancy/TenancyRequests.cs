@@ -37,7 +37,8 @@ public sealed record SearchBusinessesRequest(
     string? Category = null,
     long? MaxPriceCents = null,
     string? SortBy = null,
-    string? City = null);
+    string? City = null,
+    int? MinRating = null);
 
 /// <summary>Profissional responsável e registro no conselho (Saúde). <c>Council</c>: Crm, Crp, Crefito, Crn, Crefono ou Cro.</summary>
 public sealed record SetResponsibleRequest(string Name, string Council, string CouncilNumber, string CouncilState);
