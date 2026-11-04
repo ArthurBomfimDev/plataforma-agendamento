@@ -42,6 +42,9 @@ public sealed record SearchBusinessesRequest(
 /// <summary>Profissional responsável e registro no conselho (Saúde). <c>Council</c>: Crm, Crp, Crefito, Crn, Crefono ou Cro.</summary>
 public sealed record SetResponsibleRequest(string Name, string Council, string CouncilNumber, string CouncilState);
 
+/// <summary>Denúncia na página pública: o motivo, de 5 a 500 caracteres.</summary>
+public sealed record ReportBusinessRequest(string Reason);
+
 /// <summary>Aceite dos termos pelo dono. <c>Version</c> é a versão do texto exibido.</summary>
 public sealed record AcceptTermsRequest(string Version);
 

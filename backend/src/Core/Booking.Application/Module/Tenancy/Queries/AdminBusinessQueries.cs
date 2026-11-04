@@ -14,7 +14,8 @@ namespace Booking.Application.Module.Tenancy.Queries;
 /// <summary>Fila do Admin (ADR-020): por estado, <c>PendingReview</c> por padrão.</summary>
 public sealed class ListBusinessesForAdminQuery(IBusinessRepository businesses, IActorContext actor)
 {
-    public async Task<PagedResult<BusinessResponse>> ExecuteAsync(string? status, PageRequest page, CancellationToken ct = default)
+    public async Task<PagedResult<BusinessResponse>> ExecuteAsync(
+        string? status, string? category, PageRequest page, CancellationToken ct = default)
     {
         actor.RequirePlatformAdmin();
 
@@ -24,7 +25,15 @@ public sealed class ListBusinessesForAdminQuery(IBusinessRepository businesses, 
             throw new DomainException("business.status_invalid");
         }
 
-        PagedResult<Business> result = await businesses.ListByStatusAsync(filter, page, ct);
+        BusinessCategory? categoryFilter = null;
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            categoryFilter = System.Enum.TryParse(category, ignoreCase: true, out BusinessCategory parsed)
+                ? parsed
+                : throw new DomainException("business.category_invalid");
+        }
+
+        PagedResult<Business> result = await businesses.ListByStatusAsync(filter, categoryFilter, page, ct);
 
         return new PagedResult<BusinessResponse>(
             [.. result.Items.Select(BusinessConverter.ToResponse)], result.Page, result.PageSize, result.TotalCount);

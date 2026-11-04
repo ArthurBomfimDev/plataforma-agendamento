@@ -210,6 +210,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IBusinessRepository, BusinessRepository>();
         services.AddScoped<IBusinessMembershipRepository, BusinessMembershipRepository>();
+        services.AddScoped<IBusinessReportRepository, BusinessReportRepository>();
         services.AddScoped<IBusinessDirectory, BusinessDirectory>();
 
         services.AddScoped<CurrentBusinessLoader>();
@@ -223,6 +224,9 @@ public static class DependencyInjection
         services.AddScoped<ConfirmLocationCommand>();
         services.AddScoped<SubmitBusinessCommand>();
         services.AddScoped<PublishBusinessCommand>();
+        services.AddScoped<ReportBusinessCommand>();
+        services.AddScoped<ListBusinessReportsQuery>();
+        services.AddScoped<ResolveBusinessReportCommand>();
         services.AddScoped<SetResponsibleCommand>();
         services.AddScoped<AcceptTermsCommand>();
         services.AddScoped<GetCurrentBusinessQuery>();
