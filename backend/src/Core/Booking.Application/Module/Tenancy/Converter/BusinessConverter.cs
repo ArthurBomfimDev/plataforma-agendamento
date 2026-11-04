@@ -1,4 +1,5 @@
 using Booking.Application.Common.Media;
+using Booking.Application.Contracts.Notifications;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Module.Tenancy;
 using Booking.Domain.Enum.Module.Tenancy;
@@ -15,6 +16,13 @@ public static class BusinessConverter
             business.Category.ToString(),
             business.Status.ToString(),
             business.VerificationLevel.ToString());
+
+    /// <summary>
+    /// O que o aviso de status ao dono precisa: o nome, se é sensível e o motivo da suspensão ou da reprovação.
+    /// Nunca o documento nem o registro no conselho.
+    /// </summary>
+    public static BusinessStatusFacts ToStatusFacts(Business business) =>
+        new(business.Id, business.Name, business.Category.RequiresSensitiveHandling(), StatusReason(business));
 
     public static AddressResponse ToAddress(Business business) =>
         new(business.Street, business.StreetNumber, business.District, business.City, business.State, business.PostalCode);

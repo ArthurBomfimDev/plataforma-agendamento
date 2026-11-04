@@ -360,6 +360,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddScoped<IIdentityMailer, IdentityMailer>();
         services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
+        services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
         services.AddScoped<DispatchOutboxCommand>();
     }
 }
