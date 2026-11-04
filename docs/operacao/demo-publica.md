@@ -173,6 +173,33 @@ docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SEL
 Se o Gmail recusar o login, a entrega não se perde: volta para a fila com nova tentativa, e `last_error` diz
 `SMTP recusou o login de <conta> em smtp.gmail.com:587` — sem a senha.
 
+### Se o envio falha com "unable to get certificate CRL"
+
+Em `last_error` aparece `SslHandshakeException ... unable to get certificate CRL`. O certificado do `smtp.gmail.com`
+aponta para uma lista de revogação (CRL) em `http://c.pki.goog/we2/…crl`, e o MailKit tenta baixá-la antes de aceitar
+o certificado. Se a API não alcança esse endereço, o handshake falha, mesmo com o certificado válido.
+
+**Por que o contêiner não alcança (diagnóstico de 31/10, sem mudar a infraestrutura):**
+
+| Teste | Resultado |
+|---|---|
+| `smtp.gmail.com`, `google.com` | resolvem |
+| `c.pki.goog`, `i.pki.goog` | **não resolvem** no DNS da rede (resolvedores do provedor de internet, em `Ethernet`); o contêiner herda esse DNS, e o contêiner e o host falham igual |
+| `c.pki.goog` por `8.8.8.8` e `1.1.1.1` | resolvem |
+| `GET http://<IP>/we2/….crl` com `Host: c.pki.goog` | **200, ~110 KB**: a saída HTTP na porta 80 funciona |
+| Proxy | nenhum configurado no contêiner |
+
+Ou seja: o bloqueio é de **DNS** (o resolvedor da rede não responde por `*.pki.goog`), e não de porta 80 nem de proxy.
+Corrigir de verdade é resolver `pki.goog` (trocar o DNS da máquina ou do Docker por um público) e manter a verificação
+ligada.
+
+**Contorno para a demonstração:** `Email__Smtp__CheckCertificateRevocation=false` no `.env`.
+
+- O que continua: validação da cadeia de certificados e do nome do servidor, e STARTTLS obrigatório na 587.
+- O que se perde: a garantia contra um certificado **revogado** (a consulta à CRL/OCSP). Para um servidor conhecido
+  (`smtp.gmail.com`), numa demonstração, o risco é pequeno.
+- Em produção real, o ideal é liberar a saída para a CRL e manter `true` (o padrão).
+
 ### Limites
 
 - **Cerca de 500 mensagens por dia** numa conta Gmail comum. Para uma sessão de demonstração sobra; para cadastro em

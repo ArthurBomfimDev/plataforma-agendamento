@@ -157,6 +157,21 @@ build não embute URL de API, então trocar `API_PORT` não exige rebuild do fro
 Antes de abrir, leia o checklist em [`docs/operacao/demo-publica.md`](docs/operacao/demo-publica.md), que cobre também
 o e-mail de verdade pelo Gmail.
 
+- **Subir:** o script recria o túnel a cada execução, pega o último endereço, só o mostra depois de `/api/health`
+  responder 200 por ele e recria a API com esse endereço, para os links dos e-mails saírem certos. Se faltar variável
+  obrigatória no `.env`, ele diz quais (sem mostrar valores).
+- **Parar:** `./scripts/demo-publica.ps1 -Parar` (ou `./scripts/demo-publica.sh --parar`). O endereço antigo passa a
+  dar erro.
+- **Trocar a URL:** rode o script de novo. O endereço do túnel rápido muda a cada início, e **links de e-mails enviados
+  antes deixam de funcionar**: peça o e-mail de novo.
+- **E-mail não chega:** `./scripts/demo-publica.ps1 -Diagnostico` mostra a outbox por estado (pendente, falho,
+  processado) e o último erro de cada falha, sem e-mails nem segredos. Com `-ReprocessarFalhos` (`--diagnostico
+  --reprocessar-falhos` no bash), as entregas que falharam voltam à fila.
+- **URL fixa (túnel nomeado):** com um domínio seu na Cloudflare, crie um túnel nomeado no painel Zero Trust, ponha
+  `TUNNEL_TOKEN` no `.env`, aponte o hostname para `http://web:80` e suba com o perfil `tunnel-named`; defina
+  `APP_PUBLIC_BASE_URL` com o endereço fixo. Detalhes em
+  [`docs/operacao/demo-publica.md`](docs/operacao/demo-publica.md) (seção "Túnel nomeado").
+
 O banco é criado pelas migrations na primeira subida e fica no volume `booking_db-data`.
 As imagens enviadas (logotipo, capa, foto do profissional) ficam no volume `booking_media-data`, servidas
 pela API em `/media/…` (ADR-023). O banco guarda só o caminho de cada imagem.

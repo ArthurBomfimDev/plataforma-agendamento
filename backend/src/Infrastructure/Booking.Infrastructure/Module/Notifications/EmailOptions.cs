@@ -22,6 +22,13 @@ public sealed class SmtpOptions
 
     /// <summary>Com TLS: implícito na 465, STARTTLS obrigatório nas demais. Sem: texto puro (só o Mailpit local).</summary>
     public bool UseSsl { get; set; }
+
+    /// <summary>
+    /// Consulta CRL/OCSP ao validar o certificado do servidor (<c>Email__Smtp__CheckCertificateRevocation</c>, padrão
+    /// <c>true</c>). Em <c>false</c> a cadeia e o nome do servidor continuam validados; só a consulta de revogação é
+    /// dispensada. Para ambiente cuja saída não alcança a CRL (ADR-021).
+    /// </summary>
+    public bool CheckCertificateRevocation { get; set; } = true;
 }
 
 /// <summary><c>App__PublicBaseUrl</c> (links dos e-mails) e <c>App__BrandName</c> (padrão Vagoo).</summary>
