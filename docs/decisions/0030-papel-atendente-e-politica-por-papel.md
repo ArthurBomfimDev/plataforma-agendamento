@@ -31,7 +31,9 @@ esquecimento?
 - `AppointmentAccess.RestrictToProfessionalAsync` devolve "sem restrição" para dono e atendente; o profissional continua
   restrito à própria agenda (a de outro responde como inexistente).
 - Bloqueios e férias (`AddScheduleException`, `RemoveScheduleException`, a prévia e o cancelamento em massa) passam a ser
-  de dono e atendente. **Jornada** continua só do dono.
+  de dono e atendente, de todos os profissionais. O **profissional** mexe só nos próprios (`AgendaScope`): o de outro, ou o
+  do estabelecimento todo, dá 403. **Jornada** continua só do dono.
+- O profissional com conta edita a própria especialidade e bio (`PUT professionals/me`); nome e situação são do dono.
 - **A lista é fechada por teste.** `RolePolicyTests` classifica cada caso de uso (só o dono, dono e atendente, Admin,
   restrito por agenda, independente do papel) e reprova se aparecer um sem classe. Os casos de dono-só e de Admin são
   chamados com repositórios **nulos**: se algum tocar em dado antes de conferir o papel, o teste quebra.

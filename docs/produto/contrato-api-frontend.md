@@ -463,7 +463,8 @@ Regra: ADR-030. O token de contexto passa a levar `ctx: "Attendant"` (o `switch-
 | Rota (todas em `/api/businesses/current/…`) | Dono | Atendente | Profissional |
 |---|---|---|---|
 | `appointments` (agenda do dia), `appointments/pending`, `confirm`, `reject`, `cancel`, `complete`, `no-show`, `counter` | todos | **todos** | só os próprios |
-| `schedule-exceptions` (bloqueios, férias), `schedule-exceptions/affected-appointments` | sim | **sim**, de todos | **403** (por ora) |
+| `schedule-exceptions` (bloqueios, férias), `schedule-exceptions/affected-appointments` | sim | **sim**, de todos | **só os próprios** (`professionalId` = o seu perfil; o de outro ou o do estabelecimento todo dá 403) |
+| `GET/PUT professionals/me` `{ specialty, bio }` | só com perfil ligado | **403** (não tem perfil) | **sim**, o próprio. Nome e situação seguem do dono; a foto usa `PUT professionals/{id}/photo` |
 | `professionals` e `services` (GET), `work-schedules` (GET), `schedule-exceptions` (GET) | sim | sim | sim |
 | `work-schedules` (POST/PUT/DELETE), `services` (POST/PUT e vínculo com profissional), `professionals` (POST/PUT) | sim | **403** | 403 |
 | `professionals/{id}/photo` | sim | **403** | só a própria |
