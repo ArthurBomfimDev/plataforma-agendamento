@@ -199,8 +199,7 @@ Pilha isolada (seção 0), seed rodado. O seed agora cria `profissional.duartina
 | 14 | Como esse profissional: `GET /api/businesses/current/professionals/me` e `PUT …/me` `{ "specialty":"x", "bio":"y" }` | 200; o nome não muda. Para o dono ou o atendente: 403 / 403 |
 | 15 | Como esse profissional: `POST …/schedule-exceptions` com o `professionalId` **dele**; depois com o de outro profissional e sem `professionalId` | 201; depois **403** nos dois |
 
-**Não existe tela** para o profissional registrar folgas/bloqueios nem para editar a própria bio/foto (só a API): fica para
-o próximo ciclo (registrado na seção de limitações do PR). O atendente também não tem tela de bloqueios.
+As telas de folgas/bloqueios (atendente e profissional) e de Meu perfil foram feitas depois: ver "Telas da equipe" abaixo.
 
 ### Perfil público sempre ligado e declaração do dono (Fase 4, bloco 3 — migration `ReplaceProfessionalConsentWithDeclaration`)
 
@@ -221,6 +220,35 @@ o próximo ciclo (registrado na seção de limitações do PR). O atendente tamb
 | 10 | Desativar um profissional que tem bio antiga e nunca declarou | desativa sem pedir declaração e sai da vitrine na hora |
 | 11 | `PUT /api/businesses/current/professionals/{id}/public-profile-consent` | 404 (a rota não existe mais) |
 | 12 | Visual 390 px, claro e escuro, do formulário Editar (checkbox com 44 px de alvo) e da ficha | sem rolagem horizontal; checkbox e texto legíveis nos dois temas |
+
+### Telas da equipe: convidar, folgas e bloqueios, meu perfil e registro (sem migration)
+
+Escritas sem Docker e sem navegador. **Nada foi visto.** Para cada tela: 390 px e desktop, claro e escuro, alvos ≥ 44 px,
+foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@example.com`, `atendente.duartina@example.com`,
+`profissional.duartina@example.com`, `dono.novo@example.com` (Saúde).
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `dotnet test Booking.slnx --filter FullyQualifiedName~AttendantTests` (T5 e T6 novos) | verdes |
+| 2 | Dono → Profissionais: seção **Convites** abaixo da equipe | mostra "N de 15 vagas ocupadas" e "Nenhum convite pendente" (ou o do seed) |
+| 3 | **Convidar** com nome vazio e e-mail inválido | erros nos campos; nada é enviado |
+| 4 | Convidar como **Atendente** | notificação "Convite enviado para …"; o item aparece em pendentes com "Atendente" e a validade; o e-mail chega no Mailpit; o contador de vagas sobe 1 |
+| 5 | Convidar como **Profissional** | aparece o seletor "Perfil de profissional" (criar novo ou ligar a um perfil sem conta); como Atendente ele some |
+| 6 | Convidar o mesmo e-mail de novo | mensagem "Já existe um convite pendente para este e-mail." |
+| 7 | **Reenviar** | "Convite reenviado."; chega novo e-mail; o link do e-mail anterior passa a dar "não existe" |
+| 8 | **Revogar** → confirmar | "Convite revogado."; sai da lista; vaga volta; o link dá "foi cancelado" |
+| 9 | Com 15 vagas ocupadas (reduzir `seat_limit` no banco para testar, ex.: `UPDATE tenancy.business SET seat_limit = 2 WHERE …`) | **Convidar** fica desligado e aparece "A equipe está completa" |
+| 10 | Atendente entra → menu | **Folgas e bloqueios** presente; **sem** Serviços, Profissionais, Jornadas, Fotos, Configurações e Meu perfil |
+| 11 | Atendente → Folgas e bloqueios | seletor de profissional + formulário **com** "Estabelecimento inteiro" + lista "Próximos bloqueios" |
+| 12 | Atendente cria um bloqueio de um profissional com pedidos dentro | prévia dos afetados; escolher manter ou cancelar; salvo e listado; remover pede confirmação |
+| 13 | Profissional entra → menu | **Folgas e bloqueios** e **Meu perfil** presentes; sem as seções do dono |
+| 14 | Profissional → Folgas e bloqueios | **sem** seletor e **sem** "Estabelecimento inteiro"; só os bloqueios dele aparecem na lista |
+| 15 | Profissional → Meu perfil | nome fixo, especialidade e apresentação editáveis; **Salvar** → "Perfil atualizado."; a vitrine mostra o novo texto |
+| 16 | Profissional → Meu perfil → foto: enviar, trocar, remover | a foto aparece na vitrine; remover pede confirmação |
+| 17 | Em Saúde (`dono.novo@example.com` depois de aprovado, ou outra clínica) | **Registro profissional (opcional)** aparece em Profissionais → Editar e em Meu perfil; em Beleza **não** aparece |
+| 18 | Digitar `a`×41 no registro | o campo trava em 40 caracteres |
+| 19 | Dono digita no endereço `#/panel/blocks` ou `#/panel/profile` | volta para a agenda (guard); atendente em `#/panel/profile` também volta |
+| 20 | Celular: "Mais" | profissional vê Folgas, Meu perfil, Conta e Tema; atendente vê Folgas, Conta e Tema |
 
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
