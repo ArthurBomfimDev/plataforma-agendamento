@@ -19,6 +19,16 @@ public sealed class GetCurrentBusinessQuery(CurrentBusinessLoader loader, IImage
         BusinessConverter.ToDetail(await loader.LoadForOwnerAsync(ct), images);
 }
 
+/// <summary>
+/// O que falta para enviar ou publicar, para o painel do dono mostrar a checklist e a faixa de status. Só o Owner lê;
+/// é a mesma checklist que o servidor confere em <c>submit</c> e <c>publish</c>.
+/// </summary>
+public sealed class GetCurrentChecklistQuery(CurrentBusinessLoader loader, ActivationChecklist checklist)
+{
+    public async Task<IReadOnlyList<ChecklistItemResponse>> ExecuteAsync(CancellationToken ct = default) =>
+        await checklist.EvaluateAsync(await loader.LoadForOwnerAsync(ct), ct);
+}
+
 /// <summary>Vitrine: só estabelecimento ativo aparece para o público.</summary>
 public sealed class GetPublicBusinessQuery(IBusinessRepository businesses, IImageUrls images)
 {

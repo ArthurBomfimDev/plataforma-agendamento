@@ -150,6 +150,23 @@ public sealed class OnboardingTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task P8_the_owner_reads_the_checklist_and_a_non_owner_does_not()
+    {
+        TestBusiness draft = await _world.NewBusinessAsync(1, [new ServiceSpec(60)], submit: false);
+        TestUser customer = await _world.NewCustomerAsync();
+
+        ChecklistItemResponse[] items = await _world.SendOkAsync<ChecklistItemResponse[]>(
+            HttpMethod.Get, "/api/businesses/current/checklist", null, draft.OwnerToken);
+
+        Assert.Contains(items, i => i.Key == "terms" && i.Done);
+        Assert.Contains(items, i => i.Key == "location_confirmed" && i.Done);
+        Assert.DoesNotContain(items, i => i.Key == "responsible"); // Beleza não tem este item
+
+        using HttpResponseMessage refused = await _world.SendAsync(HttpMethod.Get, "/api/businesses/current/checklist", null, customer.Token);
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+    }
+
+    [Fact]
     public async Task P7_an_account_cannot_own_more_than_three_businesses()
     {
         TestUser owner = await _world.NewUserAsync("Dono de muitos");

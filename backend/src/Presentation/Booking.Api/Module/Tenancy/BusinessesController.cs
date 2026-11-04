@@ -36,6 +36,12 @@ public sealed class BusinessesController : ControllerBase
     public async Task<IActionResult> GetCurrent([FromServices] GetCurrentBusinessQuery query, CancellationToken ct) =>
         Ok(await query.ExecuteAsync(ct));
 
+    /// <summary>A checklist de envio e publicação (o que falta), só para o Owner.</summary>
+    [HttpGet("current/checklist")]
+    [ProducesResponseType<IReadOnlyList<ChecklistItemResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetChecklist([FromServices] GetCurrentChecklistQuery query, CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(ct));
+
     [HttpPut("current/scheduling-policy")]
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePolicy(
