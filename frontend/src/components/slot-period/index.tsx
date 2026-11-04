@@ -1,6 +1,6 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible'
 
-import { ChevronRight } from 'lucide-react'
+import { ChevronRightIcon } from '@assets/icons'
 import type { SlotPeriodProps } from './types'
 import { TimeSlotGroup } from '@components/time-slot-group'
 import { cn } from 'cn'
@@ -33,7 +33,7 @@ export const SlotPeriod = (props: SlotPeriodProps) => {
         <span className="type-caption tabular shrink-0 text-(--text-muted)">
           {countLabel(freeCount)}
         </span>
-        <ChevronRight
+        <ChevronRightIcon
           aria-hidden="true"
           className="size-5 shrink-0 text-(--text-strong) group-data-panel-open/period:hidden"
         />

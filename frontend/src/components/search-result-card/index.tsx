@@ -1,8 +1,8 @@
 import { Card, CardContent } from '@components/ui/card'
-import { Clock, Hourglass } from 'lucide-react'
+import { HourglassIcon, ScheduleIcon } from '@assets/icons'
 import { NO_AVAILABILITY_MESSAGE, priceFormat, priceWholeFormat } from './consts'
 
-import { BusinessIllustration } from '@global/images/defaults/business-illustration'
+import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { SearchResultCardProps } from './types'
 import { SmartImage } from '@components/smart-image'
 import { TimeSlotChip } from '@components/time-slot-chip'
@@ -76,7 +76,7 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
         {availability === undefined ? null : availability ? (
           <>
             <p className="type-caption flex items-center gap-(--space-8) text-(--text-muted)">
-              <Clock aria-hidden="true" className="size-4 shrink-0" />
+              <ScheduleIcon aria-hidden="true" className="size-4 shrink-0" />
               {availability.dayLabel}
             </p>
             <ul className="flex flex-wrap gap-(--space-8)">
@@ -94,7 +94,7 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
         ) : (
           // Estado "expirado": além da cor, o ícone de ampulheta e o texto carregam o significado.
           <p className="type-caption flex items-center gap-(--space-8) rounded-md border border-l-3 border-(--status-expired-fg) bg-(--status-expired-bg) px-(--space-12) py-(--space-8) text-(--status-expired-fg)">
-            <Hourglass aria-hidden="true" className="size-4 shrink-0" />
+            <HourglassIcon aria-hidden="true" className="size-4 shrink-0" />
             {NO_AVAILABILITY_MESSAGE}
           </p>
         )}

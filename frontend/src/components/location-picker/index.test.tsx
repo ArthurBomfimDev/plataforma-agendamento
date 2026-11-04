@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatDistance, formatPostalCode, postalCodeLabel, postalCodeQueries } from './consts'
 
-import { DEMO_LOCATION } from '@lib/zustand/location'
+import { DEMO_LOCATION } from '@store/location'
 import { LocationPickerPanel } from './panel'
 import type { LocationPickerPanelProps } from './types'
 import { renderToString } from 'react-dom/server'

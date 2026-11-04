@@ -1,9 +1,9 @@
 import { Button } from '@components/button'
-import { Loader2 } from 'lucide-react'
+import { SpinnerIcon } from '@assets/icons'
 
 /**
  * Estados de tela inteira enquanto o dado vem da API. Não existe wireframe no Figma; o texto e o
- * layout seguem a 404 (`features/not-found`).
+ * layout seguem a 404 (`pages/not-found`).
  */
 
 export const LoadingScreen = ({ label = 'Carregando…' }: { label?: string }) => (
@@ -12,7 +12,7 @@ export const LoadingScreen = ({ label = 'Carregando…' }: { label?: string }) =
     className="flex min-h-dvh items-start justify-center bg-(--bg-page) p-(--space-16) pt-[calc(var(--space-40)+env(safe-area-inset-top))]"
   >
     <p role="status" className="type-body flex items-center gap-(--space-8) text-(--text-muted)">
-      <Loader2 aria-hidden="true" className="size-5 animate-spin motion-reduce:animate-none" />
+      <SpinnerIcon aria-hidden="true" className="size-5 animate-spin motion-reduce:animate-none" />
       {label}
     </p>
   </main>
@@ -25,7 +25,7 @@ export const LoadingState = ({ label = 'Carregando…' }: { label?: string }) =>
     aria-busy="true"
     className="type-body flex items-center gap-(--space-8) text-(--text-muted)"
   >
-    <Loader2 aria-hidden="true" className="size-5 animate-spin motion-reduce:animate-none" />
+    <SpinnerIcon aria-hidden="true" className="size-5 animate-spin motion-reduce:animate-none" />
     {label}
   </p>
 )

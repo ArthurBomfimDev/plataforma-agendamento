@@ -1,4 +1,4 @@
-import { ImageUp, Trash2 } from 'lucide-react'
+import { AddPhotoIcon, DeleteIcon } from '@assets/icons'
 
 import { Button } from '@components/button'
 import type { ImageUploaderViewProps } from './types'
@@ -80,12 +80,12 @@ export const ImageUploaderView = (props: ImageUploaderViewProps) => {
           aria-describedby={error ? `${id}-help ${id}-error` : `${id}-help`}
           onClick={onChoose}
         >
-          <ImageUp aria-hidden="true" className="size-4" />
+          <AddPhotoIcon aria-hidden="true" className="size-4" />
           {hasImage ? 'Trocar imagem' : 'Escolher imagem'}
         </Button>
         {canRemove && hasImage && (
           <Button variant="ghost" disabled={disabled || uploading} onClick={onRemove}>
-            <Trash2 aria-hidden="true" className="size-4" />
+            <DeleteIcon aria-hidden="true" className="size-4" />
             Remover
           </Button>
         )}

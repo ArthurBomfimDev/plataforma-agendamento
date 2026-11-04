@@ -1,4 +1,4 @@
-import { Loader2, Search } from 'lucide-react'
+import { SearchIcon, SpinnerIcon } from '@assets/icons'
 
 import { Button } from '@components/button'
 import type { ComponentProps } from 'react'
@@ -27,9 +27,12 @@ export const SearchButton = (props: SearchButtonProps) => {
       className={cn('shrink-0 py-(--space-8)', className)}
     >
       {loading ? (
-        <Loader2 aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />
+        <SpinnerIcon
+          aria-hidden="true"
+          className="size-4 animate-spin motion-reduce:animate-none"
+        />
       ) : (
-        <Search aria-hidden="true" className="size-4" />
+        <SearchIcon aria-hidden="true" className="size-4" />
       )}
       {children}
     </Button>

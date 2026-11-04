@@ -1,4 +1,4 @@
-import { Eye, EyeOff, X } from 'lucide-react'
+import { CloseIcon, VisibilityIcon, VisibilityOffIcon } from '@assets/icons'
 
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -53,9 +53,9 @@ export const PasswordField = (props: PasswordFieldProps) => {
           className="absolute inset-y-0 right-0 flex min-h-(--size-touch-min) min-w-(--size-touch-min) items-center justify-center rounded-md text-(--text-muted) hover:text-(--text-strong) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--border-focus) disabled:opacity-50"
         >
           {visible ? (
-            <EyeOff aria-hidden="true" className="size-5" />
+            <VisibilityOffIcon aria-hidden="true" className="size-5" />
           ) : (
-            <Eye aria-hidden="true" className="size-5" />
+            <VisibilityIcon aria-hidden="true" className="size-5" />
           )}
         </button>
       </div>
@@ -64,7 +64,7 @@ export const PasswordField = (props: PasswordFieldProps) => {
           id={helperId}
           className="type-caption flex items-center gap-(--space-4) text-(--status-rejected-fg)"
         >
-          <X aria-hidden="true" className="size-4 shrink-0" />
+          <CloseIcon aria-hidden="true" className="size-4 shrink-0" />
           {error}
         </p>
       ) : (

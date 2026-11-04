@@ -2,8 +2,8 @@ import { LOGOTYPE_HEIGHT, LOGOTYPE_WIDTH } from './consts'
 
 import type { LogotypeProps } from './types'
 import { cn } from 'cn'
-import logotypeDark from '../../global/images/vagoo-logotipo-escuro.png'
-import logotypeLight from '../../global/images/vagoo-logotipo-claro.png'
+import logotypeDark from '../../assets/images/vagoo-logotipo-escuro.png'
+import logotypeLight from '../../assets/images/vagoo-logotipo-claro.png'
 
 /**
  * Logotipo do Figma (component set "Logotipo"). O PNG é o 2× exportado de lá, 280×94.
@@ -12,6 +12,16 @@ import logotypeLight from '../../global/images/vagoo-logotipo-claro.png'
  */
 export const Logotype = (props: LogotypeProps) => {
   const { tone = 'light', alt = 'vagoo', className } = props
+
+  // O tema é uma classe no `<html>`: os dois arquivos vão para a página e o CSS mostra o certo, sem piscar.
+  if (tone === 'auto') {
+    return (
+      <>
+        <Logotype alt={alt} className={cn('dark:hidden', className)} />
+        <Logotype tone="dark" alt={alt} className={cn('hidden dark:block', className)} />
+      </>
+    )
+  }
 
   return (
     <img

@@ -1,8 +1,10 @@
 using System.Net;
 using Booking.Application.Contracts.Identity;
 using Booking.Arguments.Module.Compliance;
+using Booking.Arguments.Module.Identity;
 using Booking.Arguments.Module.Scheduling;
 using Booking.Domain.Entity.Module.Identity;
+using Booking.Infrastructure.Module.Identity.Security;
 using Booking.Infrastructure.Persistence.Context;
 using Booking.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -127,6 +129,97 @@ public sealed class SecurityTests(IntegrationFixture fixture, ITestOutputHelper 
         Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").Single());
         Assert.Equal("default-src 'none'; frame-ancestors 'none'", response.Headers.GetValues("Content-Security-Policy").Single());
     }
+
+    /// <summary>
+    /// Demonstração pública (Onda 7H): navegador → Cloudflare → cloudflared → nginx → API. O limitador de autenticação
+    /// conta pelo IP de quem chamou, e não pelo do último proxy; um <c>X-Forwarded-For</c> inventado não troca de balde.
+    /// </summary>
+    [Fact]
+    public async Task I4_behind_the_proxies_the_auth_limiter_counts_the_real_ip_and_ignores_a_forged_one()
+    {
+        await using var factory = new BookingApiFactory(
+            fixture.ConnectionString,
+            settings: new Dictionary<string, string> { ["ForwardedHeaders:KnownNetworks:0"] = "172.16.0.0/12" });
+        using HttpClient client = factory.CreateClient();
+
+        // À direita, o cloudflared (rede do compose); antes dele, o IP que a Cloudflare viu; à esquerda, o que o
+        // navegador inventou, diferente a cada chamada.
+        async Task<HttpStatusCode> RefreshAsync(string realIp, int attempt)
+        {
+            using HttpRequestMessage request = TestWorld.Build(HttpMethod.Post, "/api/auth/refresh", new RefreshSessionRequest("token-invalido"), null);
+            request.Headers.Add("X-Forwarded-For", $"198.51.100.{attempt}, {realIp}, 172.18.0.5");
+            using HttpResponseMessage response = await client.SendAsync(request);
+            return response.StatusCode;
+        }
+
+        for (int attempt = 1; attempt <= 10; attempt++)
+        {
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, await RefreshAsync("203.0.113.7", attempt));
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, await RefreshAsync("203.0.113.7", 11));
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, await RefreshAsync("203.0.113.8", 12));
+    }
+
+    /// <summary>
+    /// O TLS termina na Cloudflare: a API recebe HTTP e só sabe que a origem era HTTPS pelo <c>X-Forwarded-Proto</c>.
+    /// Fora de Development, com ele, sai o HSTS; sem ele (acesso local direto), não sai nem redireciona.
+    /// </summary>
+    [Fact]
+    public async Task I5_outside_development_hsts_follows_the_forwarded_proto()
+    {
+        await using var factory = new BookingApiFactory(
+            fixture.ConnectionString, "Production",
+            settings: new Dictionary<string, string> { ["ForwardedHeaders:KnownNetworks:0"] = "172.16.0.0/12" });
+        using HttpClient client = factory.CreateClient();
+
+        async Task<HttpResponseMessage> GetAsync(string? proto)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+            // O HSTS não sai para localhost; o endereço do túnel é um nome qualquer.
+            request.Headers.Host = "demo.exemplo.test";
+            if (proto is not null)
+            {
+                request.Headers.Add("X-Forwarded-For", "203.0.113.7, 172.18.0.5");
+                request.Headers.Add("X-Forwarded-Proto", proto);
+            }
+
+            return await client.SendAsync(request);
+        }
+
+        using HttpResponseMessage viaTunnel = await GetAsync("https");
+        Assert.Equal(HttpStatusCode.OK, viaTunnel.StatusCode);
+        Assert.StartsWith("max-age=", viaTunnel.Headers.GetValues("Strict-Transport-Security").Single());
+
+        using HttpResponseMessage direct = await GetAsync(null);
+        Assert.Equal(HttpStatusCode.OK, direct.StatusCode);
+        Assert.False(direct.Headers.Contains("Strict-Transport-Security"));
+    }
+
+    /// <summary>
+    /// A chave do <c>.env.example</c> tem 32+ bytes e passaria na regra de tamanho. Fora de Development, a API não sobe
+    /// com ela; em Development (o compose local), sobe.
+    /// </summary>
+    [Fact]
+    public async Task I6_the_example_jwt_key_is_refused_outside_development()
+    {
+        string exampleKey = JwtOptions.PublicSigningKeys.Single();
+        var settings = new Dictionary<string, string> { ["Jwt:SigningKey"] = exampleKey };
+
+        await using (var production = new BookingApiFactory(fixture.ConnectionString, "Production", settings: settings))
+        {
+            Exception refused = Assert.ThrowsAny<Exception>(() => production.CreateClient());
+            Assert.Contains("Jwt:SigningKey", Flatten(refused));
+            Assert.DoesNotContain(exampleKey, Flatten(refused));
+        }
+
+        await using var development = new BookingApiFactory(fixture.ConnectionString, "Development", settings: settings);
+        using HttpClient client = development.CreateClient();
+        using HttpResponseMessage health = await client.GetAsync("/health");
+        Assert.Equal(HttpStatusCode.OK, health.StatusCode);
+    }
+
+    private static string Flatten(Exception e) => e.InnerException is null ? e.Message : $"{e.Message} {Flatten(e.InnerException)}";
 
     /// <summary>
     /// Token emitido pela própria instância (cada factory tem a sua chave), com o contexto do dono. Antes de qualquer

@@ -1,6 +1,8 @@
 using System.Text;
 using Booking.Application.Module.Notifications.Email;
 using Booking.Domain.Entity.Module.Notifications;
+using Booking.Infrastructure.Module.Notifications;
+using MailKit.Security;
 
 namespace Booking.UnitTests.Notifications;
 
@@ -35,6 +37,29 @@ public sealed class NotificationsTests
         Assert.NotNull(message.FailedAt);
         Assert.Equal(OutboxMessage.MaxErrorLength, message.LastError!.Length);
         Assert.Contains("a@exemplo.test", message.Payload);
+    }
+
+    [Theory]
+    [InlineData(false, 1025, SecureSocketOptions.None)]
+    [InlineData(true, 587, SecureSocketOptions.StartTls)]
+    [InlineData(true, 465, SecureSocketOptions.SslOnConnect)]
+    public void Smtp_with_tls_requires_starttls_on_587_and_implicit_tls_on_465(bool useSsl, int port, SecureSocketOptions expected)
+    {
+        Assert.Equal(expected, SmtpEmailSender.SecurityFor(new SmtpOptions { UseSsl = useSsl, Port = port }));
+    }
+
+    [Fact]
+    public void Smtp_login_refused_is_described_with_host_port_and_user_and_never_the_password()
+    {
+        // Valor de teste, não é senha de ninguém.
+        var smtp = new SmtpOptions { Host = "smtp.gmail.com", Port = 587, User = "conta@exemplo.test", Password = "abcdabcdabcdabcd" };
+
+        string text = SmtpEmailSender.DescribeAuthenticationFailure(smtp, "535: 5.7.8 Username and Password not accepted (abcdabcdabcdabcd)");
+
+        Assert.Contains("smtp.gmail.com:587", text);
+        Assert.Contains("conta@exemplo.test", text);
+        Assert.Contains("Username and Password not accepted", text);
+        Assert.DoesNotContain("abcdabcdabcdabcd", text);
     }
 
     [Fact]

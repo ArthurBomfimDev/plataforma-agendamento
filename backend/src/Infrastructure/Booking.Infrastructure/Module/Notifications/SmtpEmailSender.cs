@@ -23,16 +23,43 @@ public sealed class SmtpEmailSender(IOptions<EmailOptions> options) : IEmailSend
         using MimeMessage mime = Build(message, deliveryId);
         using var client = new SmtpClient();
 
-        SecureSocketOptions security = _options.Smtp.UseSsl ? SecureSocketOptions.Auto : SecureSocketOptions.None;
-        await client.ConnectAsync(Host, _options.Smtp.Port, security, ct);
+        await client.ConnectAsync(Host, _options.Smtp.Port, SecurityFor(_options.Smtp), ct);
 
         if (!string.IsNullOrEmpty(_options.Smtp.User))
         {
-            await client.AuthenticateAsync(_options.Smtp.User, _options.Smtp.Password ?? string.Empty, ct);
+            try
+            {
+                await client.AuthenticateAsync(_options.Smtp.User, _options.Smtp.Password ?? string.Empty, ct);
+            }
+            catch (AuthenticationException e)
+            {
+                // Vira falha comum da entrega: a outbox grava o texto em last_error e tenta de novo mais tarde.
+                throw new InvalidOperationException(DescribeAuthenticationFailure(_options.Smtp, e.Message), e);
+            }
         }
 
         await client.SendAsync(mime, ct);
         await client.DisconnectAsync(quit: true, ct);
+    }
+
+    /// <summary>
+    /// Com TLS: implícito na 465, STARTTLS obrigatório nas demais (a 587 do Gmail). Obrigatório, e não "se o servidor
+    /// oferecer" (<c>Auto</c>): quem estivesse no meio poderia tirar o STARTTLS da resposta e receber a senha em texto
+    /// puro. Sem TLS: só o Mailpit local.
+    /// </summary>
+    public static SecureSocketOptions SecurityFor(SmtpOptions smtp) =>
+        !smtp.UseSsl ? SecureSocketOptions.None
+        : smtp.Port == 465 ? SecureSocketOptions.SslOnConnect
+        : SecureSocketOptions.StartTls;
+
+    /// <summary>
+    /// O texto que vai para <c>last_error</c> quando o servidor recusa o login: host, porta e usuário, para quem
+    /// diagnostica, e nunca a senha, nem se o servidor a devolvesse na resposta.
+    /// </summary>
+    public static string DescribeAuthenticationFailure(SmtpOptions smtp, string serverReply)
+    {
+        string reply = string.IsNullOrEmpty(smtp.Password) ? serverReply : serverReply.Replace(smtp.Password, "***", StringComparison.Ordinal);
+        return $"SMTP recusou o login de {smtp.User} em {smtp.Host}:{smtp.Port}. Confira o usuário e a senha de app. Resposta: {reply}";
     }
 
     private MimeMessage Build(EmailMessage message, Guid deliveryId)

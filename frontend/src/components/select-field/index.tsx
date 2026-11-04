@@ -1,5 +1,5 @@
 import type { SelectFieldProps } from './types'
-import { X } from 'lucide-react'
+import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 
 /** Mesmo desenho do seletor da marcação de balcão: altura de toque, borda interativa, foco visível. */
@@ -37,7 +37,7 @@ export const SelectField = (props: SelectFieldProps) => {
           id={`${id}-error`}
           className="type-caption flex items-center gap-(--space-4) text-(--status-rejected-fg)"
         >
-          <X aria-hidden="true" className="size-4 shrink-0" />
+          <CloseIcon aria-hidden="true" className="size-4 shrink-0" />
           {error}
         </p>
       ) : (

@@ -1,4 +1,4 @@
-import type { ImageSet } from '@lib/api/types'
+import type { ImageSet } from '@api/models'
 
 export type SearchResultAvailability = {
   /** Rótulo do dia, por exemplo `Hoje` ou `Amanhã`. */

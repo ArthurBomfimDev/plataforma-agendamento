@@ -143,10 +143,19 @@ versionado e o compose recusa subir sem ele.
 
 | Serviço | Endereço | O que é |
 |---|---|---|
-| `web` | http://localhost:8080 | Frontend (build do Vite servido pelo nginx) |
-| `api` | http://localhost:8081 | API; OpenAPI em `/openapi/v1.json`, saúde em `/health` |
+| `web` | http://localhost:8080 | Frontend (build do Vite servido pelo nginx), com a API em `/api` e as imagens em `/media` pelo mesmo endereço |
+| `api` | http://localhost:8081 | API direta, para depurar; OpenAPI em `/openapi/v1.json` (Development), saúde em `/health` |
 | `db` | `localhost:5433` | PostgreSQL 17 + PostGIS; usuário e senha no `.env` |
+| `mailpit` | http://localhost:8025 | Caixa de e-mail falsa: sem SMTP no `.env`, os e-mails chegam aqui |
 | `migrations` | — | Aplica as migrations do EF Core e termina; roda a cada `up` |
+
+**Uma origem só:** o site chama a API em `/api` no próprio endereço e o nginx repassa (`frontend/nginx.conf`). O
+build não embute URL de API, então trocar `API_PORT` não exige rebuild do frontend.
+
+**Demonstração pública** (banca, testes com participantes): `./scripts/demo-publica.ps1` (ou `.sh`) publica só o
+`web` por um Cloudflare Tunnel, com a API em `Production`. Quem tiver o link entra, e o endereço muda a cada subida.
+Antes de abrir, leia o checklist em [`docs/operacao/demo-publica.md`](docs/operacao/demo-publica.md), que cobre também
+o e-mail de verdade pelo Gmail.
 
 O banco é criado pelas migrations na primeira subida e fica no volume `booking_db-data`.
 As imagens enviadas (logotipo, capa, foto do profissional) ficam no volume `booking_media-data`, servidas
@@ -183,8 +192,11 @@ bun scripts/seed-demo.ts --historico   # o mesmo + 60 dias de histórico e agend
 O roteiro passa pela própria API, com as mesmas regras do app — inclusive a aprovação, feita pelo
 Admin de demonstração em `api/admin/businesses`. Duas escritas são diretas no banco local: conceder o
 papel de Admin (nunca concedido por endpoint, ADR-020) e, com `--historico`, o histórico, que não
-passa pela API (antecedência mínima, horizonte). As contas de teste e a senha aparecem no fim da
-execução e no topo de `scripts/seed-demo.ts`. Pode rodar de novo: conta, CNPJ e histórico que já
+passa pela API (antecedência mínima, horizonte). As contas de teste aparecem no fim da execução. A
+senha delas é `SEED_PASSWORD`, ou a padrão de teste do topo de `scripts/seed-demo.ts` — que o seed
+**recusa com a API fora de Development** (a demonstração pública), salvo com `--permitir-senha-padrao`.
+O Admin usa `SEED_ADMIN_PASSWORD`; sem ela, ganha uma senha aleatória mostrada uma vez no fim (anote).
+Pode rodar de novo: conta, CNPJ e histórico que já
 existem são pulados. Num banco de um seed anterior (contas em `exemplo.com`), recomece do zero com
 `docker compose down -v` para ter os 30.
 
@@ -219,9 +231,9 @@ no próprio estabelecimento (409): para ele, é a marcação de balcão.
 Testes de carga (k6) dos RNF-01 e RNF-02: `scripts/perf/`, com o passo a passo em
 `docs/tcc/evidencias/rnf-01-busca.md`.
 
-Sem provedor de e-mail, o token de confirmação e o de redefinição de senha aparecem só no log
-da API (`docker compose logs api`). A URL da API é embutida no frontend no build: mudou
-`API_PORT`, rode `docker compose up --build` de novo.
+Sem SMTP no `.env`, os e-mails (confirmação, redefinição de senha, andamento do pedido) vão para o
+Mailpit, em http://localhost:8025. Para enviar de verdade, preencha o bloco do Gmail do `.env.example`
+no `.env` (senha de app, nunca a senha da conta).
 
 As portas escutam só em `127.0.0.1`. A imagem do PostGIS é só amd64: em Mac com chip Apple ela
 roda emulada, mais devagar.

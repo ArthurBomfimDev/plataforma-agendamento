@@ -1,4 +1,4 @@
-import type { ImageSet } from '@lib/api/types'
+import type { ImageSet } from '@api/models'
 import type { ReactNode } from 'react'
 
 /** Seções do painel do estabelecimento. O celular mostra só parte delas; o resto fica em "Mais". */

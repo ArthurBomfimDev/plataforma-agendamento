@@ -1,4 +1,11 @@
-import { Ban, Check, CheckCheck, Clock, type LucideIcon, UserX } from 'lucide-react'
+import {
+  BlockIcon,
+  CheckIcon,
+  DoneAllIcon,
+  type IconComponent,
+  PersonOffIcon,
+  ScheduleIcon,
+} from '@assets/icons'
 import type { AppointmentStatus } from './types'
 
 /**
@@ -8,35 +15,35 @@ import type { AppointmentStatus } from './types'
  */
 export const STATUS: Record<
   AppointmentStatus,
-  { label: string; icon: LucideIcon; className: string }
+  { label: string; icon: IconComponent; className: string }
 > = {
   pending: {
     label: 'Pendente',
-    icon: Clock,
+    icon: ScheduleIcon,
     className:
       'border-dashed border-(--status-pending-fg) bg-(--status-pending-bg) text-(--status-pending-fg)',
   },
   confirmed: {
     label: 'Confirmado',
-    icon: Check,
+    icon: CheckIcon,
     className:
       'border-(--status-confirmed-fg) bg-(--status-confirmed-bg) text-(--status-confirmed-fg)',
   },
   completed: {
     label: 'Concluído',
-    icon: CheckCheck,
+    icon: DoneAllIcon,
     className: 'border-transparent bg-(--status-completed-bg) text-(--status-completed-fg)',
   },
   // TODO(figma): o Cancelled não aparece em nenhuma tela; segue só a descrição do componente.
   cancelled: {
     label: 'Cancelado',
-    icon: Ban,
+    icon: BlockIcon,
     className: 'border-transparent bg-(--status-cancelled-bg) text-(--status-cancelled-fg)',
   },
   // Painel (Onda 7A): o estabelecimento marca a falta. Ícone próprio, além da cor.
   'no-show': {
     label: 'Faltou',
-    icon: UserX,
+    icon: PersonOffIcon,
     className: 'border-(--status-noshow-fg) bg-(--status-noshow-bg) text-(--status-noshow-fg)',
   },
 }

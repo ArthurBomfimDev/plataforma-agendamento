@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { SmartImage } from '.'
-import { mediaUrl } from '@lib/api/media'
+import { mediaUrl } from '@api/services/media'
 import { renderToString } from 'react-dom/server'
 
 const image = {

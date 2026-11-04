@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react'
+import { SearchIcon } from '@assets/icons'
 import type { SearchFieldProps } from './types'
 import { cn } from 'cn'
 
@@ -15,7 +15,7 @@ export const SearchField = (props: SearchFieldProps) => {
       )}
     >
       <label className="flex min-w-0 flex-1 items-center gap-(--space-8)">
-        <Search aria-hidden="true" className="size-5 shrink-0 text-(--text-muted)" />
+        <SearchIcon aria-hidden="true" className="size-5 shrink-0 text-(--text-muted)" />
         {/* Campo de formulário é 16px sempre — abaixo disso o Safari do iOS dá zoom no foco. */}
         <input
           {...inputProps}

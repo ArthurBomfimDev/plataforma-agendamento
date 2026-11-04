@@ -62,6 +62,9 @@ Um ADR aceito **nunca é editado nem apagado** — ele é substituído. O histó
 | [022](0022-provedores-de-geocodificacao-e-cep.md) | Provedores de geocodificação e CEP, limites e privacidade da coordenada — complementa a 016 | 📝 Proposto | 2026-10-28 |
 | [023](0023-imagens-armazenamento-de-arquivos.md) | Imagens: armazenamento de arquivos atrás de porta, processamento com SkiaSharp | 📝 Proposto | 2026-10-28 |
 | [024](0024-busca-por-termo-sem-acento-e-sinonimos.md) | Busca por termo sem acento e com dicionário de sinônimos no código | 📝 Proposto | 2026-10-29 |
+| [025](0025-camada-de-api-do-frontend-axios-e-useservice.md) | Camada de API do frontend: Axios, `base`/`models`/`services` e `useService` sobre o TanStack Query | 📝 Proposto | 2026-10-30 |
+| [026](0026-icones-material-symbols-em-svg.md) | Ícones: Material Symbols em SVG, gerados no build, num registro único | 📝 Proposto | 2026-10-30 |
+| [027](0027-estrutura-do-frontend-e-carregamento-por-pagina.md) | Estrutura do frontend por responsabilidade e carregamento sob demanda por página | 📝 Proposto | 2026-10-30 |
 
 ### Notas sobre a fila
 

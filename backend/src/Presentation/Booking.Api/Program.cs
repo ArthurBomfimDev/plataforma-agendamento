@@ -59,9 +59,12 @@ builder.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
     .AllowAnyMethod()));
 
 builder.Services.AddHealthChecks();
+builder.Services.AddTrustedProxies(builder.Configuration);
 
 WebApplication app = builder.Build();
 
+// Primeiro de tudo: o IP e o esquema reais valem para o HSTS, o redirecionamento e o limitador.
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())

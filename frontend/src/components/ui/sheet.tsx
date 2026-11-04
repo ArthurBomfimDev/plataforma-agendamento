@@ -3,7 +3,7 @@ import { Dialog as SheetPrimitive } from '@base-ui/react/dialog'
 import { cn } from 'cn'
 
 import { Button } from '@/components/ui/button'
-import { XIcon } from 'lucide-react'
+import { CloseIcon } from '@assets/icons'
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -68,7 +68,7 @@ function SheetContent({
               />
             }
           >
-            <XIcon />
+            <CloseIcon />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}

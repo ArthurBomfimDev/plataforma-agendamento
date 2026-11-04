@@ -1,5 +1,5 @@
 import type { BreadcrumbProps } from './types'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRightIcon } from '@assets/icons'
 
 /**
  * Trilha de navegação do desktop (Figma, 04D e 05D). No celular o caminho de volta é o botão
@@ -14,7 +14,7 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
         {items.map(({ label, onClick }, index) => (
           <li key={label} className="flex items-center gap-(--space-8)">
             {index > 0 && (
-              <ChevronRight aria-hidden="true" className="size-3.5 text-(--text-strong)" />
+              <ChevronRightIcon aria-hidden="true" className="size-3.5 text-(--text-strong)" />
             )}
             {onClick ? (
               <button

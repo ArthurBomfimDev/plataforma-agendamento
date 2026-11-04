@@ -13,8 +13,9 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Variável do Vite: é embutida no JS no momento do build, não lida em tempo de execução.
-# Trocar a URL da API exige rebuild da imagem (regra 1 de empacotamento, CLAUDE.md §3).
-ARG VITE_API_BASE_URL=http://localhost:8081
+# Vazia (o padrão): o app chama /api na própria origem e o nginx repassa para a API. É o que deixa a demonstração
+# pública atrás de um endereço só, sem localhost no navegador. Absoluta só para API em outro endereço (rebuild).
+ARG VITE_API_BASE_URL=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN bun run build
 

@@ -5,8 +5,8 @@ import type { AvailabilityCalendarProps } from './types'
 import { AvailabilityDayButton } from './components/day-button'
 import { Calendar } from '@components/ui/calendar'
 import { DayMarker } from './components/day-marker'
-import { Flag } from 'lucide-react'
-import { HolidayMarker } from './components/holyday-marker'
+import { FlagIcon } from '@assets/icons'
+import { HolidayMarker } from './components/holiday-marker'
 import { cn } from 'cn'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { useState } from 'react'
@@ -112,7 +112,7 @@ export const AvailabilityCalendar = (props: AvailabilityCalendarProps) => {
 
       {holidays.length > 0 && (
         <p className="type-caption flex items-center gap-(--space-8) text-(--text-body)">
-          <Flag aria-hidden="true" className="size-3.5 shrink-0" />
+          <FlagIcon aria-hidden="true" className="size-3.5 shrink-0" />
           <span>
             Feriados em {format(month, 'LLLL', { locale: ptBR })}:{' '}
             {holidays

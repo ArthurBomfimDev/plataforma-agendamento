@@ -1,8 +1,15 @@
-import { ChevronRight, Hash, LocateFixed, MapPin, Search, TriangleAlert } from 'lucide-react'
+import {
+  ChevronRightIcon,
+  LocationIcon,
+  MyLocationIcon,
+  SearchIcon,
+  TagIcon,
+  WarningIcon,
+} from '@assets/icons'
 import { formatDistance, formatPostalCode, postalCodeDigits } from './consts'
 
 import { Button } from '@components/button'
-import { DISTANCE_OPTIONS } from '@lib/api/search'
+import { DISTANCE_OPTIONS } from '@api/services/business/search'
 import { FilterChip } from '@components/filter-chip'
 import type { LocationPickerPanelProps } from './types'
 import type { ReactNode } from 'react'
@@ -34,7 +41,7 @@ const Option = ({
         <span className="type-label text-(--text-strong)">{label}</span>
         {hint && <span className="type-caption text-(--text-muted)">{hint}</span>}
       </span>
-      <ChevronRight aria-hidden="true" className="size-4 text-(--text-muted)" />
+      <ChevronRightIcon aria-hidden="true" className="size-4 text-(--text-muted)" />
     </button>
   </li>
 )
@@ -116,23 +123,23 @@ export const LocationPickerPanel = (props: LocationPickerPanelProps) => {
         )}
         <ul className="flex flex-col gap-(--space-4)">
           <Option
-            icon={<LocateFixed className="size-5" />}
+            icon={<MyLocationIcon className="size-5" />}
             label="Usar minha localização"
             hint="O navegador pergunta antes"
             onClick={() => onStep?.('device-notice')}
           />
           <Option
-            icon={<Hash className="size-5" />}
+            icon={<TagIcon className="size-5" />}
             label="Buscar por CEP"
             onClick={() => onStep?.('postal-code')}
           />
           <Option
-            icon={<Search className="size-5" />}
+            icon={<SearchIcon className="size-5" />}
             label="Endereço, bairro ou cidade"
             onClick={() => onStep?.('search')}
           />
           <Option
-            icon={<MapPin className="size-5" />}
+            icon={<LocationIcon className="size-5" />}
             label="Garça, SP (demonstração)"
             hint="Onde estão os estabelecimentos de exemplo"
             onClick={onUseDemo}
@@ -172,7 +179,7 @@ export const LocationPickerPanel = (props: LocationPickerPanelProps) => {
     return (
       <div className="flex flex-col gap-(--space-16)">
         <p role="alert" className="type-body flex items-start gap-(--space-8) text-(--text-body)">
-          <TriangleAlert
+          <WarningIcon
             aria-hidden="true"
             className="mt-0.5 size-5 shrink-0 text-(--status-pending-fg)"
           />
@@ -313,7 +320,7 @@ export const LocationPickerPanel = (props: LocationPickerPanelProps) => {
               {results.map((place) => (
                 <Option
                   key={`${place.latitude},${place.longitude},${place.label}`}
-                  icon={<MapPin className="size-5" />}
+                  icon={<LocationIcon className="size-5" />}
                   label={place.label}
                   onClick={() => onPickResult?.(place)}
                 />
