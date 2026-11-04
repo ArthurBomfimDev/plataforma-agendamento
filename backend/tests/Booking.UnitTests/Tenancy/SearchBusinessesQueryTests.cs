@@ -76,16 +76,16 @@ public sealed class SearchBusinessesQueryTests
     }
 
     [Fact]
-    public async Task Health_result_never_carries_the_service_that_matched_the_term()
+    public async Task Health_result_shows_the_service_and_the_price_like_every_other_category()
     {
         PagedResult<BusinessSearchItemResponse> result = await SearchAsync("psicologa");
 
         BusinessSearchItemResponse clinic = Assert.Single(result.Items);
         Assert.Equal(_clinic.Id, clinic.Id);
-        Assert.Null(clinic.ServiceId);
-        Assert.Null(clinic.ServiceName);
-        Assert.Null(clinic.DurationMinutes);
-        Assert.NotNull(clinic.FromPriceCents); // o "a partir de" continua
+        Assert.NotNull(clinic.ServiceId);
+        Assert.Equal("Consulta de psicologia", clinic.ServiceName);
+        Assert.Equal(30, clinic.DurationMinutes);
+        Assert.Equal(5000, clinic.FromPriceCents);
     }
 
     [Fact]

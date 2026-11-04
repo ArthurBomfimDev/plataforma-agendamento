@@ -61,9 +61,10 @@ simples do português** e por **grupos de sinônimos**.
   nutricionista/nutrição · fisioterapeuta/fisioterapia · fonoaudiólogo/fonoaudiologia/fono. O grupo casa pelo radical do
   que foi digitado, então "barbeiros" e "barbearia" caem no mesmo. Frase de várias palavras ("corte masculino") casa
   inteira. O dicionário antigo (cabelo, sobrancelha, pele, massagem → serviços) continua para a "necessidade → serviço".
-- **Saúde não vaza serviço no resultado público:** o termo ainda filtra, mas `BusinessSearchItemResponse` de um
-  estabelecimento de Saúde sai sem `ServiceId`, `ServiceName` e `DurationMinutes` (fica o "a partir de"). O nome do
-  serviço diz a condição da pessoa (LGPD, Art. 11). A tela cai no cartão do estabelecimento.
+- **Saúde na busca (decisão de 04/11, que reverte uma versão anterior desta revisão):** o resultado mostra o serviço e
+  o preço em **todas** as categorias, Saúde inclusa. Uma primeira versão tirava `ServiceId`, `ServiceName` e
+  `DurationMinutes` do resultado de Saúde; o Arthur decidiu o contrário. "Saúde não cita o serviço" continua valendo em
+  e-mail, título e descrição do `.ics`, feed de agenda e avaliações, e não na busca.
 
 **Limites novos:**
 
@@ -74,7 +75,7 @@ simples do português** e por **grupos de sinônimos**.
 
 **Prova:** `SearchTextTests` (radical, grupos, termo sem relação) e `SearchBusinessesQueryTests` (a busca de ponta a
 ponta com repositório e catálogo falsos: as mesmas barbearias para "barbeiro", "barbearia" e "barba"; "manicuri" e
-"unha"; "advogado" não traz nada; Saúde sem serviço no resultado, Beleza com serviço). O comportamento contra o banco
+"unha"; "advogado" não traz nada; Saúde e Beleza com serviço e preço no resultado). O comportamento contra o banco
 real (H7, H8) não foi rodado nesta rodada.
 
 ## Consequências

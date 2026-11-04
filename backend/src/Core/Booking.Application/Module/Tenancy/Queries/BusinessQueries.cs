@@ -104,11 +104,9 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
             .Take(pageSize)
             .Select(b =>
             {
+                // O serviço e o preço aparecem em todas as categorias, Saúde inclusa (decisão de 04/11). "Saúde não cita
+                // o serviço" vale para e-mail, título e descrição do .ics, feed de agenda e avaliações, não para a busca.
                 ServiceHighlight? h = highlights.GetValueOrDefault(b.Id);
-
-                // Em Saúde o serviço diz a condição da pessoa: o resultado público mostra o estabelecimento e o "a partir de",
-                // nunca qual serviço casou (LGPD, Art. 11). O termo ainda filtra, mas o nome do serviço não volta.
-                ServiceHighlight? shown = b.Category.RequiresSensitiveHandling() ? null : h;
                 return new BusinessSearchItemResponse(
                     b.Id,
                     b.Name,
@@ -117,9 +115,9 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
                     b.District,
                     b.City,
                     Math.Round(DistanceKm(center, b.Location!), 2),
-                    shown?.ServiceId,
-                    shown?.Name,
-                    shown?.DurationMinutes,
+                    h?.ServiceId,
+                    h?.Name,
+                    h?.DurationMinutes,
                     h?.FromPriceCents,
                     images.For(b.LogoImageKey),
                     images.For(b.CoverImageKey));

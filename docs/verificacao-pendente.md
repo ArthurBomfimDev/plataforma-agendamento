@@ -58,7 +58,7 @@ Esperado: tudo verde. **Se algum teste de integração novo falhar, é o primeir
 | 2 | Na busca (Garça, raio de cidade): "barbeiro", "barbearia", "barba" | mesmas barbearias nos três |
 | 3 | "manicuri", "unha", "massagista", "psicologa" | acham manicure, unha, massagem e psicologia, se houver no seed (o seed ainda não tem todos) |
 | 4 | "advogado" | estado vazio |
-| 5 | Resultado de um estabelecimento de **Saúde** | cartão do estabelecimento, sem nome de serviço e sem duração |
+| 5 | Resultado de um estabelecimento de **Saúde** | mostra o serviço, a duração e o preço, como em Beleza (decisão de 04/11). O serviço **não** aparece no e-mail, no `.ics` e (quando existirem) no feed e nas avaliações |
 
 ### Cadastro do estabelecimento, backend (Fase 3 — migration `AddOnboardingFields`)
 
