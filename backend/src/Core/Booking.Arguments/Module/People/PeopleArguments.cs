@@ -37,7 +37,7 @@ public sealed record PublicProfessionalResponse(
     Guid Id, string DisplayName, string? Specialty, string? Bio, string? Registration, ImageSetResponse? Photo = null);
 
 /// <summary>O estabelecimento do profissional, na página pública dele.</summary>
-public sealed record ProfessionalBusinessResponse(Guid Id, string Name, string? AddressLine, string Category);
+public sealed record ProfessionalBusinessResponse(Guid Id, string Name, string? AddressLine, string Category, string TimeZone);
 
 /// <summary>Serviço que o profissional executa, com o preço e a duração dele.</summary>
 public sealed record ProfessionalServiceResponse(Guid Id, string Name, int DurationMinutes, long PriceCents, ImageSetResponse? Photo);

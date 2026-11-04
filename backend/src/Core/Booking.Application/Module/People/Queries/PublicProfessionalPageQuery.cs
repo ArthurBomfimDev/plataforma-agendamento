@@ -39,7 +39,7 @@ public sealed class GetPublicProfessionalQuery(
             professional.Bio,
             professional.Registration,
             images.For(professional.PhotoImageKey),
-            new ProfessionalBusinessResponse(contact.BusinessId, contact.Name, contact.AddressLine, contact.RequiresSensitiveHandling ? "Saude" : "Beleza"),
+            new ProfessionalBusinessResponse(contact.BusinessId, contact.Name, contact.AddressLine, contact.RequiresSensitiveHandling ? "Saude" : "Beleza", contact.TimeZone),
             [.. services.Select(s => new ProfessionalServiceResponse(s.ServiceId, s.Name, s.DurationMinutes, s.PriceCents, images.For(s.ImageKey)))]);
     }
 }
