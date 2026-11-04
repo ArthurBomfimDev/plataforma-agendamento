@@ -7,10 +7,8 @@ export type TeamMember = {
   specialty: string | null
   bio: string | null
   isActive: boolean
-  /** Perfil completo na vitrine (especialidade, bio, foto). */
-  isPubliclyVisible: boolean
-  /** Dado pelo próprio profissional, nunca pelo dono. Sem ele, a vitrine mostra só o nome. */
-  hasPublicProfileConsent: boolean
+  /** O dono já declarou ter a autorização desta pessoa para exibir os dados dela (só vale sem login). */
+  authorizationDeclared: boolean
   /** Tem login (vínculo com uma conta). Sem login, o dono cadastrou e opera por ele. */
   hasAccount: boolean
   serviceIds: string[]
@@ -33,7 +31,8 @@ export type TeamMemberDraft = {
   specialty: string | null
   bio: string | null
   isActive: boolean
-  showFullProfile: boolean
+  /** O checkbox "Declaro ter autorização desta pessoa para exibir estes dados publicamente." */
+  authorizationDeclared: boolean
   serviceIds: string[]
 }
 

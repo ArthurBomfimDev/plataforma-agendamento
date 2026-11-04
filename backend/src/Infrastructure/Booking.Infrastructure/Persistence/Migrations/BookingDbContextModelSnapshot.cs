@@ -639,6 +639,19 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AuthorizationDeclarationVersion")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("authorization_declaration_version");
+
+                    b.Property<DateTimeOffset?>("AuthorizationDeclaredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("authorization_declared_at");
+
+                    b.Property<Guid?>("AuthorizationDeclaredByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("authorization_declared_by_user_id");
+
                     b.Property<string>("Bio")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
@@ -666,18 +679,15 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<bool>("IsPubliclyVisible")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_publicly_visible");
-
                     b.Property<string>("PhotoImageKey")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("photo_image_key");
 
-                    b.Property<DateTimeOffset?>("PublicProfileConsentAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("public_profile_consent_at");
+                    b.Property<string>("Registration")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("registration");
 
                     b.Property<string>("Specialty")
                         .HasMaxLength(100)

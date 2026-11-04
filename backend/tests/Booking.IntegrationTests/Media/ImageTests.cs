@@ -189,22 +189,29 @@ public sealed class ImageTests(IntegrationFixture fixture)
     }
 
     [Fact]
-    public async Task P8_public_route_hides_the_professional_photo_without_consent_and_full_profile()
+    public async Task P8_the_professional_photo_is_public_at_once_and_the_owner_needs_the_declaration_for_someone_without_an_account()
     {
-        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        TestBusiness business = await _world.NewBusinessAsync(2, [new ServiceSpec(30)]);
         TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
-        Guid professionalId = business.ProfessionalIds[0];
+        Guid withAccount = business.ProfessionalIds[0];
+        Guid withoutAccount = business.ProfessionalIds[1];
 
+        // Quem tem conta controla a própria foto: sem declaração do dono, sem consentimento por perfil (ADR-031).
         await UploadOkAsync<ProfessionalResponse>(
-            $"/api/businesses/current/professionals/{professionalId}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
+            $"/api/businesses/current/professionals/{withAccount}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
+        Assert.NotNull((await PublicProfessionalAsync(business, withAccount)).Photo);
 
-        Assert.Null((await PublicProfessionalAsync(business, professionalId)).Photo);
+        // O dono enviando a foto de quem não tem conta precisa ter declarado a autorização da pessoa.
+        using HttpResponseMessage refused = await UploadAsync(
+            $"/api/businesses/current/professionals/{withoutAccount}/photo", TestImages.Jpeg(300, 300), "ele.jpg", "image/jpeg", business.OwnerToken);
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Equal("professional.declaration_required", await TestWorld.ErrorCodeAsync(refused));
 
-        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{professionalId}/public-profile-consent", null, staff.Token);
-        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{professionalId}",
-            new UpdateProfessionalRequest("Profissional 1", null, null, IsActive: true, ShowFullProfile: true), business.OwnerToken);
-
-        Assert.NotNull((await PublicProfessionalAsync(business, professionalId)).Photo);
+        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{withoutAccount}",
+            new UpdateProfessionalRequest("Profissional 2", null, null, IsActive: true, AuthorizationDeclared: true), business.OwnerToken);
+        await UploadOkAsync<ProfessionalResponse>(
+            $"/api/businesses/current/professionals/{withoutAccount}/photo", TestImages.Jpeg(300, 300), "ele.jpg", "image/jpeg", business.OwnerToken);
+        Assert.NotNull((await PublicProfessionalAsync(business, withoutAccount)).Photo);
     }
 
     [Fact]

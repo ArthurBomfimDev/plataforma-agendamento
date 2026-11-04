@@ -4,7 +4,7 @@ import type { ImageSet } from '@api/models'
 export type BusinessProfessional = {
   id: string
   name: string
-  /** Sem consentimento do profissional para o perfil público, só o nome aparece (ADR-004). */
+  /** O perfil de todo profissional ativo é público (ADR-031): especialidade, bio e foto, quando informadas. */
   specialty?: string
   yearsOfExperience?: number
   /** Nota média, de 0 a 5. Ausente = ainda sem avaliações. */

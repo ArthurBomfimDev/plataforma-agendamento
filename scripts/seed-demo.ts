@@ -472,20 +472,15 @@ async function seedBusiness(demo: DemoBusiness) {
 
   const professionalIds: string[] = []
   for (const professional of demo.professionals) {
-    const created = await call<{ id: string }>('POST', '/api/businesses/current/professionals', professional, token)
+    // O perfil é sempre público (ADR-031). Quem não é o dono precisa da declaração de autorização; na demonstração
+    // (dados fictícios) o dono declara por todos. O dono ("sou eu") tem conta e não precisa.
+    const created = await call<{ id: string }>(
+      'POST',
+      '/api/businesses/current/professionals',
+      { ...professional, authorizationDeclared: !professional.isMe },
+      token,
+    )
     professionalIds.push(created.id)
-
-    // Sem consentimento, a vitrine mostra só o nome (ADR-004, invariante 4). Só o próprio
-    // profissional consente — o dono não pode por outra pessoa —, então só vale para "sou eu".
-    if (professional.isMe) {
-      await call('PUT', `/api/businesses/current/professionals/${created.id}/public-profile-consent`, undefined, token)
-      await call(
-        'PUT',
-        `/api/businesses/current/professionals/${created.id}`,
-        { displayName: professional.displayName, specialty: professional.specialty, bio: professional.bio, isActive: true, showFullProfile: true },
-        token,
-      )
-    }
 
     for (const { day, start, end } of PATTERNS[professional.pattern]!) {
       await call(

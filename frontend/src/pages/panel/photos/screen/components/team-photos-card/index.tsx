@@ -42,8 +42,8 @@ export const TeamPhotosCard = (props: TeamPhotosCardProps) => {
       )}
       <p className="type-caption text-(--text-muted)">
         Todo profissional ativo aparece na página pública — a foto é opcional. O próprio
-        profissional também pode trocar a dele pela conta dele. A foto só aparece com o perfil
-        completo, que depende do consentimento do próprio profissional.
+        profissional também pode trocar a dele pela conta dele. Para quem não tem login, marque
+        antes a declaração de autorização em Profissionais → Editar.
       </p>
     </section>
   )

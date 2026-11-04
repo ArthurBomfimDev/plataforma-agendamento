@@ -31,7 +31,7 @@ export const PanelTeamRoute = () => {
         specialty: draft.specialty,
         bio: draft.bio,
         isActive: draft.isActive,
-        showFullProfile: draft.showFullProfile,
+        authorizationDeclared: draft.authorizationDeclared,
       })
       if (draft.isActive) {
         const changes = professionalChanges(member.serviceIds, draft.serviceIds)

@@ -258,19 +258,58 @@ public sealed class TenancyAndCatalogDomainTests
         Customer.Create(Guid.CreateVersion7(), new DateOnly(2008, 10, 19), null, today);
     }
 
+    // ADR-031 substitui o consentimento por perfil: o dono declara a autorização (quem, quando, versão) de quem não tem conta.
     [Fact]
-    public void Full_public_profile_requires_the_professionals_own_consent()
+    public void The_owner_declaration_records_who_when_and_which_text_version()
+    {
+        Professional professional = Professional.Create(Guid.CreateVersion7(), "Ricardo", "Barbeiro", "Bio", null);
+        var owner = Guid.CreateVersion7();
+
+        Assert.True(professional.RequiresOwnerDeclaration);
+        Assert.False(professional.HasAuthorizationDeclaration);
+
+        professional.DeclareAuthorization(owner, _now);
+
+        Assert.True(professional.HasAuthorizationDeclaration);
+        Assert.Equal(owner, professional.AuthorizationDeclaredByUserId);
+        Assert.Equal(_now, professional.AuthorizationDeclaredAt);
+        Assert.Equal(Professional.AuthorizationDeclarationTextVersion, professional.AuthorizationDeclarationVersion);
+    }
+
+    [Fact]
+    public void A_professional_with_an_account_does_not_depend_on_the_owner_declaration()
+    {
+        Professional professional = Professional.Create(Guid.CreateVersion7(), "Ricardo", "Barbeiro", "Bio", Guid.CreateVersion7());
+
+        Assert.False(professional.RequiresOwnerDeclaration);
+    }
+
+    [Fact]
+    public void The_registration_is_optional_trimmed_and_limited()
+    {
+        Professional professional = Professional.Create(Guid.CreateVersion7(), "Dra. Ana", "Psicóloga", null, null);
+
+        professional.SetRegistration("  CRP 06/123456  ");
+        Assert.Equal("CRP 06/123456", professional.Registration);
+
+        professional.SetRegistration("   ");
+        Assert.Null(professional.Registration);
+
+        Assert.Equal(
+            "professional.registration_too_long",
+            Assert.Throws<DomainException>(() => professional.SetRegistration(new string('1', Professional.MaxRegistrationLength + 1))).Code);
+    }
+
+    [Fact]
+    public void Deactivating_a_professional_only_takes_them_off_the_showcase()
     {
         Professional professional = Professional.Create(Guid.CreateVersion7(), "Ricardo", "Barbeiro", "Bio", null);
 
-        Assert.Throws<DomainException>(professional.ShowFullProfile);
+        professional.Deactivate();
+        Assert.False(professional.IsActive);
 
-        professional.GrantPublicProfileConsent(_now);
-        professional.ShowFullProfile();
-        Assert.True(professional.IsPubliclyVisible);
-
-        professional.RevokePublicProfileConsent();
-        Assert.False(professional.IsPubliclyVisible);
+        professional.Activate();
+        Assert.True(professional.IsActive);
     }
 
     [Fact]

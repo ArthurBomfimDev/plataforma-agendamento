@@ -17,7 +17,7 @@ export const draftOf = (member: TeamMember): TeamMemberDraft => ({
   specialty: member.specialty,
   bio: member.bio,
   isActive: member.isActive,
-  showFullProfile: member.isPubliclyVisible,
+  authorizationDeclared: member.authorizationDeclared,
   serviceIds: member.serviceIds,
 })
 
@@ -39,10 +39,23 @@ export const listCaption = (member: TeamMember, services: TeamService[]) => {
 export const workLabel = (member: TeamMember) =>
   member.workSummary ?? 'Sem jornada: não tem horário para agendar.'
 
-export const consentLabel = (member: TeamMember) =>
-  member.hasPublicProfileConsent
-    ? 'Consentimento dado pelo próprio profissional'
-    : 'Sem consentimento do próprio profissional'
+/** O texto do checkbox do dono (ADR-031). Mudou o texto, muda a versão em `Professional.AuthorizationDeclarationTextVersion`. */
+export const DECLARATION_TEXT =
+  'Declaro ter autorização desta pessoa para exibir estes dados publicamente.'
+
+export const DECLARATION_REQUIRED_MESSAGE = 'Marque a declaração para salvar a apresentação.'
+
+/** Quem aparece na vitrine e com que base: declaração do dono (sem login) ou o próprio profissional (com login). */
+export const publicBasisLabel = (member: TeamMember) =>
+  member.hasAccount
+    ? 'Os dados públicos são do próprio profissional, que os edita pela conta dele.'
+    : member.authorizationDeclared
+      ? 'Declaração do dono registrada: você tem a autorização desta pessoa.'
+      : 'Sem declaração do dono. Para salvar a apresentação, marque a declaração em Editar.'
+
+/** A apresentação de quem não tem login precisa da declaração do dono para ser salva. */
+export const needsDeclaration = (member: Pick<TeamMember, 'hasAccount'>, bio: string | null) =>
+  !member.hasAccount && Boolean(bio?.trim())
 
 export const roleLabel = (member: TeamMember) =>
   member.hasAccount

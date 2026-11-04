@@ -1,6 +1,16 @@
 import type { TeamData, TeamMember, TeamScreenProps } from './types'
 import { describe, expect, it } from 'vitest'
-import { draftOf, listCaption, optional, roleLabel, servicesLabel, subtitleOf } from './consts'
+import {
+  DECLARATION_TEXT,
+  draftOf,
+  listCaption,
+  needsDeclaration,
+  optional,
+  publicBasisLabel,
+  roleLabel,
+  servicesLabel,
+  subtitleOf,
+} from './consts'
 
 import { TeamScreen } from '.'
 import { renderToString } from 'react-dom/server'
@@ -11,8 +21,7 @@ const member = (fields: Partial<TeamMember>): TeamMember => ({
   specialty: 'Cabeleireira',
   bio: null,
   isActive: true,
-  isPubliclyVisible: false,
-  hasPublicProfileConsent: false,
+  authorizationDeclared: false,
   hasAccount: false,
   serviceIds: ['s1'],
   workSummary: null,
@@ -31,7 +40,7 @@ const render = (overrides: Partial<TeamScreenProps> = {}) =>
     <TeamScreen
       data={ready([
         member({ id: 'p2', displayName: 'Carla Nunes', isActive: false, serviceIds: [] }),
-        member({ isPubliclyVisible: true, hasPublicProfileConsent: true }),
+        member({ authorizationDeclared: true }),
       ])}
       businessName="Estúdio Duartina"
       {...overrides}
@@ -50,9 +59,11 @@ describe('TeamScreen', () => {
     expect(html).toContain('Novo profissional')
     // a ficha é a do primeiro (Marina): perfil público, controles e a saída da equipe
     expect(html).toContain('Editar nome')
-    expect(html).toContain('Perfil completo visível')
-    expect(html).toContain('Ligado')
-    expect(html).toContain('Consentimento dado pelo próprio profissional')
+    expect(html).toContain('Perfil público')
+    expect(html).toContain('Visível')
+    expect(html).toContain('Declaração do dono registrada')
+    expect(html).not.toContain('consentimento')
+    expect(html).not.toContain('Perfil completo')
     expect(html).toContain('Jornada e bloqueios')
     expect(html).toContain('Remover da equipe')
     expect(html).not.toContain('Voltar para a equipe')
@@ -105,17 +116,40 @@ describe('equipe do painel', () => {
     expect(roleLabel(member({ hasAccount: false }))).toContain('Sem login')
   })
 
+  it('diz em que base o perfil é público: declaração do dono ou o próprio profissional', () => {
+    expect(publicBasisLabel(member({ hasAccount: true }))).toContain('do próprio profissional')
+    expect(publicBasisLabel(member({ authorizationDeclared: true }))).toContain(
+      'Declaração do dono registrada',
+    )
+    expect(publicBasisLabel(member({ authorizationDeclared: false }))).toContain(
+      'Sem declaração do dono',
+    )
+  })
+
+  it('só exige a declaração de quem não tem login e tem apresentação a salvar', () => {
+    expect(needsDeclaration({ hasAccount: false }, 'Cortes há 10 anos.')).toBe(true)
+    expect(needsDeclaration({ hasAccount: false }, '   ')).toBe(false)
+    expect(needsDeclaration({ hasAccount: false }, null)).toBe(false)
+    expect(needsDeclaration({ hasAccount: true }, 'Cortes há 10 anos.')).toBe(false)
+  })
+
+  it('o texto do checkbox é o da declaração do dono', () => {
+    expect(DECLARATION_TEXT).toBe(
+      'Declaro ter autorização desta pessoa para exibir estes dados publicamente.',
+    )
+  })
+
   it('lista os serviços pelo nome, em ordem', () => {
     expect(servicesLabel(member({ serviceIds: ['s2', 's1'] }), services)).toBe('Barba, Corte')
   })
 
   it('edita a partir do que a API devolveu e grava vazio como nulo', () => {
-    expect(draftOf(member({ isPubliclyVisible: true }))).toEqual({
+    expect(draftOf(member({ authorizationDeclared: true }))).toEqual({
       displayName: 'Marina Souza',
       specialty: 'Cabeleireira',
       bio: null,
       isActive: true,
-      showFullProfile: true,
+      authorizationDeclared: true,
       serviceIds: ['s1'],
     })
     expect(optional('   ')).toBeNull()

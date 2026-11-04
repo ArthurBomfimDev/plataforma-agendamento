@@ -10,27 +10,59 @@ using Booking.Domain.Interface.Repository.Module.People;
 
 namespace Booking.Application.Module.People.Commands;
 
+/// <summary>
+/// A declaração do dono (ADR-031): para exibir bio de quem não tem conta, o dono declara ter a autorização da pessoa. O
+/// que fica registrado é quem declarou, quando e a versão do texto. Quem tem conta controla os próprios dados e não
+/// depende da declaração.
+/// </summary>
+internal static class OwnerDeclaration
+{
+    /// <param name="enforce">
+    /// Falso ao desativar: quem sai da vitrine não exibe nada, então desativar nunca pode ser barrado por falta de declaração
+    /// (também vale para o cadastro antigo, anterior à declaração).
+    /// </param>
+    public static void Apply(Professional professional, bool declared, Guid ownerUserId, DateTimeOffset now, bool enforce = true)
+    {
+        if (declared && professional.RequiresOwnerDeclaration)
+        {
+            professional.DeclareAuthorization(ownerUserId, now);
+        }
+
+        if (enforce
+            && professional.RequiresOwnerDeclaration
+            && !string.IsNullOrWhiteSpace(professional.Bio)
+            && !professional.HasAuthorizationDeclaration)
+        {
+            throw new DomainException("professional.declaration_required");
+        }
+    }
+}
+
 public sealed class CreateProfessionalCommand(
     IProfessionalRepository professionals,
     IBusinessDirectory businesses,
     IActorContext actor,
     IUnitOfWork unitOfWork,
+    TimeProvider clock,
     IImageUrls images)
 {
     public async Task<ProfessionalResponse> ExecuteAsync(CreateProfessionalRequest request, CancellationToken ct = default)
     {
         Guid businessId = actor.RequireOwner();
+        Guid userId = actor.RequireUserId();
         Guid? membershipId = null;
 
         // O vínculo nunca vem do cliente: só o da própria conta, conferido aqui.
         if (request.IsMe)
         {
-            BusinessMembershipInfo membership = await businesses.FindActiveMembershipAsync(businessId, actor.RequireUserId(), ct)
+            BusinessMembershipInfo membership = await businesses.FindActiveMembershipAsync(businessId, userId, ct)
                 ?? throw new DomainException("auth.forbidden");
             membershipId = membership.MembershipId;
         }
 
         Professional professional = Professional.Create(businessId, request.DisplayName, request.Specialty, request.Bio, membershipId);
+        professional.SetRegistration(request.Registration);
+        OwnerDeclaration.Apply(professional, request.AuthorizationDeclared, userId, clock.GetUtcNow());
         professionals.Add(professional);
 
         await unitOfWork.SaveChangesAsync(ct);
@@ -39,27 +71,19 @@ public sealed class CreateProfessionalCommand(
 }
 
 public sealed class UpdateProfessionalCommand(
-    IProfessionalRepository professionals, IActorContext actor, IUnitOfWork unitOfWork, IImageUrls images)
+    IProfessionalRepository professionals, IActorContext actor, IUnitOfWork unitOfWork, TimeProvider clock, IImageUrls images)
 {
     public async Task<ProfessionalResponse> ExecuteAsync(Guid professionalId, UpdateProfessionalRequest request, CancellationToken ct = default)
     {
         actor.RequireOwner();
+        Guid userId = actor.RequireUserId();
 
         Professional professional = await professionals.GetByIdAsync(professionalId, ct)
             ?? throw new DomainException("professional.not_found");
 
         professional.UpdateProfile(request.DisplayName, request.Specialty, request.Bio);
-
-        // Perfil antes da situação: desativar por último garante que inativo nunca fica com o perfil completo
-        // ligado, mesmo num pedido que peça as duas coisas. Inativo não pede consentimento para esconder.
-        if (request.ShowFullProfile && request.IsActive)
-        {
-            professional.ShowFullProfile();
-        }
-        else
-        {
-            professional.HideFullProfile();
-        }
+        professional.SetRegistration(request.Registration);
+        OwnerDeclaration.Apply(professional, request.AuthorizationDeclared, userId, clock.GetUtcNow(), enforce: request.IsActive);
 
         if (request.IsActive)
         {
@@ -68,46 +92,6 @@ public sealed class UpdateProfessionalCommand(
         else
         {
             professional.Deactivate();
-        }
-
-        await unitOfWork.SaveChangesAsync(ct);
-        return PeopleConverter.ToResponse(professional, images);
-    }
-}
-
-/// <summary>
-/// Consentimento para o perfil público completo. Só o próprio profissional dá ou revoga — nunca o dono.
-/// </summary>
-public sealed class SetPublicProfileConsentCommand(
-    IProfessionalRepository professionals,
-    IBusinessDirectory businesses,
-    IActorContext actor,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock,
-    IImageUrls images)
-{
-    public async Task<ProfessionalResponse> ExecuteAsync(Guid professionalId, bool granted, CancellationToken ct = default)
-    {
-        Guid businessId = actor.RequireBusinessId();
-        Guid userId = actor.RequireUserId();
-
-        Professional professional = await professionals.GetByIdAsync(professionalId, ct)
-            ?? throw new DomainException("professional.not_found");
-
-        BusinessMembershipInfo? membership = await businesses.FindActiveMembershipAsync(businessId, userId, ct);
-
-        if (membership is null || professional.BusinessMembershipId != membership.MembershipId)
-        {
-            throw new DomainException("auth.forbidden");
-        }
-
-        if (granted)
-        {
-            professional.GrantPublicProfileConsent(clock.GetUtcNow());
-        }
-        else
-        {
-            professional.RevokePublicProfileConsent();
         }
 
         await unitOfWork.SaveChangesAsync(ct);

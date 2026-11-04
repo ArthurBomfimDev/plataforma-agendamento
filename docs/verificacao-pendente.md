@@ -202,6 +202,26 @@ Pilha isolada (seção 0), seed rodado. O seed agora cria `profissional.duartina
 **Não existe tela** para o profissional registrar folgas/bloqueios nem para editar a própria bio/foto (só a API): fica para
 o próximo ciclo (registrado na seção de limitações do PR). O atendente também não tem tela de bloqueios.
 
+### Perfil público sempre ligado e declaração do dono (Fase 4, bloco 3 — migration `ReplaceProfessionalConsentWithDeclaration`)
+
+> ⚠️ A migration **publica de uma vez** o perfil de todo profissional ativo (descarta o consentimento antigo). Revise antes
+> de aplicar em base com dado real. Rodar em pilha isolada.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | A migration sobe com a pilha. `SELECT column_name FROM information_schema.columns WHERE table_schema='people' AND table_name='professional' ORDER BY ordinal_position;` | **sem** `is_publicly_visible` e `public_profile_consent_at`; **com** `authorization_declared_at`, `authorization_declared_by_user_id`, `authorization_declaration_version`, `registration` |
+| 2 | `dotnet test Booking.slnx --filter "FullyQualifiedName~ProfessionalVisibilityTests\|FullyQualifiedName~ImageTests"` (R1 a R5 e P8, reescritos) | verdes |
+| 3 | `bun scripts/seed-demo.ts` (banco novo) | termina sem erro; os profissionais criados pelo seed aparecem **com** bio na vitrine |
+| 4 | Vitrine de um estabelecimento (sem login): lista de profissionais | todos os ativos com especialidade e bio; foto quando houver; **nenhum** só com o nome |
+| 5 | Painel (dono) → Profissionais → **Novo profissional** (sem bio) → **Editar** → escrever uma apresentação e **não** marcar a declaração → Salvar | erro "Marque a declaração para salvar a apresentação." no formulário; nada é salvo |
+| 6 | Marcar "Declaro ter autorização desta pessoa para exibir estes dados publicamente." → Salvar | salva; a ficha mostra "Declaração do dono registrada…". `SELECT authorization_declared_at, authorization_declared_by_user_id, authorization_declaration_version FROM people.professional WHERE display_name='…';` mostra a data, o dono e `declaracao-dono-2026-11-rascunho` |
+| 7 | Editar a apresentação de novo | **não** pede a declaração outra vez |
+| 8 | Profissional **com** login (`profissional.duartina@example.com`) no Editar do dono | **não** aparece o checkbox; a ficha diz "Os dados públicos são do próprio profissional" |
+| 9 | Fotos → enviar a foto de um profissional **sem** login e **sem** declaração | recusa com "Marque a declaração de que você tem a autorização…" |
+| 10 | Desativar um profissional que tem bio antiga e nunca declarou | desativa sem pedir declaração e sai da vitrine na hora |
+| 11 | `PUT /api/businesses/current/professionals/{id}/public-profile-consent` | 404 (a rota não existe mais) |
+| 12 | Visual 390 px, claro e escuro, do formulário Editar (checkbox com 44 px de alvo) e da ficha | sem rolagem horizontal; checkbox e texto legíveis nos dois temas |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
