@@ -11,13 +11,6 @@ export const PHOTOS_OVERLINE =
 export const PHOTOS_SUBTITLE = (businessName: string) =>
   `${businessName} · as imagens aparecem na busca e na página pública`
 
-/**
- * Onde a foto do profissional aparece. Com foto, só vai para a página pública com o perfil completo, que exige o
- * consentimento do próprio profissional (decisões de 22/09 §3); sem ele, fica guardada e só o dono vê.
- */
-export const professionalNote = (professional: PhotoProfessional) => {
-  if (!professional.photo) return 'Sem foto — aparece com as iniciais'
-  return professional.isPubliclyVisible
-    ? 'Aparece na página pública'
-    : 'Guardada: só aparece na página pública com o perfil completo (consentimento).'
-}
+/** Onde a foto do profissional aparece. O perfil de quem está ativo é sempre público (ADR-031). */
+export const professionalNote = (professional: PhotoProfessional) =>
+  professional.photo ? 'Aparece na página pública' : 'Sem foto — aparece com as iniciais'

@@ -98,8 +98,9 @@ const MESSAGES: Record<string, string> = {
     'Este profissional já não estava no serviço. A lista foi atualizada.',
   'professional.not_found': 'Profissional não encontrado ou desativado. A lista foi atualizada.',
   'professional.display_name_required': 'Informe o nome do profissional.',
-  'professional.public_profile_requires_consent':
-    'O perfil completo só aparece com o consentimento do próprio profissional.',
+  'professional.declaration_required':
+    'Marque a declaração de que você tem a autorização desta pessoa para exibir os dados dela.',
+  'professional.registration_too_long': 'O registro profissional tem no máximo 40 caracteres.',
   'work_schedule.overlaps': 'Esse horário cruza outro horário do mesmo profissional.',
   'work_schedule.end_before_start': 'O fim precisa ser depois do início.',
   'work_schedule.effective_range_invalid': 'A data final precisa ser depois da data inicial.',

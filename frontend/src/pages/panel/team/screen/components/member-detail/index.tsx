@@ -1,4 +1,4 @@
-import { OVERLINE, consentLabel, roleLabel, servicesLabel, workLabel } from '../../consts'
+import { OVERLINE, publicBasisLabel, roleLabel, servicesLabel, workLabel } from '../../consts'
 
 import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
@@ -14,8 +14,8 @@ const CARD = 'rounded-(--radius-md) border border-(--border-subtle) bg-(--bg-sur
  * O profissional selecionado (Figma 17, coluna da direita): identidade, perfil público e o que só o
  * proprietário controla. As mudanças abrem a gaveta de edição que já existia; aqui só se mostra o estado.
  *
- * O perfil completo depende do consentimento do próprio profissional (decisões de 22/09 §3): o dono
- * vê o estado e o porquê, mas a chave não liga sem ele.
+ * O perfil é sempre público enquanto o profissional está ativo (ADR-031); a ficha mostra a base: a declaração do dono
+ * ou o próprio profissional.
  */
 export const MemberDetail = (props: MemberDetailProps) => {
   const { member, services, busy, onBack, onEdit, onOpenSchedules, onDeactivate, onActivate } =
@@ -52,23 +52,23 @@ export const MemberDetail = (props: MemberDetailProps) => {
       <h3 className={OVERLINE}>Perfil público</h3>
       <section className={`${CARD} flex flex-col gap-2.5 px-4.5 pt-1 pb-3.5`}>
         <SettingRow
-          label="Perfil completo visível"
-          value="Especialidade, apresentação e foto na página do estabelecimento"
-          trailing={member.isPubliclyVisible ? 'Ligado' : 'Desligado'}
+          label="Perfil público"
+          value="Nome, especialidade, apresentação e foto na página do estabelecimento"
+          trailing={member.isActive ? 'Visível' : 'Oculto'}
         />
         <div className="flex flex-col gap-1.5 rounded-(--radius-sm) bg-(--marker-sensitive-bg) px-3.5 py-3">
           <p className="type-caption flex flex-wrap items-center gap-(--space-8) text-(--marker-sensitive-fg)">
             <span className="inline-flex items-center gap-(--space-4) px-(--space-8) py-(--space-2)">
               <LockIcon aria-hidden="true" className="size-4" />
-              Dado sensível
+              Dado pessoal
             </span>
-            {consentLabel(member)}
+            {publicBasisLabel(member)}
           </p>
           <p className="type-caption text-(--text-muted)">
-            O proprietário não pode dar este consentimento pelo profissional. Consentimento em
-            relação de emprego não é livre: quem publica a própria foto e apresentação é o
-            profissional, pela conta dele, e pode revogar quando quiser. O nome de exibição continua
-            público em qualquer caso.
+            Todo profissional ativo aparece na vitrine. Para quem não tem login, a base é a sua
+            declaração de que tem a autorização da pessoa; quem tem login controla a própria
+            apresentação e foto e pode sair da equipe quando quiser. Desativar tira o perfil da
+            vitrine na hora.
           </p>
         </div>
       </section>

@@ -11,21 +11,9 @@ const ready: PhotosData = {
   logo: null,
   cover: null,
   professionals: [
-    {
-      id: 'p1',
-      name: 'Marina Souza',
-      specialty: 'Cabeleireira',
-      photo: IMAGE,
-      isPubliclyVisible: true,
-    },
-    {
-      id: 'p2',
-      name: 'Rafael Lima',
-      specialty: 'Barbeiro',
-      photo: IMAGE,
-      isPubliclyVisible: false,
-    },
-    { id: 'p3', name: 'Carla Nunes', specialty: null, photo: null, isPubliclyVisible: true },
+    { id: 'p1', name: 'Marina Souza', specialty: 'Cabeleireira', photo: IMAGE },
+    { id: 'p2', name: 'Rafael Lima', specialty: 'Barbeiro', photo: IMAGE },
+    { id: 'p3', name: 'Carla Nunes', specialty: null, photo: null },
   ],
 }
 
@@ -57,15 +45,17 @@ describe('PhotosScreen', () => {
     expect(html).toContain('Rafael Lima')
   })
 
-  it('diz onde cada foto aparece: só com perfil completo (consentimento)', () => {
+  it('diz onde cada foto aparece: na página pública, sem depender de consentimento por perfil', () => {
     const html = render()
 
-    expect(html).toContain('depende do consentimento')
     expect(html).toContain('Aparece na página pública')
-    expect(html).toContain(
-      'Guardada: só aparece na página pública com o perfil completo (consentimento).',
-    )
     expect(html).toContain('Sem foto — aparece com as iniciais')
+    expect(html).not.toContain('consentimento')
+    expect(html).not.toContain('Guardada')
+  })
+
+  it('para quem não tem login, lembra da declaração do dono', () => {
+    expect(render()).toContain('declaração de autorização')
   })
 
   it('sem profissional ativo, manda cadastrar a equipe', () => {

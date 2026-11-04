@@ -21,8 +21,8 @@ import { useState } from 'react'
  *
  * No celular e no tablet a tela mostra uma coluna por vez: a lista e, ao escolher alguém, a ficha dele.
  *
- * O perfil completo na vitrine depende do consentimento do próprio profissional (decisões de 22/09
- * §3): o dono vê o estado, mas não consegue ligar sem ele.
+ * O perfil é sempre público (ADR-031): para quem não tem login, o dono declara a autorização da pessoa ao salvar a
+ * apresentação.
  */
 export const TeamScreen = (props: TeamScreenProps) => {
   const { data, businessName, onCreate, onSave, onOpenSchedules } = props
@@ -47,8 +47,8 @@ export const TeamScreen = (props: TeamScreenProps) => {
         specialty: member.specialty,
         bio: member.bio,
         isActive,
-        // Desativado sai da vitrine; o domínio esconde o perfil, a tela não pede o contrário.
-        showFullProfile: isActive && member.isPubliclyVisible,
+        // Desativado sai da vitrine na hora. A declaração já registrada não se refaz ao ativar ou desativar.
+        authorizationDeclared: false,
         serviceIds: member.serviceIds,
       })
       if (failure) notify.error(failure)
