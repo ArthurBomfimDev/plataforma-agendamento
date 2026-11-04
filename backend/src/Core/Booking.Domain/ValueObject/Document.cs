@@ -6,8 +6,8 @@ public sealed record Document
 {
     public string Number { get; }
 
-    // Derivado do tamanho, nunca persistido separadamente — 11 dígitos só pode ser CPF válido,
-    // 14 só pode ser CNPJ válido, porque o dígito verificador já foi conferido no Of().
+    // Derivado do tamanho, nunca persistido separadamente — 11 caracteres só pode ser CPF válido,
+    // 14 só pode ser CNPJ válido (numérico ou alfanumérico), porque o dígito verificador já foi conferido no Of().
     public DocumentKind Kind => Number.Length == 11 ? DocumentKind.Cpf : DocumentKind.Cnpj;
 
     private Document(string number)
@@ -22,12 +22,12 @@ public sealed record Document
             throw new DomainException("document.required");
         }
 
-        string digits = new([.. rawNumber.Where(char.IsDigit)]);
+        string number = Normalize(rawNumber);
 
-        bool valid = digits.Length switch
+        bool valid = number.Length switch
         {
-            11 => IsValidCpf(digits),
-            14 => IsValidCnpj(digits),
+            11 => IsValidCpf(number),
+            14 => IsValidCnpj(number),
             _ => throw new DomainException("document.invalid_length"),
         };
 
@@ -36,12 +36,19 @@ public sealed record Document
             throw new DomainException("document.invalid_check_digit");
         }
 
-        return new Document(digits);
+        return new Document(number);
     }
+
+    /// <summary>
+    /// Tira a pontuação (<c>. - /</c> e espaços) e põe em maiúsculas. Não descarta letra: o CNPJ alfanumérico
+    /// (IN RFB 2.229/2024, desde 31/07/2026) tem letras nas 12 primeiras posições, e descartá-las o truncaria.
+    /// </summary>
+    private static string Normalize(string raw) =>
+        new([.. raw.Where(c => c is not ('.' or '-' or '/') && !char.IsWhiteSpace(c)).Select(char.ToUpperInvariant)]);
 
     private static bool IsValidCpf(string d)
     {
-        if (d.Distinct().Count() == 1)
+        if (!d.All(char.IsAsciiDigit) || d.Distinct().Count() == 1)
         {
             return false;
         }
@@ -55,9 +62,13 @@ public sealed record Document
         return d[9] - '0' == d1 && d[10] - '0' == d2;
     }
 
+    // 14 caracteres: os 12 primeiros A-Z ou 0-9 e os 2 últimos (dígitos verificadores) só numéricos. O valor de cada
+    // caractere é o código ASCII menos 48, então o CNPJ numérico antigo cai no mesmo cálculo.
     private static bool IsValidCnpj(string d)
     {
-        if (d.Distinct().Count() == 1)
+        bool shape = d[..12].All(c => char.IsAsciiDigit(c) || char.IsAsciiLetterUpper(c)) && d[12..].All(char.IsAsciiDigit);
+
+        if (!shape || d.Distinct().Count() == 1)
         {
             return false;
         }
@@ -73,7 +84,7 @@ public sealed record Document
 
     private static int CheckDigit(string digits, int[] weights)
     {
-        int sum = digits.Select((c, i) => (c - '0') * weights[i]).Sum();
+        int sum = digits.Select((c, i) => (c - '0') * weights[i]).Sum(); // c - '0' == ASCII - 48, também para letras
         int remainder = sum % 11;
         return remainder < 2 ? 0 : 11 - remainder;
     }

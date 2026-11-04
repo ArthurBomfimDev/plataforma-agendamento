@@ -34,6 +34,39 @@ public sealed class TenancyAndCatalogDomainTests
         Assert.Throws<DomainException>(() => Document.Of(raw));
     }
 
+    // CNPJ alfanumérico (IN RFB 2.229/2024): o exemplo oficial da Receita é 12.ABC.345/01DE-35.
+    [Theory]
+    [InlineData("12.ABC.345/01DE-35", "12ABC34501DE35")]
+    [InlineData("12abc34501de35", "12ABC34501DE35")]
+    [InlineData(" 12ABC34501DE35 ", "12ABC34501DE35")]
+    [InlineData("AB12CD34EF5602", "AB12CD34EF5602")]
+    public void Valid_alphanumeric_cnpj_keeps_its_letters_in_uppercase(string raw, string expected)
+    {
+        Document document = Document.Of(raw);
+
+        Assert.Equal(DocumentKind.Cnpj, document.Kind);
+        Assert.Equal(expected, document.Number);
+    }
+
+    [Theory]
+    [InlineData("12.ABC.345/01DE-36")] // dígito verificador errado
+    [InlineData("12ABC34501DEAB")] // letra nas posições dos dígitos verificadores
+    [InlineData("AAAAAAAAAAAAAA")] // caracteres repetidos
+    [InlineData("12ABC34501DE3")] // 13 caracteres
+    [InlineData("12ABC34501DE355")] // 15 caracteres
+    [InlineData("12ABC34501D!35")] // símbolo no corpo
+    [InlineData("ABC.982.247-25")] // CPF não aceita letra
+    public void Invalid_alphanumeric_document_is_rejected(string raw)
+    {
+        Assert.Throws<DomainException>(() => Document.Of(raw));
+    }
+
+    [Fact]
+    public void Numeric_cnpj_still_validates_through_the_same_routine()
+    {
+        Assert.Equal("11222333000181", Document.Of("11.222.333/0001-81").Number);
+    }
+
     [Fact]
     public void Business_lifecycle_follows_draft_review_active()
     {
