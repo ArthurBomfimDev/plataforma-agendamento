@@ -73,6 +73,13 @@ describe('ProfileScreen', () => {
     expect(html).toContain('Registro profissional (opcional)')
   })
 
+  it('sair do estabelecimento só aparece quando a tela recebe o tratamento', () => {
+    expect(render()).not.toContain('Sair do estabelecimento')
+    expect(render({ onLeave: async () => null })).toContain(
+      'Você deixa a equipe de Estúdio Duartina',
+    )
+  })
+
   it('respeita os limites do domínio nos campos', () => {
     const html = render({ showRegistration: true })
 

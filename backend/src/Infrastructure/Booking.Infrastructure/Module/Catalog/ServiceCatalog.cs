@@ -35,6 +35,29 @@ public sealed class ServiceCatalog(BookingDbContext context) : IServiceCatalog
                 link.EffectivePriceCents(service));
     }
 
+    public async Task<IReadOnlyList<ProfessionalServiceInfo>> ListForProfessionalAsync(
+        Guid businessId, Guid professionalId, CancellationToken ct = default)
+    {
+        List<ServiceProfessional> links = await context.OfBusiness<ServiceProfessional>(businessId).AsNoTracking()
+            .Where(l => l.ProfessionalId == professionalId)
+            .ToListAsync(ct);
+
+        List<Guid> serviceIds = [.. links.Select(l => l.ServiceId)];
+        List<Service> services = await context.OfBusiness<Service>(businessId).AsNoTracking()
+            .Where(s => serviceIds.Contains(s.Id) && s.IsActive)
+            .OrderBy(s => s.Name)
+            .ToListAsync(ct);
+
+        return
+        [
+            .. services.Select(s =>
+            {
+                ServiceProfessional link = links.First(l => l.ServiceId == s.Id);
+                return new ProfessionalServiceInfo(s.Id, s.Name, link.EffectiveDurationMinutes(s), link.EffectivePriceCents(s), s.ImageKey);
+            }),
+        ];
+    }
+
     public Task<bool> HasBookableServiceAsync(Guid businessId, CancellationToken ct = default) =>
         context.OfBusiness<Service>(businessId)
             .Where(s => s.IsActive)

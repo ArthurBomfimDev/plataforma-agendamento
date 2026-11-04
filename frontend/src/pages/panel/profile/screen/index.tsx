@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { Button } from '@components/button'
 import { ImageUploader } from '@components/image-uploader'
+import { LeaveBusiness } from '@components/leave-business'
 import { PANEL_CARD, PanelPage } from '@components/panel-page'
 import type { ProfileScreenProps, ProfileValues } from './types'
 import { TextAreaField } from '@components/text-area-field'
@@ -20,7 +21,8 @@ const TITLE = 'Meu perfil'
  * opcional e também aparece na página pública. Quem controla estes dados é o próprio profissional.
  */
 export const ProfileScreen = (props: ProfileScreenProps) => {
-  const { data, businessName, showRegistration, onSave, onUploadPhoto, onRemovePhoto } = props
+  const { data, businessName, showRegistration, onSave, onUploadPhoto, onRemovePhoto, onLeave } =
+    props
   const subtitle = `${businessName} · o que aparece na sua página pública`
 
   if (data.status === 'loading') {
@@ -71,6 +73,8 @@ export const ProfileScreen = (props: ProfileScreenProps) => {
           onRemove={onRemovePhoto}
         />
       </section>
+
+      {onLeave && <LeaveBusiness businessName={businessName} onLeave={onLeave} />}
     </PanelPage>
   )
 }

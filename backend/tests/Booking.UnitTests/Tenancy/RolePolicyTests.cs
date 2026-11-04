@@ -48,6 +48,7 @@ public sealed class RolePolicyTests
     [
         "AdminBusinessCommands", "ListBusinessesForAdminQuery", "GetBusinessForAdminQuery",
         "ListBusinessReportsQuery", "ResolveBusinessReportCommand",
+        "ListProfessionalRemovalRequestsQuery", "ResolveProfessionalRemovalRequestCommand",
     ];
 
     /// <summary>
@@ -56,6 +57,8 @@ public sealed class RolePolicyTests
     /// </summary>
     private static readonly string[] _staffScoped =
     [
+        // "Sair do estabelecimento": profissional e atendente saem; o dono é recusado pelo domínio (ProfessionalPublicPageTests).
+        "LeaveBusinessCommand",
         "GetAgendaQuery", "ListPendingAppointmentsQuery", "CreateCounterAppointmentCommand", "ManageAppointmentCommand",
         "ListProfessionalsQuery", "ListServicesQuery", "ListWorkSchedulesQuery", "ListScheduleExceptionsQuery",
         "ProfessionalPhotoCommand",
@@ -79,7 +82,8 @@ public sealed class RolePolicyTests
         "ListMyAppointmentsQuery", "RegisterBusinessCommand",
         // Público
         "GetAvailableSlotsQuery", "GetAvailabilityCalendarQuery", "ListPublicServicesQuery", "ListPublicProfessionalsQuery",
-        "GetPublicBusinessQuery", "SearchBusinessesQuery", "ReportBusinessCommand", "LookupPostalCodeQuery",
+        "GetPublicBusinessQuery", "SearchBusinessesQuery", "ReportBusinessCommand",
+        "GetPublicProfessionalQuery", "RequestProfessionalRemovalCommand", "LookupPostalCodeQuery",
         "SearchPlacesQuery", "ReverseGeocodeQuery", "PreviewInvitationQuery", "AcceptInvitationCommand",
         "AcceptInvitationWithNewAccountCommand",
         // Apoio interno (não é rota)

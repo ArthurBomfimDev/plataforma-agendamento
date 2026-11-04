@@ -27,6 +27,13 @@ public sealed class ProfessionalLinker(IProfessionalRepository professionals) : 
         professional.LinkMembership(membershipId);
     }
 
+    // No estabelecimento do token (filtro de tenant): quem sai está no contexto dele.
+    public async Task DeactivateByMembershipAsync(Guid membershipId, CancellationToken ct = default)
+    {
+        Professional? professional = await professionals.GetByMembershipIdAsync(membershipId, ct);
+        professional?.Deactivate();
+    }
+
     public void Create(Guid businessId, string displayName, Guid membershipId) =>
         professionals.Add(Professional.Create(businessId, displayName, specialty: null, bio: null, membershipId));
 }

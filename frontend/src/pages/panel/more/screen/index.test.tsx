@@ -53,6 +53,21 @@ describe('PanelMoreScreen', () => {
     expect(html.match(/<button/g)).toHaveLength(3)
   })
 
+  it('só quem pode sair do estabelecimento vê a seção; o dono não', () => {
+    const withLeave = renderToString(
+      <PanelMoreScreen
+        businessName="Estúdio Duartina"
+        hiddenSections={hiddenSectionsFor('Attendant')}
+        onNavigate={() => undefined}
+        onAccount={() => undefined}
+        onLeave={async () => null}
+      />,
+    )
+
+    expect(withLeave).toContain('Sair do estabelecimento')
+    expect(render()).not.toContain('Sair do estabelecimento')
+  })
+
   it('oferece o alternar tema no celular, onde o painel não tem barra superior', () => {
     expect(render()).toContain('aria-label="Tema escuro"')
   })

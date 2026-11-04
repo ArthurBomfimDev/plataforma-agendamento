@@ -1,4 +1,7 @@
 import { ProfileScreen } from './screen'
+import { ROUTES } from '@router/paths'
+import { useLeaveBusiness } from '@api/services/professional/hooks'
+import { useNavigate } from 'react-router'
 import type { ProfileData } from './screen/types'
 import { errorMessage } from '@api/base'
 import { managementService } from '@api/services/management'
@@ -14,6 +17,8 @@ import { usePanelMutation } from '@api/services/panel/hooks'
 export const PanelProfileRoute = () => {
   const { context, business } = usePanelContext()
   const mine = useMyProfessionalProfile(context.businessId, true)
+  const leave = useLeaveBusiness()
+  const navigate = useNavigate()
 
   const save = usePanelMutation(
     context.businessId,
@@ -63,6 +68,15 @@ export const PanelProfileRoute = () => {
         )
         await mine.refetch()
         return updated.photo
+      }}
+      onLeave={async () => {
+        try {
+          await leave.mutateAsync()
+          navigate(ROUTES.home, { replace: true })
+          return null
+        } catch (error) {
+          return errorMessage(error)
+        }
       }}
       onRemovePhoto={async () => {
         if (!mine.data) return

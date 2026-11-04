@@ -31,6 +31,19 @@ public sealed class BusinessesController : ControllerBase
         return CreatedAtAction(nameof(GetPublic), new { businessId = business.Id }, business);
     }
 
+    /// <summary>
+    /// "Sair do estabelecimento": profissional ou atendente remove o próprio vínculo; o perfil sai da vitrine na hora.
+    /// O dono recebe 409 (<c>business_membership.cannot_remove_owner</c>). Depois, o token do painel deixa de valer
+    /// para este estabelecimento nas rotas que conferem o vínculo: o frontend volta ao contexto de consumidor.
+    /// </summary>
+    [HttpPost("current/leave")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Leave([FromServices] LeaveBusinessCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(ct);
+        return NoContent();
+    }
+
     [HttpGet("current")]
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCurrent([FromServices] GetCurrentBusinessQuery query, CancellationToken ct) =>

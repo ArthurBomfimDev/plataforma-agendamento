@@ -10,6 +10,55 @@ export type PublicProfessionalResponse = {
   photo: ImageSet | null
 }
 
+/** O estabelecimento, na página pública do profissional. `category`: `Beleza` ou `Saude`. */
+export type ProfessionalBusinessResponse = {
+  id: string
+  name: string
+  addressLine: string | null
+  category: string
+  timeZone: string
+}
+
+/** Serviço que o profissional executa, com o preço e a duração dele. */
+export type ProfessionalServiceResponse = {
+  id: string
+  name: string
+  durationMinutes: number
+  priceCents: number
+  photo: ImageSet | null
+}
+
+/** `GET /api/professionals/{id}`: só profissional ativo de estabelecimento ativo (senão 404). */
+export type ProfessionalPageResponse = {
+  id: string
+  displayName: string
+  specialty: string | null
+  bio: string | null
+  /** Registro profissional (Saúde). Só vem quando informado. */
+  registration: string | null
+  photo: ImageSet | null
+  business: ProfessionalBusinessResponse
+  services: ProfessionalServiceResponse[]
+}
+
+/** "Solicitar remoção deste perfil": motivo de 5 a 500 caracteres e contato opcional. Sem login. */
+export type RequestProfessionalRemovalRequest = { reason: string; contact: string | null }
+
+export type ProfessionalRemovalResponse = {
+  id: string
+  professionalId: string
+  professionalName: string
+  businessId: string
+  businessName: string
+  reason: string
+  contact: string | null
+  status: 'Open' | 'Resolved'
+  requestedAt: string
+  resolvedByUserId: string | null
+  resolvedAt: string | null
+  resolution: string | null
+}
+
 export type CustomerResponse = {
   id: string
   birthDate: string

@@ -36,4 +36,43 @@ public sealed record ProfessionalResponse(
 public sealed record PublicProfessionalResponse(
     Guid Id, string DisplayName, string? Specialty, string? Bio, string? Registration, ImageSetResponse? Photo = null);
 
+/// <summary>O estabelecimento do profissional, na página pública dele.</summary>
+public sealed record ProfessionalBusinessResponse(Guid Id, string Name, string? AddressLine, string Category, string TimeZone);
+
+/// <summary>Serviço que o profissional executa, com o preço e a duração dele.</summary>
+public sealed record ProfessionalServiceResponse(Guid Id, string Name, int DurationMinutes, long PriceCents, ImageSetResponse? Photo);
+
+/// <summary>
+/// Página pública do profissional (<c>GET /api/professionals/{id}</c>): só profissional ativo de estabelecimento ativo.
+/// <c>Registration</c> só vem quando informado (Saúde). Sem avaliações ainda: a nota entra com o módulo Reputation.
+/// </summary>
+public sealed record ProfessionalPageResponse(
+    Guid Id,
+    string DisplayName,
+    string? Specialty,
+    string? Bio,
+    string? Registration,
+    ImageSetResponse? Photo,
+    ProfessionalBusinessResponse Business,
+    IReadOnlyList<ProfessionalServiceResponse> Services);
+
+/// <summary>"Solicitar remoção deste perfil": motivo de 5 a 500 caracteres e contato opcional. Sem login.</summary>
+public sealed record RequestProfessionalRemovalRequest(string Reason, string? Contact);
+
+public sealed record ProfessionalRemovalResponse(
+    Guid Id,
+    Guid ProfessionalId,
+    string ProfessionalName,
+    Guid BusinessId,
+    string BusinessName,
+    string Reason,
+    string? Contact,
+    string Status,
+    DateTimeOffset RequestedAt,
+    Guid? ResolvedByUserId,
+    DateTimeOffset? ResolvedAt,
+    string? Resolution);
+
+public sealed record ResolveProfessionalRemovalRequest(string? Note);
+
 public sealed record CustomerResponse(Guid Id, DateOnly BirthDate, string? SocialName);

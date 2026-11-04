@@ -11,6 +11,7 @@ import {
 } from './consts'
 import { ErrorState, LoadingState } from '@components/screen-state'
 import type { AdminBusinessesScreenProps, AdminTab, Load } from './types'
+import type { ProfessionalRemovalResponse } from '@api/models'
 
 import type { AdminBusinessDetailResponse, BusinessReportResponse } from '@api/models'
 import { Button } from '@components/button'
@@ -22,6 +23,7 @@ import { useState } from 'react'
 const TABS: ReadonlyArray<{ id: AdminTab; label: string }> = [
   { id: 'businesses', label: 'Estabelecimentos' },
   { id: 'reports', label: 'Denúncias' },
+  { id: 'removals', label: 'Remoções de perfil' },
 ]
 
 const CARD =
@@ -74,7 +76,13 @@ export const AdminBusinessesScreen = (props: AdminBusinessesScreenProps) => {
           ))}
         </div>
 
-        {tab === 'businesses' ? <BusinessesTab {...props} /> : <ReportsTab {...props} />}
+        {tab === 'businesses' ? (
+          <BusinessesTab {...props} />
+        ) : tab === 'reports' ? (
+          <ReportsTab {...props} />
+        ) : (
+          <RemovalsTab {...props} />
+        )}
       </div>
     </main>
   )
@@ -307,6 +315,110 @@ const ReportsTab = (props: AdminBusinessesScreenProps) => {
         }
       </Loaded>
     </div>
+  )
+}
+
+/**
+ * Fila de pedidos de remoção de perfil (ADR-031). O Admin só encerra o pedido, com uma anotação: desativar o perfil é
+ * decisão do dono. O contato de quem pediu aparece só aqui e no e-mail do dono.
+ */
+const RemovalsTab = (props: AdminBusinessesScreenProps) => {
+  const {
+    removalStatus = 'Open',
+    onRemovalStatusChange,
+    removals = { status: 'ready', data: [] },
+    onResolveRemoval,
+  } = props
+
+  return (
+    <div className="flex flex-col gap-(--space-12)">
+      <SelectField
+        id="admin-removal-status"
+        label="Situação"
+        options={[
+          { value: 'Open', label: 'Abertos' },
+          { value: 'Resolved', label: 'Resolvidos' },
+        ]}
+        value={removalStatus}
+        onChange={(event) => onRemovalStatusChange?.(event.target.value as 'Open' | 'Resolved')}
+      />
+      <Loaded load={removals}>
+        {(items) =>
+          items.length === 0 ? (
+            <p className="type-body text-(--text-muted)">
+              {removalStatus === 'Open'
+                ? 'Nenhum pedido de remoção aberto.'
+                : 'Nenhum pedido resolvido.'}
+            </p>
+          ) : (
+            <ul aria-label="Pedidos de remoção de perfil" className="flex flex-col gap-(--space-8)">
+              {items.map((request) => (
+                <li key={request.id}>
+                  <RemovalCard
+                    request={request}
+                    onResolve={(id, note) => onResolveRemoval?.(id, note) ?? Promise.resolve(null)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </Loaded>
+    </div>
+  )
+}
+
+const RemovalCard = (props: {
+  request: ProfessionalRemovalResponse
+  onResolve: (requestId: string, note: string | null) => Promise<string | null>
+}) => {
+  const { request, onResolve } = props
+  const [note, setNote] = useState('')
+  const [error, setError] = useState<string>()
+  const [busy, setBusy] = useState(false)
+
+  const resolve = async () => {
+    setError(undefined)
+    setBusy(true)
+    const failure = await onResolve(request.id, note.trim() || null)
+    setBusy(false)
+    if (failure) setError(failure)
+  }
+
+  return (
+    <article className={CARD}>
+      <h3 className="type-label text-(--text-strong)">
+        {request.professionalName || 'Profissional'} · {request.businessName || 'Estabelecimento'}
+      </h3>
+      <p className="type-body break-words">{request.reason}</p>
+      <p className="type-caption text-(--text-muted)">
+        {formatDate(request.requestedAt)} ·{' '}
+        {request.contact ? `contato: ${request.contact}` : 'sem contato'}
+      </p>
+      {request.status === 'Resolved' ? (
+        <p className="type-caption text-(--text-muted)">
+          Resolvido em {request.resolvedAt ? formatDate(request.resolvedAt) : '—'}
+          {request.resolution ? `: ${request.resolution}` : ''}
+        </p>
+      ) : (
+        <>
+          <TextField
+            id={`removal-note-${request.id}`}
+            label="Anotação (opcional)"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+          />
+          {error && (
+            <p role="alert" className="type-label text-(--status-rejected-fg)">
+              {error}
+            </p>
+          )}
+          <Button variant="secondary" disabled={busy} onClick={() => void resolve()}>
+            {busy ? 'Resolvendo…' : 'Resolver pedido'}
+          </Button>
+        </>
+      )}
+    </article>
   )
 }
 

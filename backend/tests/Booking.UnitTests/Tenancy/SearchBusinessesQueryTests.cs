@@ -123,6 +123,9 @@ public sealed class SearchBusinessesQueryTests
     // Imita o ServiceCatalog de produção: a mesma comparação (SearchText), em memória.
     private sealed class FakeCatalog(Dictionary<Guid, string[]> services) : IServiceCatalog
     {
+        public Task<IReadOnlyList<ProfessionalServiceInfo>> ListForProfessionalAsync(Guid businessId, Guid professionalId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<IReadOnlySet<Guid>> FilterBusinessesOfferingAsync(IReadOnlyCollection<Guid> businessIds, string term, CancellationToken ct = default)
         {
             IReadOnlyList<string> wanted = SearchText.Expand(term);
