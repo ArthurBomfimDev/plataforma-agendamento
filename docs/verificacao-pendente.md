@@ -316,6 +316,24 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 5 | Busca sem `sortBy` | cada item traz `ratingAverage` (nulo se "Novo") e `ratingCount` |
 | 6 | Os **30 estabelecimentos do seed** continuam aparecendo na busca como antes (nenhum some por falta de nota) | sim |
 
+### Avaliações — telas (Fase 8, fatia 3; sem migration)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `bun run test` | 513 testes verdes (rodaram), incluindo `rating-label`, `star-rating-input`, `reviews-section`, `review-drawer` |
+| 2 | Concluir um agendamento no painel; como consumidor, **Meus agendamentos** → aba Próximos → "Concluídos" | aparece **Avaliar atendimento** com "Você tem 30 dias para avaliar." |
+| 3 | Abrir a gaveta; teclado: Tab até as estrelas, setas ← → | a nota muda e o leitor diz "N estrelas"; Enviar sem nota mostra "Escolha de 1 a 5 estrelas" |
+| 4 | Enviar 5 estrelas, nota do profissional e comentário | toast "Obrigado pela avaliação!"; o cartão vira "Você avaliou: 5 de 5" com **Editar avaliação** |
+| 5 | Editar uma vez; tentar de novo | a 2ª edição não é oferecida; se forçada pela API, 409 `review.already_edited` com a mensagem em português |
+| 6 | Comentário com 501 caracteres | o campo limita em 500; o contador confere |
+| 7 | Estabelecimento de **Saúde**: abrir a gaveta | aviso em destaque "Não escreva dados de saúde"; a avaliação pública **não mostra o serviço** |
+| 8 | Página do estabelecimento com 1 e 2 avaliações | cabeçalho e aba dizem **Novo**, "A média aparece a partir de 3 avaliações" |
+| 9 | Com 3 ou mais | "★ 4,7 (12)", distribuição por estrela, lista com "Ana S." e data; paginação aparece com mais de 10 |
+| 10 | Busca → chip **Melhor avaliados** | ordem por nota; os "Novos" depois, por distância; o cartão mostra a nota ou "Novo" |
+| 11 | Página do profissional | "★ nota (n)" ou "Novo" no cabeçalho e a seção "Avaliações de NOME" |
+| 12 | Painel do dono (token de painel) tentando avaliar pela API | 403 `appointment.customer_context_required` |
+| 13 | 390 px, claro e escuro: gaveta, estrelas, lista, distribuição, chip | sem rolagem horizontal; alvos ≥ 44 px; foco visível; contraste da estrela cheia (âmbar) legível nos dois temas |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
