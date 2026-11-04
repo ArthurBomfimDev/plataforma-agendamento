@@ -565,6 +565,19 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - **Limitações registradas:** o dono não responde; o consumidor não apaga a avaliação.
 - Migration `AddReputation` (não aplicada): `reputation.review` e `reputation.rating_summary`.
 
+### 4.17.1 Busca por nota (Fase 8, fatia 2 de 5) — **escrito sem Docker, não verificado**
+
+| Parâmetro / campo | Detalhe |
+|---|---|
+| `sortBy=rating` | melhores primeiro; empate de média decidido pelo número de avaliações. Estabelecimento **sem média** ("Novo", menos de 3 avaliações) vem **depois**, na ordem de distância |
+| `minRating=1..5` | só estabelecimentos com média **maior ou igual**. Os "Novos" ficam de fora (não se afirma uma nota que não existe). Fora de 1 a 5: 400 `search.min_rating_invalid` |
+| `ratingAverage` (novo, aditivo) | média com 1 casa; **nulo** enquanto "Novo" |
+| `ratingCount` (novo, aditivo) | quantas avaliações; 0 se nenhuma. A tela mostra "Novo" quando `ratingAverage` é nulo |
+
+- Sem `sortBy=rating` nem `minRating`, a nota só é lida dos itens da página exibida (uma consulta a mais, por ids).
+- A busca lê a nota pelo contrato `IReputationDirectory`; o módulo Tenancy não conhece `RatingSummary`.
+- Os campos novos são aditivos: o frontend atual os ignora.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

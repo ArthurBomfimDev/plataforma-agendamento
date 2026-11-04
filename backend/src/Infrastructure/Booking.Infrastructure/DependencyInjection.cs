@@ -6,6 +6,7 @@ using Booking.Application.Contracts.Compliance;
 using Booking.Application.Contracts.Identity;
 using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.People;
+using Booking.Application.Contracts.Reputation;
 using Booking.Application.Contracts.Scheduling;
 using Booking.Application.Contracts.Tenancy;
 using Booking.Application.Module.Availability.Commands;
@@ -54,6 +55,7 @@ using Booking.Infrastructure.Module.Notifications;
 using Booking.Infrastructure.Module.Notifications.Repository;
 using Booking.Infrastructure.Module.People;
 using Booking.Infrastructure.Module.People.Repository;
+using Booking.Infrastructure.Module.Reputation;
 using Booking.Infrastructure.Module.Reputation.Repository;
 using Booking.Infrastructure.Module.Scheduling;
 using Booking.Infrastructure.Module.Scheduling.Repository;
@@ -336,6 +338,7 @@ public static class DependencyInjection
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IRatingSummaryRepository, RatingSummaryRepository>();
         services.AddScoped<IAppointmentReviewLookup, AppointmentReviewLookup>();
+        services.AddScoped<IReputationDirectory, ReputationDirectory>();
 
         services.AddScoped<RatingAggregator>();
         services.AddScoped<CreateReviewCommand>();

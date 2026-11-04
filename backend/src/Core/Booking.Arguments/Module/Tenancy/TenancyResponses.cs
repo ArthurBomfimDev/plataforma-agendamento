@@ -83,7 +83,9 @@ public sealed record BusinessSearchItemResponse(
     int? DurationMinutes = null,
     long? FromPriceCents = null,
     ImageSetResponse? Logo = null,
-    ImageSetResponse? Cover = null);
+    ImageSetResponse? Cover = null,
+    double? RatingAverage = null,
+    int RatingCount = 0);
 
 /// <summary>Item da checklist de ativação. <c>RequiredForSubmit</c> diz se a submissão já exige o item hoje.</summary>
 public sealed record ChecklistItemResponse(string Key, bool Done, bool RequiredForSubmit);

@@ -1,6 +1,7 @@
 using Booking.Application.Common.Media;
 using Booking.Application.Common.Search;
 using Booking.Application.Contracts.Catalog;
+using Booking.Application.Contracts.Reputation;
 using Booking.Application.Module.Tenancy.Commands;
 using Booking.Application.Module.Tenancy.Converter;
 using Booking.Arguments.Module.Tenancy;
@@ -52,7 +53,7 @@ public sealed class GetPublicBusinessQuery(IBusinessRepository businesses, IImag
 /// filtros sobre o conjunto que o filtro geográfico já cortou, antes da paginação; a ordenação também.
 /// O cálculo de horários fica para a página exibida, em consulta separada por estabelecimento.
 /// </summary>
-public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServiceCatalog catalog, IImageUrls images)
+public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServiceCatalog catalog, IReputationDirectory reputation, IImageUrls images)
 {
     private const int _maxCandidates = 500;
     private const int _maxPageSize = 50;
@@ -66,7 +67,12 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
         double radiusKm = city is null ? Math.Clamp(request.RadiusKm, 0.1, _maxRadiusKm) : _maxRadiusKm;
         int page = Math.Max(1, request.Page);
         int pageSize = Math.Clamp(request.PageSize, 1, _maxPageSize);
-        bool byPrice = ParseSort(request.SortBy);
+        SearchSort sort = ParseSort(request.SortBy);
+
+        if (request.MinRating is < 1 or > 5)
+        {
+            throw new DomainException("search.min_rating_invalid");
+        }
 
         // 1. Geográfico (ST_DWithin sobre índice GiST), já em ordem de distância.
         IEnumerable<Business> matching = await businesses.FindBookableNearbyAsync(center, radiusKm * 1000, _maxCandidates, ct);
@@ -107,16 +113,47 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
             candidates = [.. candidates.Where(b => highlights.TryGetValue(b.Id, out ServiceHighlight? h) && h.FromPriceCents <= maxPrice)];
         }
 
-        if (byPrice)
+        if (sort == SearchSort.Price)
         {
             // OrderBy é estável: no empate de preço, fica a ordem de distância.
             candidates = [.. candidates.OrderBy(b => highlights.TryGetValue(b.Id, out ServiceHighlight? h) ? h.FromPriceCents : long.MaxValue)];
         }
 
+        // Nota (ADR-032). Com ordenação ou filtro por nota, o conjunto inteiro precisa dela; sem isso, só a página exibida.
+        // Estabelecimento "Novo" (menos de três avaliações) não tem média: vai depois dos que têm, na ordem de distância, e
+        // fica de fora de um filtro mínimo (não se afirma uma nota que ainda não existe).
+        IReadOnlyDictionary<Guid, RatingInfo> ratings = new Dictionary<Guid, RatingInfo>();
+
+        if (sort == SearchSort.Rating || request.MinRating is not null)
+        {
+            ratings = await reputation.GetBusinessRatingsAsync([.. candidates.Select(b => b.Id)], ct);
+        }
+
+        if (request.MinRating is int minRating)
+        {
+            candidates = [.. candidates.Where(b => ratings.GetValueOrDefault(b.Id)?.Average >= minRating)];
+        }
+
+        if (sort == SearchSort.Rating)
+        {
+            candidates =
+            [
+                .. candidates
+                    .OrderBy(b => ratings.GetValueOrDefault(b.Id)?.Average is null ? 1 : 0)
+                    .ThenByDescending(b => ratings.GetValueOrDefault(b.Id)?.Average ?? 0)
+                    .ThenByDescending(b => ratings.GetValueOrDefault(b.Id)?.Average is null ? 0 : ratings[b.Id].Count),
+            ];
+        }
+
         // 3. Paginação.
-        List<BusinessSearchItemResponse> items = candidates
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        List<Business> pageOfBusinesses = [.. candidates.Skip((page - 1) * pageSize).Take(pageSize)];
+
+        if (ratings.Count == 0)
+        {
+            ratings = await reputation.GetBusinessRatingsAsync([.. pageOfBusinesses.Select(b => b.Id)], ct);
+        }
+
+        List<BusinessSearchItemResponse> items = pageOfBusinesses
             .Select(b =>
             {
                 // O serviço e o preço aparecem em todas as categorias, Saúde inclusa (decisão de 04/11). "Saúde não cita
@@ -135,7 +172,9 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
                     h?.DurationMinutes,
                     h?.FromPriceCents,
                     images.For(b.LogoImageKey),
-                    images.For(b.CoverImageKey));
+                    images.For(b.CoverImageKey),
+                    ratings.GetValueOrDefault(b.Id)?.Average is double average ? Math.Round(average, 1, MidpointRounding.AwayFromZero) : null,
+                    ratings.GetValueOrDefault(b.Id)?.Count ?? 0);
             })
             .ToList();
 
@@ -149,10 +188,18 @@ public sealed class SearchBusinessesQuery(IBusinessRepository businesses, IServi
         _ => category.ToString(),
     };
 
-    private static bool ParseSort(string? sortBy) => sortBy?.Trim().ToLowerInvariant() switch
+    private enum SearchSort
     {
-        null or "" or "distance" => false,
-        "price" => true,
+        Distance,
+        Price,
+        Rating,
+    }
+
+    private static SearchSort ParseSort(string? sortBy) => sortBy?.Trim().ToLowerInvariant() switch
+    {
+        null or "" or "distance" => SearchSort.Distance,
+        "price" => SearchSort.Price,
+        "rating" => SearchSort.Rating,
         _ => throw new DomainException("search.sort_invalid"),
     };
 

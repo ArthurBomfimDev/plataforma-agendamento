@@ -305,6 +305,17 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 12 | Duas avaliações de agendamentos diferentes do mesmo estabelecimento **ao mesmo tempo** (dois `curl` em paralelo) | as duas gravam, ou uma dá 503 `review.contention_try_again`; **a contagem nunca perde uma** |
 | 13 | 11 POSTs na mesma hora com a mesma conta | o 11º dá 429 |
 
+### Avaliações — busca por nota (Fase 8, fatia 2; sem migration)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `dotnet test --filter FullyQualifiedName~SearchBusinessesQueryTests` | verdes (testes unitários, rodaram sem Docker) |
+| 2 | Com 3 ou mais avaliações em dois estabelecimentos: `GET /api/businesses/search?latitude=…&longitude=…&sortBy=rating` | o de maior média primeiro; os sem média no fim, na ordem de distância |
+| 3 | `…&minRating=4` | só médias ≥ 4; os "Novos" não aparecem; `totalCount` confere |
+| 4 | `…&minRating=0` e `…&minRating=6` | 400 `search.min_rating_invalid` |
+| 5 | Busca sem `sortBy` | cada item traz `ratingAverage` (nulo se "Novo") e `ratingCount` |
+| 6 | Os **30 estabelecimentos do seed** continuam aparecendo na busca como antes (nenhum some por falta de nota) | sim |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
