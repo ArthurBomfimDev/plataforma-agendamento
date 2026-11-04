@@ -45,7 +45,7 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `POST /api/businesses/current/services` · `PUT …/{id}` | `manageApi.createService` · `updateService` | ✅ desde a 7D (§4.7) |
 | `PUT` · `DELETE …/services/{id}/professionals/{pid}` | `manageApi.enableProfessional` · `disableProfessional` | ✅ desde a 7D — o preço e a duração próprios por profissional ainda não têm tela |
 | `POST /api/businesses/current/professionals` · `PUT …/{id}` | `manageApi.createProfessional` · `updateProfessional` | ✅ desde a 7D |
-| `PUT` · `DELETE …/professionals/{id}/public-profile-consent` | — | ⬜ só o próprio profissional dá; sem login de profissional (5D), não há tela |
+| ~~`PUT` · `DELETE …/professionals/{id}/public-profile-consent`~~ | — | **Removidas** (ADR-031, §4.13): o perfil é sempre público e a base é a declaração do dono |
 | `POST` · `PUT …/{id}` · `DELETE …/{id}` em `…/work-schedules` | `manageApi.addWorkSchedule` · `updateWorkSchedule` · `removeWorkSchedule` | ✅ desde a 7D |
 | `GET` · `POST` · `DELETE …/{id}` em `…/schedule-exceptions`, `GET …/affected-appointments` | `manageApi.exceptions` · `addException` · `removeException` · `affectedAppointments` | ✅ desde a 7D |
 | `PUT /api/businesses/current/scheduling-policy` | `manageApi.updatePolicy` (`timeZone: null` mantém o fuso) | ✅ desde a 7D |
@@ -475,6 +475,30 @@ Regra: ADR-030. O token de contexto passa a levar `ctx: "Attendant"` (o `switch-
 - O atendente **não** agenda como consumidor no contexto do painel (`appointment.customer_context_required`, 403).
 - **Para o frontend:** o painel do atendente não pode chamar `GET current` nem `checklist` (403). Para o nome do
   estabelecimento use `GET /api/users/me`.
+
+## 4.13 Perfil público sempre ligado e a declaração do dono (Fase 4, bloco 3, 04/11) — **backend escrito sem Docker, não verificado**
+
+Decisão e justificativa: ADR-031. **Quebra de contrato** (o frontend desta branch já acompanha):
+
+| Antes | Agora |
+|---|---|
+| `ProfessionalResponse.isPubliclyVisible`, `hasPublicProfileConsent` | **Removidos.** Entram `authorizationDeclared` (o dono já declarou) e `registration` (registro profissional, opcional) |
+| `UpdateProfessionalRequest.showFullProfile` | **Removido.** Entra `authorizationDeclared` (bool, padrão `false`) e `registration` (opcional) |
+| `CreateProfessionalRequest` | ganha `authorizationDeclared` e `registration` (opcionais) |
+| `PUT/DELETE professionals/{id}/public-profile-consent` | **Removidas** (404) |
+| `PublicProfessionalResponse`: só o nome sem consentimento | **Sempre** nome, `specialty`, `bio`, `photo` e `registration` de todo profissional **ativo** |
+| `PUT professionals/me` `{ specialty, bio }` | ganha `registration` (opcional) |
+
+- **Declaração do dono:** "Declaro ter autorização desta pessoa para exibir estes dados publicamente." Para salvar a **bio**
+  de quem **não tem conta**, `authorizationDeclared: true` é obrigatório na primeira vez (400 `professional.declaration_required`).
+  Registra-se quem declarou, quando e a versão do texto (`declaracao-dono-2026-11-rascunho`, sem IP). Declarar de novo atualiza.
+- **Foto de quem não tem conta, enviada pelo dono:** exige a declaração antes (400 `professional.declaration_required`).
+- **Quem tem conta** controla a própria bio e foto e **não** depende da declaração.
+- **Desativar nunca é barrado** pela declaração (inclui cadastros anteriores a ela). Desativado, o profissional sai da vitrine na hora.
+- **Migration `ReplaceProfessionalConsentWithDeclaration`** (não aplicada): remove `is_publicly_visible` e
+  `public_profile_consent_at` e cria `authorization_declared_at`, `authorization_declared_by_user_id`,
+  `authorization_declaration_version` e `registration`. **Efeito de dados:** depois dela, todo profissional ativo, com ou sem
+  consentimento antigo, passa a aparecer completo na vitrine.
 
 ## 5. Resumo para fechar o lado do frontend
 
