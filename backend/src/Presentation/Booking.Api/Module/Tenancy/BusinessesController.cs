@@ -38,7 +38,7 @@ public sealed class BusinessesController : ControllerBase
 
     /// <summary>A checklist de envio e publicação (o que falta), só para o Owner.</summary>
     [HttpGet("current/checklist")]
-    [ProducesResponseType<IReadOnlyList<ChecklistItemResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<PagedResult<ChecklistItemResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetChecklist([FromServices] GetCurrentChecklistQuery query, CancellationToken ct) =>
         Ok(await query.ExecuteAsync(ct));
 
