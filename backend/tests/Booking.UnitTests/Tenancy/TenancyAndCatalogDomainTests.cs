@@ -82,6 +82,58 @@ public sealed class TenancyAndCatalogDomainTests
     }
 
     [Fact]
+    public void Beauty_business_publishes_straight_to_active_without_review()
+    {
+        Business business = NewBusiness();
+
+        business.Publish();
+
+        Assert.Equal(BusinessStatus.Active, business.Status);
+        Assert.True(business.IsBookable);
+        Assert.Throws<DomainException>(business.Publish); // já ativo: não publica de novo
+    }
+
+    [Fact]
+    public void Health_business_never_publishes_directly_and_only_goes_live_after_the_admin_approves()
+    {
+        var business = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+
+        DomainException blocked = Assert.Throws<DomainException>(business.Publish);
+
+        Assert.Equal("business.requires_review", blocked.Message);
+        Assert.Equal(BusinessStatus.Draft, business.Status);
+        Assert.False(business.IsBookable);
+
+        business.Submit();
+        Assert.False(business.IsBookable); // em análise: configurável, mas não agendável
+
+        business.Approve();
+        Assert.True(business.IsBookable);
+    }
+
+    [Fact]
+    public void Suspended_business_cannot_be_published_again_and_a_rejected_one_returns_to_draft_with_the_reason()
+    {
+        Business suspended = NewBusiness();
+        suspended.Publish();
+        suspended.Suspend();
+        Assert.Throws<DomainException>(suspended.Publish);
+
+        var admin = Guid.NewGuid();
+        var clinic = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+        clinic.Submit();
+        clinic.RejectVerification(admin, "Registro do conselho não confere.", _now);
+        clinic.ReturnToDraft();
+
+        Assert.Equal(BusinessStatus.Draft, clinic.Status);
+        Assert.Equal(VerificationLevel.Rejected, clinic.VerificationLevel);
+        Assert.Equal("Registro do conselho não confere.", clinic.VerificationNote);
+        Assert.Equal(admin, clinic.VerifiedByUserId);
+        clinic.Submit(); // o dono corrige e reenvia
+        Assert.Equal(BusinessStatus.PendingReview, clinic.Status);
+    }
+
+    [Fact]
     public void Changing_the_address_drops_the_confirmed_location()
     {
         Business business = NewBusiness();

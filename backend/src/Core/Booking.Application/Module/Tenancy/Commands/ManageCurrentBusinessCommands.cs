@@ -89,6 +89,37 @@ public sealed class ConfirmLocationCommand(CurrentBusinessLoader loader, IUnitOf
     }
 }
 
+/// <summary>
+/// "Publicar meu estabelecimento" (Beleza): conferida a mesma checklist do envio, o estabelecimento fica ativo na hora.
+/// Saúde recusa (<c>business.requires_review</c>) e usa o envio para análise.
+/// </summary>
+public sealed class PublishBusinessCommand(
+    CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images)
+{
+    public async Task<BusinessDetailResponse> ExecuteAsync(CancellationToken ct = default)
+    {
+        Business business = await loader.LoadForOwnerAsync(ct);
+
+        // Categoria e status antes da checklist: Saúde nunca publica, mesmo com tudo pronto.
+        if (business.Category.RequiresSensitiveHandling())
+        {
+            throw new DomainException("business.requires_review");
+        }
+
+        IReadOnlyList<string> missing = await checklist.MissingForSubmitAsync(business, ct);
+
+        if (missing.Count > 0)
+        {
+            throw new DomainException("business.activation_checklist_incomplete", new Dictionary<string, object?> { ["missing"] = missing });
+        }
+
+        business.Publish();
+
+        await unitOfWork.SaveChangesAsync(ct);
+        return BusinessConverter.ToDetail(business, images);
+    }
+}
+
 /// <summary>Envia para análise depois de conferir a checklist de ativação nos outros módulos.</summary>
 public sealed class SubmitBusinessCommand(
     CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images)

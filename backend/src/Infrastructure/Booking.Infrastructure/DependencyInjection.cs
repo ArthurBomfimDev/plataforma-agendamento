@@ -222,6 +222,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateAddressCommand>();
         services.AddScoped<ConfirmLocationCommand>();
         services.AddScoped<SubmitBusinessCommand>();
+        services.AddScoped<PublishBusinessCommand>();
         services.AddScoped<GetCurrentBusinessQuery>();
         services.AddScoped<GetPublicBusinessQuery>();
         services.AddScoped<SearchBusinessesQuery>();
