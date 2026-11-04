@@ -30,6 +30,24 @@ describe('BusinessDetailScreen', () => {
     expect(html).toContain('Aberto hoje até 18:00')
   })
 
+  it('serviço com foto mostra a foto; sem foto, o ícone padrão da categoria', () => {
+    const photo = { small: 'b/s-s.webp', medium: 'b/s-m.webp', large: 'b/s-l.webp' }
+    const [first, ...others] = business.services
+    const html = render(
+      <BusinessDetailScreen
+        business={{
+          ...business,
+          services: [{ ...first!, photo }, ...others.map((s) => ({ ...s, photo: null }))],
+        }}
+      />,
+    )
+
+    expect(html).toContain('b/s-m.webp')
+    // Os outros serviços não têm foto: ficam com o ícone (decorativo), sem <img> a mais.
+    expect(html.match(/<img/g)?.length ?? 0).toBeGreaterThanOrEqual(1)
+    expect(html).toContain('aria-hidden="true"')
+  })
+
   it('não inventa nota quando ainda não há avaliações', () => {
     const withoutReviews = { ...business, rating: undefined, reviewCount: undefined }
     const html = render(<BusinessDetailScreen business={withoutReviews} />)

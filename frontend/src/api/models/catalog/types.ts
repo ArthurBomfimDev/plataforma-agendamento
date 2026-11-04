@@ -1,3 +1,5 @@
+import type { ImageSet } from '../common/types'
+
 export type ServiceProfessionalResponse = {
   professionalId: string
   priceCents: number
@@ -12,6 +14,8 @@ export type PublicServiceResponse = {
   durationMinutes: number
   priceCents: number
   professionals: ServiceProfessionalResponse[]
+  /** Foto do serviço (ADR-023). Nula: o ícone padrão da categoria. */
+  photo: ImageSet | null
 }
 
 /** Visão do painel: com intervalos, passo e nota de insumos, que a vitrine não mostra. */

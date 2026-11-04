@@ -250,6 +250,22 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 19 | Dono digita no endereço `#/panel/blocks` ou `#/panel/profile` | volta para a agenda (guard); atendente em `#/panel/profile` também volta |
 | 20 | Celular: "Mais" | profissional vê Folgas, Meu perfil, Conta e Tema; atendente vê Folgas, Conta e Tema |
 
+### Foto de serviço (Fase 4, bloco 5 — migration `AddServiceImage`)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | A migration sobe com a pilha. `SELECT column_name FROM information_schema.columns WHERE table_schema='catalog' AND table_name='service';` | inclui `image_key` (NULL nas linhas antigas) |
+| 2 | `dotnet test Booking.slnx --filter "FullyQualifiedName~ImageTests"` (P12 novo; os demais seguem) | verdes |
+| 3 | Dono → Serviços → **Novo serviço** | o cartão Foto diz "Salve o serviço primeiro" |
+| 4 | Dono → Serviços → Editar um serviço → **Foto**: enviar um JPEG | progresso, miniatura; `ls` na pasta de mídia mostra `businesses/<id>/services/<guid>-{s,m,l}.webp` |
+| 5 | Enviar um `.exe` renomeado para `.jpg`; enviar imagem de 6 MB | recusados com a mensagem do 19b (tipo / tamanho) |
+| 6 | Trocar a foto | os três arquivos antigos somem do disco |
+| 7 | Página pública do estabelecimento (sem login) | o serviço mostra a foto ao lado do nome; os sem foto mostram o ícone da categoria |
+| 8 | Remover (com confirmação) | volta o ícone; os arquivos somem |
+| 9 | Em **Saúde** (Editar serviço) | aparece "não envie imagem de pacientes" |
+| 10 | Profissional e atendente: `PUT …/services/{id}/image` | 403; dono de outro estabelecimento: 404 |
+| 11 | 390 px, claro e escuro: cartão da foto e o serviço na vitrine | sem rolagem horizontal; alvo de toque ≥ 44 px; miniatura 48 px não estoura a linha |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |

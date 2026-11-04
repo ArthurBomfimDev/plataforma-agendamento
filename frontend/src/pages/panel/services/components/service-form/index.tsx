@@ -19,6 +19,7 @@ import { useCallback, useRef, useState } from 'react'
 
 import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
+import { ImageUploader } from '@components/image-uploader'
 import { OccupancySummary } from './components/occupancy-summary'
 import { PANEL_CONTENT_BOTTOM_PADDING } from '@components/bottom-navigation/consts'
 import { PANEL_NOTICE } from '@components/panel-page'
@@ -69,6 +70,9 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
     categoryName,
     sensitive = false,
     professionals,
+    photo,
+    onUploadPhoto,
+    onRemovePhoto,
     initialValues,
     previewHours,
     saving = false,
@@ -227,6 +231,38 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
                 placeholder="Descreva o que está incluído"
                 autoComplete="off"
               />
+            </Section>
+
+            <Section id="service-photo" title="Foto (opcional)">
+              {onUploadPhoto ? (
+                <>
+                  <ImageUploader
+                    id="service-photo-uploader"
+                    label={values.name.trim() || 'Foto do serviço'}
+                    note="Aparece ao lado do serviço na página do estabelecimento. Sem foto, aparece o ícone da categoria."
+                    removeOf="do serviço"
+                    shape="card"
+                    current={photo ?? null}
+                    fallback={
+                      <span className="type-caption flex size-full items-center justify-center text-(--text-muted)">
+                        sem foto
+                      </span>
+                    }
+                    onUpload={onUploadPhoto}
+                    onRemove={onRemovePhoto}
+                  />
+                  {sensitive && (
+                    <p className="type-caption text-(--text-muted)">
+                      Estabelecimento de saúde: não envie imagem de pacientes. Use só a foto do
+                      ambiente ou do procedimento, sem pessoas identificáveis.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="type-caption text-(--text-muted)">
+                  Salve o serviço primeiro; depois, em Editar, você envia a foto.
+                </p>
+              )}
             </Section>
 
             <Section id="service-time" title="Tempo">

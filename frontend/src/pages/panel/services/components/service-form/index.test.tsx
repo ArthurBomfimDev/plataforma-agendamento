@@ -52,6 +52,27 @@ describe('ServiceFormScreen', () => {
     expect(html).toContain('Salvar serviço')
   })
 
+  it('foto do serviço: no cadastro pede para salvar primeiro; na edição oferece o envio', () => {
+    expect(render()).toContain('Salve o serviço primeiro')
+
+    const editing = render({
+      mode: 'edit',
+      onUploadPhoto: async () => null,
+      onRemovePhoto: async () => undefined,
+    })
+    expect(editing).toContain('Foto (opcional)')
+    expect(editing).toContain('sem foto')
+    expect(editing).not.toContain('Salve o serviço primeiro')
+    // Beleza: sem o aviso de saúde.
+    expect(editing).not.toContain('não envie imagem de pacientes')
+  })
+
+  it('foto do serviço em Saúde: avisa para não enviar imagem de pacientes', () => {
+    expect(render({ mode: 'edit', sensitive: true, onUploadPhoto: async () => null })).toContain(
+      'não envie imagem de pacientes',
+    )
+  })
+
   it('só a edição mostra a situação, e ela diz o efeito de pausar', () => {
     expect(render()).not.toContain('Serviço ativo')
 

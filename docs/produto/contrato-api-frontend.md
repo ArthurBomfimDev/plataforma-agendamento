@@ -515,6 +515,18 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - O profissional descobre o próprio id por `professionals/me` e filtra a lista de bloqueios por ele no cliente; o servidor
   recusa o resto com 403.
 
+## 4.15 Foto de serviço (Fase 4, bloco 5, 04/11) — **backend e frontend escritos sem Docker, não verificados**
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `PUT /api/businesses/current/services/{id}/image` | **só o Owner** | `multipart/form-data`, campo `file`. As mesmas validações do logotipo (ADR-023): assinatura do arquivo (não o nome nem o `Content-Type`), 5 MB, JPEG/PNG/WebP, EXIF removido, três variantes WebP, nome GUID. Devolve `ServiceResponse` com `photo`. 20 envios por hora por conta |
+| `DELETE /api/businesses/current/services/{id}/image` | Owner | remove e apaga os arquivos. Serviço de outro estabelecimento: 404 |
+
+- `photo` (`ImageSet | null`) entra em `ServiceResponse` (painel) e `PublicServiceResponse` (vitrine). **Aditivo**: nada quebra.
+- Frontend: `ImageUploader` em "Editar serviço" (no cadastro: "Salve o serviço primeiro"); a vitrine mostra a foto ao lado do
+  serviço, e o ícone da categoria quando não há. Em Saúde, aviso no envio: não enviar imagem de pacientes.
+- Migration `AddServiceImage` (não aplicada): `catalog.service.image_key varchar(200) NULL`.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

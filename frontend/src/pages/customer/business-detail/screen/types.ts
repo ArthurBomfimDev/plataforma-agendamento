@@ -3,6 +3,8 @@ import type { ServiceCardProps } from '@components/service-card/types'
 
 export type BusinessService = Pick<ServiceCardProps, 'name' | 'durationMinutes' | 'priceCents'> & {
   id: string
+  /** Foto do serviço. Nula: o ícone padrão da categoria. */
+  photo?: ImageSet | null
 }
 
 export type BusinessDetail = {

@@ -128,11 +128,23 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                         ref={servicesRef}
                         className="flex scroll-mt-(--space-24) flex-col gap-(--space-12) lg:gap-(--space-16)"
                       >
-                        {business.services.map(({ id, ...service }) => (
+                        {business.services.map(({ id, photo, ...service }) => (
                           <li key={id}>
                             <ServiceCard
                               {...service}
-                              leading={<ServiceIcon category={business.category} />}
+                              leading={
+                                <SmartImage
+                                  image={photo}
+                                  alt=""
+                                  sizes="48px"
+                                  width={48}
+                                  height={48}
+                                  className="size-12 shrink-0 rounded-md"
+                                  fallback={
+                                    <ServiceIcon category={business.category} className="size-12" />
+                                  }
+                                />
+                              }
                               onBook={() => onBookService?.(id)}
                             />
                           </li>
