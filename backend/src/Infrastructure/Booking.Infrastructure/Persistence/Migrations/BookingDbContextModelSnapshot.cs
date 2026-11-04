@@ -201,6 +201,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("duration_minutes");
 
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("image_key");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");

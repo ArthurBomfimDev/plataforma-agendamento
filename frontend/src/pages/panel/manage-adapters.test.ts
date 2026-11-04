@@ -37,6 +37,7 @@ const service: ServiceResponse = {
   professionals: [
     { professionalId: 'p1', priceCents: 4_500, durationMinutes: 30, hasOverride: false },
   ],
+  photo: null,
 }
 
 const schedule = (fields: Partial<WorkScheduleResponse>): WorkScheduleResponse => ({

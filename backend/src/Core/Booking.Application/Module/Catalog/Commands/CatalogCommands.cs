@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.People;
@@ -9,7 +10,7 @@ using Booking.Domain.Interface.Repository.Module.Catalog;
 
 namespace Booking.Application.Module.Catalog.Commands;
 
-public sealed class CreateServiceCommand(IServiceRepository services, IActorContext actor, IUnitOfWork unitOfWork)
+public sealed class CreateServiceCommand(IServiceRepository services, IActorContext actor, IUnitOfWork unitOfWork, IImageUrls images)
 {
     public async Task<ServiceResponse> ExecuteAsync(SaveServiceRequest r, CancellationToken ct = default)
     {
@@ -26,7 +27,7 @@ public sealed class CreateServiceCommand(IServiceRepository services, IActorCont
         services.Add(service);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return CatalogConverter.ToResponse(service, []);
+        return CatalogConverter.ToResponse(service, [], images);
     }
 }
 
@@ -34,7 +35,8 @@ public sealed class UpdateServiceCommand(
     IServiceRepository services,
     IServiceProfessionalRepository links,
     IActorContext actor,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IImageUrls images)
 {
     public async Task<ServiceResponse> ExecuteAsync(Guid serviceId, SaveServiceRequest r, CancellationToken ct = default)
     {
@@ -56,7 +58,7 @@ public sealed class UpdateServiceCommand(
         await unitOfWork.SaveChangesAsync(ct);
 
         IReadOnlyList<ServiceProfessional> assigned = await links.ListForServicesAsync(businessId, [service.Id], ct);
-        return CatalogConverter.ToResponse(service, assigned);
+        return CatalogConverter.ToResponse(service, assigned, images);
     }
 }
 
@@ -66,7 +68,8 @@ public sealed class EnableProfessionalCommand(
     IServiceProfessionalRepository links,
     IPeopleDirectory people,
     IActorContext actor,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IImageUrls images)
 {
     public async Task<ServiceResponse> ExecuteAsync(Guid serviceId, Guid professionalId, EnableProfessionalRequest r, CancellationToken ct = default)
     {
@@ -95,7 +98,7 @@ public sealed class EnableProfessionalCommand(
         await unitOfWork.SaveChangesAsync(ct);
 
         IReadOnlyList<ServiceProfessional> assigned = await links.ListForServicesAsync(businessId, [service.Id], ct);
-        return CatalogConverter.ToResponse(service, assigned);
+        return CatalogConverter.ToResponse(service, assigned, images);
     }
 }
 

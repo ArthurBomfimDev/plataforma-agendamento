@@ -54,6 +54,13 @@ export const managementService = {
       url: managementEndpoints.service(serviceId),
       data: request,
     }),
+  uploadServiceImage: (serviceId: string, file: File, onProgress?: UploadProgress) =>
+    upload<ServiceResponse>(managementEndpoints.serviceImage(serviceId), file, onProgress),
+  removeServiceImage: (serviceId: string) =>
+    authRequest<ServiceResponse>({
+      method: 'DELETE',
+      url: managementEndpoints.serviceImage(serviceId),
+    }),
   /** Habilita o profissional no serviço, com o preço e a duração do serviço. */
   enableProfessional: (serviceId: string, professionalId: string) =>
     authRequest<ServiceResponse>({

@@ -1,9 +1,11 @@
+using Booking.Api.Common;
 using Booking.Application.Module.Catalog.Commands;
 using Booking.Application.Module.Catalog.Queries;
 using Booking.Arguments.Module.Catalog;
 using Booking.Domain.Entity.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Booking.Api.Module.Catalog;
 
@@ -22,6 +24,24 @@ public sealed class ServicesController : ControllerBase
     [ProducesResponseType<ServiceResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create(SaveServiceRequest request, [FromServices] CreateServiceCommand command, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await command.ExecuteAsync(request, ct));
+
+    /// <summary>Foto do serviço: <c>multipart/form-data</c>, campo <c>file</c>. JPEG, PNG ou WebP, até 5 MB. Só o dono.</summary>
+    [HttpPut("{serviceId:guid}/image")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(ImageUpload.MaxRequestBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.MaxRequestBytes)]
+    [EnableRateLimiting(ImageUpload.RateLimitPolicy)]
+    [ProducesResponseType<ServiceResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetImage(Guid serviceId, IFormFile? file, [FromServices] ServiceImageCommand command, CancellationToken ct)
+    {
+        await using Stream upload = ImageUpload.Open(file);
+        return Ok(await command.SetAsync(serviceId, upload, ct));
+    }
+
+    [HttpDelete("{serviceId:guid}/image")]
+    [ProducesResponseType<ServiceResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemoveImage(Guid serviceId, [FromServices] ServiceImageCommand command, CancellationToken ct) =>
+        Ok(await command.RemoveAsync(serviceId, ct));
 
     [HttpPut("{serviceId:guid}")]
     [ProducesResponseType<ServiceResponse>(StatusCodes.Status200OK)]

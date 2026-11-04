@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Arguments.Module.Catalog;
 using Booking.Domain.Entity.Module.Catalog;
 
@@ -12,7 +13,7 @@ public static class CatalogConverter
             link.EffectiveDurationMinutes(service),
             link.PriceOverrideCents is not null || link.DurationOverrideMinutes is not null);
 
-    public static ServiceResponse ToResponse(Service service, IEnumerable<ServiceProfessional> links) =>
+    public static ServiceResponse ToResponse(Service service, IEnumerable<ServiceProfessional> links, IImageUrls images) =>
         new(
             service.Id,
             service.Name,
@@ -24,14 +25,16 @@ public static class CatalogConverter
             service.PriceCents,
             service.SuppliesNote,
             service.IsActive,
-            [.. links.Where(l => l.ServiceId == service.Id).Select(l => ToResponse(l, service))]);
+            [.. links.Where(l => l.ServiceId == service.Id).Select(l => ToResponse(l, service))],
+            images.For(service.ImageKey));
 
-    public static PublicServiceResponse ToPublic(Service service, IEnumerable<ServiceProfessional> links) =>
+    public static PublicServiceResponse ToPublic(Service service, IEnumerable<ServiceProfessional> links, IImageUrls images) =>
         new(
             service.Id,
             service.Name,
             service.Description,
             service.DurationMinutes,
             service.PriceCents,
-            [.. links.Where(l => l.ServiceId == service.Id).Select(l => ToResponse(l, service))]);
+            [.. links.Where(l => l.ServiceId == service.Id).Select(l => ToResponse(l, service))],
+            images.For(service.ImageKey));
 }

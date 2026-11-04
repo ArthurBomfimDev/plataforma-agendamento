@@ -9,6 +9,7 @@ const exceptions = `${PANEL_PATH}/schedule-exceptions`
 export const managementEndpoints = {
   services: `${PANEL_PATH}/services`,
   service,
+  serviceImage: (serviceId: string) => `${service(serviceId)}/image`,
   serviceProfessional: (serviceId: string, professionalId: string) =>
     `${service(serviceId)}/professionals/${enc(professionalId)}`,
   professionals: `${PANEL_PATH}/professionals`,

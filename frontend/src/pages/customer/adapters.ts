@@ -69,11 +69,12 @@ export const toBusinessDetail = (
   street: streetLine(business),
   neighborhood: business.address.district ?? business.address.city ?? '',
   confirmationHours: business.pendingExpirationHours,
-  services: services.map(({ id, name, durationMinutes, priceCents }) => ({
+  services: services.map(({ id, name, durationMinutes, priceCents, photo }) => ({
     id,
     name,
     durationMinutes,
     priceCents,
+    photo,
   })),
 })
 

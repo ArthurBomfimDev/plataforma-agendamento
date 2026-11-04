@@ -1,3 +1,5 @@
+using Booking.Arguments.Common;
+
 namespace Booking.Arguments.Module.Catalog;
 
 public sealed record SaveServiceRequest(
@@ -27,7 +29,8 @@ public sealed record ServiceResponse(
     long PriceCents,
     string? SuppliesNote,
     bool IsActive,
-    IReadOnlyList<ServiceProfessionalResponse> Professionals);
+    IReadOnlyList<ServiceProfessionalResponse> Professionals,
+    ImageSetResponse? Photo = null);
 
 /// <summary>Vitrine: sem nota de insumos e sem buffers internos.</summary>
 public sealed record PublicServiceResponse(
@@ -36,4 +39,5 @@ public sealed record PublicServiceResponse(
     string? Description,
     int DurationMinutes,
     long PriceCents,
-    IReadOnlyList<ServiceProfessionalResponse> Professionals);
+    IReadOnlyList<ServiceProfessionalResponse> Professionals,
+    ImageSetResponse? Photo = null);

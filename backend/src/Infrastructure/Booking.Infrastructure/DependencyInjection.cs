@@ -272,6 +272,7 @@ public static class DependencyInjection
         services.AddScoped<IServiceProfessionalRepository, ServiceProfessionalRepository>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
 
+        services.AddScoped<ServiceImageCommand>();
         services.AddScoped<CreateServiceCommand>();
         services.AddScoped<UpdateServiceCommand>();
         services.AddScoped<EnableProfessionalCommand>();

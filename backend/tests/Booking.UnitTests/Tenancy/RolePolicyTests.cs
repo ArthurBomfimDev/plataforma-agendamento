@@ -25,7 +25,7 @@ public sealed class RolePolicyTests
     private static readonly string[] _ownerOnly =
     [
         "AddWorkScheduleCommand", "UpdateWorkScheduleCommand", "RemoveWorkScheduleCommand",
-        "CreateServiceCommand", "UpdateServiceCommand", "EnableProfessionalCommand", "DisableProfessionalCommand",
+        "CreateServiceCommand", "UpdateServiceCommand", "ServiceImageCommand", "EnableProfessionalCommand", "DisableProfessionalCommand",
         "CreateProfessionalCommand", "UpdateProfessionalCommand",
         "InviteMemberCommand", "ResendInvitationCommand", "RevokeInvitationCommand", "ListInvitationsQuery", "GetSeatsQuery",
         "UpdateSchedulingPolicyCommand", "UpdateAddressCommand", "ConfirmLocationCommand", "SetResponsibleCommand",
