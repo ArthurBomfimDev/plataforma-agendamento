@@ -2,6 +2,7 @@ import type {
   AdminBusinessDetailResponse,
   BusinessReportResponse,
   BusinessResponse,
+  ProfessionalRemovalResponse,
 } from '@api/models'
 
 /** Estado de uma lista ou de um detalhe: carregando, erro com "Tentar de novo", ou pronto. */
@@ -10,7 +11,7 @@ export type Load<T> =
   | { status: 'error'; message: string; onRetry: () => void }
   | { status: 'ready'; data: T }
 
-export type AdminTab = 'businesses' | 'reports'
+export type AdminTab = 'businesses' | 'reports' | 'removals'
 
 export type AdminFilters = { status: string; category: string }
 
@@ -37,4 +38,10 @@ export type AdminBusinessesScreenProps = {
   onReportStatusChange: (status: 'Open' | 'Resolved') => void
   reports: Load<BusinessReportResponse[]>
   onResolveReport: (reportId: string, note: string | null) => DecisionResult
+
+  /** Pedidos de remoção de perfil (ADR-031): fila própria, na aba "Remoções de perfil". */
+  removalStatus?: 'Open' | 'Resolved'
+  onRemovalStatusChange?: (status: 'Open' | 'Resolved') => void
+  removals?: Load<ProfessionalRemovalResponse[]>
+  onResolveRemoval?: (requestId: string, note: string | null) => DecisionResult
 }

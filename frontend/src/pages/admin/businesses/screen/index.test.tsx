@@ -3,6 +3,7 @@ import type {
   BusinessReportResponse,
   BusinessResponse,
   OwnerBusinessResponse,
+  ProfessionalRemovalResponse,
 } from '@api/models'
 import { decisionsFor, statusLabel } from './consts'
 import { describe, expect, it } from 'vitest'
@@ -113,6 +114,79 @@ const render = (overrides: Partial<AdminBusinessesScreenProps> = {}) =>
       {...overrides}
     />,
   ).replaceAll('<!-- -->', '')
+
+const removal = (
+  overrides: Partial<ProfessionalRemovalResponse> = {},
+): ProfessionalRemovalResponse => ({
+  id: 'r1',
+  professionalId: 'p1',
+  professionalName: 'Marcos Lima',
+  businessId: 'b1',
+  businessName: 'Estúdio Duartina',
+  reason: 'Não autorizei a foto.',
+  contact: 'ana@example.com',
+  status: 'Open',
+  requestedAt: '2026-11-04T12:00:00Z',
+  resolvedByUserId: null,
+  resolvedAt: null,
+  resolution: null,
+  ...overrides,
+})
+
+describe('AdminBusinessesScreen — remoções de perfil', () => {
+  it('a aba existe ao lado de Denúncias', () => {
+    const html = render()
+
+    expect(html).toContain('Remoções de perfil')
+    expect(html).toContain('Denúncias')
+  })
+
+  it('carregando e erro mostram o estado, com "Tentar de novo" no erro', () => {
+    expect(render({ tab: 'removals', removals: { status: 'loading' } })).toContain('Carregando')
+
+    const html = render({
+      tab: 'removals',
+      removals: { status: 'error', message: 'Sem conexão com o servidor.', onRetry: noop },
+    })
+    expect(html).toContain('Sem conexão com o servidor.')
+    expect(html).toContain('Tentar de novo')
+  })
+
+  it('vazio: sem pedido aberto', () => {
+    expect(render({ tab: 'removals', removals: { status: 'ready', data: [] } })).toContain(
+      'Nenhum pedido de remoção aberto.',
+    )
+  })
+
+  it('sucesso: profissional, estabelecimento, motivo, contato e o botão de resolver', () => {
+    const html = render({ tab: 'removals', removals: { status: 'ready', data: [removal()] } })
+
+    expect(html).toContain('Marcos Lima · Estúdio Duartina')
+    expect(html).toContain('Não autorizei a foto.')
+    expect(html).toContain('contato: ana@example.com')
+    expect(html).toContain('Resolver pedido')
+  })
+
+  it('pedido resolvido mostra quando e a anotação, sem o botão', () => {
+    const html = render({
+      tab: 'removals',
+      removalStatus: 'Resolved',
+      removals: {
+        status: 'ready',
+        data: [
+          removal({
+            status: 'Resolved',
+            resolvedAt: '2026-11-05T10:00:00Z',
+            resolution: 'Falei com o dono.',
+          }),
+        ],
+      },
+    })
+
+    expect(html).toContain('Falei com o dono.')
+    expect(html).not.toContain('Resolver pedido')
+  })
+})
 
 describe('regras de status', () => {
   it('cada status tem as decisões certas; rascunho não tem (quem age é o dono)', () => {

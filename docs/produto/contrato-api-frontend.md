@@ -527,6 +527,23 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
   serviço, e o ícone da categoria quando não há. Em Saúde, aviso no envio: não enviar imagem de pacientes.
 - Migration `AddServiceImage` (não aplicada): `catalog.service.image_key varchar(200) NULL`.
 
+## 4.16 Página pública do profissional, remoção de perfil e sair do estabelecimento (Fase 4, bloco 4, 04/11) — **escrito sem Docker e sem navegador, não verificado**
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `GET /api/professionals/{id}` | **anônimo** | `ProfessionalPageResponse`: `displayName`, `specialty`, `bio`, `registration` (só se informado), `photo`, `business { id, name, addressLine, category, timeZone }` e `services[]` com o preço e a duração **do profissional** (override aplicado) e a foto do serviço. **404** para profissional inativo, estabelecimento fora da vitrine ou id que não existe: os três respondem igual |
+| `POST /api/professionals/{id}/removal-requests` `{ reason, contact? }` | **anônimo** | 204. Motivo de 5 a 500 caracteres (400 `removal_request.reason_invalid`); contato opcional de até 150. **5 por hora por IP** (429). E-mail aos donos pela outbox (em Saúde o assunto não cita nome) e entra na fila do Admin. **Nada é desativado sozinho.** 404 se o perfil não é público |
+| `GET /api/admin/professional-removals?status=Open\|Resolved` | Admin | fila paginada; traz `contact` (só o Admin e o dono veem) |
+| `POST /api/admin/professional-removals/{id}/resolve` `{ note? }` | Admin | encerra (409 se já resolvido). Desativar o perfil é decisão do dono |
+| `POST /api/businesses/current/leave` | Professional ou Attendant | 204. Remove o próprio vínculo; o perfil de profissional é **desativado** e sai da vitrine na hora; o histórico de agendamentos permanece. **O dono recebe 409** `business_membership.cannot_remove_owner`. Depois, o frontend volta ao contexto de consumidor |
+
+- Frontend: `#/profissional/:professionalId` (foto ou iniciais, serviços, horários de hoje e amanhã, estabelecimento,
+  "Solicitar remoção deste perfil"); a aba **Profissionais** da página do estabelecimento deixa de ser "Em breve" e lista os
+  ativos, cada um com "Ver perfil"; aba **Remoções de perfil** em `#/admin/estabelecimentos`; **Sair do estabelecimento** em
+  Meu perfil (profissional) e em "Mais" (profissional e atendente, no celular).
+- O espaço da **nota do profissional** existe e fica escondido até haver média (módulo de avaliações).
+- Migration `AddProfessionalRemovalRequest` (não aplicada): `people.professional_removal_request`.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

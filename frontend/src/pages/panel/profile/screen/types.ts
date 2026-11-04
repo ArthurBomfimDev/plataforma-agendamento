@@ -28,4 +28,6 @@ export type ProfileScreenProps = {
   onSave?: (values: ProfileValues) => Promise<string | null>
   onUploadPhoto?: UploadImage
   onRemovePhoto?: () => Promise<void>
+  /** "Sair do estabelecimento": resolve `null` se saiu, senão a mensagem de erro. Ausente: a seção não aparece. */
+  onLeave?: () => Promise<string | null>
 }

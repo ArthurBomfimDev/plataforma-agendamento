@@ -1,5 +1,6 @@
 import { AccountCircleIcon, ChevronRightIcon } from '@assets/icons'
 
+import { LeaveBusiness } from '@components/leave-business'
 import { PanelPage } from '@components/panel-page'
 import type { PanelMoreScreenProps } from './types'
 import { SECTIONS } from '@components/panel-sidebar/consts'
@@ -13,7 +14,7 @@ const ITEM =
  * desktop — e a conta, onde se troca de contexto e se sai. O profissional vê só a conta.
  */
 export const PanelMoreScreen = (props: PanelMoreScreenProps) => {
-  const { businessName, hiddenSections, onNavigate, onAccount } = props
+  const { businessName, hiddenSections, onNavigate, onAccount, onLeave } = props
   const sections = SECTIONS.filter(
     ({ id }) => id !== 'agenda' && id !== 'requests' && !hiddenSections.includes(id),
   )
@@ -51,6 +52,8 @@ export const PanelMoreScreen = (props: PanelMoreScreenProps) => {
           </li>
         </ul>
       </nav>
+
+      {onLeave && <LeaveBusiness businessName={businessName} onLeave={onLeave} />}
     </PanelPage>
   )
 }

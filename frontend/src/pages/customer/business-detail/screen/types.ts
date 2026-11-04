@@ -1,3 +1,4 @@
+import type { BusinessProfessional } from '@pages/customer/booking/choose-professional/screen/types'
 import type { ImageSet } from '@api/models'
 import type { ServiceCardProps } from '@components/service-card/types'
 
@@ -36,6 +37,9 @@ export type BusinessDetailScreenProps = {
   /** Próximos horários livres, `HH:mm`, para o card "Agendar agora" do desktop. Vazio = não exibe. */
   nextFreeSlots?: string[]
   onBookService?: (serviceId: string) => void
+  /** Equipe ativa (ADR-031): cada cartão leva à página do profissional. Ausente = a aba mostra "carregando". */
+  professionals?: BusinessProfessional[]
+  onOpenProfessional?: (professionalId: string) => void
   /** "Denunciar este estabelecimento": `null` se enviou, senão a mensagem de erro. Sem a prop, o botão não aparece. */
   onReport?: (reason: string) => Promise<string | null>
 }

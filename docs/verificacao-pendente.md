@@ -266,6 +266,27 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 10 | Profissional e atendente: `PUT …/services/{id}/image` | 403; dono de outro estabelecimento: 404 |
 | 11 | 390 px, claro e escuro: cartão da foto e o serviço na vitrine | sem rolagem horizontal; alvo de toque ≥ 44 px; miniatura 48 px não estoura a linha |
 
+### Página do profissional, remoção de perfil e sair do estabelecimento (migration `AddProfessionalRemovalRequest`)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | A migration sobe com a pilha. `SELECT column_name FROM information_schema.columns WHERE table_schema='people' AND table_name='professional_removal_request';` | id, business_id, professional_id, reason, contact, requested_at, status, resolved_by_user_id, resolved_at, resolution, created_at, updated_at |
+| 2 | `dotnet test Booking.slnx --filter FullyQualifiedName~ProfessionalPublicPageTests` (Q1 a Q5, escritos sem Docker) | verdes |
+| 3 | Página do estabelecimento (sem login) → aba **Profissionais** | lista os ativos com foto ou iniciais, especialidade e **Ver perfil** (não diz mais "Em breve") |
+| 4 | **Ver perfil** | abre `#/profissional/<id>`: nome, especialidade, sobre, **Agendar com NOME**, serviços (preço e duração dele), horários de **hoje e amanhã**, estabelecimento com endereço e link |
+| 5 | **Agendar com NOME** e o **Agendar** de um serviço | abre a escolha de horário já com **aquele profissional** selecionado |
+| 6 | Em Saúde, com registro informado em Meu perfil | aparece "Registro profissional: …" discreto; sem registro, não aparece |
+| 7 | Desativar o profissional (Profissionais → Remover da equipe) e recarregar a página dele | tela de "não encontrado" (404); o mesmo para estabelecimento em rascunho |
+| 8 | **Solicitar remoção deste perfil** com motivo de 4 caracteres | erro no campo; nada é enviado |
+| 9 | Com motivo válido e contato | "Recebemos o seu pedido…"; chega e-mail ao dono no Mailpit (em Saúde, assunto genérico); o perfil **continua** na vitrine |
+| 10 | Repetir o pedido 6 vezes do mesmo IP | a 6ª dá erro de limite (429) |
+| 11 | Admin → `#/admin/estabelecimentos` → aba **Remoções de perfil** | o pedido aberto com profissional, estabelecimento, motivo e contato; **Resolver pedido** o move para "Resolvidos" |
+| 12 | Conta que não é Admin em `GET /api/admin/professional-removals` | 403 |
+| 13 | `profissional.duartina@example.com` → Meu perfil → **Sair do estabelecimento** → confirmar | volta ao contexto de consumidor; a página dele dá 404; `SELECT status FROM tenancy.business_membership WHERE …` mostra `Removed`; o histórico de agendamentos dele continua no banco |
+| 14 | Atendente (celular) → Mais → **Sair do estabelecimento** | idem, sem perfil a desativar |
+| 15 | Dono: `POST /api/businesses/current/leave` | 409 `business_membership.cannot_remove_owner` |
+| 16 | 390 px, claro e escuro: página do profissional, aba Profissionais, formulário de remoção, aba do Admin | sem rolagem horizontal; alvos ≥ 44 px |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |

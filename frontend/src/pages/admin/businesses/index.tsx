@@ -6,6 +6,10 @@ import {
   useAdminReports,
   useResolveReport,
 } from '@api/services/onboarding/hooks'
+import {
+  useAdminProfessionalRemovals,
+  useResolveProfessionalRemoval,
+} from '@api/services/professional/hooks'
 import { useState } from 'react'
 
 import { AdminBusinessesScreen } from './screen'
@@ -37,6 +41,9 @@ const AdminBusinesses = () => {
   const businesses = useAdminBusinesses(filters.status, filters.category || null)
   const detail = useAdminBusiness(selectedId)
   const reports = useAdminReports(reportStatus)
+  const [removalStatus, setRemovalStatus] = useState<'Open' | 'Resolved'>('Open')
+  const removals = useAdminProfessionalRemovals(removalStatus)
+  const resolveRemoval = useResolveProfessionalRemoval()
   const decision = useAdminDecision()
   const resolve = useResolveReport()
 
@@ -69,6 +76,12 @@ const AdminBusinesses = () => {
       onReportStatusChange={setReportStatus}
       reports={toLoad(reports, (page) => page.items)}
       onResolveReport={(reportId, note) => attempt(() => resolve.mutateAsync({ reportId, note }))}
+      removalStatus={removalStatus}
+      onRemovalStatusChange={setRemovalStatus}
+      removals={toLoad(removals, (items) => items)}
+      onResolveRemoval={(requestId, note) =>
+        attempt(() => resolveRemoval.mutateAsync({ requestId, note }))
+      }
     />
   )
 }

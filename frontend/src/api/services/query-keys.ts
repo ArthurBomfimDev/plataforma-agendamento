@@ -28,6 +28,9 @@ export const queryKeys = {
   // Cadastro do estabelecimento. A visão do dono mora sob o painel (trocar de contexto não mistura); o Admin, sob `admin`.
   ownerBusiness: (businessId: string) => ['panel', businessId, 'owner'] as const,
   ownerChecklist: (businessId: string) => ['panel', businessId, 'owner', 'checklist'] as const,
+  professionalPage: (professionalId: string) => ['professionals', professionalId, 'page'] as const,
+  adminProfessionalRemovals: (status: string) =>
+    ['admin', 'professional-removals', status] as const,
   admin: ['admin'] as const,
   adminBusinesses: (status: string, category: string | null) =>
     ['admin', 'businesses', status, category] as const,

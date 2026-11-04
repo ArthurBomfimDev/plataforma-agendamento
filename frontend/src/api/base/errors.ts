@@ -100,6 +100,11 @@ const MESSAGES: Record<string, string> = {
   'professional.display_name_required': 'Informe o nome do profissional.',
   'professional.declaration_required':
     'Marque a declaração de que você tem a autorização desta pessoa para exibir os dados dela.',
+  'removal_request.reason_invalid': 'O motivo precisa ter de 5 a 500 caracteres.',
+  'removal_request.contact_too_long': 'O contato pode ter até 150 caracteres.',
+  'removal_request.cannot_resolve_from_current_status': 'Este pedido já foi resolvido.',
+  'business_membership.cannot_remove_owner':
+    'O dono não sai do próprio estabelecimento. Peça a um administrador para encerrá-lo.',
   'professional.registration_too_long': 'O registro profissional tem no máximo 40 caracteres.',
   'work_schedule.overlaps': 'Esse horário cruza outro horário do mesmo profissional.',
   'work_schedule.end_before_start': 'O fim precisa ser depois do início.',

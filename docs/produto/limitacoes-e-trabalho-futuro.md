@@ -57,6 +57,12 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
 - Quem volta à equipe (`Rejoin`) e tinha o perfil desativado precisa ser reativado pelo dono; o aceite não reativa.
 - Aceite simultâneo do mesmo link por duas requisições: protegido só pelo índice único do vínculo.
 - O termo do profissional é **rascunho, sem revisão jurídica**.
+- **Sair do estabelecimento** está em Meu perfil (profissional) e em "Mais" (profissional e atendente, só no celular). O
+  atendente no desktop não tem entrada para ela: o menu lateral não tem "Mais".
+- O pedido de remoção de perfil **não desativa nada sozinho** e o Admin só o encerra com anotação; quem desativa é o dono.
+  Não há aviso de volta a quem pediu (o contato é opcional e só vai ao dono e ao Admin).
+- A página do profissional mostra os horários de hoje e amanhã do **primeiro serviço** dele; a escolha de verdade acontece
+  no fluxo de agendamento.
 
 ## Verificação
 

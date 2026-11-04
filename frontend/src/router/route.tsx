@@ -70,6 +70,10 @@ const ResetPasswordRoute = lazyPage(
   () => import('@pages/auth/reset-password'),
   'ResetPasswordRoute',
 )
+const ProfessionalPageRoute = lazyPage(
+  () => import('@pages/customer/professional'),
+  'ProfessionalPageRoute',
+)
 const SearchRoute = lazyPage(() => import('@pages/customer/search'), 'SearchRoute')
 const SignInRoute = lazyPage(() => import('@pages/auth/sign-in'), 'SignInRoute')
 const SignUpRoute = lazyPage(() => import('@pages/auth/sign-up'), 'SignUpRoute')
@@ -94,6 +98,7 @@ export const AppRoutes = () => {
           <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
           <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
           <Route path={ROUTES.search} element={<SearchRoute />} />
+          <Route path={ROUTES.professional} element={<ProfessionalPageRoute />} />
           <Route path="*" element={<NotFoundScreen />} />
         </Route>
         {/* Fora da moldura: entrar e criar conta não têm barra superior. */}

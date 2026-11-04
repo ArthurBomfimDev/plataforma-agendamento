@@ -12,6 +12,7 @@ import { ServiceCard } from '@components/service-card'
 import { TabBar } from '@components/tab-bar'
 import { TimeSlotChip } from '@components/time-slot-chip'
 import { VerifiedBadge } from '@components/card-establishment/components/verified-badge'
+import { ProfessionalsList } from './components/professionals-list'
 import { useRef } from 'react'
 const comingSoon = <p className="type-body text-(--text-muted)">Em breve.</p>
 
@@ -19,7 +20,14 @@ const comingSoon = <p className="type-body text-(--text-muted)">Em breve.</p>
  * Tela 03 · Página do estabelecimento (Figma, 390px; desktop: 03D, 1440px).
  */
 export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
-  const { business, nextFreeSlots = [], onBookService, onReport } = props
+  const {
+    business,
+    nextFreeSlots = [],
+    onBookService,
+    onReport,
+    professionals,
+    onOpenProfessional,
+  } = props
 
   const servicesRef = useRef<HTMLUListElement>(null)
 
@@ -153,7 +161,16 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                     ),
                   },
                   // TODO: Profissionais e Avaliações não têm wireframe ainda.
-                  { id: 'professionals', label: 'Profissionais', content: comingSoon },
+                  {
+                    id: 'professionals',
+                    label: 'Profissionais',
+                    content: (
+                      <ProfessionalsList
+                        professionals={professionals}
+                        onOpen={(id) => onOpenProfessional?.(id)}
+                      />
+                    ),
+                  },
                   { id: 'reviews', label: 'Avaliações', content: comingSoon },
                 ]}
               />

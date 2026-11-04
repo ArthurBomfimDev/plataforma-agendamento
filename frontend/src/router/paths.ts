@@ -58,6 +58,8 @@ export const ROUTES = {
   account: '/account',
   /** Cadastrar meu estabelecimento (ondas finais, Fase 3). `?retomar=1` volta ao rascunho que já existe. */
   registerBusiness: '/cadastrar-estabelecimento',
+  /** Página pública do profissional (ADR-031): `#/profissional/:professionalId`. */
+  professional: '/profissional/:professionalId',
   /** Link do e-mail de convite de equipe (ADR-029): `#/convite?token=`. Não mudar sem mudar o e-mail. */
   invitation: '/convite',
   /** Administração da plataforma: estabelecimentos e denúncias. Só o Admin (guard na tela e no servidor). */
@@ -219,6 +221,9 @@ export const returnPathFor = (pathname: string, search = '') => {
 /** O assistente de cadastro. Com `resume`, continua o rascunho do estabelecimento atual em vez de começar outro. */
 export const registerBusinessPath = (resume = false) =>
   withSearch(ROUTES.registerBusiness, { retomar: resume ? '1' : null })
+
+export const professionalPath = (professionalId: string) =>
+  `/profissional/${encodeURIComponent(professionalId)}`
 
 /** O link do convite, com o token; serve de `redirect` depois de entrar. */
 export const invitationPath = (token: string) =>
