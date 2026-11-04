@@ -402,6 +402,34 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
   chama a 8081 direto.
 - Sem mudança de rota nem de JSON. Guia de operação: `docs/operacao/demo-publica.md`.
 
+## 4.10 Cadastro do estabelecimento (ondas finais, 04/11) — **backend escrito sem Docker, não verificado**
+
+Ciclo e regra: ADR-028. Todas as rotas `current/*` exigem o contexto de estabelecimento com papel `Owner`.
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `POST /api/businesses` | conta logada | cria o estabelecimento em `Draft` e o vínculo `Owner`. **409 `business.account_limit_reached`** no 4º; limite de 5 por hora por conta (429) |
+| `POST /api/businesses/current/terms` `{ version }` | Owner | aceita os termos (data e versão); a checklist exige |
+| `PUT /api/businesses/current/responsible` `{ name, council, councilNumber, councilState }` | Owner, só Saúde | `council`: `Crm`, `Crp`, `Crefito`, `Crn`, `Crefono`, `Cro`. Outra categoria: `business.responsible_only_for_health` |
+| `POST /api/businesses/current/publish` | Owner, não-Saúde | `Draft → Active` com a checklist completa. Saúde: **409 `business.requires_review`** |
+| `POST /api/businesses/current/submit` | Owner | `Draft → PendingReview` com a checklist completa (`business.activation_checklist_incomplete` + `missing`) |
+| `GET /api/businesses/current` | Owner | agora traz `statusReason` (motivo da suspensão ou da reprovação), `termsAccepted`, `responsibleInformed` |
+| `POST /api/businesses/{id}/reports` `{ reason }` | **anônimo** | denuncia estabelecimento **ativo** (5 a 500 caracteres). 204; 404 se não ativo; 5 por hora por IP (429) |
+| `GET /api/admin/businesses?status=&category=` | Admin | fila por status (padrão `PendingReview`) e categoria |
+| `GET /api/admin/businesses/{id}` | Admin | detalhe com `checklist`, `responsible` (**só aqui**), `suspensionReason`, `suspendedByUserId`, `suspendedAt`, `termsAcceptedAt`, `termsVersion` |
+| `POST /api/admin/businesses/{id}/suspend` `{ note }` | Admin | **o motivo é obrigatório** (`business.suspension_requires_reason`) |
+| `GET /api/admin/businesses/reports?status=Open\|Resolved` | Admin | fila de denúncias |
+| `POST /api/admin/businesses/reports/{reportId}/resolve` `{ note? }` | Admin | encerra a denúncia (409 se já resolvida); suspender é uma decisão à parte |
+
+- **Checklist** (`ActivationChecklist`): `terms` (todas as categorias), `responsible` (só Saúde), localização confirmada,
+  ≥ 1 profissional, ≥ 1 serviço com profissional habilitado, ≥ 1 jornada.
+- **"Reprovado" não é status:** é `Draft` com `verificationLevel: "Rejected"`; o motivo vem em `statusReason`.
+- **Privacidade:** o registro no conselho só sai para o Admin; o dono recebe `responsibleInformed`; documento, registro e
+  denunciante nunca vão para log. Denúncia guarda a conta só se logada, nunca o IP.
+- **E-mails ao dono** (outbox): cadastro recebido (Saúde), aprovado, reprovado com motivo, suspenso com motivo, publicado.
+  Em Saúde o assunto não cita o nome do estabelecimento nem serviço.
+- **Busca:** serviço e preço aparecem em todas as categorias, Saúde inclusa (ADR-024).
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
