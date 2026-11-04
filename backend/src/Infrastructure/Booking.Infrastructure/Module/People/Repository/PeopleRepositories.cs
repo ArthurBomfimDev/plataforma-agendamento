@@ -11,6 +11,9 @@ public sealed class ProfessionalRepository(BookingDbContext context) : IProfessi
     public Task<Professional?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         context.Set<Professional>().FirstOrDefaultAsync(x => x.Id == id, ct);
 
+    public Task<Professional?> GetByMembershipIdAsync(Guid membershipId, CancellationToken ct = default) =>
+        context.Set<Professional>().FirstOrDefaultAsync(x => x.BusinessMembershipId == membershipId, ct);
+
     public Task<Professional?> GetByIdOfBusinessAsync(Guid businessId, Guid id, CancellationToken ct = default) =>
         context.OfBusiness<Professional>(businessId).FirstOrDefaultAsync(x => x.Id == id, ct);
 

@@ -259,6 +259,8 @@ public static class DependencyInjection
         services.AddScoped<CreateProfessionalCommand>();
         services.AddScoped<UpdateProfessionalCommand>();
         services.AddScoped<SetPublicProfileConsentCommand>();
+        services.AddScoped<GetMyProfessionalProfileQuery>();
+        services.AddScoped<UpdateMyProfessionalProfileCommand>();
         services.AddScoped<RegisterCustomerCommand>();
         services.AddScoped<ListProfessionalsQuery>();
         services.AddScoped<ListPublicProfessionalsQuery>();
@@ -288,6 +290,7 @@ public static class DependencyInjection
         services.AddScoped<AddWorkScheduleCommand>();
         services.AddScoped<UpdateWorkScheduleCommand>();
         services.AddScoped<RemoveWorkScheduleCommand>();
+        services.AddScoped<AgendaScope>();
         services.AddScoped<AddScheduleExceptionCommand>();
         services.AddScoped<RemoveScheduleExceptionCommand>();
         services.AddScoped<ListWorkSchedulesQuery>();

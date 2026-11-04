@@ -26,6 +26,19 @@ public sealed class ProfessionalsController : ControllerBase
         CreateProfessionalRequest request, [FromServices] CreateProfessionalCommand command, CancellationToken ct) =>
         StatusCode(StatusCodes.Status201Created, await command.ExecuteAsync(request, ct));
 
+    /// <summary>"Meu perfil": o profissional com conta lê o próprio perfil. Quem não tem perfil recebe 403.</summary>
+    [HttpGet("me")]
+    [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMine([FromServices] GetMyProfessionalProfileQuery query, CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(ct));
+
+    /// <summary>O profissional com conta edita a própria especialidade e bio (nome e situação são do dono).</summary>
+    [HttpPut("me")]
+    [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateMine(
+        UpdateMyProfessionalProfileRequest request, [FromServices] UpdateMyProfessionalProfileCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(request, ct));
+
     [HttpPut("{professionalId:guid}")]
     [ProducesResponseType<ProfessionalResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(
