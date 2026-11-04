@@ -14,6 +14,8 @@ export type TeamMember = {
   /** Tem login (vínculo com uma conta). Sem login, o dono cadastrou e opera por ele. */
   hasAccount: boolean
   serviceIds: string[]
+  /** Jornada em uma linha ("Seg a sáb · 09:00–18:00"). Nula: sem jornada, sem horário para agendar. */
+  workSummary: string | null
   /** Foto enviada em Fotos (7CF). Nula: as iniciais. */
   photo?: ImageSet | null
 }
@@ -46,6 +48,8 @@ export type NewTeamMemberDraft = {
 export type TeamScreenProps = {
   data: TeamData
   businessName: string
+  /** Abre a tela de jornadas e bloqueios. */
+  onOpenSchedules?: () => void
   /** Gravam na API. Resolvem `null` se deu certo, senão a mensagem de erro, já em português. */
   onCreate?: (draft: NewTeamMemberDraft) => Promise<string | null>
   onSave?: (member: TeamMember, draft: TeamMemberDraft) => Promise<string | null>

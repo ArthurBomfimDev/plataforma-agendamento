@@ -6,6 +6,7 @@ import { lazyPage } from './lazy-page'
 
 import { AppLayout } from '@layouts/public-layout'
 import { NotFoundScreen } from '@pages/not-found'
+import { PANEL_PAGE_LOADERS } from './panel-pages'
 import { ROUTES } from './paths'
 import { RequireOwner } from './guards/require-owner'
 
@@ -43,19 +44,16 @@ const ForgotPasswordRoute = lazyPage(
 )
 const HomeRoute = lazyPage(() => import('@pages/customer/home'), 'HomeRoute')
 const MyAccountRoute = lazyPage(() => import('@pages/account'), 'MyAccountRoute')
-const PanelAgendaRoute = lazyPage(() => import('@pages/panel/agenda'), 'PanelAgendaRoute')
+const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
 const PanelLayout = lazyPage(() => import('@layouts/panel-layout'), 'PanelLayout')
-const PanelMoreRoute = lazyPage(() => import('@pages/panel/more'), 'PanelMoreRoute')
-const PanelPhotosRoute = lazyPage(() => import('@pages/panel/photos'), 'PanelPhotosRoute')
-const PanelRequestsRoute = lazyPage(() => import('@pages/panel/requests'), 'PanelRequestsRoute')
-const PanelSchedulesRoute = lazyPage(() => import('@pages/panel/schedules'), 'PanelSchedulesRoute')
-const PanelServiceFormRoute = lazyPage(
-  () => import('@pages/panel/services'),
-  'PanelServiceFormRoute',
-)
-const PanelServicesRoute = lazyPage(() => import('@pages/panel/services'), 'PanelServicesRoute')
-const PanelSettingsRoute = lazyPage(() => import('@pages/panel/settings'), 'PanelSettingsRoute')
-const PanelTeamRoute = lazyPage(() => import('@pages/panel/team'), 'PanelTeamRoute')
+const PanelMoreRoute = lazyPage(PANEL_PAGE_LOADERS.more, 'PanelMoreRoute')
+const PanelPhotosRoute = lazyPage(PANEL_PAGE_LOADERS.photos, 'PanelPhotosRoute')
+const PanelRequestsRoute = lazyPage(PANEL_PAGE_LOADERS.requests, 'PanelRequestsRoute')
+const PanelSchedulesRoute = lazyPage(PANEL_PAGE_LOADERS.schedules, 'PanelSchedulesRoute')
+const PanelServiceFormRoute = lazyPage(PANEL_PAGE_LOADERS.services, 'PanelServiceFormRoute')
+const PanelServicesRoute = lazyPage(PANEL_PAGE_LOADERS.services, 'PanelServicesRoute')
+const PanelSettingsRoute = lazyPage(PANEL_PAGE_LOADERS.settings, 'PanelSettingsRoute')
+const PanelTeamRoute = lazyPage(PANEL_PAGE_LOADERS.team, 'PanelTeamRoute')
 const ResetPasswordRoute = lazyPage(
   () => import('@pages/auth/reset-password'),
   'ResetPasswordRoute',

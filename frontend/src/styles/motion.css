@@ -1,0 +1,20 @@
+/* Movimento do painel: uma duração e uma curva para tudo (página, gaveta, diálogo, menu). Só `transform` e
+   `opacity` se animam. As constantes equivalentes para o framer-motion estão em `components/page-transition/consts`. */
+:root {
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Quem pede menos movimento no sistema não recebe nenhuma transição ou animação CSS (o framer-motion segue o
+   mesmo sinal por `MotionConfig reducedMotion="user"`). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

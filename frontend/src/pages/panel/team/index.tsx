@@ -2,10 +2,12 @@ import type { NewTeamMemberDraft, TeamData, TeamMember, TeamMemberDraft } from '
 import { professionalChanges, toTeamMember } from '../manage-adapters'
 import { usePanelMutation, usePanelServices, usePanelTeam } from '@api/services/panel/hooks'
 
+import { ROUTES } from '@router/paths'
 import { TeamScreen } from './screen'
 import { errorMessage } from '@api/base'
 import { managementService } from '@api/services/management'
 import { notify } from '@components/toaster/notify'
+import { useNavigate } from 'react-router'
 import { usePanelContext } from '@layouts/panel-layout/context'
 
 /**
@@ -13,7 +15,8 @@ import { usePanelContext } from '@layouts/panel-layout/context'
  * tem uma rota por vínculo; habilitar exige profissional ativo, então desativar não mexe nos serviços).
  */
 export const PanelTeamRoute = () => {
-  const { context, business } = usePanelContext()
+  const { context, business, schedules, today } = usePanelContext()
+  const navigate = useNavigate()
   const team = usePanelTeam(context.businessId)
   const services = usePanelServices(context.businessId, true)
 
@@ -58,7 +61,9 @@ export const PanelTeamRoute = () => {
     : team.data && services.data
       ? {
           status: 'ready',
-          members: team.data.map((professional) => toTeamMember(professional, services.data)),
+          members: team.data.map((professional) =>
+            toTeamMember(professional, services.data, schedules.get(professional.id), today),
+          ),
           services: services.data.map(({ id, name, isActive }) => ({ id, name, isActive })),
         }
       : { status: 'loading' }
@@ -67,6 +72,7 @@ export const PanelTeamRoute = () => {
     <TeamScreen
       data={data}
       businessName={business.name}
+      onOpenSchedules={() => navigate(ROUTES.panelSchedules)}
       onCreate={async (draft) => {
         try {
           const created = await create.mutateAsync(draft)

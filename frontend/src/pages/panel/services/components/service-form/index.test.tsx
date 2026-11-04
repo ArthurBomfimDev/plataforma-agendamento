@@ -52,6 +52,20 @@ describe('ServiceFormScreen', () => {
     expect(html).toContain('Salvar serviço')
   })
 
+  it('só a edição mostra a situação, e ela diz o efeito de pausar', () => {
+    expect(render()).not.toContain('Serviço ativo')
+
+    const active = render({ mode: 'edit' })
+    expect(active).toContain('Serviço ativo')
+    expect(active).toContain('Aparece na vitrine')
+
+    const paused = render({
+      mode: 'edit',
+      initialValues: { ...FIXTURE_SERVICE_VALUES, isActive: false },
+    })
+    expect(paused).toContain('Pausado: sai da vitrine')
+  })
+
   it('soma buffers e atendimento no que bloqueia a agenda', () => {
     const html = render()
 
@@ -180,6 +194,7 @@ describe('cadastro de serviço', () => {
       slotStepMinutes: 15,
       priceCents: 4_500,
       professionalIds: ['marina-souza', 'rafael-lima'],
+      isActive: true,
     })
   })
 
@@ -278,6 +293,7 @@ describe('cadastro de serviço', () => {
       bufferAfterMinutes: 10,
       slotStepMinutes: 15,
       priceCents: 6_000,
+      isActive: false,
       professionals: [{ professionalId: 'p1' }],
     })
 
@@ -290,6 +306,7 @@ describe('cadastro de serviço', () => {
       slotStepMinutes: '15 min',
       price: 'R$ 60,00',
       professionalIds: ['p1'],
+      isActive: false,
     })
     expect(validateService(values)).toEqual({})
   })

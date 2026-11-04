@@ -7,7 +7,7 @@ export type AvatarProps = {
    * como fallback enquanto a imagem não carrega.
    */
   initials?: string
-  /** `sm` = 32px (painel), `md` = 40px. Padrão: `md`. */
-  size?: 'sm' | 'md'
+  /** `sm` = 32px (painel), `md` = 40px, `lg` = 56px (cabeçalho do detalhe). Padrão: `md`. */
+  size?: 'sm' | 'md' | 'lg'
   className?: string
 }

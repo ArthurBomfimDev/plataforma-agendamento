@@ -78,6 +78,9 @@ export const toServiceListItem = (
   id: service.id,
   name: service.name,
   durationMinutes: service.durationMinutes,
+  description: service.description,
+  blockedMinutes:
+    service.bufferBeforeMinutes + service.durationMinutes + service.bufferAfterMinutes,
   priceCents: service.priceCents,
   isActive: service.isActive,
   professionalNames: service.professionals.flatMap(
@@ -86,7 +89,7 @@ export const toServiceListItem = (
   ),
 })
 
-/** O pedido de gravação a partir do formulário. O que a tela não edita (insumos, situação) fica como estava. */
+/** O pedido de gravação a partir do formulário. O que a tela não edita (insumos) fica como estava. */
 export const toSaveServiceRequest = (
   draft: ServiceDraft,
   existing: ServiceResponse | null,
@@ -99,20 +102,7 @@ export const toSaveServiceRequest = (
   slotStepMinutes: draft.slotStepMinutes,
   priceCents: draft.priceCents,
   suppliesNote: existing?.suppliesNote ?? null,
-  isActive: existing?.isActive ?? true,
-})
-
-/** O mesmo serviço, só com a situação trocada: ativar e desativar usam a edição. */
-export const withActive = (service: ServiceResponse, isActive: boolean): SaveServiceRequest => ({
-  name: service.name,
-  description: service.description,
-  durationMinutes: service.durationMinutes,
-  bufferBeforeMinutes: service.bufferBeforeMinutes,
-  bufferAfterMinutes: service.bufferAfterMinutes,
-  slotStepMinutes: service.slotStepMinutes,
-  priceCents: service.priceCents,
-  suppliesNote: service.suppliesNote,
-  isActive,
+  isActive: draft.isActive,
 })
 
 /** Quem ligar e quem desligar para o serviço ficar com exatamente `wanted`. */
@@ -121,9 +111,39 @@ export const professionalChanges = (current: string[], wanted: string[]) => ({
   disable: current.filter((id) => !wanted.includes(id)),
 })
 
+/**
+ * A jornada em uma linha, a que vale hoje: "Seg a sáb · 09:00–18:00". Dias seguidos (três ou mais) viram
+ * intervalo; o horário vai da primeira entrada à última saída. Nula: sem jornada, o profissional não
+ * tem horário para agendar.
+ */
+export const workSummaryOf = (schedules: WorkScheduleResponse[], today: string): string | null => {
+  const rows = schedules.map(toScheduleRow).filter((row) => activeOn(row, today))
+  if (rows.length === 0) return null
+
+  const days = WEEKDAYS.filter(({ day }) => rows.some((row) => row.dayOfWeek === day))
+  const short = (label: string) => label.slice(0, 3)
+  const consecutive = days.every(
+    (day, index) => index === 0 || WEEKDAYS.indexOf(day) === WEEKDAYS.indexOf(days[index - 1]!) + 1,
+  )
+  const dayLabel =
+    days.length >= 3 && consecutive
+      ? `${short(days[0]!.label)} a ${days.at(-1)!.label.slice(0, 3).toLowerCase()}`
+      : days
+          .map(({ label }, index) => (index === 0 ? short(label) : short(label).toLowerCase()))
+          .join(', ')
+  const start = rows.map(({ start }) => start).toSorted()[0]!
+  const end = rows
+    .map(({ end }) => end)
+    .toSorted()
+    .at(-1)!
+  return `${dayLabel} · ${start}–${end}`
+}
+
 export const toTeamMember = (
   professional: ProfessionalResponse,
   services: ServiceResponse[],
+  schedules: WorkScheduleResponse[] = [],
+  today = '',
 ): TeamMember => ({
   id: professional.id,
   displayName: professional.displayName,
@@ -134,6 +154,7 @@ export const toTeamMember = (
   hasPublicProfileConsent: professional.hasPublicProfileConsent,
   hasAccount: professional.membershipId !== null,
   photo: professional.photo,
+  workSummary: workSummaryOf(schedules, today),
   serviceIds: services
     .filter((service) =>
       service.professionals.some(({ professionalId }) => professionalId === professional.id),

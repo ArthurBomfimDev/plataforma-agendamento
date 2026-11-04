@@ -27,4 +27,5 @@ export const FIXTURE_SERVICE_VALUES: ServiceFormValues = {
   slotStepMinutes: '15 min',
   price: formatCents(4_500),
   professionalIds: ['marina-souza', 'rafael-lima'],
+  isActive: true,
 }

@@ -2,7 +2,10 @@
 export type ServiceListItem = {
   id: string
   name: string
+  description: string | null
   durationMinutes: number
+  /** Quanto o serviço ocupa na agenda: duração mais os buffers antes e depois. */
+  blockedMinutes: number
   priceCents: number
   isActive: boolean
   professionalNames: string[]
@@ -16,10 +19,16 @@ export type ServicesData =
 export type ServicesScreenProps = {
   data: ServicesData
   businessName: string
+  /** Categoria do estabelecimento ("Beleza"), no subtítulo do estado vazio. */
+  categoryName?: string
   /** Estabelecimento de saúde (`RequiresSensitiveHandling`): avisa o que vai para a vitrine. */
   sensitive: boolean
   onNew?: () => void
   onEdit?: (serviceId: string) => void
-  /** Ativa ou desativa. Resolve `true` se deu certo; o erro vira toast em quem chamou. */
-  onToggleActive?: (service: ServiceListItem) => Promise<boolean>
+}
+
+/** O que a tabela (desktop) e os cartões (celular e tablet) recebem para listar os serviços. */
+export type ServiceRowsProps = {
+  services: ServiceListItem[]
+  onEdit?: (serviceId: string) => void
 }

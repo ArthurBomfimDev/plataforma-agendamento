@@ -1,6 +1,6 @@
 import type { ServiceListItem, ServicesData, ServicesScreenProps } from './types'
 import { describe, expect, it } from 'vitest'
-import { professionalsLabel, serviceSummary } from './consts'
+import { alertMessage, initialsOf, serviceSummary, subtitleOf } from './consts'
 
 import { ServicesScreen } from '.'
 import { renderToString } from 'react-dom/server'
@@ -12,7 +12,9 @@ const services: ServiceListItem[] = [
   {
     id: 's2',
     name: 'Escova',
+    description: null,
     durationMinutes: 45,
+    blockedMinutes: 55,
     priceCents: 6_000,
     isActive: false,
     professionalNames: [],
@@ -20,7 +22,9 @@ const services: ServiceListItem[] = [
   {
     id: 's1',
     name: 'Corte masculino',
+    description: 'Lavagem, corte e finalização',
     durationMinutes: 30,
+    blockedMinutes: 45,
     priceCents: 4_500,
     isActive: true,
     professionalNames: ['Rafael Lima', 'Marina Souza'],
@@ -34,6 +38,7 @@ const render = (overrides: Partial<ServicesScreenProps> = {}) =>
     <ServicesScreen
       data={ready()}
       businessName="Estúdio Duartina"
+      categoryName="Beleza"
       sensitive={false}
       {...overrides}
     />,
@@ -42,21 +47,32 @@ const render = (overrides: Partial<ServicesScreenProps> = {}) =>
     .replaceAll(NBSP, ' ')
 
 describe('ServicesScreen', () => {
-  it('lista os ativos primeiro, com duração, preço, profissionais e situação em texto', () => {
+  it('lista os ativos primeiro, com tempo bloqueado, preço, profissionais e estado em texto', () => {
     const html = render()
 
-    expect(html).toContain('1 ativo de 2 · Estúdio Duartina')
+    expect(html).toContain('1 ativo · 1 pausado · Estúdio Duartina')
     expect(html.indexOf('Corte masculino')).toBeLessThan(html.indexOf('Escova'))
-    expect(html).toContain('30 min · R$ 45,00')
-    expect(html).toContain('Marina Souza, Rafael Lima')
-    expect(html).toContain('>Ativo</span>')
-    expect(html).toContain('>Inativo</span>')
-    expect(html).toContain('aria-label="Desativar Corte masculino"')
-    expect(html).toContain('aria-label="Ativar Escova"')
+    expect(html).toContain('bloqueia 45 com os buffers')
+    expect(html).toContain('Lavagem, corte e finalização')
+    expect(html).toContain('R$ 45,00')
+    expect(html).toContain('2 profissionais')
+    expect(html).toContain('>Ativo<')
+    expect(html).toContain('>Pausado<')
+    expect(html).toContain('aria-label="Editar Corte masculino"')
+    expect(html).not.toContain('Pausar Corte masculino')
+    expect(html).not.toContain('Ativar Escova')
   })
 
-  it('avisa quando o serviço não tem quem execute', () => {
-    expect(render()).toContain('Nenhum profissional: o serviço não aparece para agendar.')
+  it('avisa no topo do serviço ativo sem quem execute, e não do pausado', () => {
+    const html = render({
+      data: ready([{ ...services[1]!, name: 'Hidratação', professionalNames: [] }, services[0]!]),
+    })
+
+    expect(html).toContain(
+      '1 serviço sem profissional designado não aparece para quem busca — Hidratação.',
+    )
+    expect(html).toContain('designar profissional')
+    expect(render()).not.toContain('sem profissional designado não aparece')
   })
 
   it('em Saúde, lembra que nome e descrição vão para a vitrine', () => {
@@ -67,8 +83,10 @@ describe('ServicesScreen', () => {
   it('sem serviço, convida a cadastrar o primeiro', () => {
     const html = render({ data: ready([]) })
 
-    expect(html).toContain('Nenhum serviço cadastrado.')
-    expect(html).toContain('Cadastrar o primeiro serviço')
+    expect(html).toContain('Nenhum serviço cadastrado ainda')
+    expect(html).toContain('Criar o primeiro serviço')
+    expect(html).toContain('Estúdio Duartina · Beleza')
+    expect(html).not.toContain('Novo serviço')
   })
 
   it('mostra o carregando e o erro com "Tentar de novo"', () => {
@@ -79,7 +97,7 @@ describe('ServicesScreen', () => {
     })
     expect(html).toContain('Sem conexão com o servidor.')
     expect(html).toContain('Tentar de novo')
-    expect(html).not.toContain('Nenhum serviço cadastrado.')
+    expect(html).not.toContain('Nenhum serviço cadastrado')
   })
 })
 
@@ -88,7 +106,19 @@ describe('serviços do painel', () => {
     expect(serviceSummary(services[1]!).replaceAll(NBSP, ' ')).toBe('30 min · R$ 45,00')
   })
 
-  it('ordena os nomes dos profissionais', () => {
-    expect(professionalsLabel(['Rafael', 'Ana'])).toBe('Ana, Rafael')
+  it('conta ativos e pausados no subtítulo', () => {
+    expect(subtitleOf(services, 'Estúdio')).toBe('1 ativo · 1 pausado · Estúdio')
+    expect(subtitleOf([services[1]!], 'Estúdio')).toBe('1 ativo · Estúdio')
+  })
+
+  it('concorda a mensagem do aviso no plural', () => {
+    expect(alertMessage(['A', 'B'])).toBe(
+      '2 serviços sem profissional designado não aparecem para quem busca — A, B.',
+    )
+  })
+
+  it('tira as iniciais do primeiro e do último nome', () => {
+    expect(initialsOf('Rafael Lima')).toBe('RL')
+    expect(initialsOf('Ana')).toBe('A')
   })
 })

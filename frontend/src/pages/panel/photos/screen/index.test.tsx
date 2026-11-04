@@ -4,13 +4,28 @@ import { describe, expect, it } from 'vitest'
 import { PhotosScreen } from '.'
 import { renderToString } from 'react-dom/server'
 
+const IMAGE = { small: '/a.webp', medium: '/b.webp', large: '/c.webp' }
+
 const ready: PhotosData = {
   status: 'ready',
   logo: null,
   cover: null,
   professionals: [
-    { id: 'p1', name: 'Marina Souza', photo: null, isPubliclyVisible: true },
-    { id: 'p2', name: 'Rafael Lima', photo: null, isPubliclyVisible: false },
+    {
+      id: 'p1',
+      name: 'Marina Souza',
+      specialty: 'Cabeleireira',
+      photo: IMAGE,
+      isPubliclyVisible: true,
+    },
+    {
+      id: 'p2',
+      name: 'Rafael Lima',
+      specialty: 'Barbeiro',
+      photo: IMAGE,
+      isPubliclyVisible: false,
+    },
+    { id: 'p3', name: 'Carla Nunes', specialty: null, photo: null, isPubliclyVisible: true },
   ],
 }
 
@@ -34,18 +49,23 @@ describe('PhotosScreen', () => {
   it('oferece logotipo, capa e a foto de cada profissional', () => {
     const html = render()
 
-    expect(html).toContain('Logotipo')
-    expect(html).toContain('Capa')
+    expect(html).toContain('Logotipo · quadrado')
+    expect(html).toContain('Capa · 3:1, cortada no centro')
+    expect(html).toContain('Imagens do estabelecimento')
+    expect(html).toContain('Cabeleireira')
     expect(html).toContain('Marina Souza')
     expect(html).toContain('Rafael Lima')
   })
 
-  it('diz de quem a foto aparece na vitrine: só com perfil completo (consentimento)', () => {
+  it('diz onde cada foto aparece: só com perfil completo (consentimento)', () => {
     const html = render()
 
-    expect(html).toContain('precisa do consentimento')
-    expect(html).toContain('Aparece na vitrine.')
-    expect(html).toContain('Não aparece na vitrine: sem perfil completo (consentimento).')
+    expect(html).toContain('depende do consentimento')
+    expect(html).toContain('Aparece na página pública')
+    expect(html).toContain(
+      'Guardada: só aparece na página pública com o perfil completo (consentimento).',
+    )
+    expect(html).toContain('Sem foto — aparece com as iniciais')
   })
 
   it('sem profissional ativo, manda cadastrar a equipe', () => {

@@ -9,7 +9,6 @@ import {
   professionalChanges,
   toSaveServiceRequest,
   toServiceListItem,
-  withActive,
 } from '../manage-adapters'
 import { Button } from '@components/button'
 import { errorMessage } from '@api/base'
@@ -31,18 +30,13 @@ import { notify } from '@components/toaster/notify'
 import { usePanelContext } from '@layouts/panel-layout/context'
 import { useState } from 'react'
 
-/** Painel — Serviços (Onda 7D): lista, ativar e desativar. Só o dono (`RequireOwner`). */
+/** Painel — Serviços (Onda 7D): a lista. Pausar e ativar ficam na edição do serviço. Só o dono (`RequireOwner`). */
 export const PanelServicesRoute = () => {
   const { context, business } = usePanelContext()
   const navigate = useNavigate()
   const services = usePanelServices(context.businessId, true)
   const team = usePanelTeam(context.businessId)
   const detail = usePanelBusinessDetail(context.businessId)
-  const update = usePanelMutation(
-    context.businessId,
-    ({ service, isActive }: { service: ServiceResponse; isActive: boolean }) =>
-      managementService.updateService(service.id, withActive(service, isActive)),
-  )
 
   const data: ServicesData = services.isError
     ? {
@@ -61,25 +55,10 @@ export const PanelServicesRoute = () => {
     <ServicesScreen
       data={data}
       businessName={business.name}
+      categoryName={categoryLabel(detail.data?.category ?? '')}
       sensitive={isSensitiveCategory(detail.data?.category ?? '')}
       onNew={() => navigate(ROUTES.panelNewService)}
       onEdit={(serviceId) => navigate(editServicePath(serviceId))}
-      onToggleActive={async (item) => {
-        const service = services.data?.find(({ id }) => id === item.id)
-        if (!service) return false
-        try {
-          await update.mutateAsync({ service, isActive: !service.isActive })
-          notify.success(
-            service.isActive
-              ? `"${service.name}" desativado. Ele saiu da vitrine.`
-              : `"${service.name}" ativado. Ele voltou para a vitrine.`,
-          )
-          return true
-        } catch (error) {
-          notify.error(error)
-          return false
-        }
-      }}
     />
   )
 }

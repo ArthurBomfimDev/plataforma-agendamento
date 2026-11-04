@@ -25,9 +25,13 @@ import { PANEL_NOTICE } from '@components/panel-page'
 import { VerifiedUserIcon } from '@assets/icons'
 import { ProfessionalPicker } from './components/professional-picker'
 import { SelectField } from '@components/select-field'
+import { SwitchField } from '@components/switch-field'
 import { SlotPreview } from './components/slot-preview'
 import { TextField } from '@components/text-field'
 import { cn } from 'cn'
+
+/** Os campos que guardam texto: lista de profissionais e situação têm controle próprio. */
+type TextFormField = Exclude<ServiceFormField, 'professionalIds' | 'isActive'>
 
 type BufferField = Extract<ServiceFormField, 'bufferBeforeMinutes' | 'bufferAfterMinutes'>
 
@@ -84,18 +88,18 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
   const subtitle = `${businessName} · ${categoryName}`
   const title = mode === 'edit' ? 'Editar serviço' : 'Novo serviço'
 
-  const setField = (field: Exclude<ServiceFormField, 'professionalIds'>, value: string) =>
+  const setField = (field: TextFormField, value: string) =>
     setValues((current) => ({ ...current, [field]: value }))
 
   /** Os seletores dão o número; o formulário guarda "30 min", como sempre guardou. */
-  const setMinutes = (field: Exclude<ServiceFormField, 'professionalIds'>, value: string) =>
+  const setMinutes = (field: TextFormField, value: string) =>
     setField(field, value === '' ? '' : minutesLabel(Number(value)))
 
   const gap = stepGap(values)
 
   /** `mask` reescreve a cada tecla; `normalize`, ao sair do campo. */
   const textProps = (
-    field: Exclude<ServiceFormField, 'professionalIds'>,
+    field: TextFormField,
     format: { mask?: (value: string) => string; normalize?: (value: string) => string } = {},
   ) => {
     const { mask, normalize } = format
@@ -318,6 +322,22 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
                 error={errors.professionalIds}
               />
             </Section>
+
+            {mode === 'edit' && (
+              <Section id="service-status" title="Situação">
+                <SwitchField
+                  id={FIELD_IDS.isActive}
+                  label="Serviço ativo"
+                  description={
+                    values.isActive
+                      ? 'Aparece na vitrine e o consumidor consegue agendar.'
+                      : 'Pausado: sai da vitrine e ninguém consegue pedir. Os agendamentos já feitos continuam válidos e os relatórios continuam contando.'
+                  }
+                  checked={values.isActive}
+                  onCheckedChange={(isActive) => setValues((current) => ({ ...current, isActive }))}
+                />
+              </Section>
+            )}
           </div>
 
           <aside
