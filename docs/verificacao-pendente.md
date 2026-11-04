@@ -175,6 +175,33 @@ Escrito sem Docker. O papel é texto (`role`), então não há migration. Pilha 
 | 10 | `POST /api/appointments` com esse token | 403 `appointment.customer_context_required` |
 | 11 | No `psql`: `SELECT actor_role, count(*) FROM scheduling.appointment_event GROUP BY 1;` depois do passo 5 | aparece `Attendant` (a coluna aceita até 20 caracteres) |
 
+### Convite e painel por papel, frontend e seed (Fase 4, bloco 1 e 2)
+
+Pilha isolada (seção 0), seed rodado. O seed agora cria `profissional.duartina@example.com` (ligado ao perfil Marcos Lima),
+`atendente.duartina@example.com` e um convite pendente para `convidado.duartina@example.com` (o e-mail está no Mailpit).
+**Tudo abaixo é visual ou depende do banco: nada foi visto.** Para cada tela: 390 px e desktop, claro e escuro, alvos ≥ 44 px.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `bun scripts/seed-demo.ts` duas vezes | a 2ª não duplica nada ("já existia — pulando"); o resumo lista profissional, atendente e convite |
+| 2 | Mailpit: abrir o e-mail "Convite para a equipe de Estúdio Duartina" e o botão **Ver o convite** | abre `#/convite?token=…` |
+| 3 | `#/convite` com o token do passo 2 (sem sessão) | mostra o estabelecimento, quem convidou e o e-mail; formulário de **conta nova** (nome, senha, confirmação); **sem** checkbox de termo (é atendente); botão "Já tenho conta: Entrar" |
+| 4 | Senha com 7 caracteres → **Criar conta e aceitar** | erro "A senha tem no mínimo 8 caracteres" no campo; nada é criado |
+| 5 | Preencher certo → **Criar conta e aceitar** | notificação "Convite aceito…" e abre `#/panel` já como atendente: menu **sem** Serviços, Profissionais, Jornadas, Fotos e Configurações |
+| 6 | Atendente: Agenda | mostra o **filtro por profissional** e os pedidos de **todos**; confirmar um pedido funciona |
+| 7 | Abrir o mesmo link de novo | tela "Convite indisponível: já foi usado" com o botão **Entrar** |
+| 8 | Convite novo (dono: `POST /api/businesses/current/invitations`, role `Professional`) → abrir o link **sem** marcar o termo | erro "Aceite o termo do profissional para continuar."; marcado, conclui |
+| 9 | Abrir o link logado com **outra** conta | "Você está com a conta X, mas este convite é para Y" e **Sair e entrar com outra conta**; ao tocar, vai a Entrar e volta ao convite |
+| 10 | Convite para um e-mail que **já tem conta** (ex.: `profissional.duartina@example.com` já aceito → convidar `dono.helena@example.com` como atendente) | sem sessão: "Já existe uma conta com este e-mail" + **Já tenho conta: Entrar**; depois de entrar, volta ao convite e mostra **Aceitar convite** |
+| 11 | Link adulterado (token cortado) e link vencido (alterar `expires_at` no banco) | "não existe ou o link está incompleto" e "expirou", respectivamente |
+| 12 | Tela Entrar | mostra "Recebeu um convite? Use o link do e-mail." |
+| 13 | `profissional.duartina@example.com` entra | painel **limitado**: agenda só com os pedidos dele; menu sem as seções do dono |
+| 14 | Como esse profissional: `GET /api/businesses/current/professionals/me` e `PUT …/me` `{ "specialty":"x", "bio":"y" }` | 200; o nome não muda. Para o dono ou o atendente: 403 / 403 |
+| 15 | Como esse profissional: `POST …/schedule-exceptions` com o `professionalId` **dele**; depois com o de outro profissional e sem `professionalId` | 201; depois **403** nos dois |
+
+**Não existe tela** para o profissional registrar folgas/bloqueios nem para editar a própria bio/foto (só a API): fica para
+o próximo ciclo (registrado na seção de limitações do PR). O atendente também não tem tela de bloqueios.
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |

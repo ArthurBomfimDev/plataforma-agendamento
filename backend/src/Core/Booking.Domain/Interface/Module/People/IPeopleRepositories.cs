@@ -8,6 +8,9 @@ public interface IProfessionalRepository
     /// <summary>Do estabelecimento do token (filtro global de tenant).</summary>
     Task<Professional?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
+    /// <summary>O perfil ligado a um vínculo, no estabelecimento do token.</summary>
+    Task<Professional?> GetByMembershipIdAsync(Guid membershipId, CancellationToken ct = default);
+
     /// <summary>De um estabelecimento informado explicitamente, sem depender do token (aceite de convite).</summary>
     Task<Professional?> GetByIdOfBusinessAsync(Guid businessId, Guid id, CancellationToken ct = default);
 

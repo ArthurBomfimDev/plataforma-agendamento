@@ -7,6 +7,9 @@ public sealed record CreateProfessionalRequest(string DisplayName, string? Speci
 
 public sealed record UpdateProfessionalRequest(string DisplayName, string? Specialty, string? Bio, bool IsActive, bool ShowFullProfile);
 
+/// <summary>O profissional com conta edita a própria especialidade e bio. Nome e situação são do dono.</summary>
+public sealed record UpdateMyProfessionalProfileRequest(string? Specialty, string? Bio);
+
 public sealed record RegisterCustomerRequest(DateOnly BirthDate, string? SocialName);
 
 public sealed record ProfessionalResponse(

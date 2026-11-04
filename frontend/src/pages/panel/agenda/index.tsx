@@ -20,7 +20,7 @@ import { BusinessAgendaScreen } from './screen'
 import { DateNavigator } from './components/date-navigator'
 import type { RangeData } from './components/agenda-range/types'
 import { ViewSwitch } from './components/view-switch'
-import { canManageBusiness } from '@router/paths'
+import { canOperateWholeAgenda } from '@router/paths'
 import { errorMessage } from '@api/base'
 import { shiftDay } from './screen/consts'
 import { toAgendaDay } from '../adapters'
@@ -45,7 +45,8 @@ export const PanelAgendaRoute = () => {
   const { context, business, today, date, setDate, professionals, schedules, pendingItems } = panel
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = readAgendaFilters(searchParams)
-  const owner = canManageBusiness(context.role)
+  // Dono e atendente veem a equipe toda e filtram por profissional; o profissional só tem a própria agenda.
+  const owner = canOperateWholeAgenda(context.role)
   const view = filters.view
   const period = view === 'day' ? null : agendaPeriod(view, date)
   const days = period ? daysOf(period.from, period.to) : [date]

@@ -45,6 +45,18 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
   mão pelo Admin.
 - Beleza publica sem conferência humana; o freio é o limite de 3 por conta, as denúncias e a suspensão (ADR-028).
 
+## Equipe, convites e papéis (Fase 4)
+
+- **Sem tela do dono para convidar.** O convite, o reenvio, a revogação e a lista de pendentes existem na API (ADR-029)
+  e têm testes, mas a tela "Convidar" em Profissionais **não foi feita**. Quem convida hoje usa a API.
+- **Sem tela de bloqueios para o atendente** e **sem tela para o profissional registrar folgas** ou editar a própria bio
+  e foto. A API já aceita (ADR-030: `schedule-exceptions` com escopo e `professionals/me`). A tela de Jornadas e bloqueios
+  continua só do dono.
+- O painel do atendente não pode depender de `GET /api/businesses/current` (403); ele usa o nome do `GET /api/users/me`.
+- Quem volta à equipe (`Rejoin`) e tinha o perfil desativado precisa ser reativado pelo dono; o aceite não reativa.
+- Aceite simultâneo do mesmo link por duas requisições: protegido só pelo índice único do vínculo.
+- O termo do profissional é **rascunho, sem revisão jurídica**.
+
 ## Verificação
 
 - Tudo escrito em 04/11 sem Docker e sem navegador está em `docs/verificacao-pendente.md` com o que ainda não tem prova.

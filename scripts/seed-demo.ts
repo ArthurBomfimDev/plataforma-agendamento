@@ -1033,6 +1033,67 @@ function printCounts() {
   }
 }
 
+/**
+ * Equipe do Estúdio Duartina (Fase 4): um profissional com conta (ligado ao perfil "Marcos Lima"), um atendente e um
+ * convite pendente. O convite sai pela API do dono, então o e-mail cai no Mailpit com o link verdadeiro; o seed nunca
+ * toca no token. Os vínculos entram por SQL, só no banco local do Docker, como o Admin.
+ */
+const DUARTINA = { owner: 'dono.duartina@example.com', business: 'Estúdio Duartina', professionalProfile: 'Marcos Lima' }
+const TEAM = {
+  professional: { fullName: 'Marcos Lima', email: 'profissional.duartina@example.com' },
+  attendant: { fullName: 'Atendente Duartina', email: 'atendente.duartina@example.com' },
+  invited: { name: 'Convidado Pendente', email: 'convidado.duartina@example.com' },
+}
+
+async function seedDuartinaTeam() {
+  console.log(`• Equipe do ${DUARTINA.business}`)
+  const login = await call<{ accessToken: string }>('POST', '/api/auth/login', { email: DUARTINA.owner, password: DEMO_PASSWORD })
+  const me = await call<{ businesses: Array<{ businessId: string; name: string }> }>('GET', '/api/users/me', undefined, login.accessToken)
+  const business = me.businesses.find((candidate) => candidate.name === DUARTINA.business)
+  if (!business) {
+    console.log('  estabelecimento não encontrado — pulando')
+    return
+  }
+
+  for (const [person, role] of [
+    [TEAM.professional, 'Professional'],
+    [TEAM.attendant, 'Attendant'],
+  ] as const) {
+    if (!(await registerAndLogin(person.fullName, person.email))) {
+      console.log(`  ${person.email} já existia — pulando`)
+      continue
+    }
+    psql(`
+      INSERT INTO tenancy.business_membership (id, business_id, user_id, role, status, accepted_at, created_at)
+      SELECT gen_random_uuid(), ${sqlText(business.businessId)}::uuid, u.id, ${sqlText(role)}, 'Active', now(), now()
+      FROM identity."user" u
+      WHERE u.email = ${sqlText(person.email)}
+        AND NOT EXISTS (SELECT 1 FROM tenancy.business_membership m WHERE m.business_id = ${sqlText(business.businessId)}::uuid AND m.user_id = u.id);
+    `)
+    if (role === 'Professional') {
+      psql(`
+        UPDATE people.professional p SET business_membership_id = m.id
+        FROM tenancy.business_membership m
+        JOIN identity."user" u ON u.id = m.user_id
+        WHERE u.email = ${sqlText(person.email)} AND m.business_id = p.business_id
+          AND p.business_id = ${sqlText(business.businessId)}::uuid
+          AND p.display_name = ${sqlText(DUARTINA.professionalProfile)}
+          AND p.business_membership_id IS NULL;
+      `)
+    }
+    console.log(`  ${person.email} (${role})`)
+  }
+
+  const { accessToken } = await call<{ accessToken: string }>('POST', '/api/users/me/context', { businessId: business.businessId }, login.accessToken)
+  try {
+    await call('POST', '/api/businesses/current/invitations', { name: TEAM.invited.name, email: TEAM.invited.email, role: 'Attendant' }, accessToken)
+    console.log(`  convite pendente para ${TEAM.invited.email} (o e-mail está no Mailpit)`)
+  } catch (error) {
+    if (!(error instanceof ApiCallError) || error.code !== 'invitation.already_pending') throw error
+    console.log('  o convite pendente já existia')
+  }
+}
+
 async function main() {
   console.log(`Populando ${API} com dados de demonstração${WITH_HISTORY ? ' (com histórico)' : ''}\n`)
   await call('GET', '/health').catch(() => {
@@ -1044,6 +1105,7 @@ async function main() {
     await seedBusiness(business)
   }
   await seedBusiness(PENDING_REVIEW_DEMO)
+  await seedDuartinaTeam()
   await seedCustomer()
   const adminCreated = await approvePendingBusinesses()
 
@@ -1059,6 +1121,9 @@ async function main() {
   console.log(`  consumidor   ${CUSTOMER.email}`)
   console.log(`  donos        dono.<estabelecimento>@example.com — ${BUSINESSES.length} estabelecimentos, por exemplo ${BUSINESSES[0]!.owner.email}`)
   console.log(`  em análise   ${PENDING_REVIEW_DEMO.owner.email} — ${PENDING_REVIEW_DEMO.name} (Saúde), para o Admin aprovar`)
+  console.log(`  profissional ${TEAM.professional.email} — com conta, ligado ao perfil ${DUARTINA.professionalProfile}`)
+  console.log(`  atendente    ${TEAM.attendant.email} — opera a agenda de todos`)
+  console.log(`  convite      ${TEAM.invited.email} — pendente (e-mail no Mailpit)`)
   if (ADMIN_PASSWORD_FROM_ENV) console.log(`  admin        ${ADMIN.email} (senha: a de SEED_ADMIN_PASSWORD)`)
   else if (adminCreated) console.log(`  admin        ${ADMIN.email} (senha gerada agora, anote — não aparece de novo: ${ADMIN_PASSWORD})`)
   else console.log(`  admin        ${ADMIN.email} (já existia; senha inalterada)`)

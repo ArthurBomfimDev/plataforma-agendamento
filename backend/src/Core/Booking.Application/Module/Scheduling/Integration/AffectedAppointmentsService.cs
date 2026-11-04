@@ -13,24 +13,34 @@ using Booking.Domain.Interface.Repository.Module.Scheduling;
 namespace Booking.Application.Module.Scheduling.Integration;
 
 /// <summary>
-/// Implementa <see cref="IAffectedAppointments"/> com as regras do próprio Scheduling: só o proprietário e o atendente
-/// resolvem o bloqueio, e o cancelamento passa pela máquina de estados do agendamento (grava <c>AppointmentEvent</c>).
+/// Implementa <see cref="IAffectedAppointments"/> com as regras do próprio Scheduling: dono e atendente resolvem o bloqueio
+/// de qualquer profissional, e o profissional, o da própria agenda, e o cancelamento passa pela máquina de estados do agendamento (grava <c>AppointmentEvent</c>).
 /// </summary>
 public sealed class AffectedAppointmentsService(
     IAppointmentRepository appointments,
     AppointmentAccess access,
     IAppointmentNotifier notifier,
-    IActorContext actor,
     IUnitOfWork unitOfWork,
     TimeProvider clock) : IAffectedAppointments
 {
     /// <summary>Teto de um "cancelar todos": acima disso, o dono divide o período. Evita uma transação sem limite.</summary>
     public const int MaxCancelledAtOnce = 500;
 
+    /// <summary>Dono e atendente enxergam qualquer período; o profissional, só o da própria agenda (a de outro é proibida).</summary>
+    private async Task EnsureScopeAsync(Guid? professionalId, CancellationToken ct)
+    {
+        Guid? own = await access.RestrictToProfessionalAsync(ct);
+
+        if (own is Guid ownId && professionalId != ownId)
+        {
+            throw new DomainException("auth.forbidden");
+        }
+    }
+
     public async Task<PagedResult<AffectedAppointment>> ListAsync(
         Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc, PageRequest page, CancellationToken ct = default)
     {
-        actor.RequireAgendaOperator();
+        await EnsureScopeAsync(professionalId, ct);
 
         PagedResult<Appointment> result = await appointments.ListActiveInRangeAsync(professionalId, fromUtc, toUtc, page, ct);
 
@@ -51,7 +61,7 @@ public sealed class AffectedAppointmentsService(
     public async Task<int> StageCancellationAsync(
         Guid? professionalId, DateTimeOffset fromUtc, DateTimeOffset toUtc, string reason, CancellationToken ct = default)
     {
-        actor.RequireAgendaOperator();
+        await EnsureScopeAsync(professionalId, ct);
 
         IReadOnlyList<Appointment> affected =
             await appointments.ListActiveInRangeForUpdateAsync(professionalId, fromUtc, toUtc, MaxCancelledAtOnce + 1, ct);

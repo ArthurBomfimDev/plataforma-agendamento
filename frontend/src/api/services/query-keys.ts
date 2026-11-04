@@ -23,6 +23,8 @@ export const queryKeys = {
   appointments: ['appointments'] as const,
   myAppointments: ['appointments', 'mine'] as const,
   me: ['me'] as const,
+  // Prévia do convite: o token só existe na memória e no link; a chave nunca vai a log.
+  invitationPreview: (token: string) => ['invitation', 'preview', token] as const,
   // Cadastro do estabelecimento. A visão do dono mora sob o painel (trocar de contexto não mistura); o Admin, sob `admin`.
   ownerBusiness: (businessId: string) => ['panel', businessId, 'owner'] as const,
   ownerChecklist: (businessId: string) => ['panel', businessId, 'owner', 'checklist'] as const,
