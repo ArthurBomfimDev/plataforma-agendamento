@@ -1,9 +1,10 @@
 import { Card, CardContent } from '@components/ui/card'
-import { LocationIcon, StarIcon } from '@assets/icons'
-import { distanceFormat, ratingFormat } from './consts'
+import { distanceFormat } from './consts'
 
 import { CardEstablishmentImage } from './components/card-establishment-image'
 import type { CardEstablishmentProps } from './types'
+import { LocationIcon } from '@assets/icons'
+import { RatingLabel } from '@components/rating-label'
 import { VerifiedBadge } from './components/verified-badge'
 import { cn } from 'cn'
 
@@ -52,14 +53,9 @@ export const CardEstablishment = (props: CardEstablishmentProps) => {
         </div>
 
         <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted)">
-          {rating !== undefined && reviewCount ? (
-            <>
-              <StarIcon aria-hidden="true" className="size-4" />
-              <span>
-                <span className="sr-only">Nota </span>
-                {ratingFormat.format(rating)} ({reviewCount})
-              </span>
-            </>
+          {/* Sem `reviewCount` a nota não foi lida (tela sem dado): não afirma nada. Sem média, "Novo". */}
+          {reviewCount !== undefined ? (
+            <RatingLabel average={rating ?? null} count={reviewCount} />
           ) : null}
           <LocationIcon aria-hidden="true" className="size-4" />
           <span>

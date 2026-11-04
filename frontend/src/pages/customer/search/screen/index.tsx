@@ -172,6 +172,12 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
             >
               Menor preço
             </FilterChip>
+            <FilterChip
+              selected={filters.sortBy === 'rating'}
+              onClick={() => onChange?.({ sortBy: 'rating' })}
+            >
+              Melhor avaliados
+            </FilterChip>
           </div>
         </div>
       </header>
@@ -251,6 +257,7 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
                         image={item.image}
                         category={item.category}
                         distanceKm={item.distanceKm}
+                        rating={item.rating}
                         onOpen={() => onOpen?.(item.id)}
                       />
                     ) : (
@@ -261,6 +268,8 @@ export const SearchResultsScreen = (props: SearchResultsScreenProps) => {
                         verified={item.verified}
                         image={item.cover}
                         category={item.category}
+                        rating={item.rating.average ?? undefined}
+                        reviewCount={item.rating.count}
                         onClick={() => onOpen?.(item.id)}
                       />
                     )}

@@ -52,6 +52,7 @@ export { default as SellIcon } from '~icons/material-symbols/sell-outline-rounde
 export { default as SettingsIcon } from '~icons/material-symbols/settings-outline-rounded'
 export { default as SpinnerIcon } from '~icons/material-symbols/progress-activity'
 export { default as StarIcon } from '~icons/material-symbols/star-outline-rounded'
+export { default as StarFilledIcon } from '~icons/material-symbols/star-rounded'
 export { default as StorefrontIcon } from '~icons/material-symbols/storefront-outline-rounded'
 export { default as TagIcon } from '~icons/material-symbols/tag-rounded'
 export { default as VerifiedUserIcon } from '~icons/material-symbols/verified-user-outline-rounded'

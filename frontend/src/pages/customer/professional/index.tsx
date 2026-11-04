@@ -12,6 +12,7 @@ import { NotFoundScreen } from '@pages/not-found'
 import { ProfessionalPageScreen } from './screen'
 import type { ProfessionalPageData } from './screen/types'
 import { availabilityPath, businessPath } from '@router/paths'
+import { useProfessionalReviewsState } from '../reviews-state'
 
 /**
  * `#/profissional/:professionalId` — página pública do profissional (ADR-031). Perfil inativo, estabelecimento fora da
@@ -23,6 +24,7 @@ export const ProfessionalPageRoute = () => {
   const navigate = useNavigate()
   const page = useProfessionalPage(professionalId)
   const removal = useRequestProfessionalRemoval()
+  const reviews = useProfessionalReviewsState(professionalId)
 
   const professional = page.data
   const timeZone = professional?.business.timeZone
@@ -62,6 +64,10 @@ export const ProfessionalPageRoute = () => {
           bio: professional.bio,
           registration: professional.registration,
           photo: professional.photo,
+          // Sem média (menos de 3 avaliações), o rótulo diz "Novo"; enquanto a nota não chega, nada aparece.
+          rating: reviews.rating
+            ? { average: reviews.rating.average, count: reviews.rating.count }
+            : null,
           business: {
             id: professional.business.id,
             name: professional.business.name,
@@ -90,6 +96,7 @@ export const ProfessionalPageRoute = () => {
   return (
     <ProfessionalPageScreen
       data={data}
+      reviews={{ summary: reviews.summary, list: reviews.list }}
       onBook={(serviceId) => {
         const target = serviceId ?? professional?.services[0]?.id
         if (professional && target)

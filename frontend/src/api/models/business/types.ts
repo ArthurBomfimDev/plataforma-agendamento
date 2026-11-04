@@ -43,6 +43,9 @@ export type BusinessSearchItemResponse = {
   fromPriceCents: number | null
   logo: ImageSet | null
   cover: ImageSet | null
+  /** Média com 1 casa. Nula enquanto há menos de 3 avaliações ("Novo"). */
+  ratingAverage: number | null
+  ratingCount: number
 }
 
 export type SchedulingPolicyResponse = {

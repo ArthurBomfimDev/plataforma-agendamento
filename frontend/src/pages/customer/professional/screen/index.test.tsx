@@ -103,11 +103,30 @@ describe('ProfessionalPageScreen', () => {
     )
   })
 
-  it('a nota do profissional fica escondida até existir média', () => {
+  it('a nota do profissional não aparece enquanto não foi lida; com média mostra "4,8 (12)", sem média "Novo"', () => {
     expect(render()).not.toContain('Nota ')
-    expect(render({}, { rating: { average: 4.75, count: 12 } })).toContain(
-      'Nota 4,8 · 12 avaliações',
-    )
+    expect(render()).not.toContain('Novo')
+    // O formato mudou com o módulo de avaliações: o rótulo é o mesmo dos cartões ("4,8 (12)"), com a nota por extenso
+    // para o leitor de tela. A regra "escondida até a nota ser lida" continua valendo.
+    const rated = render({}, { rating: { average: 4.75, count: 12 } })
+    expect(rated).toContain('4,8 (12)')
+    expect(rated).toContain('Nota 4,8 de 5, 12 avaliações')
+    expect(render({}, { rating: { average: null, count: 2 } })).toContain('Novo')
+  })
+
+  it('mostra as avaliações do profissional quando a tela as recebe', () => {
+    const page = render({
+      reviews: {
+        summary: {
+          status: 'ready',
+          data: { average: null, count: 0, distribution: [0, 0, 0, 0, 0], isNew: true },
+        },
+        list: { status: 'ready', items: [], page: 1, totalPages: 1, onPageChange: () => undefined },
+      },
+    })
+
+    expect(page).toContain('Avaliações de ')
+    expect(page).toContain('Ainda não há avaliações')
   })
 
   it('só oferece o pedido de remoção quando a tela recebe o tratamento dele', () => {

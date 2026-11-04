@@ -23,6 +23,17 @@ export const queryKeys = {
   appointments: ['appointments'] as const,
   myAppointments: ['appointments', 'mine'] as const,
   me: ['me'] as const,
+  // Avaliações (ADR-032). As públicas moram sob `reviews`; as do consumidor, sob `appointments` (saem do cache ao trocar de conta).
+  reviews: ['reviews'] as const,
+  myReviews: ['appointments', 'reviews', 'mine'] as const,
+  searches: ['businesses', 'search'] as const,
+  businessRating: (businessId: string) => ['reviews', 'business', businessId, 'rating'] as const,
+  businessReviews: (businessId: string, page: number) =>
+    ['reviews', 'business', businessId, 'list', page] as const,
+  professionalRating: (professionalId: string) =>
+    ['reviews', 'professional', professionalId, 'rating'] as const,
+  professionalReviews: (professionalId: string, page: number) =>
+    ['reviews', 'professional', professionalId, 'list', page] as const,
   // Prévia do convite: o token só existe na memória e no link; a chave nunca vai a log.
   invitationPreview: (token: string) => ['invitation', 'preview', token] as const,
   // Cadastro do estabelecimento. A visão do dono mora sob o painel (trocar de contexto não mistura); o Admin, sob `admin`.

@@ -1,5 +1,8 @@
-import { LocationIcon, ScheduleIcon, StarIcon } from '@assets/icons'
-import { distanceFormat, ratingFormat } from '@components/card-establishment/consts'
+import { LocationIcon, ScheduleIcon } from '@assets/icons'
+
+import { distanceFormat } from '@components/card-establishment/consts'
+import { RatingLabel } from '@components/rating-label'
+import { ReviewsSection } from '@components/reviews-section'
 
 import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { BusinessDetailScreenProps } from './types'
@@ -27,6 +30,7 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
     onReport,
     professionals,
     onOpenProfessional,
+    reviews,
   } = props
 
   const servicesRef = useRef<HTMLUListElement>(null)
@@ -98,15 +102,10 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
               </div>
 
               <div className="flex flex-wrap items-center gap-(--space-8) lg:gap-(--space-12)">
-                {rating !== undefined && reviewCount ? (
-                  <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted) lg:text-(length:--size-label)! lg:leading-(--line-height-label)! lg:font-medium! lg:text-(--text-body)">
-                    <StarIcon aria-hidden="true" className="size-4" />
-                    <span>
-                      <span className="sr-only">Nota </span>
-                      {ratingFormat.format(rating)} ({reviewCount})
-                    </span>
-                  </p>
-                ) : null}
+                {/* Sem contagem = a nota ainda não foi lida (carregando ou erro): não afirma nada. */}
+                {reviewCount !== undefined && (
+                  <RatingLabel average={rating ?? null} count={reviewCount} />
+                )}
                 {verified && <VerifiedBadge />}
                 {openUntilChip('hidden lg:flex')}
               </div>
@@ -171,7 +170,19 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                       />
                     ),
                   },
-                  { id: 'reviews', label: 'Avaliações', content: comingSoon },
+                  {
+                    id: 'reviews',
+                    label: 'Avaliações',
+                    content: reviews ? (
+                      <ReviewsSection
+                        title="Avaliações"
+                        summary={reviews.summary}
+                        list={reviews.list}
+                      />
+                    ) : (
+                      comingSoon
+                    ),
+                  },
                 ]}
               />
             </main>

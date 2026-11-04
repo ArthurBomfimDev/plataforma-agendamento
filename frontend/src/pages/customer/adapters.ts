@@ -2,11 +2,14 @@ import type {
   AppointmentResponse,
   AppointmentStatusResponse,
   BusinessSearchItemResponse,
+  MyReviewResponse,
   PublicBusinessResponse,
   PublicProfessionalResponse,
   PublicServiceResponse,
 } from '@api/models'
 import { dateKeyIn, timeIn } from '@utils/time-zone'
+
+import { REVIEW_WINDOW_DAYS } from './appointments/screen/consts'
 
 import type { AppointmentStatus } from '@components/status-chip/types'
 import type { BusinessDetail } from './business-detail/screen/types'
@@ -21,6 +24,8 @@ import type { SearchResult } from './search/screen/types'
  * mudou o contrato, muda aqui.
  */
 
+const REVIEW_WINDOW_MS = REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000
+
 const streetLine = ({ address }: PublicBusinessResponse) =>
   [address.street, address.streetNumber].filter(Boolean).join(', ')
 
@@ -33,7 +38,9 @@ export const toHomeEstablishment = (item: BusinessSearchItemResponse): HomeEstab
   // O card é largo: a capa primeiro; sem capa, o logotipo; sem nenhum, a ilustração da categoria.
   image: item.cover ?? item.logo,
   category: item.category,
-  // TODO: nota e avaliações dependem do módulo Reputation, ainda sem endpoint público.
+  // Sem média (menos de 3 avaliações) o card diz "Novo".
+  rating: item.ratingAverage ?? undefined,
+  reviewCount: item.ratingCount,
 })
 
 export const toSearchResult = (item: BusinessSearchItemResponse): SearchResult => ({
@@ -54,6 +61,7 @@ export const toSearchResult = (item: BusinessSearchItemResponse): SearchResult =
           fromPriceCents: item.fromPriceCents,
         }
       : null,
+  rating: { average: item.ratingAverage, count: item.ratingCount },
 })
 
 export const toBusinessDetail = (
@@ -122,6 +130,8 @@ export const toCustomerAppointment = (
   appointment: AppointmentResponse,
   business: PublicBusinessResponse | undefined,
   fallbackTimeZone: string,
+  review: MyReviewResponse | null = null,
+  now: Date = new Date(),
 ): CustomerAppointment => {
   const timeZone = business?.timeZone ?? fallbackTimeZone
   const street = business ? streetLine(business) : ''
@@ -136,7 +146,13 @@ export const toCustomerAppointment = (
     timeZone,
     address: street || undefined,
     expiresAt: appointment.expiresAt ? new Date(appointment.expiresAt) : undefined,
-    // TODO: avaliação depende do módulo Reputation, ainda sem endpoint.
-    reviewable: false,
+    // Avaliável: concluído, ainda sem avaliação e até 30 dias depois do fim. A conclusão exata o servidor confere
+    // (`review.window_expired`); o fim do horário é o que a tela conhece e nunca é depois da conclusão.
+    reviewable:
+      appointment.status === 'Completed' &&
+      review === null &&
+      now.getTime() <= new Date(appointment.endsAt).getTime() + REVIEW_WINDOW_MS,
+    review,
+    sensitive: business?.category === 'Saude',
   }
 }

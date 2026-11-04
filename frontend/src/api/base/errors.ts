@@ -106,6 +106,17 @@ const MESSAGES: Record<string, string> = {
   'business_membership.cannot_remove_owner':
     'O dono não sai do próprio estabelecimento. Peça a um administrador para encerrá-lo.',
   'professional.registration_too_long': 'O registro profissional tem no máximo 40 caracteres.',
+  // Avaliações (ADR-032).
+  'review.rating_invalid': 'A nota vai de 1 a 5 estrelas.',
+  'review.comment_too_long': 'O comentário pode ter até 500 caracteres.',
+  'review.not_found': 'Não encontramos esta avaliação.',
+  'review.not_completed': 'Só dá para avaliar depois que o atendimento for concluído.',
+  'review.window_expired': 'O prazo de 30 dias para avaliar este atendimento acabou.',
+  'review.already_reviewed': 'Você já avaliou este atendimento.',
+  'review.already_edited': 'A avaliação só pode ser editada uma vez.',
+  'review.edit_window_expired': 'O prazo de 7 dias para editar a avaliação acabou.',
+  'review.not_allowed': 'Quem faz parte do estabelecimento não pode avaliá-lo.',
+  'review.contention_try_again': 'Muita gente avaliando ao mesmo tempo. Tente de novo.',
   'work_schedule.overlaps': 'Esse horário cruza outro horário do mesmo profissional.',
   'work_schedule.end_before_start': 'O fim precisa ser depois do início.',
   'work_schedule.effective_range_invalid': 'A data final precisa ser depois da data inicial.',

@@ -254,6 +254,9 @@ export const searchPath = (filters: Partial<SearchFilters>) => {
  * Lê os filtros da URL. Valor que não existe no backend (link editado à mão) é ignorado, em vez de virar
  * erro 400 na tela. Distância: a da URL; sem ela, a guardada no aparelho (`stored`); sem as duas, Cidade.
  */
+const sortFrom = (value: string | null): SearchFilters['sortBy'] =>
+  value === 'price' || value === 'rating' ? value : 'distance'
+
 export const readSearchFilters = (
   params: URLSearchParams,
   stored: SearchDistance | null = null,
@@ -266,7 +269,7 @@ export const readSearchFilters = (
     term: term ? term.slice(0, 100) : null,
     category: SEARCH_CATEGORIES.find((c) => c === category) ?? null,
     maxPriceCents: Number.isInteger(maxPrice) && maxPrice > 0 ? maxPrice : null,
-    sortBy: params.get('sort') === 'price' ? 'price' : 'distance',
+    sortBy: sortFrom(params.get('sort')),
     distance: parseDistance(params.get('radius')) ?? stored ?? DEFAULT_DISTANCE,
   }
 }

@@ -3,6 +3,7 @@ import { HourglassIcon, ScheduleIcon } from '@assets/icons'
 import { NO_AVAILABILITY_MESSAGE, priceFormat, priceWholeFormat } from './consts'
 
 import { BusinessIllustration } from '@components/image-defaults/business-illustration'
+import { RatingLabel } from '@components/rating-label'
 import type { SearchResultCardProps } from './types'
 import { SmartImage } from '@components/smart-image'
 import { TimeSlotChip } from '@components/time-slot-chip'
@@ -20,6 +21,7 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
     category,
     availability,
     priceFrom,
+    rating,
     onSelectSlot,
     onOpen,
     className,
@@ -70,6 +72,7 @@ export const SearchResultCard = (props: SearchResultCardProps) => {
               {priceFrom && 'a partir de '}
               {price.format(priceCents / 100)} · {distanceFormat.format(distanceKm)} km
             </p>
+            {rating && <RatingLabel average={rating.average} count={rating.count} />}
           </div>
         </div>
 
