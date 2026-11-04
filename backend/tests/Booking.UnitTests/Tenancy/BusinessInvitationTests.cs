@@ -545,6 +545,8 @@ public sealed class BusinessInvitationTests
 
         public Task<Guid?> FindProfessionalIdByMembershipAsync(Guid businessId, Guid membershipId, CancellationToken ct = default) => Task.FromResult<Guid?>(null);
 
+        public Task<Guid?> FindActiveProfessionalBusinessAsync(Guid professionalId, CancellationToken ct = default) => throw new NotSupportedException();
+
         public Task<Guid?> FindCustomerIdAsync(Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<CustomerIdentity>> GetCustomersAsync(IReadOnlyCollection<Guid> customerIds, CancellationToken ct = default) =>

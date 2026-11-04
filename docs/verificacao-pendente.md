@@ -287,6 +287,24 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 15 | Dono: `POST /api/businesses/current/leave` | 409 `business_membership.cannot_remove_owner` |
 | 16 | 390 px, claro e escuro: página do profissional, aba Profissionais, formulário de remoção, aba do Admin | sem rolagem horizontal; alvos ≥ 44 px |
 
+### Avaliações — backend (Fase 8, fatia 1; migration `AddReputation`)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | A migration sobe com a pilha. `SELECT table_name FROM information_schema.tables WHERE table_schema='reputation';` | `review` e `rating_summary`; **sem** coluna `xmin` criada à mão em `rating_summary` (`xmin` é do sistema) |
+| 2 | `dotnet test Booking.slnx --filter FullyQualifiedName~Reputation` | verdes (testes unitários, rodaram sem Docker). **Não há teste de integração nesta fatia**: a trava `ux_review_appointment`, o `xmin` e o 503 de disputa só se provam com o banco, pelos passos 4 e 12 abaixo |
+| 3 | Concluir um agendamento e `POST /api/appointments/{id}/review` `{ "rating": 5, "professionalRating": 4 }` com a conta do consumidor | 201; `rating_summary` ganha 1 linha do estabelecimento e 1 do profissional (`count = 1`) |
+| 4 | Repetir o POST | 409 `review.already_reviewed` |
+| 5 | POST com token de painel (dono) | 403 `appointment.customer_context_required` |
+| 6 | POST de um agendamento ainda **não concluído** | 409 `review.not_completed` |
+| 7 | POST de agendamento de **outro** consumidor | 404 `review.not_found` |
+| 8 | `PUT` com nota diferente; depois um segundo `PUT` | o 1º muda a média (confira `sum`/`count`: não soma duas vezes); o 2º dá 409 `review.already_edited` |
+| 9 | `GET /api/businesses/{id}/rating` com 1 e 2 avaliações; depois com 3 | até 2: `average` nulo e `isNew` verdadeiro; com 3: média com 1 casa |
+| 10 | Avaliação em estabelecimento de **Saúde** | `serviceName` nulo na resposta e `service_name` nulo no banco |
+| 11 | `GET /api/businesses/{id}/reviews` | só "Nome S."; sem id de consumidor |
+| 12 | Duas avaliações de agendamentos diferentes do mesmo estabelecimento **ao mesmo tempo** (dois `curl` em paralelo) | as duas gravam, ou uma dá 503 `review.contention_try_again`; **a contagem nunca perde uma** |
+| 13 | 11 POSTs na mesma hora com a mesma conta | o 11º dá 429 |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |

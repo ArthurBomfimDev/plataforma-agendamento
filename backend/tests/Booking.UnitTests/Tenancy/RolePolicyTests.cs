@@ -80,14 +80,16 @@ public sealed class RolePolicyTests
         "GrantConsentCommand", "RevokeConsentCommand", "ListMyConsentsQuery", "GetConsentVersionsQuery",
         "RegisterCustomerCommand", "GetMyCustomerProfileQuery", "RequestAppointmentCommand", "CancelMyAppointmentCommand",
         "ListMyAppointmentsQuery", "RegisterBusinessCommand",
+        "CreateReviewCommand", "UpdateReviewCommand", "ListMyReviewsQuery", "GetMyReviewQuery",
         // Público
         "GetAvailableSlotsQuery", "GetAvailabilityCalendarQuery", "ListPublicServicesQuery", "ListPublicProfessionalsQuery",
         "GetPublicBusinessQuery", "SearchBusinessesQuery", "ReportBusinessCommand",
         "GetPublicProfessionalQuery", "RequestProfessionalRemovalCommand", "LookupPostalCodeQuery",
         "SearchPlacesQuery", "ReverseGeocodeQuery", "PreviewInvitationQuery", "AcceptInvitationCommand",
-        "AcceptInvitationWithNewAccountCommand",
+        "AcceptInvitationWithNewAccountCommand", "ListBusinessReviewsQuery", "ListProfessionalReviewsQuery",
+        "GetBusinessRatingQuery", "GetProfessionalRatingQuery",
         // Apoio interno (não é rota)
-        "AppointmentAccess", "CustomerNameResolver", "SlotGuard", "ActivationChecklist", "CurrentBusinessLoader",
+        "RatingAggregator", "AppointmentAccess", "CustomerNameResolver", "SlotGuard", "ActivationChecklist", "CurrentBusinessLoader",
         "InvitationAcceptance", "DispatchOutboxCommand", "ExpirePendingAppointmentsCommand",
     ];
 

@@ -14,4 +14,7 @@ public static class RateLimits
 
     /// <summary>Prévia e aceite do convite, rotas do link: 20 por hora por IP.</summary>
     public const string InvitationLink = "invitation-link";
+
+    /// <summary>Avaliar ou editar avaliação: 10 por hora por conta (Fase 8). Cada agendamento só admite uma, então é folga.</summary>
+    public const string Review = "review";
 }

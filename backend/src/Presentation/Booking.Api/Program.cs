@@ -61,6 +61,11 @@ builder.Services.AddRateLimiter(limiter =>
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
 
+    // Avaliações (Fase 8): texto livre público. 10 por hora por conta, contra spam e script.
+    limiter.AddPolicy(RateLimits.Review, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromHours(1) }));
+
     // Trocar a senha (Onda 7CF): quem tem um token roubado não pode testar senhas atuais à vontade. 5 por 15 minutos
     // por conta, que é o que importa aqui (o IP muda; a conta, não).
     limiter.AddPolicy("password", context => RateLimitPartition.GetFixedWindowLimiter(

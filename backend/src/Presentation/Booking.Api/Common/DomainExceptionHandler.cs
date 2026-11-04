@@ -43,15 +43,16 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
             or "auth.unauthenticated" => StatusCodes.Status401Unauthorized,
         "auth.account_not_active" or "identity.email_not_confirmed" or "auth.forbidden" or "tenant.missing"
             or "compliance.consent_required" or "appointment.customer_context_required" or "invitation.email_mismatch"
-            => StatusCodes.Status403Forbidden,
+            or "review.not_allowed" => StatusCodes.Status403Forbidden,
         "user.email_already_registered" or "business.document_already_registered"
             or "appointment.slot_no_longer_available" or "customer.already_registered"
             or "work_schedule.overlaps" or "business.requires_review" or "business.account_limit_reached"
             or "business.seat_limit_reached" or "invitation.already_pending" or "invitation.already_member"
             or "invitation.account_exists" or "invitation.already_used" or "invitation.professional_not_linkable"
-            => StatusCodes.Status409Conflict,
+            or "review.already_reviewed" or "review.not_completed" or "review.window_expired" or "review.already_edited"
+            or "review.edit_window_expired" => StatusCodes.Status409Conflict,
         "invitation.expired" or "invitation.revoked" => StatusCodes.Status410Gone,
-        "appointment.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
+        "appointment.contention_try_again" or "review.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
         "image.too_large" => StatusCodes.Status413PayloadTooLarge,
         "image.unsupported_type" => StatusCodes.Status415UnsupportedMediaType,
         _ when code.EndsWith(".not_found", StringComparison.Ordinal) => StatusCodes.Status404NotFound,

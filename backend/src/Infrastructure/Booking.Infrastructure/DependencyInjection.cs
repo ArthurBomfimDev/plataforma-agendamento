@@ -25,6 +25,8 @@ using Booking.Application.Module.Notifications.Integration;
 using Booking.Application.Module.People.Commands;
 using Booking.Application.Module.People.Integration;
 using Booking.Application.Module.People.Queries;
+using Booking.Application.Module.Reputation.Commands;
+using Booking.Application.Module.Reputation.Queries;
 using Booking.Application.Module.Scheduling.Commands;
 using Booking.Application.Module.Scheduling.Integration;
 using Booking.Application.Module.Scheduling.Queries;
@@ -37,6 +39,7 @@ using Booking.Domain.Interface.Repository.Module.Compliance;
 using Booking.Domain.Interface.Repository.Module.Identity;
 using Booking.Domain.Interface.Repository.Module.Notifications;
 using Booking.Domain.Interface.Repository.Module.People;
+using Booking.Domain.Interface.Repository.Module.Reputation;
 using Booking.Domain.Interface.Repository.Module.Scheduling;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
 using Booking.Infrastructure.Module.Availability.Repository;
@@ -51,6 +54,7 @@ using Booking.Infrastructure.Module.Notifications;
 using Booking.Infrastructure.Module.Notifications.Repository;
 using Booking.Infrastructure.Module.People;
 using Booking.Infrastructure.Module.People.Repository;
+using Booking.Infrastructure.Module.Reputation.Repository;
 using Booking.Infrastructure.Module.Scheduling;
 using Booking.Infrastructure.Module.Scheduling.Repository;
 using Booking.Infrastructure.Module.Tenancy;
@@ -89,6 +93,7 @@ public static class DependencyInjection
         services.AddCatalogModule();
         services.AddAvailabilityModule();
         services.AddSchedulingModule();
+        services.AddReputationModule();
         services.AddComplianceModule();
         services.AddNotificationsModule(configuration, isDevelopment);
         services.AddGeo(configuration);
@@ -323,6 +328,24 @@ public static class DependencyInjection
         services.AddScoped<GetAgendaQuery>();
         services.AddScoped<ListPendingAppointmentsQuery>();
         services.AddScoped<ListMyAppointmentsQuery>();
+    }
+
+    /// <summary>Avaliações (ADR-032). O Scheduling só entra pelo contrato <see cref="IAppointmentReviewLookup"/>.</summary>
+    private static void AddReputationModule(this IServiceCollection services)
+    {
+        services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IRatingSummaryRepository, RatingSummaryRepository>();
+        services.AddScoped<IAppointmentReviewLookup, AppointmentReviewLookup>();
+
+        services.AddScoped<RatingAggregator>();
+        services.AddScoped<CreateReviewCommand>();
+        services.AddScoped<UpdateReviewCommand>();
+        services.AddScoped<ListBusinessReviewsQuery>();
+        services.AddScoped<ListProfessionalReviewsQuery>();
+        services.AddScoped<GetBusinessRatingQuery>();
+        services.AddScoped<GetProfessionalRatingQuery>();
+        services.AddScoped<ListMyReviewsQuery>();
+        services.AddScoped<GetMyReviewQuery>();
     }
 
     private static void AddComplianceModule(this IServiceCollection services)

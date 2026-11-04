@@ -544,6 +544,27 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - O espaço da **nota do profissional** existe e fica escondido até haver média (módulo de avaliações).
 - Migration `AddProfessionalRemovalRequest` (não aplicada): `people.professional_removal_request`.
 
+## 4.17 Avaliações (Fase 8, fatia 1 de 5, 04/11) — **backend escrito sem Docker, não verificado** (ADR-032, Proposto)
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `GET /api/appointments/{id}/review` | consumidor | `MyReviewResponse` com `canEdit`. 404 `review.not_found` se não existe ou é de outra pessoa |
+| `POST /api/appointments/{id}/review` `{ rating, professionalRating?, comment? }` | consumidor | 201. Agendamento **concluído**, do próprio consumidor, em até 30 dias. **10 por hora por conta** (429) |
+| `PUT /api/appointments/{id}/review` (mesmo corpo) | consumidor | 200. **Uma única edição**, em até 7 dias |
+| `GET /api/reviews/mine?page&pageSize` | consumidor | `PagedResult<MyReviewResponse>` |
+| `GET /api/businesses/{id}/reviews?page&pageSize` | **anônimo** | `PagedResult<PublicReviewResponse>`, mais recentes primeiro, sem as ocultas. 404 se o estabelecimento não está na vitrine |
+| `GET /api/businesses/{id}/rating` | **anônimo** | `{ average, count, distribution[5], isNew }`. `average` é nulo e `isNew` verdadeiro com menos de 3 avaliações |
+| `GET /api/professionals/{id}/reviews` e `/rating` | **anônimo** | idem, só com as notas em que o consumidor avaliou o profissional. 404 para profissional inativo |
+
+- `PublicReviewResponse`: `id`, `rating`, `professionalRating?`, `comment?`, `reviewerName` (**"Ana S."**), `serviceName?`
+  (**nulo em Saúde**), `reviewedAt`. Nunca traz id de consumidor nem de agendamento.
+- Erros: 400 `review.rating_invalid` / `review.comment_too_long`; 403 `appointment.customer_context_required` (token de
+  painel) e `review.not_allowed` (dono ou equipe do estabelecimento); 404 `review.not_found`; 409 `review.not_completed`,
+  `review.window_expired`, `review.already_reviewed`, `review.already_edited`, `review.edit_window_expired`; 503
+  `review.contention_try_again` (duas avaliações no mesmo alvo ao mesmo tempo: tentar de novo).
+- **Limitações registradas:** o dono não responde; o consumidor não apaga a avaliação.
+- Migration `AddReputation` (não aplicada): `reputation.review` e `reputation.rating_summary`.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

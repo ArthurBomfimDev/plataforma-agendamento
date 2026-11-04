@@ -785,6 +785,191 @@ namespace Booking.Infrastructure.Persistence.Migrations
                     b.ToTable("professional_removal_request", "people");
                 });
 
+            modelBuilder.Entity("Booking.Domain.Entity.Module.Reputation.RatingSummary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer")
+                        .HasColumnName("count");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Stars1")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars1");
+
+                    b.Property<int>("Stars2")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars2");
+
+                    b.Property<int>("Stars3")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars3");
+
+                    b.Property<int>("Stars4")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars4");
+
+                    b.Property<int>("Stars5")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars5");
+
+                    b.Property<long>("Sum")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sum");
+
+                    b.Property<string>("Target")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("target");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rating_summary");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("ix_rating_summary_business_id");
+
+                    b.HasIndex("Target", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_rating_summary_target");
+
+                    b.ToTable("rating_summary", "reputation");
+                });
+
+            modelBuilder.Entity("Booking.Domain.Entity.Module.Reputation.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AppointmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("appointment_id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTimeOffset?>("EditedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("edited_at");
+
+                    b.Property<DateTimeOffset?>("HiddenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("hidden_at");
+
+                    b.Property<Guid?>("HiddenByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("hidden_by_user_id");
+
+                    b.Property<string>("HiddenReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("hidden_reason");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_hidden");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_sensitive");
+
+                    b.Property<Guid>("ProfessionalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("professional_id");
+
+                    b.Property<int?>("ProfessionalRating")
+                        .HasColumnType("integer")
+                        .HasColumnName("professional_rating");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<DateTimeOffset>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("ReviewerName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("reviewer_name");
+
+                    b.Property<string>("ServiceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("service_name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_review");
+
+                    b.HasIndex("AppointmentId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_review_appointment");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("ix_review_business_id");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_review_customer_id");
+
+                    b.HasIndex("BusinessId", "IsHidden", "ReviewedAt")
+                        .HasDatabaseName("ix_review_business_id_is_hidden_reviewed_at");
+
+                    b.HasIndex("ProfessionalId", "IsHidden", "ReviewedAt")
+                        .HasDatabaseName("ix_review_professional_id_is_hidden_reviewed_at");
+
+                    b.ToTable("review", "reputation", t =>
+                        {
+                            t.HasCheckConstraint("ck_review_professional_rating", "professional_rating IS NULL OR professional_rating BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("ck_review_rating", "rating BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("Booking.Domain.Entity.Module.Scheduling.Appointment", b =>
                 {
                     b.Property<Guid>("Id")
