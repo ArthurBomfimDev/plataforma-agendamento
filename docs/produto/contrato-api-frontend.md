@@ -429,6 +429,32 @@ Ciclo e regra: ADR-028. Todas as rotas `current/*` exigem o contexto de estabele
 - **E-mails ao dono** (outbox): cadastro recebido (Saúde), aprovado, reprovado com motivo, suspenso com motivo, publicado.
   Em Saúde o assunto não cita o nome do estabelecimento nem serviço.
 - **Busca:** serviço e preço aparecem em todas as categorias, Saúde inclusa (ADR-024).
+- **`GET /api/businesses/current/checklist` devolve `PagedResult`** (uma página com todos os itens), como manda a
+  ADR-010; o serviço do frontend lê `.items`. Corrigido na Fase 4 (o teste de paginação estava vermelho).
+
+## 4.11 Convites de equipe (Fase 4, bloco 1, 04/11) — **backend escrito sem Docker, não verificado**
+
+Ciclo e regra: ADR-029. O convite é **opcional**: o caminho principal é o dono cadastrar o profissional sem conta.
+Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca é convidável).
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `POST /api/businesses/current/invitations` `{ name, email, role, professionalId? }` | Owner | 201 `InvitationResponse`. **409** `business.seat_limit_reached`, `invitation.already_pending`, `invitation.already_member`, `invitation.professional_not_linkable`. 400 `invitation.role_invalid`. 30 por hora por conta (429) |
+| `GET /api/businesses/current/invitations?page=&pageSize=` | Owner | `PagedResult<InvitationResponse>` só dos **pendentes** |
+| `GET /api/businesses/current/seats` | Owner | `{ used, limit }`: contas ativas + convites pendentes contra o `SeatLimit` (15) |
+| `POST /api/businesses/current/invitations/{id}/resend` | Owner | token novo e prazo novo (o link antigo deixa de valer). Expirado volta a ocupar vaga |
+| `DELETE /api/businesses/current/invitations/{id}` | Owner | revoga. 204. Convite de outro estabelecimento responde **404** |
+| `POST /api/invitations/preview` `{ token }` | **anônimo** | `{ businessName, inviterName, inviteeName, email, role, accountExists, termsVersion, termsRequired }` |
+| `POST /api/invitations/accept` `{ token, acceptTerms }` | conta logada | a conta precisa ter o e-mail do convite (**403** `invitation.email_mismatch`) |
+| `POST /api/invitations/accept-new-account` `{ token, fullName, password, acceptTerms }` | **anônimo** | cria a conta com e-mail já confirmado e aceita. **409** `invitation.account_exists` se já há conta. Depois, o frontend faz o login com as mesmas credenciais |
+
+- **Token no corpo, nunca na URL** (log de acesso, histórico). Rotas do link: 20 por hora por IP (429).
+- **Erros do link:** `invitation.not_found` (404, token que não existe ou de outro estabelecimento), `invitation.expired`
+  e `invitation.revoked` (**410**), `invitation.already_used` (409), `invitation.terms_required` (400, só `Professional`).
+- `AcceptedInvitationResponse` = `{ businessId, businessName, role }`. Depois do aceite o frontend troca de contexto
+  (`switch-context`) para o novo estabelecimento.
+- **E-mail** pelo outbox, link `#/convite?token=`. O texto cita o estabelecimento e o papel, nunca categoria nem serviço.
+- **Migration `AddBusinessInvitation`** (não aplicada): tabela `tenancy.business_invitation` e `seat_limit` 1 → 15.
 
 ## 5. Resumo para fechar o lado do frontend
 
