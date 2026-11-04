@@ -60,6 +60,27 @@ Esperado: tudo verde. **Se algum teste de integração novo falhar, é o primeir
 | 4 | "advogado" | estado vazio |
 | 5 | Resultado de um estabelecimento de **Saúde** | cartão do estabelecimento, sem nome de serviço e sem duração |
 
+### Cadastro do estabelecimento, backend (Fase 3 — migration `AddOnboardingFields`)
+
+```powershell
+# 1. A migration é aplicada pelo serviço `migrations` ao subir a pilha (seção 0). Conferir:
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\d tenancy.business"'
+# esperado: responsible_name, responsible_council, responsible_council_number, responsible_council_state,
+#           suspension_reason, suspended_by_user_id, suspended_at, terms_accepted_at, terms_version (todas NULL nas linhas antigas)
+# 2. Testes novos (escritos sem Docker): OnboardingTests P1 a P7 + os ajustes de AdminBusinessTests e TestWorld
+cd backend; dotnet test tests/Booking.IntegrationTests --filter "FullyQualifiedName~Onboarding|FullyQualifiedName~AdminBusiness"
+```
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | Suíte de integração inteira | verde. **O `TestWorld` agora aceita os termos (e informa o responsável em Saúde) antes do envio**: se algo antigo quebrar, comece por aí |
+| 2 | `POST /api/admin/businesses/{id}/suspend` sem motivo | 400 `business.suspension_requires_reason` |
+| 3 | Suspender com motivo, depois `GET /api/businesses/current` pelo dono | `statusReason` com o motivo |
+| 4 | Quarto `POST /api/businesses` da mesma conta | 409 `business.account_limit_reached` |
+| 5 | Estabelecimento de Saúde sem responsável tenta `submit` | 400 `business.activation_checklist_incomplete` com `responsible` em `missing` |
+| 6 | Admin abre o detalhe de uma Saúde | vê `responsible`; o dono vê só `responsibleInformed: true`; a resposta pública nunca traz |
+| 7 | **Seed** (`bun scripts/seed-demo.ts`) | conclui sem erro: o seed agora chama `POST current/terms` (e `PUT current/responsible` nas de Saúde) antes do `submit`. Não foi executado |
+
 ### Fechamento da casca mobile (#34)
 
 | # | Passo | Esperado |
