@@ -94,6 +94,19 @@ public sealed class BusinessesController : ControllerBase
     public async Task<IActionResult> Submit([FromServices] SubmitBusinessCommand command, CancellationToken ct) =>
         Ok(await command.ExecuteAsync(ct));
 
+    /// <summary>Responsável de Saúde e registro no conselho. Só o Owner; só o Admin lê.</summary>
+    [HttpPut("current/responsible")]
+    [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetResponsible(
+        SetResponsibleRequest request, [FromServices] SetResponsibleCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(request, ct));
+
+    [HttpPost("current/terms")]
+    [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AcceptTerms(
+        AcceptTermsRequest request, [FromServices] AcceptTermsCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(request, ct));
+
     /// <summary>Publica na hora (Beleza), com a checklist completa. Saúde responde <c>business.requires_review</c>.</summary>
     [HttpPost("current/publish")]
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]

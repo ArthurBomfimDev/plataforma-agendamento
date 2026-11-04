@@ -1,4 +1,5 @@
 using Booking.Domain.Entity.Module.Tenancy;
+using Booking.Domain.Enum.Module.Tenancy;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
 using Booking.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,11 @@ public sealed class BusinessMembershipRepository(BookingDbContext context) : IBu
 
     public Task<BusinessMembership?> GetByBusinessAndUserAsync(Guid businessId, Guid userId, CancellationToken ct = default) =>
         context.Set<BusinessMembership>().FirstOrDefaultAsync(x => x.BusinessId == businessId && x.UserId == userId, ct);
+
+    // Entre estabelecimentos por natureza: o limite é da conta, não de um tenant. Filtra pelo usuário.
+    public Task<int> CountOwnedByUserAsync(Guid userId, CancellationToken ct = default) =>
+        context.AcrossTenants<BusinessMembership>()
+            .CountAsync(x => x.UserId == userId && x.Role == BusinessMembershipRole.Owner && x.Status != BusinessMembershipStatus.Removed, ct);
 
     public void Add(BusinessMembership membership) => context.Set<BusinessMembership>().Add(membership);
 }

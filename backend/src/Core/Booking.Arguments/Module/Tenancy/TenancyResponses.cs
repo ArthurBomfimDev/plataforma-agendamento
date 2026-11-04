@@ -41,7 +41,10 @@ public sealed record BusinessDetailResponse(
     bool LocationConfirmed,
     SchedulingPolicyResponse Policy,
     ImageSetResponse? Logo = null,
-    ImageSetResponse? Cover = null);
+    ImageSetResponse? Cover = null,
+    string? StatusReason = null,
+    bool TermsAccepted = false,
+    bool ResponsibleInformed = false);
 
 /// <summary>
 /// Visão pública da vitrine. Sem documento. Da política, só o que o consumidor precisa ver antes de pedir:
@@ -91,4 +94,13 @@ public sealed record AdminBusinessDetailResponse(
     IReadOnlyList<ChecklistItemResponse> Checklist,
     Guid? VerifiedByUserId,
     DateTimeOffset? VerifiedAt,
-    string? VerificationNote);
+    string? VerificationNote,
+    ResponsibleResponse? Responsible = null,
+    string? SuspensionReason = null,
+    Guid? SuspendedByUserId = null,
+    DateTimeOffset? SuspendedAt = null,
+    DateTimeOffset? TermsAcceptedAt = null,
+    string? TermsVersion = null);
+
+/// <summary>Responsável de Saúde e registro no conselho. Só o Admin recebe; nunca é público nem vai para log.</summary>
+public sealed record ResponsibleResponse(string Name, string Council, string CouncilNumber, string CouncilState);

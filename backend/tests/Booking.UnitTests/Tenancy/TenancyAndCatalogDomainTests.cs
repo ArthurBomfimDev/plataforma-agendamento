@@ -116,7 +116,7 @@ public sealed class TenancyAndCatalogDomainTests
     {
         Business suspended = NewBusiness();
         suspended.Publish();
-        suspended.Suspend();
+        suspended.Suspend(Guid.NewGuid(), "Denúncia procedente.", _now);
         Assert.Throws<DomainException>(suspended.Publish);
 
         var admin = Guid.NewGuid();
@@ -131,6 +131,72 @@ public sealed class TenancyAndCatalogDomainTests
         Assert.Equal(admin, clinic.VerifiedByUserId);
         clinic.Submit(); // o dono corrige e reenvia
         Assert.Equal(BusinessStatus.PendingReview, clinic.Status);
+    }
+
+    [Fact]
+    public void Suspension_requires_a_reason_and_records_who_decided_and_when()
+    {
+        Business business = NewBusiness();
+        business.Publish();
+        var admin = Guid.NewGuid();
+
+        Assert.Equal("business.suspension_requires_reason", Assert.Throws<DomainException>(() => business.Suspend(admin, "  ", _now)).Message);
+        Assert.Equal(BusinessStatus.Active, business.Status);
+
+        business.Suspend(admin, "  Denúncia procedente.  ", _now);
+
+        Assert.Equal(BusinessStatus.Suspended, business.Status);
+        Assert.Equal("Denúncia procedente.", business.SuspensionReason);
+        Assert.Equal(admin, business.SuspendedByUserId);
+        Assert.Equal(_now, business.SuspendedAt);
+        Assert.False(business.IsBookable);
+
+        business.Reactivate();
+        Assert.True(business.IsBookable);
+    }
+
+    [Fact]
+    public void Health_responsible_keeps_only_the_council_number_chars_and_an_uppercase_state()
+    {
+        var clinic = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+        Assert.False(clinic.HasResponsible);
+
+        clinic.SetResponsible("  Dra. Ana Lima ", ProfessionalCouncil.Crp, "06/12345", "sp");
+
+        Assert.True(clinic.HasResponsible);
+        Assert.Equal("Dra. Ana Lima", clinic.ResponsibleName);
+        Assert.Equal(ProfessionalCouncil.Crp, clinic.ResponsibleCouncil);
+        Assert.Equal("0612345", clinic.ResponsibleCouncilNumber);
+        Assert.Equal("SP", clinic.ResponsibleCouncilState);
+    }
+
+    [Theory]
+    [InlineData("", "123", "SP", "business.responsible_incomplete")]
+    [InlineData("Ana", "///", "SP", "business.responsible_incomplete")]
+    [InlineData("Ana", "123", "S", "business.responsible_state_invalid")]
+    [InlineData("Ana", "123", "S1", "business.responsible_state_invalid")]
+    [InlineData("Ana", "123", "SPP", "business.responsible_state_invalid")]
+    public void Health_responsible_with_missing_or_malformed_data_is_refused(string name, string number, string state, string code)
+    {
+        var clinic = Business.Create("Clínica", Document.Of("11.222.333/0001-81"), BusinessCategory.Saude);
+
+        DomainException failure = Assert.Throws<DomainException>(() => clinic.SetResponsible(name, ProfessionalCouncil.Crm, number, state));
+
+        Assert.Equal(code, failure.Message);
+        Assert.False(clinic.HasResponsible);
+    }
+
+    [Fact]
+    public void Terms_record_the_version_and_the_moment()
+    {
+        Business business = NewBusiness();
+
+        Assert.Throws<DomainException>(() => business.AcceptTerms(" ", _now));
+
+        business.AcceptTerms("2026-11", _now);
+
+        Assert.Equal("2026-11", business.TermsVersion);
+        Assert.Equal(_now, business.TermsAcceptedAt);
     }
 
     [Fact]

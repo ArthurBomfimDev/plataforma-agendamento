@@ -3,6 +3,7 @@ using Booking.Application.Contracts.Catalog;
 using Booking.Application.Contracts.People;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Module.Tenancy;
+using Booking.Domain.Enum.Module.Tenancy;
 
 namespace Booking.Application.Module.Tenancy.Commands;
 
@@ -14,7 +15,19 @@ public sealed class ActivationChecklist(IServiceCatalog catalog, IPeopleDirector
 {
     public async Task<IReadOnlyList<ChecklistItemResponse>> EvaluateAsync(Business business, CancellationToken ct)
     {
-        return
+        var items = new List<ChecklistItemResponse>
+        {
+            // Os termos incluem a declaração de que o dono tem autorização dos profissionais para exibi-los (Fase 3).
+            new("terms", business.TermsAcceptedAt is not null, RequiredForSubmit: true),
+        };
+
+        // Saúde: profissional responsável e registro no conselho (só o Admin vê). Beleza não tem este item.
+        if (business.Category.RequiresSensitiveHandling())
+        {
+            items.Add(new("responsible", business.HasResponsible, RequiredForSubmit: true));
+        }
+
+        items.AddRange(
         [
             // CNPJ ou CPF com dígito verificador conferido na criação (Document.Of): nunca chega inválido aqui.
             new ChecklistItemResponse("document", true, RequiredForSubmit: true),
@@ -28,7 +41,9 @@ public sealed class ActivationChecklist(IServiceCatalog catalog, IPeopleDirector
 
             // Foto do estabelecimento não existe no recorte de entrega.
             new ChecklistItemResponse("photo", false, RequiredForSubmit: false),
-        ];
+        ]);
+
+        return items;
     }
 
     public async Task<IReadOnlyList<string>> MissingForSubmitAsync(Business business, CancellationToken ct) =>

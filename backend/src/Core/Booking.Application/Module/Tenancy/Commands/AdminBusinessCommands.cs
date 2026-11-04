@@ -37,9 +37,12 @@ public sealed class AdminBusinessCommands(
             business.ReturnToDraft();
         }, ct);
 
-    /// <summary>Ativo → suspenso. Some da busca e da vitrine (<see cref="Business.IsBookable"/>).</summary>
-    public Task<AdminBusinessDetailResponse> SuspendAsync(Guid businessId, CancellationToken ct = default) =>
-        DecideAsync(businessId, (business, _, _) => business.Suspend(), ct);
+    /// <summary>
+    /// Ativo → suspenso, com o motivo (obrigatório), quem decidiu e quando. Some da busca e da vitrine
+    /// (<see cref="Business.IsBookable"/>).
+    /// </summary>
+    public Task<AdminBusinessDetailResponse> SuspendAsync(Guid businessId, string? reason, CancellationToken ct = default) =>
+        DecideAsync(businessId, (business, adminId, now) => business.Suspend(adminId, reason ?? string.Empty, now), ct);
 
     /// <summary>Suspenso → ativo.</summary>
     public Task<AdminBusinessDetailResponse> ReinstateAsync(Guid businessId, CancellationToken ct = default) =>

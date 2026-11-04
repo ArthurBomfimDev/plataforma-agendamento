@@ -32,6 +32,17 @@ public sealed class BusinessMapping : BaseMapping<Business>
         builder.Property(x => x.State).HasMaxLength(2);
         builder.Property(x => x.PostalCode).HasMaxLength(8);
 
+        builder.Property(x => x.SuspensionReason).HasMaxLength(500);
+
+        // Responsável de Saúde: dado sensível de acesso restrito (só o Admin lê). Nunca vai para log nem para resposta pública.
+        builder.Property(x => x.ResponsibleName).HasMaxLength(150);
+        builder.Property(x => x.ResponsibleCouncil).HasConversion<string>().HasMaxLength(20);
+        builder.Property(x => x.ResponsibleCouncilNumber).HasMaxLength(20);
+        builder.Property(x => x.ResponsibleCouncilState).HasMaxLength(2);
+        builder.Ignore(x => x.HasResponsible);
+
+        builder.Property(x => x.TermsVersion).HasMaxLength(20);
+
         builder.Property(x => x.VerificationLevel).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(x => x.VerificationNote).HasMaxLength(500);
 

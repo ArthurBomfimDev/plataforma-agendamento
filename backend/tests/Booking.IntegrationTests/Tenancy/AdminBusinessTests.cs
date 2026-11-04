@@ -87,7 +87,7 @@ public sealed class AdminBusinessTests(IntegrationFixture fixture, ITestOutputHe
 
         Assert.Equal(1, (await _world.SendOkAsync<PagedResult<BusinessSearchItemResponse>>(HttpMethod.Get, search, null, admin.Token)).TotalCount);
 
-        await _world.SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/suspend", null, admin.Token);
+        await _world.SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{business.Id}/suspend", new AdminDecisionRequest("Denúncia procedente"), admin.Token);
 
         Assert.Equal(0, (await _world.SendOkAsync<PagedResult<BusinessSearchItemResponse>>(HttpMethod.Get, search, null, admin.Token)).TotalCount);
         using (HttpResponseMessage showcase = await _world.SendAsync(HttpMethod.Get, $"/api/businesses/{business.Id}", null, null))
@@ -139,7 +139,7 @@ public sealed class AdminBusinessTests(IntegrationFixture fixture, ITestOutputHe
             (HttpMethod.Get, path, null),
             (HttpMethod.Post, $"{path}/approve", new AdminDecisionRequest("tentativa")),
             (HttpMethod.Post, $"{path}/reject", new AdminDecisionRequest("tentativa")),
-            (HttpMethod.Post, $"{path}/suspend", null),
+            (HttpMethod.Post, $"{path}/suspend", new AdminDecisionRequest("tentativa")),
             (HttpMethod.Post, $"{path}/reinstate", null),
         ];
 

@@ -18,6 +18,11 @@ public sealed class RegisterBusinessCommand(
     public async Task<BusinessResponse> ExecuteAsync(
         Guid ownerUserId, RegisterBusinessRequest request, CancellationToken ct = default)
     {
+        if (await memberships.CountOwnedByUserAsync(ownerUserId, ct) >= Business.MaxPerAccount)
+        {
+            throw new DomainException("business.account_limit_reached");
+        }
+
         Document document = Document.Of(request.Document);
 
         if (!Enum.TryParse(request.Category, ignoreCase: true, out BusinessCategory category))

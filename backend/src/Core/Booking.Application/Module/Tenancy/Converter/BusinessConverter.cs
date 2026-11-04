@@ -40,11 +40,42 @@ public static class BusinessConverter
                 business.CancellationWindowHours,
                 business.TimeZone),
             images.For(business.LogoImageKey),
-            images.For(business.CoverImageKey));
+            images.For(business.CoverImageKey),
+            StatusReason(business),
+            business.TermsAcceptedAt is not null,
+            business.HasResponsible);
+
+    /// <summary>
+    /// O motivo que o dono precisa ler: o da suspensão (Suspenso) ou o da reprovação (rascunho com nível Rejected).
+    /// Fora desses dois estados, nada.
+    /// </summary>
+    private static string? StatusReason(Business business) => business.Status switch
+    {
+        BusinessStatus.Suspended => business.SuspensionReason,
+        BusinessStatus.Draft when business.VerificationLevel == VerificationLevel.Rejected => business.VerificationNote,
+        _ => null,
+    };
 
     public static AdminBusinessDetailResponse ToAdminDetail(
         Business business, IReadOnlyList<ChecklistItemResponse> checklist, IImageUrls images) =>
-        new(ToDetail(business, images), checklist, business.VerifiedByUserId, business.VerifiedAt, business.VerificationNote);
+        new(
+            ToDetail(business, images),
+            checklist,
+            business.VerifiedByUserId,
+            business.VerifiedAt,
+            business.VerificationNote,
+            business.HasResponsible
+                ? new ResponsibleResponse(
+                    business.ResponsibleName!,
+                    business.ResponsibleCouncil!.Value.ToString(),
+                    business.ResponsibleCouncilNumber!,
+                    business.ResponsibleCouncilState!)
+                : null,
+            business.SuspensionReason,
+            business.SuspendedByUserId,
+            business.SuspendedAt,
+            business.TermsAcceptedAt,
+            business.TermsVersion);
 
     public static PublicBusinessResponse ToPublic(Business business, IImageUrls images) =>
         new(

@@ -9,6 +9,9 @@ public sealed class Business : AggregateRoot, IAuditable
 {
     public const string DefaultTimeZone = "America/Sao_Paulo";
 
+    /// <summary>Freio contra abuso: estabelecimentos que uma conta pode ter como dona.</summary>
+    public const int MaxPerAccount = 3;
+
     public string Name { get; private set; } = null!;
     public Document Document { get; private set; } = null!;
     public BusinessCategory Category { get; private set; }
@@ -31,6 +34,21 @@ public sealed class Business : AggregateRoot, IAuditable
     public int MinLeadTimeHours { get; private set; } = 2;
     public int BookingHorizonDays { get; private set; } = 60;
     public int CancellationWindowHours { get; private set; } = 24;
+
+    // --- Suspensão: motivo e quem decidiu (o histórico fica; a tela só mostra enquanto Suspenso) ---
+    public string? SuspensionReason { get; private set; }
+    public Guid? SuspendedByUserId { get; private set; }
+    public DateTimeOffset? SuspendedAt { get; private set; }
+
+    // --- Responsável de Saúde: nunca em resposta pública nem em log; só o Admin vê ---
+    public string? ResponsibleName { get; private set; }
+    public ProfessionalCouncil? ResponsibleCouncil { get; private set; }
+    public string? ResponsibleCouncilNumber { get; private set; }
+    public string? ResponsibleCouncilState { get; private set; }
+
+    // --- Termos de uso aceitos pelo dono (inclui a declaração de autorização dos profissionais) ---
+    public DateTimeOffset? TermsAcceptedAt { get; private set; }
+    public string? TermsVersion { get; private set; }
 
     public VerificationLevel VerificationLevel { get; private set; }
     public Guid? VerifiedByUserId { get; private set; }
@@ -203,14 +221,63 @@ public sealed class Business : AggregateRoot, IAuditable
         Status = BusinessStatus.Draft;
     }
 
-    public void Suspend()
+    /// <summary>Ativo → suspenso. O motivo é obrigatório e fica registrado com quem decidiu e quando.</summary>
+    public void Suspend(Guid adminUserId, string reason, DateTimeOffset now)
     {
         if (Status != BusinessStatus.Active)
         {
             throw new DomainException("business.cannot_suspend_from_current_status");
         }
 
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException("business.suspension_requires_reason");
+        }
+
         Status = BusinessStatus.Suspended;
+        SuspensionReason = reason.Trim();
+        SuspendedByUserId = adminUserId;
+        SuspendedAt = now;
+    }
+
+    /// <summary>
+    /// Profissional responsável e registro no conselho (Saúde). Tudo obrigatório; a UF é a sigla de 2 letras.
+    /// A conferência no portal do conselho é do Admin, à mão: aqui só se garante o formato.
+    /// </summary>
+    public void SetResponsible(string name, ProfessionalCouncil council, string councilNumber, string councilState)
+    {
+        string number = new([.. (councilNumber ?? string.Empty).Where(char.IsLetterOrDigit)]);
+        string state = (councilState ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (string.IsNullOrWhiteSpace(name) || number.Length is < 1 or > 20)
+        {
+            throw new DomainException("business.responsible_incomplete");
+        }
+
+        if (state.Length != 2 || !state.All(char.IsAsciiLetterUpper))
+        {
+            throw new DomainException("business.responsible_state_invalid");
+        }
+
+        ResponsibleName = name.Trim();
+        ResponsibleCouncil = council;
+        ResponsibleCouncilNumber = number;
+        ResponsibleCouncilState = state;
+    }
+
+    public bool HasResponsible =>
+        !string.IsNullOrWhiteSpace(ResponsibleName) && ResponsibleCouncil is not null && ResponsibleCouncilNumber is not null && ResponsibleCouncilState is not null;
+
+    /// <summary>O dono aceita os termos (data e versão). Sem eles o estabelecimento não é enviado nem publicado.</summary>
+    public void AcceptTerms(string version, DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            throw new DomainException("business.terms_version_required");
+        }
+
+        TermsVersion = version.Trim();
+        TermsAcceptedAt = now;
     }
 
     public void Reactivate()

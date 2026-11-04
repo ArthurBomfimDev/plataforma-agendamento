@@ -45,10 +45,12 @@ public sealed class AdminBusinessesController : ControllerBase
         Guid businessId, AdminDecisionRequest request, [FromServices] AdminBusinessCommands commands, CancellationToken ct) =>
         Ok(await commands.RejectAsync(businessId, request.Note, ct));
 
+    /// <summary>Suspende. Sem motivo, 400 <c>business.suspension_requires_reason</c>.</summary>
     [HttpPost("{businessId:guid}/suspend")]
     [ProducesResponseType<AdminBusinessDetailResponse>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Suspend(Guid businessId, [FromServices] AdminBusinessCommands commands, CancellationToken ct) =>
-        Ok(await commands.SuspendAsync(businessId, ct));
+    public async Task<IActionResult> Suspend(
+        Guid businessId, AdminDecisionRequest request, [FromServices] AdminBusinessCommands commands, CancellationToken ct) =>
+        Ok(await commands.SuspendAsync(businessId, request.Note, ct));
 
     [HttpPost("{businessId:guid}/reinstate")]
     [ProducesResponseType<AdminBusinessDetailResponse>(StatusCodes.Status200OK)]
