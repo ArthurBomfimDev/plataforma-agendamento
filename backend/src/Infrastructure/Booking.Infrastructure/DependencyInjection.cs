@@ -238,6 +238,7 @@ public static class DependencyInjection
         services.AddScoped<GetPublicBusinessQuery>();
         services.AddScoped<SearchBusinessesQuery>();
 
+        services.AddScoped<LeaveBusinessCommand>();
         services.AddScoped<InviteMemberCommand>();
         services.AddScoped<ResendInvitationCommand>();
         services.AddScoped<RevokeInvitationCommand>();
@@ -253,11 +254,16 @@ public static class DependencyInjection
     {
         services.AddScoped<IProfessionalRepository, ProfessionalRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IProfessionalRemovalRequestRepository, ProfessionalRemovalRequestRepository>();
         services.AddScoped<IPeopleDirectory, PeopleDirectory>();
         services.AddScoped<IProfessionalLinker, ProfessionalLinker>();
 
         services.AddScoped<CreateProfessionalCommand>();
         services.AddScoped<UpdateProfessionalCommand>();
+        services.AddScoped<GetPublicProfessionalQuery>();
+        services.AddScoped<RequestProfessionalRemovalCommand>();
+        services.AddScoped<ListProfessionalRemovalRequestsQuery>();
+        services.AddScoped<ResolveProfessionalRemovalRequestCommand>();
         services.AddScoped<GetMyProfessionalProfileQuery>();
         services.AddScoped<UpdateMyProfessionalProfileCommand>();
         services.AddScoped<RegisterCustomerCommand>();
@@ -385,6 +391,7 @@ public static class DependencyInjection
         services.AddScoped<IInvitationMailer, InvitationMailer>();
         services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
         services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
+        services.AddScoped<IProfessionalRemovalNotifier, ProfessionalRemovalNotifier>();
         services.AddScoped<DispatchOutboxCommand>();
     }
 }

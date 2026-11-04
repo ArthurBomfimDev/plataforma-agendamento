@@ -11,6 +11,12 @@ public interface IProfessionalLinker
 
     Task LinkAsync(Guid businessId, Guid professionalId, Guid membershipId, CancellationToken ct = default);
 
+    /// <summary>
+    /// "Sair do estabelecimento": desativa o perfil ligado ao vínculo, que sai da vitrine na hora. O histórico de
+    /// agendamentos permanece. Sem perfil ligado (atendente), não faz nada.
+    /// </summary>
+    Task DeactivateByMembershipAsync(Guid membershipId, CancellationToken ct = default);
+
     /// <summary>Cria o perfil do profissional já ligado ao vínculo.</summary>
     void Create(Guid businessId, string displayName, Guid membershipId);
 }

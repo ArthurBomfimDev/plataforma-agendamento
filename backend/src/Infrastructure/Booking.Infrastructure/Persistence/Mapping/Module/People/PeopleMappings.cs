@@ -24,6 +24,26 @@ public sealed class ProfessionalMapping : BaseMapping<Professional>
     }
 }
 
+/// <summary>Pedidos de remoção de perfil. Fora do tenant: o Admin lê os de todos os estabelecimentos.</summary>
+public sealed class ProfessionalRemovalRequestMapping : BaseMapping<ProfessionalRemovalRequest>
+{
+    protected override void ConfigureEntity(EntityTypeBuilder<ProfessionalRemovalRequest> builder)
+    {
+        builder.ToTable("professional_removal_request", "people");
+
+        builder.Property(x => x.BusinessId).IsRequired();
+        builder.Property(x => x.ProfessionalId).IsRequired();
+        builder.Property(x => x.Reason).HasMaxLength(ProfessionalRemovalRequest.MaxReasonLength).IsRequired();
+        builder.Property(x => x.Contact).HasMaxLength(ProfessionalRemovalRequest.MaxContactLength);
+        builder.Property(x => x.RequestedAt).IsRequired();
+        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Resolution).HasMaxLength(500);
+
+        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.ProfessionalId);
+    }
+}
+
 public sealed class CustomerMapping : BaseMapping<Customer>
 {
     protected override void ConfigureEntity(EntityTypeBuilder<Customer> builder)

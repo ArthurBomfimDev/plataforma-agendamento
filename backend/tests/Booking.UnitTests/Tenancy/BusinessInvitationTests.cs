@@ -526,6 +526,14 @@ public sealed class BusinessInvitationTests
             return Task.CompletedTask;
         }
 
+        public List<Guid> Deactivated { get; } = [];
+
+        public Task DeactivateByMembershipAsync(Guid membershipId, CancellationToken ct = default)
+        {
+            Deactivated.Add(membershipId);
+            return Task.CompletedTask;
+        }
+
         public void Create(Guid businessId, string displayName, Guid membershipId) => Created.Add((businessId, membershipId));
     }
 

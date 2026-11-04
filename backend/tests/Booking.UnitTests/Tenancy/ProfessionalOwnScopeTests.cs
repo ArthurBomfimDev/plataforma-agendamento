@@ -144,6 +144,8 @@ public sealed class ProfessionalOwnScopeTests
     {
         public Task<Professional?> GetByMembershipIdAsync(Guid membershipId, CancellationToken ct = default) => Task.FromResult(own);
 
+        public Task<Professional?> GetByIdAcrossTenantsAsync(Guid id, CancellationToken ct = default) => throw new NotSupportedException();
+
         public Task<Professional?> GetByIdAsync(Guid id, CancellationToken ct = default) => throw new NotSupportedException();
 
         public Task<Professional?> GetByIdOfBusinessAsync(Guid businessId, Guid id, CancellationToken ct = default) => throw new NotSupportedException();
