@@ -157,6 +157,24 @@ Escrito sem Docker. Pilha isolada (seção 0), seed rodado. Conta do dono: `dono
 | 16 | Aceitar logado com uma conta de **outro** e-mail (`POST /api/invitations/accept`) | 403 `invitation.email_mismatch` |
 | 17 | Enviar 31 convites em uma hora, ou abrir a prévia 21 vezes do mesmo IP | 429 |
 
+### Papel Atendente (Fase 4, bloco 2) — sem migration
+
+Escrito sem Docker. O papel é texto (`role`), então não há migration. Pilha isolada (seção 0).
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `dotnet test Booking.slnx --filter FullyQualifiedName~AttendantTests` (T1 a T4, escritos sem Docker) | verdes. T1 é a matriz de 28 rotas com 403; se uma falhar, a mensagem diz qual rota respondeu outra coisa |
+| 2 | `dotnet test Booking.slnx --filter FullyQualifiedName~RolePolicyTests` (já rodou sem Docker: 68 casos) | verdes |
+| 3 | Convidar um atendente (passo 4 do convite), aceitar, entrar e trocar de contexto | `POST /api/users/me/context` devolve `role: "Attendant"` |
+| 4 | Com esse token: `GET /api/businesses/current/appointments?date=…` e `…/pending` | 200, com os pedidos de **todos** os profissionais |
+| 5 | Confirmar um pedido do profissional A e outro do B | os dois 200, `status: Confirmed` |
+| 6 | `POST …/appointments/counter` para o profissional B | 201 |
+| 7 | `POST …/schedule-exceptions` (bloqueio de um período do profissional A) | 201 |
+| 8 | `POST …/work-schedules`, `POST …/services`, `PUT …/address`, `POST …/invitations`, `DELETE …/professionals/{id}/photo` | **todos 403** |
+| 9 | `GET /api/businesses/current` | **403** (só o dono) |
+| 10 | `POST /api/appointments` com esse token | 403 `appointment.customer_context_required` |
+| 11 | No `psql`: `SELECT actor_role, count(*) FROM scheduling.appointment_event GROUP BY 1;` depois do passo 5 | aparece `Attendant` (a coluna aceita até 20 caracteres) |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
