@@ -31,6 +31,27 @@ const MESSAGES: Record<string, string> = {
   'compliance.consent_required':
     'Este estabelecimento é da área da saúde: é preciso dar o consentimento antes de agendar.',
   'business.not_found': 'Estabelecimento não encontrado.',
+  'business.document_already_registered':
+    'Já existe um estabelecimento cadastrado com este documento.',
+  'business.account_limit_reached': 'Cada conta pode ter até 3 estabelecimentos.',
+  'business.requires_review':
+    'Estabelecimentos de saúde passam por análise: use "Enviar para análise".',
+  'business.activation_checklist_incomplete': 'Ainda falta completar a checklist para continuar.',
+  'business.cannot_publish_from_current_status':
+    'Este estabelecimento não pode ser publicado agora.',
+  'business.cannot_submit_from_current_status': 'Este estabelecimento já foi enviado.',
+  'business.responsible_incomplete': 'Informe o responsável e o número do registro.',
+  'business.responsible_state_invalid': 'Informe a UF do registro com 2 letras.',
+  'business.responsible_only_for_health': 'Só estabelecimentos de saúde informam responsável.',
+  'business.address_incomplete': 'Informe a rua, a cidade e a UF.',
+  'business.location_not_geocoded': 'Não foi possível localizar o endereço. Confira os dados.',
+  'business.suspension_requires_reason': 'Informe o motivo da suspensão.',
+  'business.verification_rejection_requires_note': 'Informe o motivo da reprovação.',
+  'report.reason_invalid': 'O motivo precisa ter de 5 a 500 caracteres.',
+  'report.cannot_resolve_from_current_status': 'Esta denúncia já foi resolvida.',
+  'document.required': 'Informe o documento.',
+  'document.invalid_length': 'O documento deve ter 11 caracteres (CPF) ou 14 (CNPJ).',
+  'document.invalid_check_digit': 'Documento inválido. Confira os dígitos.',
   'service.not_found': 'Serviço não encontrado.',
   'appointment.not_found': 'Agendamento não encontrado.',
   'auth.forbidden': 'Você não tem permissão para fazer isso neste estabelecimento.',

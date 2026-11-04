@@ -224,6 +224,7 @@ public static class DependencyInjection
         services.AddScoped<ConfirmLocationCommand>();
         services.AddScoped<SubmitBusinessCommand>();
         services.AddScoped<PublishBusinessCommand>();
+        services.AddScoped<GetCurrentChecklistQuery>();
         services.AddScoped<ReportBusinessCommand>();
         services.AddScoped<ListBusinessReportsQuery>();
         services.AddScoped<ResolveBusinessReportCommand>();

@@ -4,6 +4,7 @@ import { distanceFormat, ratingFormat } from '@components/card-establishment/con
 import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { BusinessDetailScreenProps } from './types'
 import { Button } from '@components/button'
+import { ReportBusiness } from '@components/report-business'
 import { ServiceIcon } from '@components/image-defaults/service-icon'
 import { SmartImage } from '@components/smart-image'
 import { PageContainer } from '@components/page-container'
@@ -18,7 +19,7 @@ const comingSoon = <p className="type-body text-(--text-muted)">Em breve.</p>
  * Tela 03 · Página do estabelecimento (Figma, 390px; desktop: 03D, 1440px).
  */
 export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
-  const { business, nextFreeSlots = [], onBookService } = props
+  const { business, nextFreeSlots = [], onBookService, onReport } = props
 
   const servicesRef = useRef<HTMLUListElement>(null)
 
@@ -145,6 +146,7 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                 ]}
               />
             </main>
+            {onReport && <ReportBusiness onSubmit={onReport} />}
           </div>
 
           {/* Desktop: card fixo ao rolar, com os próximos horários (03D). */}

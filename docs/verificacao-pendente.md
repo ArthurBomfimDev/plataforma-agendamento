@@ -101,6 +101,38 @@ cd backend; dotnet test tests/Booking.IntegrationTests --filter "FullyQualifiedN
 | 8 | Reprovar com motivo | e-mail "Seu cadastro precisa de ajustes" com "Motivo: …"; o **assunto não cita o nome da clínica** |
 | 9 | Criar o 4º estabelecimento da mesma conta | 409 `business.account_limit_reached` |
 
+### Cadastro do estabelecimento, frontend (assistente, faixa de status, Admin)
+
+Escrito sem navegador: só teste de componente com API simulada. **Visual, 390 px e claro/escuro NÃO verificados.**
+
+```powershell
+# Pilha isolada (seção 0), seed rodado. Contas: dono.novo@example.com (Saúde em análise), admin@example.com,
+# e uma conta nova para cadastrar (confirme o e-mail pelo Mailpit em http://localhost:8095).
+```
+
+| # | Passo (390 px **e** desktop, claro **e** escuro) | Esperado |
+|---|---|---|
+| 1 | Home → rolar até o fim | cartão "Tem um negócio?" com **Tenho um negócio** (alvo ≥ 44 px) |
+| 2 | Logado: menu da conta → **Cadastrar meu estabelecimento**; e em Minha conta o mesmo botão | abre `#/cadastrar-estabelecimento` |
+| 3 | Sem sessão, abrir `#/cadastrar-estabelecimento` | vai para "Entrar" e volta ao assistente |
+| 4 | Passo 1: nome vazio → Continuar | erro "Informe o nome do estabelecimento." no campo |
+| 5 | Passo 2 (Documento): texto "Regra do documento **em definição**"; digitar `123` | erro do formato; `12.ABC.345/01DE-35` é aceito |
+| 6 | **Criar e continuar** | cria o rascunho (`POST /api/businesses`) e passa para o contexto dele; CNPJ repetido mostra "Já existe um estabelecimento…" |
+| 7 | Passo 3: CEP `17400-000` → **Buscar CEP** | preenche rua/bairro/cidade/UF quando o CEP traz; CEP não achado mostra o aviso e deixa digitar |
+| 8 | **Salvar e confirmar a localização** | `PUT address` + `PUT location`; endereço que não geocodifica mostra "Não foi possível localizar o endereço." |
+| 9 | Categoria **Saúde**: passo "Responsável" | aparece só em Saúde; nome, conselho, número, UF; erro por campo |
+| 10 | Revisão sem marcar os termos → Salvar | "Aceite os termos para continuar."; marcado, vai ao painel |
+| 11 | Painel, rascunho com itens faltando | faixa **Rascunho** com a checklist; cada item tem **Resolver** (cadastro, Serviços, Profissionais ou Jornadas); **nenhum** botão de publicar |
+| 12 | Completar tudo (Beleza) | aparece **Publicar meu estabelecimento**; ao tocar, some a faixa e o estabelecimento entra na busca |
+| 13 | Saúde completo | botão **Enviar para análise**; faixa vira **Em análise** (diz o que já pode e o que está bloqueado) e a clínica **não** aparece na busca |
+| 14 | `admin@example.com` → menu da conta → **Administração** (`#/admin/estabelecimentos`) | lista "Em análise" com a Clínica; filtros de status e categoria funcionam |
+| 15 | Abrir a clínica → **Reprovar** sem motivo | "Informe o motivo…"; com motivo, o dono vê a faixa **Reprovado** com o motivo e o e-mail "Seu cadastro precisa de ajustes" |
+| 16 | Dono corrige e **Reenviar para análise**; Admin **Aprova** | clínica aparece na busca; o dono vê **Aprovado** uma vez ("Entendi" some para sempre) |
+| 17 | Admin **Suspende** (motivo) e **Reativa** | some e volta da busca; o dono vê **Suspenso** com o motivo |
+| 18 | Conta que **não** é Admin abre `#/admin/estabelecimentos` | volta para a Home; e `GET /api/admin/businesses` com o token dela responde **403** |
+| 19 | Página pública de um estabelecimento ativo (sem login): **Denunciar este estabelecimento** → motivo com menos de 5 caracteres | erro no campo; com motivo válido, "Recebemos a sua denúncia…". Abrir o mesmo formulário 6 vezes seguidas do mesmo IP: a 6ª mostra o erro de limite (429) |
+| 20 | Admin → aba **Denúncias** (depois de `POST .../reports` pelo curl) | denúncia aberta (anônima ou "conta identificada"); **Resolver denúncia** a move para "Resolvidas" |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |

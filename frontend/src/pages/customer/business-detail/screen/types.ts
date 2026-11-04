@@ -34,4 +34,6 @@ export type BusinessDetailScreenProps = {
   /** Próximos horários livres, `HH:mm`, para o card "Agendar agora" do desktop. Vazio = não exibe. */
   nextFreeSlots?: string[]
   onBookService?: (serviceId: string) => void
+  /** "Denunciar este estabelecimento": `null` se enviou, senão a mensagem de erro. Sem a prop, o botão não aparece. */
+  onReport?: (reason: string) => Promise<string | null>
 }

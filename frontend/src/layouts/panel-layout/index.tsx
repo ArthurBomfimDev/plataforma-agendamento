@@ -30,6 +30,7 @@ import type { CounterBookingSlot } from '@pages/panel/agenda/screen/types'
 import { DESKTOP_QUERY } from '@hooks/use-media-query/consts'
 import type { PanelBottomItem } from '@components/bottom-navigation/types'
 import { BottomNavigation } from '@components/bottom-navigation'
+import { BusinessStatusPanel } from './business-status'
 import { PANEL_NAVIGATION_ITEMS } from '@components/bottom-navigation/consts'
 import { PageTransition } from '@components/page-transition'
 import { PendingBadge } from '@components/pending-badge'
@@ -262,6 +263,7 @@ const PanelShell = ({
       />
 
       <div className="min-w-0 flex-1">
+        <BusinessStatusPanel context={context} />
         <Suspense
           fallback={
             <div className="p-(--space-16) lg:p-(--space-24)">

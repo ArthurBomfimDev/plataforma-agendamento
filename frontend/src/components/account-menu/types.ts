@@ -11,6 +11,10 @@ export type AccountMenuProps = {
   onAccount?: () => void
   /** "Meu painel": só para quem tem estabelecimento e está como consumidor. */
   onOpenPanel?: () => void
+  /** "Cadastrar meu estabelecimento" (Fase 3). */
+  onRegisterBusiness?: () => void
+  /** "Administração": só para o Admin da plataforma. */
+  onOpenAdmin?: () => void
   onSignOut: () => void
   /** Lado do botão em que o menu abre. Padrão: `end`. */
   align?: 'start' | 'end'
