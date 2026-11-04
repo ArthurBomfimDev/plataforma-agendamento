@@ -17,11 +17,13 @@ using Booking.Application.Module.Compliance.Commands;
 using Booking.Application.Module.Compliance.Integration;
 using Booking.Application.Module.Compliance.Queries;
 using Booking.Application.Module.Identity.Commands;
+using Booking.Application.Module.Identity.Integration;
 using Booking.Application.Module.Identity.Queries;
 using Booking.Application.Module.Notifications.Commands;
 using Booking.Application.Module.Notifications.Email;
 using Booking.Application.Module.Notifications.Integration;
 using Booking.Application.Module.People.Commands;
+using Booking.Application.Module.People.Integration;
 using Booking.Application.Module.People.Queries;
 using Booking.Application.Module.Scheduling.Commands;
 using Booking.Application.Module.Scheduling.Integration;
@@ -186,6 +188,7 @@ public static class DependencyInjection
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddScoped<IUserDirectory, UserDirectory>();
+        services.AddScoped<IAccountProvisioner, AccountProvisioner>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -211,6 +214,7 @@ public static class DependencyInjection
         services.AddScoped<IBusinessRepository, BusinessRepository>();
         services.AddScoped<IBusinessMembershipRepository, BusinessMembershipRepository>();
         services.AddScoped<IBusinessReportRepository, BusinessReportRepository>();
+        services.AddScoped<IBusinessInvitationRepository, BusinessInvitationRepository>();
         services.AddScoped<IBusinessDirectory, BusinessDirectory>();
 
         services.AddScoped<CurrentBusinessLoader>();
@@ -233,6 +237,16 @@ public static class DependencyInjection
         services.AddScoped<GetCurrentBusinessQuery>();
         services.AddScoped<GetPublicBusinessQuery>();
         services.AddScoped<SearchBusinessesQuery>();
+
+        services.AddScoped<InviteMemberCommand>();
+        services.AddScoped<ResendInvitationCommand>();
+        services.AddScoped<RevokeInvitationCommand>();
+        services.AddScoped<ListInvitationsQuery>();
+        services.AddScoped<GetSeatsQuery>();
+        services.AddScoped<PreviewInvitationQuery>();
+        services.AddScoped<InvitationAcceptance>();
+        services.AddScoped<AcceptInvitationCommand>();
+        services.AddScoped<AcceptInvitationWithNewAccountCommand>();
     }
 
     private static void AddPeopleModule(this IServiceCollection services)
@@ -240,6 +254,7 @@ public static class DependencyInjection
         services.AddScoped<IProfessionalRepository, ProfessionalRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IPeopleDirectory, PeopleDirectory>();
+        services.AddScoped<IProfessionalLinker, ProfessionalLinker>();
 
         services.AddScoped<CreateProfessionalCommand>();
         services.AddScoped<UpdateProfessionalCommand>();
@@ -364,6 +379,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddScoped<IIdentityMailer, IdentityMailer>();
+        services.AddScoped<IInvitationMailer, InvitationMailer>();
         services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
         services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
         services.AddScoped<DispatchOutboxCommand>();

@@ -8,6 +8,9 @@ public interface IProfessionalRepository
     /// <summary>Do estabelecimento do token (filtro global de tenant).</summary>
     Task<Professional?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
+    /// <summary>De um estabelecimento informado explicitamente, sem depender do token (aceite de convite).</summary>
+    Task<Professional?> GetByIdOfBusinessAsync(Guid businessId, Guid id, CancellationToken ct = default);
+
     Task<PagedResult<Professional>> ListAsync(PageRequest page, CancellationToken ct = default);
 
     /// <summary>Vitrine: ativos de um estabelecimento informado explicitamente.</summary>
