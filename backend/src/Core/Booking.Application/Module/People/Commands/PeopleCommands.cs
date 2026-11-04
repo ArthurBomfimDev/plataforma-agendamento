@@ -17,14 +17,19 @@ namespace Booking.Application.Module.People.Commands;
 /// </summary>
 internal static class OwnerDeclaration
 {
-    public static void Apply(Professional professional, bool declared, Guid ownerUserId, DateTimeOffset now)
+    /// <param name="enforce">
+    /// Falso ao desativar: quem sai da vitrine não exibe nada, então desativar nunca pode ser barrado por falta de declaração
+    /// (também vale para o cadastro antigo, anterior à declaração).
+    /// </param>
+    public static void Apply(Professional professional, bool declared, Guid ownerUserId, DateTimeOffset now, bool enforce = true)
     {
         if (declared && professional.RequiresOwnerDeclaration)
         {
             professional.DeclareAuthorization(ownerUserId, now);
         }
 
-        if (professional.RequiresOwnerDeclaration
+        if (enforce
+            && professional.RequiresOwnerDeclaration
             && !string.IsNullOrWhiteSpace(professional.Bio)
             && !professional.HasAuthorizationDeclaration)
         {
@@ -78,7 +83,7 @@ public sealed class UpdateProfessionalCommand(
 
         professional.UpdateProfile(request.DisplayName, request.Specialty, request.Bio);
         professional.SetRegistration(request.Registration);
-        OwnerDeclaration.Apply(professional, request.AuthorizationDeclared, userId, clock.GetUtcNow());
+        OwnerDeclaration.Apply(professional, request.AuthorizationDeclared, userId, clock.GetUtcNow(), enforce: request.IsActive);
 
         if (request.IsActive)
         {

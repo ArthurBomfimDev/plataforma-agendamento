@@ -107,6 +107,19 @@ public sealed class ProfessionalDeclarationTests
     }
 
     [Fact]
+    public async Task Deactivating_an_old_record_with_a_bio_and_no_declaration_is_never_blocked()
+    {
+        var legacy = Professional.Create(_businessId, "Marcos", "Barbeiro", "Bio antiga.", null);
+        var repo = new FakeRepo(legacy);
+
+        ProfessionalResponse saved = await Update(repo, new FakeUnit()).ExecuteAsync(
+            legacy.Id, new UpdateProfessionalRequest("Marcos", "Barbeiro", "Bio antiga.", IsActive: false));
+
+        Assert.False(saved.IsActive);
+        Assert.False(saved.AuthorizationDeclared);
+    }
+
+    [Fact]
     public async Task Deactivating_takes_the_professional_off_the_public_profile_without_asking_for_anything()
     {
         var existing = Professional.Create(_businessId, "Marcos", null, null, null);
