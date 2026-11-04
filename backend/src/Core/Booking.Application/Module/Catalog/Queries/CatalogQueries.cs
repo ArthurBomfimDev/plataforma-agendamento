@@ -1,3 +1,4 @@
+using Booking.Application.Common.Media;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Module.Catalog.Converter;
 using Booking.Arguments.Module.Catalog;
@@ -7,7 +8,7 @@ using Booking.Domain.Interface.Repository.Module.Catalog;
 
 namespace Booking.Application.Module.Catalog.Queries;
 
-public sealed class ListServicesQuery(IServiceRepository services, IServiceProfessionalRepository links, IActorContext actor)
+public sealed class ListServicesQuery(IServiceRepository services, IServiceProfessionalRepository links, IActorContext actor, IImageUrls images)
 {
     public async Task<PagedResult<ServiceResponse>> ExecuteAsync(PageRequest page, CancellationToken ct = default)
     {
@@ -17,11 +18,11 @@ public sealed class ListServicesQuery(IServiceRepository services, IServiceProfe
         IReadOnlyList<ServiceProfessional> assigned = await links.ListForServicesAsync(businessId, [.. result.Items.Select(s => s.Id)], ct);
 
         return new PagedResult<ServiceResponse>(
-            [.. result.Items.Select(s => CatalogConverter.ToResponse(s, assigned))], result.Page, result.PageSize, result.TotalCount);
+            [.. result.Items.Select(s => CatalogConverter.ToResponse(s, assigned, images))], result.Page, result.PageSize, result.TotalCount);
     }
 }
 
-public sealed class ListPublicServicesQuery(IServiceRepository services, IServiceProfessionalRepository links)
+public sealed class ListPublicServicesQuery(IServiceRepository services, IServiceProfessionalRepository links, IImageUrls images)
 {
     public async Task<PagedResult<PublicServiceResponse>> ExecuteAsync(Guid businessId, PageRequest page, CancellationToken ct = default)
     {
@@ -29,6 +30,6 @@ public sealed class ListPublicServicesQuery(IServiceRepository services, IServic
         IReadOnlyList<ServiceProfessional> assigned = await links.ListForServicesAsync(businessId, [.. result.Items.Select(s => s.Id)], ct);
 
         return new PagedResult<PublicServiceResponse>(
-            [.. result.Items.Select(s => CatalogConverter.ToPublic(s, assigned))], result.Page, result.PageSize, result.TotalCount);
+            [.. result.Items.Select(s => CatalogConverter.ToPublic(s, assigned, images))], result.Page, result.PageSize, result.TotalCount);
     }
 }

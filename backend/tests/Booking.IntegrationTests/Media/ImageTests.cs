@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Booking.Application.Common.Media;
 using Booking.Arguments.Common;
+using Booking.Arguments.Module.Catalog;
 using Booking.Arguments.Module.People;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Base;
@@ -212,6 +213,43 @@ public sealed class ImageTests(IntegrationFixture fixture)
         await UploadOkAsync<ProfessionalResponse>(
             $"/api/businesses/current/professionals/{withoutAccount}/photo", TestImages.Jpeg(300, 300), "ele.jpg", "image/jpeg", business.OwnerToken);
         Assert.NotNull((await PublicProfessionalAsync(business, withoutAccount)).Photo);
+    }
+
+    [Fact]
+    public async Task P12_service_photo_only_the_owner_validated_like_the_logo_and_shown_in_the_showcase()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        TestBusiness other = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
+        Guid serviceId = business.Services[0].Id;
+        string path = $"/api/businesses/current/services/{serviceId}/image";
+
+        ServiceResponse saved = await UploadOkAsync<ServiceResponse>(path, TestImages.Jpeg(400, 300), "corte.jpg", "image/jpeg", business.OwnerToken);
+        Assert.NotNull(saved.Photo);
+
+        PublicServiceResponse shown = Assert.Single(
+            (await _world.SendOkAsync<PagedResult<PublicServiceResponse>>(HttpMethod.Get, $"/api/businesses/{business.Id}/services", null, null!)).Items,
+            s => s.Id == serviceId);
+        Assert.NotNull(shown.Photo);
+
+        // Tipo conferido pelo conteúdo, não pelo nome; profissional e outro estabelecimento não mexem.
+        using (HttpResponseMessage fake = await UploadAsync(path, [0x4D, 0x5A, 0x90, 0x00], "corte.jpg", "image/jpeg", business.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.UnsupportedMediaType, fake.StatusCode);
+        }
+
+        using (HttpResponseMessage byStaff = await UploadAsync(path, TestImages.Jpeg(50, 50), "f.jpg", "image/jpeg", staff.Token))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, byStaff.StatusCode);
+        }
+
+        using (HttpResponseMessage crossTenant = await UploadAsync(path, TestImages.Jpeg(50, 50), "f.jpg", "image/jpeg", other.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.NotFound, crossTenant.StatusCode);
+        }
+
+        ServiceResponse removed = await _world.SendOkAsync<ServiceResponse>(HttpMethod.Delete, path, null, business.OwnerToken);
+        Assert.Null(removed.Photo);
     }
 
     [Fact]

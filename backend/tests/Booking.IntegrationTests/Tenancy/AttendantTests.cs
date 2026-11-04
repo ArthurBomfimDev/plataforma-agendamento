@@ -29,6 +29,7 @@ public sealed class AttendantTests(IntegrationFixture fixture)
             // Serviços
             (HttpMethod.Post, "/api/businesses/current/services", empty),
             (HttpMethod.Put, $"/api/businesses/current/services/{id}", empty),
+            (HttpMethod.Delete, $"/api/businesses/current/services/{id}/image", null),
             (HttpMethod.Put, $"/api/businesses/current/services/{id}/professionals/{id}", null),
             (HttpMethod.Delete, $"/api/businesses/current/services/{id}/professionals/{id}", null),
             // Equipe e fotos
