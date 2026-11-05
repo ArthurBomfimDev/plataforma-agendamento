@@ -31,6 +31,24 @@ public sealed class ReviewRepository(BookingDbContext context) : IReviewReposito
             .OrderByDescending(x => x.ReviewedAt).ThenByDescending(x => x.Id)
             .ToPagedAsync(page, ct);
 
+    public Task<Review?> GetByIdAsync(Guid reviewId, CancellationToken ct = default) =>
+        context.AcrossTenants<Review>().FirstOrDefaultAsync(x => x.Id == reviewId, ct);
+
+    public Task<Review?> GetOfBusinessAsync(Guid businessId, Guid reviewId, CancellationToken ct = default) =>
+        context.OfBusiness<Review>(businessId).FirstOrDefaultAsync(x => x.Id == reviewId, ct);
+
+    public Task<PagedResult<Review>> ListWithOpenReportAsync(PageRequest page, CancellationToken ct = default) =>
+        context.AcrossTenants<Review>().AsNoTracking()
+            .Where(x => x.ReportedAt != null && x.ReportClosedAt == null)
+            .OrderBy(x => x.ReportedAt).ThenBy(x => x.Id)
+            .ToPagedAsync(page, ct);
+
+    public Task<PagedResult<Review>> ListHiddenAsync(PageRequest page, CancellationToken ct = default) =>
+        context.AcrossTenants<Review>().AsNoTracking()
+            .Where(x => x.IsHidden)
+            .OrderByDescending(x => x.HiddenAt).ThenByDescending(x => x.Id)
+            .ToPagedAsync(page, ct);
+
     public void Add(Review review) => context.Set<Review>().Add(review);
 }
 

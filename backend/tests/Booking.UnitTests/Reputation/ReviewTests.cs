@@ -346,6 +346,37 @@ public sealed class ReviewTests
     }
 
     [Fact]
+    public void Report_needs_a_reason_opens_once_and_hiding_closes_it()
+    {
+        Review review = Review.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, null, "ruim", "Ana S.", null, false, _completedAt);
+        Guid owner = Guid.NewGuid();
+
+        Assert.Equal("review.report_reason_invalid", Assert.Throws<DomainException>(() => review.Report(owner, "curt", _completedAt)).Code);
+
+        review.Report(owner, "  Não fui atendida por esta pessoa.  ", _completedAt);
+        Assert.True(review.HasOpenReport);
+        Assert.Equal("Não fui atendida por esta pessoa.", review.ReportReason);
+        Assert.Equal("review.already_reported", Assert.Throws<DomainException>(() => review.Report(owner, "de novo, outra vez", _completedAt)).Code);
+
+        review.Hide(Guid.NewGuid(), "ofensa", _completedAt);
+        Assert.False(review.HasOpenReport);
+    }
+
+    [Fact]
+    public void Dismissing_keeps_the_review_public_and_only_works_with_an_open_report()
+    {
+        Review review = Review.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, null, null, "Ana S.", null, false, _completedAt);
+
+        Assert.Equal("review.no_open_report", Assert.Throws<DomainException>(() => review.DismissReport(_completedAt)).Code);
+
+        review.Report(Guid.NewGuid(), "Motivo da denúncia", _completedAt);
+        review.DismissReport(_completedAt);
+
+        Assert.False(review.HasOpenReport);
+        Assert.False(review.IsHidden);
+    }
+
+    [Fact]
     public async Task Public_rating_of_a_business_without_reviews_is_new()
     {
         World w = new();
@@ -535,6 +566,18 @@ public sealed class ReviewTests
 
         public Task<PagedResult<Review>> ListOfCustomerAsync(Guid customerId, PageRequest page, CancellationToken ct = default) =>
             Page(_all.Where(r => r.CustomerId == customerId), page);
+
+        public Task<Review?> GetByIdAsync(Guid reviewId, CancellationToken ct = default) =>
+            Task.FromResult(_all.SingleOrDefault(r => r.Id == reviewId));
+
+        public Task<Review?> GetOfBusinessAsync(Guid businessId, Guid reviewId, CancellationToken ct = default) =>
+            Task.FromResult(_all.SingleOrDefault(r => r.Id == reviewId && r.BusinessId == businessId));
+
+        public Task<PagedResult<Review>> ListWithOpenReportAsync(PageRequest page, CancellationToken ct = default) =>
+            Page(_all.Where(r => r.HasOpenReport), page);
+
+        public Task<PagedResult<Review>> ListHiddenAsync(PageRequest page, CancellationToken ct = default) =>
+            Page(_all.Where(r => r.IsHidden), page);
 
         public void Add(Review review) => _all.Add(review);
 

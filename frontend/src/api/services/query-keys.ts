@@ -64,6 +64,9 @@ export const queryKeys = {
   panelSeats: (businessId: string) => ['panel', businessId, 'seats'] as const,
   panelMyProfile: (businessId: string) => ['panel', businessId, 'my-profile'] as const,
   panelExceptions: (businessId: string) => ['panel', businessId, 'schedule-exceptions'] as const,
+  panelReviews: (businessId: string, page: number) =>
+    ['panel', businessId, 'reviews', page] as const,
+  adminReviews: (status: string) => ['admin', 'reviews', status] as const,
 }
 
 /** O que pertence a uma conta: sai do cache ao entrar, sair ou trocar de conta. */

@@ -9,6 +9,7 @@ export const PANEL_PAGE_LOADERS = {
   more: () => import('@pages/panel/more'),
   photos: () => import('@pages/panel/photos'),
   requests: () => import('@pages/panel/requests'),
+  reviews: () => import('@pages/panel/reviews'),
   schedules: () => import('@pages/panel/schedules'),
   services: () => import('@pages/panel/services'),
   settings: () => import('@pages/panel/settings'),

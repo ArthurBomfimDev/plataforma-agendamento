@@ -92,6 +92,42 @@ public sealed class GetMyReviewQuery(IReviewRepository reviews, IPeopleDirectory
     }
 }
 
+/// <summary>As avaliações do estabelecimento para o dono, com a marca de quais ele já denunciou.</summary>
+public sealed class ListOwnerReviewsQuery(IReviewRepository reviews, IActorContext actor)
+{
+    public async Task<PagedResult<OwnerReviewResponse>> ExecuteAsync(PageRequest page, CancellationToken ct = default)
+    {
+        Guid businessId = actor.RequireOwner();
+
+        PagedResult<Review> result = await reviews.ListOfBusinessAsync(businessId, page, ct);
+        return new PagedResult<OwnerReviewResponse>([.. result.Items.Select(ReviewConverter.ToOwner)], result.Page, result.PageSize, result.TotalCount);
+    }
+}
+
+/// <summary>Fila do Admin: <c>Open</c> (denúncias abertas, padrão) ou <c>Hidden</c> (as ocultas, para poder reexibir).</summary>
+public sealed class ListReviewsForModerationQuery(IReviewRepository reviews, IBusinessDirectory businesses, IActorContext actor)
+{
+    public async Task<PagedResult<ModerationReviewResponse>> ExecuteAsync(string? status, PageRequest page, CancellationToken ct = default)
+    {
+        actor.RequirePlatformAdmin();
+
+        PagedResult<Review> result = status?.Trim().ToLowerInvariant() switch
+        {
+            null or "" or "open" => await reviews.ListWithOpenReportAsync(page, ct),
+            "hidden" => await reviews.ListHiddenAsync(page, ct),
+            _ => throw new DomainException("review.status_invalid"),
+        };
+
+        var items = new List<ModerationReviewResponse>(result.Items.Count);
+        foreach (Review review in result.Items)
+        {
+            items.Add(ReviewConverter.ToModeration(review, (await businesses.GetContactInfoAsync(review.BusinessId, ct))?.Name ?? string.Empty));
+        }
+
+        return new PagedResult<ModerationReviewResponse>(items, result.Page, result.PageSize, result.TotalCount);
+    }
+}
+
 /// <summary>Só se avalia e se lê o que o público vê: estabelecimento ativo, profissional ativo. O resto responde 404.</summary>
 internal static class PublicTarget
 {

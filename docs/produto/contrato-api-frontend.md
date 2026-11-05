@@ -565,6 +565,21 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - **Limitações registradas:** o dono não responde; o consumidor não apaga a avaliação.
 - Migration `AddReputation` (não aplicada): `reputation.review` e `reputation.rating_summary`.
 
+### 4.17.4 Moderação (Fase 8, fatia 5 de 5) — **backend rodado com Docker; telas não vistas no navegador**
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `GET /api/businesses/current/reviews?page&pageSize` | dono | `PagedResult<OwnerReviewResponse>`: a avaliação e `reported` |
+| `POST /api/businesses/current/reviews/{id}/report` `{ reason }` | dono | 204. Motivo de 5 a 500 caracteres. Uma denúncia por avaliação (409 `review.already_reported`). Outro estabelecimento: 404. **Nada sai do ar sozinho** |
+| `GET /api/admin/reviews?status=Open\|Hidden` | Admin | fila: denúncias abertas, as mais antigas primeiro, ou as ocultas |
+| `POST /api/admin/reviews/{id}/hide` `{ reason }` | Admin | oculta: sai da lista pública e da média na mesma transação; grava quem decidiu, quando e o motivo (obrigatório). Fecha a denúncia |
+| `POST /api/admin/reviews/{id}/unhide` | Admin | reexibe: volta à lista e à média |
+| `POST /api/admin/reviews/{id}/dismiss-report` | Admin | mantém no ar e fecha a denúncia (409 `review.no_open_report` sem denúncia aberta) |
+
+- Telas: **Avaliações** no painel, só do dono (`#/panel/reviews`), e a aba **Avaliações** em `#/admin/estabelecimentos`.
+- A fila do Admin não traz id de consumidor: decide-se pelo texto, com o nome abreviado.
+- Migration `AddReviewReport` (não aplicada): `reported_by_user_id`, `reported_at`, `report_reason`, `report_closed_at`.
+
 ### 4.17.3 E-mail "Como foi?" (Fase 8, fatia 4 de 5) — **escrito sem Docker, não verificado**
 
 - **Quando:** o estabelecimento conclui o agendamento (`POST …/complete`). Vai pela **outbox**, no mesmo `SaveChanges` da

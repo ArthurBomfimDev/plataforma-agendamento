@@ -10,6 +10,7 @@ import {
   useAdminProfessionalRemovals,
   useResolveProfessionalRemoval,
 } from '@api/services/professional/hooks'
+import { useAdminReviews, useModerateReview } from '@api/services/review/hooks'
 import { useState } from 'react'
 
 import { AdminBusinessesScreen } from './screen'
@@ -44,6 +45,9 @@ const AdminBusinesses = () => {
   const [removalStatus, setRemovalStatus] = useState<'Open' | 'Resolved'>('Open')
   const removals = useAdminProfessionalRemovals(removalStatus)
   const resolveRemoval = useResolveProfessionalRemoval()
+  const [reviewStatus, setReviewStatus] = useState<'Open' | 'Hidden'>('Open')
+  const moderation = useAdminReviews(reviewStatus)
+  const moderate = useModerateReview()
   const decision = useAdminDecision()
   const resolve = useResolveReport()
 
@@ -81,6 +85,12 @@ const AdminBusinesses = () => {
       removals={toLoad(removals, (items) => items)}
       onResolveRemoval={(requestId, note) =>
         attempt(() => resolveRemoval.mutateAsync({ requestId, note }))
+      }
+      reviewStatus={reviewStatus}
+      onReviewStatusChange={setReviewStatus}
+      moderation={toLoad(moderation, (items) => items)}
+      onModerate={(reviewId, action, reason) =>
+        attempt(() => moderate.mutateAsync({ reviewId, action, reason }))
       }
     />
   )

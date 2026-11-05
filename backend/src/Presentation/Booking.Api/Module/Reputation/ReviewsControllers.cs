@@ -64,6 +64,64 @@ public sealed class MyReviewsController : ControllerBase
         Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
 }
 
+/// <summary>O dono lê as avaliações do estabelecimento e denuncia. Não apaga nem responde (ADR-032).</summary>
+[ApiController]
+[Route("api/businesses/current/reviews")]
+[Authorize]
+public sealed class OwnerReviewsController : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType<PagedResult<OwnerReviewResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> List(
+        [FromServices] ListOwnerReviewsQuery query,
+        CancellationToken ct,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
+
+    [HttpPost("{reviewId:guid}/report")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Report(
+        Guid reviewId, ReportReviewRequest request, [FromServices] ReportReviewCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(reviewId, request, ct);
+        return NoContent();
+    }
+}
+
+/// <summary>Fila de moderação do Admin da plataforma (ADR-020, ADR-032).</summary>
+[ApiController]
+[Route("api/admin/reviews")]
+[Authorize(Policy = AuthorizationPolicies.PlatformAdmin)]
+public sealed class AdminReviewsController : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType<PagedResult<ModerationReviewResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> List(
+        [FromServices] ListReviewsForModerationQuery query,
+        CancellationToken ct,
+        [FromQuery] string? status = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await query.ExecuteAsync(status, new PageRequest(page, pageSize), ct));
+
+    [HttpPost("{reviewId:guid}/hide")]
+    [ProducesResponseType<ModerationReviewResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Hide(
+        Guid reviewId, HideReviewRequest request, [FromServices] ModerateReviewCommand command, CancellationToken ct) =>
+        Ok(await command.HideAsync(reviewId, request.Reason, ct));
+
+    [HttpPost("{reviewId:guid}/unhide")]
+    [ProducesResponseType<ModerationReviewResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Unhide(Guid reviewId, [FromServices] ModerateReviewCommand command, CancellationToken ct) =>
+        Ok(await command.UnhideAsync(reviewId, ct));
+
+    [HttpPost("{reviewId:guid}/dismiss-report")]
+    [ProducesResponseType<ModerationReviewResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DismissReport(Guid reviewId, [FromServices] ModerateReviewCommand command, CancellationToken ct) =>
+        Ok(await command.DismissReportAsync(reviewId, ct));
+}
+
 /// <summary>Avaliações e nota de um estabelecimento ativo. Anônimo: é vitrine.</summary>
 [ApiController]
 [Route("api/businesses/{businessId:guid}")]

@@ -10,6 +10,7 @@ export type PanelSection =
   | 'schedules'
   | 'photos'
   | 'settings'
+  | 'reviews'
   // Do atendente e do profissional (ADR-030): o dono tem as jornadas; o profissional, o próprio perfil.
   | 'blocks'
   | 'profile'

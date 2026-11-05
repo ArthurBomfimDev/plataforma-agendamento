@@ -23,6 +23,8 @@ public sealed class ReviewMapping : BaseMapping<Review>
         builder.Property(x => x.ServiceName).HasMaxLength(100);
         builder.Property(x => x.ReviewedAt).IsRequired();
         builder.Property(x => x.HiddenReason).HasMaxLength(500);
+        builder.Property(x => x.ReportReason).HasMaxLength(Review.MaxCommentLength);
+        builder.Ignore(x => x.HasOpenReport);
 
         builder.HasIndex(x => x.AppointmentId).IsUnique().HasDatabaseName(AppointmentIndex);
         builder.HasIndex(x => new { x.BusinessId, x.IsHidden, x.ReviewedAt });

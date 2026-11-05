@@ -349,6 +349,10 @@ public static class DependencyInjection
         services.AddScoped<GetProfessionalRatingQuery>();
         services.AddScoped<ListMyReviewsQuery>();
         services.AddScoped<GetMyReviewQuery>();
+        services.AddScoped<ReportReviewCommand>();
+        services.AddScoped<ModerateReviewCommand>();
+        services.AddScoped<ListOwnerReviewsQuery>();
+        services.AddScoped<ListReviewsForModerationQuery>();
     }
 
     private static void AddComplianceModule(this IServiceCollection services)

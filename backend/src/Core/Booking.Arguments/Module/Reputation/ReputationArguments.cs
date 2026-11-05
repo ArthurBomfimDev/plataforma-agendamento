@@ -32,6 +32,41 @@ public sealed record MyReviewResponse(
     DateTimeOffset? EditedAt,
     bool CanEdit);
 
+/// <summary>O dono denuncia: motivo de 5 a 500 caracteres.</summary>
+public sealed record ReportReviewRequest(string Reason);
+
+/// <summary>O Admin oculta: motivo obrigatório.</summary>
+public sealed record HideReviewRequest(string? Reason);
+
+/// <summary>A avaliação como o dono a vê no painel. <c>Reported</c>: ele já denunciou (uma vez só).</summary>
+public sealed record OwnerReviewResponse(
+    Guid Id,
+    int Rating,
+    int? ProfessionalRating,
+    string? Comment,
+    string ReviewerName,
+    string? ServiceName,
+    DateTimeOffset ReviewedAt,
+    bool Reported);
+
+/// <summary>Item da fila do Admin. <c>ReportOpen</c>: a denúncia ainda espera decisão.</summary>
+public sealed record ModerationReviewResponse(
+    Guid Id,
+    Guid BusinessId,
+    string BusinessName,
+    int Rating,
+    int? ProfessionalRating,
+    string? Comment,
+    string ReviewerName,
+    DateTimeOffset ReviewedAt,
+    string? ReportReason,
+    DateTimeOffset? ReportedAt,
+    bool ReportOpen,
+    bool IsHidden,
+    string? HiddenReason,
+    DateTimeOffset? HiddenAt,
+    Guid? HiddenByUserId);
+
 /// <summary>
 /// Resumo das notas. <c>Average</c> só vem a partir de 3 avaliações (<c>IsNew</c> é verdadeiro antes disso: a tela mostra
 /// "Novo"). <c>Distribution</c>: quantas notas de 1, 2, 3, 4 e 5 estrelas.

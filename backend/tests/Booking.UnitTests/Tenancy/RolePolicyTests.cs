@@ -31,6 +31,7 @@ public sealed class RolePolicyTests
         "UpdateSchedulingPolicyCommand", "UpdateAddressCommand", "ConfirmLocationCommand", "SetResponsibleCommand",
         "AcceptTermsCommand", "PublishBusinessCommand", "SubmitBusinessCommand",
         "GetCurrentBusinessQuery", "GetCurrentChecklistQuery", "BusinessImageCommand",
+        "ReportReviewCommand", "ListOwnerReviewsQuery",
     ];
 
     /// <summary>
@@ -49,6 +50,7 @@ public sealed class RolePolicyTests
         "AdminBusinessCommands", "ListBusinessesForAdminQuery", "GetBusinessForAdminQuery",
         "ListBusinessReportsQuery", "ResolveBusinessReportCommand",
         "ListProfessionalRemovalRequestsQuery", "ResolveProfessionalRemovalRequestCommand",
+        "ModerateReviewCommand", "ListReviewsForModerationQuery",
     ];
 
     /// <summary>

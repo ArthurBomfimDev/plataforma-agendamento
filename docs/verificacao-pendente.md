@@ -353,6 +353,19 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 > O `seed-demo.ts` **só foi compilado** (`bun build`): o SQL das avaliações nunca rodou, e a lógica de pular horários ocupados
 > (`ON CONFLICT DO NOTHING`) também não. Se algum passo acima falhar, o primeiro suspeito é o SQL do seed.
 
+### Avaliações — moderação (Fase 8, fatia 5; migration `AddReviewReport`)
+
+A regra (dono denuncia, Admin oculta e reexibe, a média acompanha) **já rodou** em `ReviewTests.V9`, com banco. Falta olhar a tela:
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | Como dono: menu **Avaliações** (no celular, em Mais) | lista com nota, nome abreviado e **Denunciar**; atendente e profissional não veem o item |
+| 2 | **Denunciar** com 4 caracteres; depois com motivo válido | erro no campo; o cartão vira "Denúncia enviada…" e a avaliação segue pública |
+| 3 | Como Admin: `#/admin/estabelecimentos` → aba **Avaliações** | a denúncia aparece com o motivo do dono; **Ocultar** sem motivo dá erro no campo |
+| 4 | **Ocultar avaliação** com motivo | some da fila e da página pública; a média muda; aparece em "Ocultas" com **Reexibir avaliação** |
+| 5 | **Reexibir** e **Manter no ar** | voltam à média e à lista; a denúncia sai da fila |
+| 6 | 390 px, claro e escuro | as 4 abas do Admin cabem sem rolagem horizontal; alvos ≥ 44 px |
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
