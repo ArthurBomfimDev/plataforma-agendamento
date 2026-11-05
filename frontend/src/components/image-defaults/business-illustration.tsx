@@ -5,20 +5,23 @@ import { cn } from 'cn'
  * simples em SVG pintadas só com tokens da R5 (`var(--…)`), então o tema claro e o escuro vêm de graça — os tokens
  * mudam e o desenho acompanha. Decorativa: a informação (nome, categoria) está no texto ao lado.
  *
- * Proporção 16:9, a mesma da capa; preenche o espaço reservado sem salto de layout.
+ * Proporção 16:9, a mesma da capa; preenche o espaço reservado sem salto de layout. `square` enquadra só o desenho do
+ * centro, para os espaços 1:1 (barra lateral, miniatura): cortada do 16:9, a arte virava um borrão em 32 px.
  */
 export const BusinessIllustration = ({
   category,
   className,
+  square = false,
 }: {
   category: string
   className?: string
+  square?: boolean
 }) => {
   const health = category === 'Saude'
 
   return (
     <svg
-      viewBox="0 0 320 180"
+      viewBox={square ? '70 0 180 180' : '0 0 320 180'}
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
       focusable="false"

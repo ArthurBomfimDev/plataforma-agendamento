@@ -31,7 +31,8 @@ describe('AppointmentCard', () => {
     const html = render({ image: null, category: 'Beleza' })
 
     expect(html).toContain('size-14')
-    expect(html).not.toMatch(/hidden size-1\d/)
+    // `overflow-hidden` da moldura não conta: só a classe `hidden` esconderia a imagem.
+    expect(html).not.toMatch(/[\s"]hidden\s/)
   })
 
   it('sem foto: a ilustração da categoria, e não o quadrado cinza', () => {

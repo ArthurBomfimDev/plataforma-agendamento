@@ -46,16 +46,19 @@ export const ACCEPT_ATTRIBUTE = ACCEPTED_IMAGE_TYPES.join(',')
 
 export const HELP_TEXT = 'JPEG, PNG ou WebP · até 5 MB'
 
-/** Tamanho da moldura (Figma 19): logotipo 132×132, capa 132 de altura, foto de profissional 104 de altura. */
+/**
+ * Tamanho da moldura: logotipo 132×132, capa 132 de altura. A foto de profissional e de serviço é redonda, 132×132: a
+ * faixa larga de antes deixava um vazio enorme em volta de uma foto quadrada.
+ */
 export const SHAPE_CLASSES = {
   square: 'size-33',
   cover: 'h-33 w-full',
-  card: 'h-26 w-full',
+  card: 'size-33 self-center rounded-full',
 } as const
 
 /** Proporção reservada e `sizes` de cada formato, para o `SmartImage`. */
 export const SHAPE_IMAGE = {
   square: { width: 1, height: 1, sizes: '132px' },
   cover: { width: 3, height: 1, sizes: '(min-width: 768px) 640px, 100vw' },
-  card: { width: 16, height: 9, sizes: '(min-width: 1024px) 25vw, 50vw' },
+  card: { width: 1, height: 1, sizes: '132px' },
 } as const

@@ -111,7 +111,9 @@ describe('PanelSidebar', () => {
 
     expect(html).toContain('Avaliações')
     expect(html).not.toContain('Relatórios')
-    expect(html.match(/<button/g)).toHaveLength(9)
+    // Nove seções do dono e o alternador de tema.
+    expect(html.match(/<button/g)).toHaveLength(10)
+    expect(html).toContain('aria-label="Tema escuro"')
     expect(sidebar(hiddenSectionsFor('Attendant'))).not.toContain('Avaliações')
     expect(sidebar(hiddenSectionsFor('Professional'))).not.toContain('Avaliações')
   })

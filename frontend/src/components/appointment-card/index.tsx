@@ -39,7 +39,7 @@ export const AppointmentCard = (props: AppointmentCardProps) => {
           sizes="72px"
           width={1}
           height={1}
-          fallback={<BusinessIllustration category={category ?? 'Beleza'} />}
+          fallback={<BusinessIllustration category={category ?? 'Beleza'} square />}
           className="size-14 shrink-0 rounded-md lg:size-18"
         />
 
