@@ -1,0 +1,123 @@
+import { describe, expect, it, vi } from 'vitest'
+import { LOCATION_NOT_FOUND, addressQueries, bestPlaces, locateAddress, mapLink } from './consts'
+
+import { AddressLocation, type AddressLocationProps } from '.'
+import type { GeoPlaceResponse } from '@api/models'
+import { renderToString } from 'react-dom/server'
+
+const noop = () => undefined
+
+const render = (check: AddressLocationProps['check'], error?: string) =>
+  renderToString(
+    <AddressLocation
+      check={check}
+      busy={false}
+      error={error}
+      onConfirm={noop}
+      onRetry={noop}
+      onEdit={noop}
+    />,
+  ).replaceAll('<!-- -->', '')
+
+const place = (patch: Partial<GeoPlaceResponse> = {}): GeoPlaceResponse => ({
+  label: 'Rua das Flores, 10, Garça, SP',
+  latitude: -22.2125,
+  longitude: -49.6564,
+  precision: 'Street',
+  ...patch,
+})
+
+const address = {
+  postalCode: '17400-000',
+  street: 'Rua das Flores',
+  streetNumber: '10',
+  district: 'Centro',
+  city: 'Garça',
+  state: 'sp',
+}
+
+describe('AddressLocation', () => {
+  it('carregando: avisa que está procurando e não oferece confirmar', () => {
+    const html = render({ status: 'loading' })
+
+    expect(html).toContain('role="status"')
+    expect(html).toContain('Procurando o endereço')
+    expect(html).not.toContain('Confirmar esta localização')
+  })
+
+  it('sucesso: mostra o lugar achado, o link do mapa e pede a confirmação do dono', () => {
+    const html = render({ status: 'found', places: [place()] })
+
+    expect(html).toContain('Rua das Flores, 10, Garça, SP')
+    expect(html).toContain('Na rua')
+    expect(html).toContain('Ver no mapa')
+    expect(html).toContain('mlat=-22.2125')
+    expect(html).toContain('Confirmar esta localização')
+    expect(html).toContain('Corrigir o endereço')
+  })
+
+  it('sem resultado: a mensagem certa, como alerta, e o caminho de volta ao formulário', () => {
+    const html = render({ status: 'not-found' })
+
+    expect(html).toContain('role="alert"')
+    expect(html).toContain(LOCATION_NOT_FOUND)
+    expect(html).toContain('Corrigir o endereço')
+    expect(html).not.toContain('Confirmar esta localização')
+  })
+
+  it('erro de rede: mostra a mensagem e oferece tentar de novo', () => {
+    const html = render({ status: 'error', message: 'Sem conexão com o servidor. Tente de novo.' })
+
+    expect(html).toContain('Sem conexão com o servidor')
+    expect(html).toContain('Tentar de novo')
+    expect(html).not.toContain('Algo deu errado')
+  })
+
+  it('erro ao gravar a confirmação aparece junto do botão', () => {
+    expect(render({ status: 'found', places: [place()] }, 'Falhou ao gravar.')).toContain(
+      'Falhou ao gravar.',
+    )
+  })
+})
+
+describe('busca do endereço', () => {
+  it('monta a busca completa e a de reserva, sem repetir', () => {
+    expect(addressQueries(address)).toEqual([
+      'Rua das Flores, 10, Centro, Garça, SP',
+      'Rua das Flores, Garça, SP',
+    ])
+  })
+
+  it('o melhor resultado vem primeiro e o que não tem coordenada sai', () => {
+    const ordered = bestPlaces([
+      place({ label: 'cidade', precision: 'City' }),
+      place({ label: 'sem ponto', latitude: Number.NaN }),
+      place({ label: 'exato', precision: 'Rooftop' }),
+    ])
+
+    expect(ordered.map(({ label }) => label)).toEqual(['exato', 'cidade'])
+  })
+
+  it('tenta a segunda busca quando a primeira não acha nada', async () => {
+    const search = vi.fn(async (text: string) => (text.includes('Centro') ? [] : [place()]))
+
+    expect(await locateAddress(address, search)).toHaveLength(1)
+    expect(search).toHaveBeenCalledTimes(2)
+  })
+
+  it('sem resultado nas duas: lista vazia, sem erro', async () => {
+    expect(await locateAddress(address, async () => [])).toEqual([])
+  })
+
+  it('falha de rede sobe para quem chamou mostrar o erro', async () => {
+    await expect(
+      locateAddress(address, async () => {
+        throw new Error('rede')
+      }),
+    ).rejects.toThrow('rede')
+  })
+
+  it('o link leva ao ponto escolhido', () => {
+    expect(mapLink(place())).toContain('#map=17/-22.2125/-49.6564')
+  })
+})

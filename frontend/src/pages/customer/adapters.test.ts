@@ -47,6 +47,31 @@ describe('toCustomerAppointment', () => {
     expect(result.time).toBe('09:00')
   })
 
+  it('leva o logotipo do estabelecimento, senão a capa, e a categoria para o cartão', () => {
+    const logo = { small: 'l-s', medium: 'l-m', large: 'l-l' }
+    const cover = { small: 'c-s', medium: 'c-m', large: 'c-l' }
+    const business = (patch: object) =>
+      ({
+        category: 'Beleza',
+        address: {},
+        logo: null,
+        cover: null,
+        ...patch,
+      }) as PublicBusinessResponse
+    const image = (patch: object) =>
+      toCustomerAppointment(appointment, business(patch), 'America/Sao_Paulo').businessImage
+
+    expect(image({ logo, cover })).toBe(logo)
+    expect(image({ cover })).toBe(cover)
+    expect(image({})).toBeNull()
+    expect(
+      toCustomerAppointment(appointment, undefined, 'America/Sao_Paulo').businessImage,
+    ).toBeNull()
+    expect(toCustomerAppointment(appointment, business({}), 'America/Sao_Paulo').category).toBe(
+      'Beleza',
+    )
+  })
+
   it('leva recusado para "cancelado": o atendimento não acontece', () => {
     expect(toCustomerAppointment(appointment, undefined, 'America/Sao_Paulo').status).toBe(
       'cancelled',

@@ -27,6 +27,7 @@ import { ConfirmDialog } from '@components/confirm-dialog'
 import { DESKTOP_QUERY } from '@hooks/use-media-query/consts'
 import { DayGrid } from './components/day-grid'
 import { DayList } from './components/day-list'
+import { DayTimeline } from './components/day-timeline'
 import { PANEL_CONTENT_BOTTOM_PADDING_WITH_ACTION } from '@components/bottom-navigation/consts'
 import { PendingBadge } from '@components/pending-badge'
 import { cn } from 'cn'
@@ -81,6 +82,7 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
     onCounterBooking,
     controls,
     filtered = false,
+    timeline = false,
   } = props
 
   const now = useNow()
@@ -214,7 +216,7 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
             </div>
           </div>
 
-          {professionals.length > 0 && (
+          {!timeline && professionals.length > 0 && (
             <ul
               aria-label="Profissional"
               className="scrollbar-none mt-(--space-12) flex gap-(--space-8) overflow-x-auto px-(--space-16) md:mx-auto md:max-w-160"
@@ -260,7 +262,11 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
           {controls?.viewSwitch}
           {controls?.filters}
           {noAppointments}
-          {selected ? (
+          {timeline && day ? (
+            <DayTimeline professionals={professionals} now={now} onOpen={setOpenId} />
+          ) : timeline ? (
+            emptyDay
+          ) : selected ? (
             <AnimatePresence mode="popLayout" initial={false} custom={professionalDirection}>
               {/* Deslizar o dedo para os lados troca de profissional; na vertical, rola. */}
               <motion.div
@@ -332,7 +338,9 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
         </ul>
 
         {noAppointments}
-        {professionals.length > 0 ? (
+        {timeline && day ? (
+          <DayTimeline professionals={professionals} now={now} onOpen={setOpenId} />
+        ) : professionals.length > 0 ? (
           <DayGrid
             professionals={professionals}
             nowMinutes={nowMinutes}

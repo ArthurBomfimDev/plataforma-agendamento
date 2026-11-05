@@ -18,6 +18,7 @@ public sealed class CreateServiceCommand(IServiceRepository services, IActorCont
 
         Service service = Service.Create(
             businessId, r.Name, r.Description, r.DurationMinutes, r.BufferBeforeMinutes, r.BufferAfterMinutes, r.SlotStepMinutes, r.PriceCents, r.SuppliesNote);
+        service.SetShowPhotoInShowcase(r.ShowPhotoInShowcase);
 
         if (!r.IsActive)
         {
@@ -45,6 +46,7 @@ public sealed class UpdateServiceCommand(
         Service service = await services.GetByIdAsync(serviceId, ct) ?? throw new DomainException("service.not_found");
 
         service.Update(r.Name, r.Description, r.DurationMinutes, r.BufferBeforeMinutes, r.BufferAfterMinutes, r.SlotStepMinutes, r.PriceCents, r.SuppliesNote);
+        service.SetShowPhotoInShowcase(r.ShowPhotoInShowcase);
 
         if (r.IsActive)
         {

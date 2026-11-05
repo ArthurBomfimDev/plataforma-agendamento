@@ -20,6 +20,7 @@ import { ROUTES } from '@router/paths'
 import { TeamScreen } from './screen'
 import { errorMessage } from '@api/base'
 import { managementService } from '@api/services/management'
+import { useProfessionalPhoto } from '@api/services/management/hooks'
 import { notify } from '@components/toaster/notify'
 import { useNavigate } from 'react-router'
 import { usePanelContext } from '@layouts/panel-layout/context'
@@ -33,6 +34,7 @@ export const PanelTeamRoute = () => {
   const navigate = useNavigate()
   const team = usePanelTeam(context.businessId)
   const services = usePanelServices(context.businessId, true)
+  const photo = useProfessionalPhoto(context.businessId)
 
   const create = usePanelMutation(context.businessId, (draft: NewTeamMemberDraft) =>
     managementService.createProfessional(draft),
@@ -124,6 +126,7 @@ export const PanelTeamRoute = () => {
       businessName={business.name}
       showRegistration={business.category === 'Saude'}
       invites={invites}
+      photo={{ onUpload: photo.upload, onRemove: photo.remove }}
       onInvite={(draft) =>
         attempt(async () => {
           const sent = await invite.mutateAsync(draft)
@@ -136,7 +139,7 @@ export const PanelTeamRoute = () => {
       onCreate={async (draft) => {
         try {
           const created = await create.mutateAsync(draft)
-          notify.success(`${created.displayName} cadastrado. Ligue os serviços em "Editar".`)
+          notify.success(`Perfil de ${created.displayName} criado. Ligue os serviços em "Editar".`)
           return null
         } catch (error) {
           return errorMessage(error)

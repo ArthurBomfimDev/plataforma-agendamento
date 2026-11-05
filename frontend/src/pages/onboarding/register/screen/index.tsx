@@ -23,7 +23,9 @@ import type {
 } from './types'
 import { useState } from 'react'
 
-import type { BusinessCategoryName } from '@api/models'
+import { AddressLocation } from './components/address-location'
+import type { LocationCheck } from './components/address-location/consts'
+import type { BusinessCategoryName, GeoPlaceResponse } from '@api/models'
 import { Button } from '@components/button'
 import { Checkbox } from '@components/checkbox'
 import { type BusinessDocumentType, documentTypeError } from './components/document-step/consts'
@@ -31,6 +33,7 @@ import { DocumentStep } from './components/document-step'
 import { RadioOptionGroup } from '@components/radio-option-group'
 import { SelectField } from '@components/select-field'
 import { TextField } from '@components/text-field'
+import { ThemeToggle } from '@components/theme-toggle'
 
 const EMPTY_ADDRESS: AddressValues = {
   postalCode: '',
@@ -85,9 +88,12 @@ export const RegisterBusinessScreen = (props: RegisterScreenProps) => {
     <main className="min-h-dvh bg-(--bg-page) px-(--space-16) pt-[calc(var(--space-24)+env(safe-area-inset-top))] pb-[calc(var(--space-24)+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-120 flex-col gap-(--space-16)">
         <header className="flex flex-col gap-(--space-4)">
-          <p className="type-caption tabular text-(--text-muted)">
-            Passo {position} de {steps.length} · {STEP_LABELS[step]}
-          </p>
+          <div className="flex items-center justify-between gap-(--space-12)">
+            <p className="type-caption tabular min-w-0 text-(--text-muted)">
+              Passo {position} de {steps.length} · {STEP_LABELS[step]}
+            </p>
+            <ThemeToggle />
+          </div>
           <h1 className="type-heading text-(--text-strong)">Cadastrar meu estabelecimento</h1>
           <ol aria-label="Passos do cadastro" className="flex gap-(--space-4)">
             {steps.map((item, index) => (
@@ -128,7 +134,8 @@ export const RegisterBusinessScreen = (props: RegisterScreenProps) => {
             busy={busy}
             error={error}
             onLookupPostalCode={props.onLookupPostalCode}
-            onSubmit={(address) => run(() => props.onSaveAddress(address), goNext)}
+            onLocate={props.onLocateAddress}
+            onConfirm={(place) => run(() => props.onConfirmLocation(place), goNext)}
           />
         )}
 
@@ -270,12 +277,19 @@ const AddressStep = (props: {
   busy: boolean
   error?: string
   onLookupPostalCode: RegisterScreenProps['onLookupPostalCode']
-  onSubmit: (address: AddressValues) => void
+  onLocate: RegisterScreenProps['onLocateAddress']
+  onConfirm: (place: GeoPlaceResponse) => void
 }) => {
-  const { initial, busy, error, onLookupPostalCode, onSubmit } = props
+  const { initial, busy, error, onLookupPostalCode, onLocate, onConfirm } = props
   const [values, setValues] = useState(initial)
   const [errors, setErrors] = useState<FieldErrors<AddressValues>>({})
   const [lookupMessage, setLookupMessage] = useState<string>()
+  const [check, setCheck] = useState<LocationCheck>({ status: 'idle' })
+
+  const locate = async () => {
+    setCheck({ status: 'loading' })
+    setCheck(await onLocate(values))
+  }
 
   const field = (name: keyof AddressValues) => ({
     value: values[name],
@@ -302,6 +316,19 @@ const AddressStep = (props: {
     }))
   }
 
+  if (check.status !== 'idle') {
+    return (
+      <AddressLocation
+        check={check}
+        busy={busy}
+        error={error}
+        onConfirm={onConfirm}
+        onRetry={() => void locate()}
+        onEdit={() => setCheck({ status: 'idle' })}
+      />
+    )
+  }
+
   return (
     <form
       noValidate
@@ -310,7 +337,7 @@ const AddressStep = (props: {
         event.preventDefault()
         const found = validateAddress(values)
         setErrors(found)
-        if (!hasErrors(found)) onSubmit(values)
+        if (!hasErrors(found)) void locate()
       }}
     >
       <p className="type-body text-(--text-muted)">
@@ -353,9 +380,8 @@ const AddressStep = (props: {
         autoComplete="address-level1"
         {...field('state')}
       />
-      <Problem message={error} />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>
-        {busy ? 'Confirmando a localização…' : 'Salvar e confirmar a localização'}
+        Salvar e confirmar a localização
       </Button>
     </form>
   )

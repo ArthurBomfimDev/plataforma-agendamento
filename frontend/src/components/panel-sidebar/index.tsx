@@ -4,6 +4,7 @@ import { SECTIONS } from './consts'
 import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { PanelSidebarProps } from './types'
 import { SmartImage } from '@components/smart-image'
+import { ThemeToggle } from '@components/theme-toggle'
 
 /**
  * Navegação lateral do painel do estabelecimento, só no desktop (tela 09). No celular quem navega
@@ -32,13 +33,14 @@ export const PanelSidebar = (props: PanelSidebarProps) => {
           sizes="32px"
           width={1}
           height={1}
-          fallback={<BusinessIllustration category={category} />}
+          fallback={<BusinessIllustration category={category} square />}
           className="size-8 shrink-0 rounded-md"
         />
-        <div className="flex min-w-0 flex-col gap-(--space-2)">
+        <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
           <p className="type-label truncate text-(--text-strong)">{businessName}</p>
           <p className="type-caption text-(--text-muted)">Painel do estabelecimento</p>
         </div>
+        <ThemeToggle />
       </div>
 
       <nav aria-label="Painel do estabelecimento">

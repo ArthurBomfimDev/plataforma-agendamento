@@ -8,6 +8,7 @@ import { Button } from '@components/button'
 import { SmartImage } from '@components/smart-image'
 import { NOTE_MAX_LENGTH } from './consts'
 import { PageContainer } from '@components/page-container'
+import { SensitiveConsent } from '@components/sensitive-consent'
 import { TextAreaField } from '@components/text-area-field'
 import { VerifiedBadge } from '@components/card-establishment/components/verified-badge'
 import { cn } from 'cn'
@@ -59,6 +60,7 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
     submitting,
     onBack,
     onSubmit,
+    consent,
   } = props
 
   const [note, setNote] = useState('')
@@ -87,6 +89,8 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
           <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
             Revise seu pedido
           </h1>
+
+          {consent && <SensitiveConsent {...consent} />}
 
           <section
             aria-label="Resumo do pedido"
@@ -182,22 +186,27 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
             <Button variant="ghost" size="lg" onClick={onBack}>
               Voltar
             </Button>
-            <Button size="lg" onClick={submit} disabled={submitting}>
-              {submitLabel}
-            </Button>
+            {!consent && (
+              <Button size="lg" onClick={submit} disabled={submitting}>
+                {submitLabel}
+              </Button>
+            )}
           </div>
         </main>
       </PageContainer>
 
       {/* TODO(figma): a sombra para cima não tem token; o valor é o do Figma. */}
-      <ActionFooter>
-        <Button onClick={submit} disabled={submitting} size="lg" className="w-full">
-          {submitLabel}
-        </Button>
-        <p className="type-caption text-center text-(--text-muted)">
-          O pedido fica pendente até a empresa aprovar. Você é avisado por e-mail e no app.
-        </p>
-      </ActionFooter>
+      {/* Com o consentimento pendente, a única saída é o bloco: "Enviar pedido" seria recusado de novo. */}
+      {!consent && (
+        <ActionFooter>
+          <Button onClick={submit} disabled={submitting} size="lg" className="w-full">
+            {submitLabel}
+          </Button>
+          <p className="type-caption text-center text-(--text-muted)">
+            O pedido fica pendente até a empresa aprovar. Você é avisado por e-mail e no app.
+          </p>
+        </ActionFooter>
+      )}
     </div>
   )
 }

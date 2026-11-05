@@ -52,6 +52,19 @@ describe('ServiceFormScreen', () => {
     expect(html).toContain('Salvar serviço')
   })
 
+  it('o interruptor "Mostrar foto na vitrine" fica na seção da foto', () => {
+    const html = render({
+      mode: 'edit',
+      onUploadPhoto: async () => null,
+      onRemovePhoto: async () => undefined,
+    })
+
+    expect(html).toContain('Mostrar foto na vitrine')
+    expect(html).toContain('id="service-show-photo"')
+    // No cadastro ainda não há foto a mostrar: o interruptor só aparece na edição.
+    expect(render()).not.toContain('Mostrar foto na vitrine')
+  })
+
   it('foto do serviço: no cadastro pede para salvar primeiro; na edição oferece o envio', () => {
     expect(render()).toContain('Salve o serviço primeiro')
 
@@ -216,6 +229,7 @@ describe('cadastro de serviço', () => {
       priceCents: 4_500,
       professionalIds: ['marina-souza', 'rafael-lima'],
       isActive: true,
+      showPhotoInShowcase: true,
     })
   })
 
@@ -315,6 +329,7 @@ describe('cadastro de serviço', () => {
       slotStepMinutes: 15,
       priceCents: 6_000,
       isActive: false,
+      showPhotoInShowcase: false,
       professionals: [{ professionalId: 'p1' }],
     })
 
@@ -328,6 +343,7 @@ describe('cadastro de serviço', () => {
       price: 'R$ 60,00',
       professionalIds: ['p1'],
       isActive: false,
+      showPhotoInShowcase: false,
     })
     expect(validateService(values)).toEqual({})
   })

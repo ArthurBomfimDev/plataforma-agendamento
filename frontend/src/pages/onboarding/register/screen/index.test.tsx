@@ -20,7 +20,8 @@ const render = (overrides: Partial<RegisterScreenProps> = {}) =>
   renderToString(
     <RegisterBusinessScreen
       onCreate={noop}
-      onSaveAddress={noop}
+      onLocateAddress={async () => ({ status: 'not-found' })}
+      onConfirmLocation={noop}
       onSaveResponsible={noop}
       onFinish={noop}
       onLookupPostalCode={async () => null}

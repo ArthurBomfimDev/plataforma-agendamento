@@ -1,7 +1,9 @@
 import { contextItems, useContextSwitch } from '@hooks/use-account-menu'
 import { useChangePassword, useUpdateMe } from '@api/services/auth/hooks'
 
-import type { MyAccountData } from './screen/types'
+import { useMyConsents, useRevokeConsent } from '@api/services/consent/hooks'
+
+import type { ConsentsData, MyAccountData } from './screen/types'
 import { MyAccountScreen } from './screen'
 import { ROUTES, registerBusinessPath } from '@router/paths'
 import { RequireSession } from '@router/guards/require-session'
@@ -13,6 +15,8 @@ const MyAccount = () => {
   const { me, context, choose, leave } = useContextSwitch()
   const updateMe = useUpdateMe()
   const changePassword = useChangePassword()
+  const consents = useMyConsents()
+  const revokeConsent = useRevokeConsent()
   const several = me.data ? contextItems(me.data, context?.businessId ?? null).length > 1 : false
 
   // "Meu painel": só para quem tem estabelecimento e está como consumidor. Com um só, abre direto; com vários, escolhe.
@@ -40,9 +44,21 @@ const MyAccount = () => {
       ? { status: 'ready', fullName: me.data.fullName, email: me.data.email }
       : { status: 'loading' }
 
+  const consentsData: ConsentsData = consents.isError
+    ? {
+        status: 'error',
+        message: errorMessage(consents.error),
+        onRetry: () => void consents.refetch(),
+      }
+    : consents.data
+      ? { status: 'ready', items: consents.data }
+      : { status: 'loading' }
+
   return (
     <MyAccountScreen
       data={data}
+      consents={consentsData}
+      onRevokeConsent={(purpose) => attempt(() => revokeConsent.mutateAsync(purpose))}
       onSaveName={(fullName) => attempt(() => updateMe.mutateAsync(fullName))}
       onChangePassword={(current, next) =>
         attempt(() => changePassword.mutateAsync({ current, next }))

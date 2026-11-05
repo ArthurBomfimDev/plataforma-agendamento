@@ -17,6 +17,7 @@ import type { AdminBusinessDetailResponse, BusinessReportResponse } from '@api/m
 import { Button } from '@components/button'
 import { SelectField } from '@components/select-field'
 import { TextField } from '@components/text-field'
+import { ThemeToggle } from '@components/theme-toggle'
 import { labelOf } from '@components/business-status-banner/consts'
 import { useState } from 'react'
 
@@ -56,9 +57,16 @@ export const AdminBusinessesScreen = (props: AdminBusinessesScreenProps) => {
   return (
     <main className="min-h-dvh bg-(--bg-page) px-(--space-16) pt-[calc(var(--space-24)+env(safe-area-inset-top))] pb-[calc(var(--space-24)+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-240 flex-col gap-(--space-16)">
-        <h1 className="type-heading text-(--text-strong)">Administração</h1>
+        <div className="flex items-center justify-between gap-(--space-12)">
+          <h1 className="type-heading min-w-0 text-(--text-strong)">Administração</h1>
+          <ThemeToggle />
+        </div>
 
-        <div role="tablist" aria-label="Seções da administração" className="flex gap-(--space-8)">
+        <div
+          role="tablist"
+          aria-label="Seções da administração"
+          className="flex flex-wrap gap-(--space-8)"
+        >
           {TABS.map(({ id, label }) => (
             <button
               key={id}

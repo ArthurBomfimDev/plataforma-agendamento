@@ -1,3 +1,4 @@
+import { AttendantProfileRoute } from './attendant'
 import { ProfileScreen } from './screen'
 import { ROUTES } from '@router/paths'
 import { useLeaveBusiness } from '@api/services/professional/hooks'
@@ -14,7 +15,14 @@ import { usePanelMutation } from '@api/services/panel/hooks'
  * Painel — Meu perfil (ADR-031): o profissional com conta edita a própria especialidade, bio, registro e foto.
  * O servidor confere que o perfil é o da conta (403 para quem não tem perfil ligado).
  */
-export const PanelProfileRoute = () => {
+export const PanelProfileRoute = () =>
+  usePanelContext().context.role === 'Attendant' ? (
+    <AttendantProfileRoute />
+  ) : (
+    <ProfessionalProfileRoute />
+  )
+
+const ProfessionalProfileRoute = () => {
   const { context, business } = usePanelContext()
   const mine = useMyProfessionalProfile(context.businessId, true)
   const leave = useLeaveBusiness()

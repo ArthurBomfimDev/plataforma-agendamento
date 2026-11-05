@@ -23,6 +23,9 @@ export const queryKeys = {
   appointments: ['appointments'] as const,
   myAppointments: ['appointments', 'mine'] as const,
   me: ['me'] as const,
+  // Sob `me`: sai do cache ao trocar de conta.
+  consents: ['me', 'consents'] as const,
+  consentVersions: ['consent-versions'] as const,
   // Avaliações (ADR-032). As públicas moram sob `reviews`; as do consumidor, sob `appointments` (saem do cache ao trocar de conta).
   reviews: ['reviews'] as const,
   myReviews: ['appointments', 'reviews', 'mine'] as const,
@@ -62,6 +65,7 @@ export const queryKeys = {
   panelBusinessDetail: (businessId: string) => ['panel', businessId, 'business-detail'] as const,
   panelInvitations: (businessId: string) => ['panel', businessId, 'invitations'] as const,
   panelSeats: (businessId: string) => ['panel', businessId, 'seats'] as const,
+  panelMembers: (businessId: string) => ['panel', businessId, 'members'] as const,
   panelMyProfile: (businessId: string) => ['panel', businessId, 'my-profile'] as const,
   panelExceptions: (businessId: string) => ['panel', businessId, 'schedule-exceptions'] as const,
   panelReviews: (businessId: string, page: number) =>

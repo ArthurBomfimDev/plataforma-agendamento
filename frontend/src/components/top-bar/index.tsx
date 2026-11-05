@@ -100,7 +100,7 @@ export const TopBar = (props: TopBarProps) => {
             </Button>
           ))
         ) : (
-          <Button className="shrink-0" onClick={onSignIn}>
+          <Button className="min-w-(--size-touch-min) shrink-0" onClick={onSignIn}>
             Entrar
           </Button>
         )}

@@ -1,21 +1,16 @@
 import { Button } from '@components/button'
 import type { NewMemberSheetProps } from './types'
 import { PanelSheet } from '@components/panel-sheet'
-import { SwitchField } from '@components/switch-field'
 import { TextField } from '@components/text-field'
 import { optional } from '../../consts'
 import { useState } from 'react'
 
-/**
- * Cadastrar um profissional sem login: o dono opera a agenda dele. O convite por e-mail, que dá login
- * ao profissional, é a Onda 5D.
- */
+/** O dono que também atende cria o próprio perfil, ligado à conta dele. Qualquer outra pessoa entra por convite. */
 export const NewMemberSheet = (props: NewMemberSheetProps) => {
   const { open, onOpenChange, onCreate } = props
 
   const [name, setName] = useState('')
   const [specialty, setSpecialty] = useState('')
-  const [isMe, setIsMe] = useState(false)
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
@@ -26,20 +21,19 @@ export const NewMemberSheet = (props: NewMemberSheetProps) => {
     if (open) {
       setName('')
       setSpecialty('')
-      setIsMe(false)
       setTouched(false)
       setError(undefined)
     }
   }
 
-  const nameError = touched && !name.trim() ? 'Informe o nome do profissional.' : undefined
+  const nameError = touched && !name.trim() ? 'Informe o nome que aparece na agenda.' : undefined
 
   return (
     <PanelSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Novo profissional"
-      description="Sem login: você opera a agenda dele. O convite por e-mail ainda não existe."
+      title="Eu também atendo"
+      description="Cria o seu perfil de profissional, ligado à sua conta."
     >
       <form
         noValidate
@@ -54,7 +48,7 @@ export const NewMemberSheet = (props: NewMemberSheetProps) => {
             displayName: name.trim(),
             specialty: optional(specialty),
             bio: null,
-            isMe,
+            isMe: true,
           })
           setSaving(false)
           if (failure) setError(failure)
@@ -75,13 +69,6 @@ export const NewMemberSheet = (props: NewMemberSheetProps) => {
           value={specialty}
           onChange={(event) => setSpecialty(event.target.value)}
         />
-        <SwitchField
-          id="new-member-is-me"
-          label="Sou eu: também atendo"
-          description="Liga o profissional à sua conta."
-          checked={isMe}
-          onCheckedChange={setIsMe}
-        />
 
         {error && (
           <p role="alert" className="type-label text-(--status-rejected-fg)">
@@ -90,7 +77,7 @@ export const NewMemberSheet = (props: NewMemberSheetProps) => {
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={saving}>
-          {saving ? 'Cadastrando…' : 'Cadastrar'}
+          {saving ? 'Criando…' : 'Criar meu perfil'}
         </Button>
       </form>
     </PanelSheet>

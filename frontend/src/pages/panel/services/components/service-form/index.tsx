@@ -32,7 +32,10 @@ import { TextField } from '@components/text-field'
 import { cn } from 'cn'
 
 /** Os campos que guardam texto: lista de profissionais e situação têm controle próprio. */
-type TextFormField = Exclude<ServiceFormField, 'professionalIds' | 'isActive'>
+type TextFormField = Exclude<
+  ServiceFormField,
+  'professionalIds' | 'isActive' | 'showPhotoInShowcase'
+>
 
 type BufferField = Extract<ServiceFormField, 'bufferBeforeMinutes' | 'bufferAfterMinutes'>
 
@@ -250,6 +253,15 @@ export const ServiceFormScreen = (props: ServiceFormScreenProps) => {
                     }
                     onUpload={onUploadPhoto}
                     onRemove={onRemovePhoto}
+                  />
+                  <SwitchField
+                    id={FIELD_IDS.showPhotoInShowcase}
+                    label="Mostrar foto na vitrine"
+                    description="Desligado, a foto fica só aqui no painel e a vitrine mostra o ícone da categoria."
+                    checked={values.showPhotoInShowcase}
+                    onCheckedChange={(showPhotoInShowcase) =>
+                      setValues((current) => ({ ...current, showPhotoInShowcase }))
+                    }
                   />
                   {sensitive && (
                     <p className="type-caption text-(--text-muted)">

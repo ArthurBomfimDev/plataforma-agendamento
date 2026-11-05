@@ -28,7 +28,11 @@ export const MobileTopBar = (props: MobileTopBarProps) => {
           accountMenu
         ) : (
           <>
-            <Button variant="ghost" className="shrink-0" onClick={onSignIn}>
+            <Button
+              variant="ghost"
+              className="min-w-(--size-touch-min) shrink-0"
+              onClick={onSignIn}
+            >
               Entrar
             </Button>
             <Button className="shrink-0" onClick={onSignUp}>

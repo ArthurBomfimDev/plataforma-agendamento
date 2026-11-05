@@ -6,6 +6,7 @@ import type {
   InviteMemberRequest,
   PagedResult,
   SeatsResponse,
+  TeamMemberResponse,
 } from '@api/models'
 import { authRequest, request } from '@api/base'
 
@@ -21,6 +22,13 @@ export const invitationService = {
     }),
   seats: (signal?: AbortSignal) =>
     authRequest<SeatsResponse>({ url: invitationEndpoints.seats, signal }),
+  /** Quem tem conta no estabelecimento, com o papel (só o dono). */
+  members: (signal?: AbortSignal) =>
+    authRequest<PagedResult<TeamMemberResponse>>({
+      url: invitationEndpoints.members,
+      params: { pageSize: 50 },
+      signal,
+    }),
   invite: (data: InviteMemberRequest) =>
     authRequest<InvitationResponse>({ method: 'POST', url: invitationEndpoints.list, data }),
   /** Token novo e prazo novo: o link antigo deixa de valer. */

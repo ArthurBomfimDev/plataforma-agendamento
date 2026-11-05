@@ -25,6 +25,8 @@ export type ServiceResponse = PublicServiceResponse & {
   slotStepMinutes: number
   suppliesNote: string | null
   isActive: boolean
+  /** Desligado: `photo` vem aqui para o dono, mas nenhuma resposta pública leva a imagem. */
+  showPhotoInShowcase: boolean
 }
 
 export type SaveServiceRequest = {
@@ -37,4 +39,5 @@ export type SaveServiceRequest = {
   priceCents: number
   suppliesNote: string | null
   isActive: boolean
+  showPhotoInShowcase: boolean
 }

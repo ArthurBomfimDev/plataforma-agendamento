@@ -41,6 +41,13 @@ export type InvitationResponse = {
 /** Vagas da equipe: contas ativas + convites pendentes contra o limite do estabelecimento. */
 export type SeatsResponse = { used: number; limit: number }
 
+/** Um membro com conta: a seção Equipe. `role` é o papel de acesso, não o perfil público. */
+export type TeamMemberResponse = {
+  membershipId: string
+  name: string
+  role: 'Owner' | 'Professional' | 'Attendant'
+}
+
 export type AcceptInvitationNewAccountRequest = {
   token: string
   fullName: string

@@ -11,7 +11,8 @@ public sealed record SaveServiceRequest(
     int SlotStepMinutes,
     long PriceCents,
     string? SuppliesNote,
-    bool IsActive = true);
+    bool IsActive = true,
+    bool ShowPhotoInShowcase = true);
 
 public sealed record EnableProfessionalRequest(long? PriceOverrideCents, int? DurationOverrideMinutes);
 
@@ -30,7 +31,8 @@ public sealed record ServiceResponse(
     string? SuppliesNote,
     bool IsActive,
     IReadOnlyList<ServiceProfessionalResponse> Professionals,
-    ImageSetResponse? Photo = null);
+    ImageSetResponse? Photo = null,
+    bool ShowPhotoInShowcase = true);
 
 /// <summary>Vitrine: sem nota de insumos e sem buffers internos.</summary>
 public sealed record PublicServiceResponse(

@@ -20,6 +20,12 @@ public sealed class BusinessInvitationsController : ControllerBase
         [FromServices] ListInvitationsQuery query, CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) =>
         Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
 
+    [HttpGet("members")]
+    [ProducesResponseType<PagedResult<TeamMemberResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListMembers(
+        [FromServices] ListTeamMembersQuery query, CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 50) =>
+        Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
+
     [HttpGet("seats")]
     [ProducesResponseType<SeatsResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSeats([FromServices] GetSeatsQuery query, CancellationToken ct) =>

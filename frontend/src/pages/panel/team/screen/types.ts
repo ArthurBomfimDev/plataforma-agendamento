@@ -1,4 +1,5 @@
 import type { ImageSet } from '@api/models'
+import type { MemberPhotoActions } from './components/member-photo'
 
 /** Um profissional na tela de equipe, já com os serviços que executa. */
 export type TeamMember = {
@@ -88,4 +89,6 @@ export type TeamScreenProps = {
   /** Gravam na API. Resolvem `null` se deu certo, senão a mensagem de erro, já em português. */
   onCreate?: (draft: NewTeamMemberDraft) => Promise<string | null>
   onSave?: (member: TeamMember, draft: TeamMemberDraft) => Promise<string | null>
+  /** Enviar e remover a foto: as mesmas funções da aba Fotos. */
+  photo?: MemberPhotoActions
 }
