@@ -38,8 +38,10 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
 
 ## Cadastro do estabelecimento
 
-- **Regra do documento (CPF ou CNPJ por categoria) e modo "Atendo na minha casa": em aberto** (versões A e B). O passo do
-  documento fica atrás de um ponto de extensão com o texto "em definição".
+- **Regra do documento: Versão B (04/11, ADR-028).** Toda categoria aceita CPF ou CNPJ. "Sou MEI" é declarado pelo dono e a
+  plataforma não confere.
+- Um documento não se repete entre estabelecimentos (índice único): quem cadastra com CPF tem **um** estabelecimento por CPF,
+  embora a conta aceite até 3.
 - Fora do escopo: consulta de CNPJ na Receita, integração com conselhos profissionais, upload de documento, pagamento
   e plano, edição de nome e categoria depois de ativo. A situação cadastral e o registro no conselho são conferidos à
   mão pelo Admin.

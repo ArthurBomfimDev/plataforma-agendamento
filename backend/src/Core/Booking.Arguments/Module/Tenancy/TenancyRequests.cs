@@ -1,6 +1,10 @@
 namespace Booking.Arguments.Module.Tenancy;
 
-public sealed record RegisterBusinessRequest(string Name, string Document, string Category);
+/// <summary>
+/// Cadastro. <c>Document</c>: CPF ou CNPJ, em qualquer categoria. <c>DocumentType</c>: <c>Cpf</c> ou <c>Cnpj</c>, conferido com
+/// o documento; sem ele, vale o que o documento é. <c>IsMei</c>: informativo, só com CNPJ.
+/// </summary>
+public sealed record RegisterBusinessRequest(string Name, string Document, string Category, string? DocumentType = null, bool IsMei = false);
 
 public sealed record UpdateSchedulingPolicyRequest(
     bool AutoConfirm,

@@ -9,7 +9,7 @@ import {
   validateResponsible,
 } from './consts'
 
-import { DOCUMENT_RULE } from './components/document-step/consts'
+import { documentTypeError } from './components/document-step/consts'
 import { RegisterBusinessScreen } from '.'
 import type { RegisterScreenProps } from './types'
 import { renderToString } from 'react-dom/server'
@@ -104,13 +104,24 @@ describe('validação, um erro por campo', () => {
   })
 })
 
-describe('ponto de extensão do documento', () => {
-  it('o texto é provisório ("em definição") e a validação aceita CPF, CNPJ e CNPJ alfanumérico', () => {
-    expect(DOCUMENT_RULE.helpText).toContain('em definição')
-    expect(DOCUMENT_RULE.validate('529.982.247-25', 'Beleza')).toBeUndefined()
-    expect(DOCUMENT_RULE.validate('11.222.333/0001-81', 'Saude')).toBeUndefined()
-    expect(DOCUMENT_RULE.validate('12.ABC.345/01DE-35', 'Beleza')).toBeUndefined()
-    expect(DOCUMENT_RULE.validate('123', 'Beleza')).toBeDefined()
+describe('regra do documento (Versão B)', () => {
+  it('aceita o documento do tipo escolhido, incluindo o CNPJ alfanumérico', () => {
+    expect(documentTypeError('529.982.247-25', 'Cpf')).toBeUndefined()
+    expect(documentTypeError('11.222.333/0001-81', 'Cnpj')).toBeUndefined()
+    expect(documentTypeError('12.ABC.345/01DE-35', 'Cnpj')).toBeUndefined()
+  })
+
+  it('recusa com a mensagem do campo: vazio, tamanho, dígito e o documento do outro tipo', () => {
+    expect(documentTypeError('', 'Cpf')).toBe('Informe o CPF.')
+    expect(documentTypeError('', 'Cnpj')).toBe('Informe o CNPJ.')
+    expect(documentTypeError('123', 'Cpf')).toBe('O CPF tem 11 dígitos.')
+    expect(documentTypeError('123', 'Cnpj')).toBe('O CNPJ tem 14 caracteres.')
+    expect(documentTypeError('529.982.247-26', 'Cpf')).toBe('CPF inválido. Confira os dígitos.')
+    expect(documentTypeError('11.222.333/0001-80', 'Cnpj')).toBe(
+      'CNPJ inválido. Confira os dígitos.',
+    )
+    expect(documentTypeError('11.222.333/0001-81', 'Cpf')).toContain('Este número é um CNPJ')
+    expect(documentTypeError('529.982.247-25', 'Cnpj')).toContain('Este número é um CPF')
   })
 })
 
@@ -128,12 +139,16 @@ describe('RegisterBusinessScreen', () => {
     expect(html).toContain('Continuar depois')
   })
 
-  it('o passo do documento mostra o texto "em definição" e o botão que cria o rascunho', () => {
+  it('o passo do documento pergunta o tipo, oferece "Sou MEI" com CNPJ e o texto sobre o CNPJ', () => {
     const html = render({ initialStep: 'document' })
 
     expect(html).toContain('Passo 2 de 4 · Documento')
-    expect(html).toContain('Documento do estabelecimento')
-    expect(html).toContain('em definição')
+    expect(html).toContain('Empresa (CNPJ)')
+    expect(html).toContain('Autônomo(a) (CPF)')
+    expect(html).toContain('Sou MEI')
+    expect(html).toContain('Portal do Empreendedor')
+    expect(html).toContain('Não aparece na página pública')
+    expect(html).not.toContain('em definição')
     expect(html).toContain('Criar e continuar')
   })
 

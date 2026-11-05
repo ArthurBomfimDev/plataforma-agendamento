@@ -44,7 +44,9 @@ public sealed record BusinessDetailResponse(
     ImageSetResponse? Cover = null,
     string? StatusReason = null,
     bool TermsAccepted = false,
-    bool ResponsibleInformed = false);
+    bool ResponsibleInformed = false,
+    string? DocumentType = null,
+    bool IsMei = false);
 
 /// <summary>
 /// Visão pública da vitrine. Sem documento. Da política, só o que o consumidor precisa ver antes de pedir:

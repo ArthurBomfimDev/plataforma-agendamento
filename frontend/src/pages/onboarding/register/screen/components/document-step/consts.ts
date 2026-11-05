@@ -1,23 +1,48 @@
-import { documentError } from '@utils/document'
+import { checkDocument } from '@utils/document'
 
 /**
- * PONTO DE EXTENSÃO da regra de cadastro (versões A e B, ainda em aberto).
- *
- * Quando o Arthur decidir qual documento cada categoria aceita (CNPJ obrigatório, ou CPF ou CNPJ), só este arquivo
- * muda: o rótulo, o texto de ajuda e `validate`. O restante do assistente não sabe da regra. Enquanto isso, o texto é
- * provisório e a validação só confere o formato (CPF, CNPJ numérico e CNPJ alfanumérico).
- *
- * Fora do escopo aqui: o modo "Atendo na minha casa" (só existe na versão B).
+ * Regra de cadastro, Versão B (decidida em 04/11, ADR-028): toda categoria aceita CPF ou CNPJ, para incluir o autônomo
+ * informal. MEI usa CNPJ. O servidor confere de novo; aqui a validação só poupa a ida até ele e dá a mensagem do campo.
  */
-export type DocumentRule = {
+export type BusinessDocumentType = 'Cnpj' | 'Cpf'
+
+export const DOCUMENT_TYPE_OPTIONS: ReadonlyArray<{
+  value: BusinessDocumentType
   label: string
-  helpText: string
-  /** Mensagem de erro em português, ou `undefined` se o documento é aceito. */
-  validate: (raw: string, category: 'Beleza' | 'Saude') => string | undefined
+  description: string
+}> = [
+  { value: 'Cnpj', label: 'Empresa (CNPJ)', description: 'Inclui quem é MEI.' },
+  {
+    value: 'Cpf',
+    label: 'Autônomo(a) (CPF)',
+    description: 'Para quem trabalha sem empresa aberta.',
+  },
+]
+
+export const DOCUMENT_HELP_TEXT =
+  'Com CNPJ (inclusive MEI, que é gratuito e se abre em minutos no Portal do Empreendedor) você fica pronto para receber pagamentos quando a plataforma passar a oferecê-los.'
+
+const NAMES: Record<BusinessDocumentType, string> = { Cnpj: 'CNPJ', Cpf: 'CPF' }
+
+const LENGTH_MESSAGES: Record<BusinessDocumentType, string> = {
+  Cnpj: 'O CNPJ tem 14 caracteres.',
+  Cpf: 'O CPF tem 11 dígitos.',
 }
 
-export const DOCUMENT_RULE: DocumentRule = {
-  label: 'Documento do estabelecimento',
-  helpText: 'Regra do documento em definição. Por enquanto, informe o CPF ou o CNPJ.',
-  validate: (raw) => documentError(raw),
+export const documentLabel = (type: BusinessDocumentType) => NAMES[type]
+
+/** A mensagem do campo, em português, ou `undefined` se o documento é válido para o tipo escolhido. */
+export const documentTypeError = (raw: string, type: BusinessDocumentType) => {
+  const result = checkDocument(raw)
+  const name = NAMES[type]
+
+  if (result.valid) {
+    const found: BusinessDocumentType = result.kind === 'cpf' ? 'Cpf' : 'Cnpj'
+    return found === type
+      ? undefined
+      : `Este número é um ${NAMES[found]}. Informe um ${name} ou troque a opção acima.`
+  }
+  if (result.reason === 'empty') return `Informe o ${name}.`
+  if (result.reason === 'length') return LENGTH_MESSAGES[type]
+  return `${name} inválido. Confira os dígitos.`
 }

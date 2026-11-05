@@ -55,6 +55,21 @@ Alternativa 3.
 - **Freios:** e-mail confirmado (o login já exige), no máximo 3 estabelecimentos por conta, suspensão pelo Admin com
   registro. Taxa de criação e a fila de denúncias entram em seguida.
 
+### Documento do cadastro: Versão B (Arthur, 04/11)
+
+**Toda categoria aceita CPF ou CNPJ.** O passo do documento pergunta "Empresa (CNPJ)" ou "Autônomo(a) (CPF)"; MEI usa CNPJ.
+
+**Por quê:** exigir CNPJ deixaria de fora o autônomo informal, que é o público do problema estudado no TCC (o barbeiro, a
+manicure, quem trabalha sozinho). A Versão A (CNPJ obrigatório) foi descartada por isso. O CNPJ continua incentivado no
+próprio passo, porque ele prepara o portão de receber descrito abaixo.
+
+- `document_type` (`Cpf` ou `Cnpj`) sai do documento, e o tipo declarado no assistente é conferido no servidor
+  (`document.expected_cpf`, `document.expected_cnpj`). `is_mei` é informativo, declarado pelo dono, e só existe com CNPJ
+  (`business.mei_requires_cnpj` e a constraint `ck_business_mei_requires_cnpj`). A plataforma não confere se a pessoa é MEI.
+- Saúde não muda: além do documento, o responsável, o conselho, o número e a UF, e a análise do Admin.
+- O documento nunca é público nem vai para log; só o dono e o Admin veem. Um documento não se repete entre estabelecimentos
+  (índice único).
+
 ### Publicar é diferente de receber
 
 O status só diz respeito a **aparecer na plataforma**. Quando houver pagamento, **receber** será um segundo portão,

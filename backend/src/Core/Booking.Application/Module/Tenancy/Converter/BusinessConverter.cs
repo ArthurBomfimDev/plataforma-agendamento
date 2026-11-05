@@ -51,7 +51,9 @@ public static class BusinessConverter
             images.For(business.CoverImageKey),
             StatusReason(business),
             business.TermsAcceptedAt is not null,
-            business.HasResponsible);
+            business.HasResponsible,
+            business.DocumentType.ToString(),
+            business.IsMei);
 
     /// <summary>
     /// O motivo que o dono precisa ler: o da suspensão (Suspenso) ou o da reprovação (rascunho com nível Rejected).

@@ -68,6 +68,11 @@ const MESSAGES: Record<string, string> = {
   'document.required': 'Informe o documento.',
   'document.invalid_length': 'O documento deve ter 11 caracteres (CPF) ou 14 (CNPJ).',
   'document.invalid_check_digit': 'Documento inválido. Confira os dígitos.',
+  'document.expected_cpf': 'Este número não é um CPF. Informe um CPF ou escolha "Empresa (CNPJ)".',
+  'document.expected_cnpj':
+    'Este número não é um CNPJ. Informe um CNPJ ou escolha "Autônomo(a) (CPF)".',
+  'document.type_invalid': 'Escolha entre CPF e CNPJ.',
+  'business.mei_requires_cnpj': 'MEI usa CNPJ. Desmarque "Sou MEI" ou informe o CNPJ.',
   'service.not_found': 'Serviço não encontrado.',
   'appointment.not_found': 'Agendamento não encontrado.',
   'auth.forbidden': 'Você não tem permissão para fazer isso neste estabelecimento.',

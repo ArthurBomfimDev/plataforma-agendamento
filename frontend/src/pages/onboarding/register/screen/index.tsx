@@ -15,6 +15,7 @@ import {
 import type {
   AddressValues,
   BusinessValues,
+  DocumentValues,
   RegisterScreenProps,
   ResponsibleValues,
   StepResult,
@@ -25,7 +26,7 @@ import { useState } from 'react'
 import type { BusinessCategoryName } from '@api/models'
 import { Button } from '@components/button'
 import { Checkbox } from '@components/checkbox'
-import { DOCUMENT_RULE } from './components/document-step/consts'
+import { type BusinessDocumentType, documentTypeError } from './components/document-step/consts'
 import { DocumentStep } from './components/document-step'
 import { RadioOptionGroup } from '@components/radio-option-group'
 import { SelectField } from '@components/select-field'
@@ -55,7 +56,11 @@ export const RegisterBusinessScreen = (props: RegisterScreenProps) => {
     name: '',
     category: createdCategory ?? 'Beleza',
   })
-  const [documentValue, setDocumentValue] = useState('')
+  const [documentValues, setDocumentValues] = useState<DocumentValues>({
+    document: '',
+    documentType: 'Cnpj',
+    isMei: false,
+  })
   const [error, setError] = useState<string>()
   const [busy, setBusy] = useState(false)
 
@@ -108,13 +113,12 @@ export const RegisterBusinessScreen = (props: RegisterScreenProps) => {
 
         {step === 'document' && (
           <DocumentForm
-            category={category}
-            value={documentValue}
+            values={documentValues}
             busy={busy}
             error={error}
-            onChange={setDocumentValue}
+            onChange={setDocumentValues}
             onBack={goBack}
-            onSubmit={() => run(() => props.onCreate(business, documentValue), goNext)}
+            onSubmit={() => run(() => props.onCreate(business, documentValues), goNext)}
           />
         )}
 
@@ -212,16 +216,20 @@ const BusinessStep = (props: {
 }
 
 const DocumentForm = (props: {
-  category: BusinessCategoryName
-  value: string
+  values: DocumentValues
   busy: boolean
   error?: string
-  onChange: (value: string) => void
+  onChange: (values: DocumentValues) => void
   onBack: () => void
   onSubmit: () => void
 }) => {
-  const { category, value, busy, error, onChange, onBack, onSubmit } = props
+  const { values, busy, error, onChange, onBack, onSubmit } = props
   const [fieldError, setFieldError] = useState<string>()
+
+  const change = (patch: Partial<DocumentValues>) => {
+    setFieldError(undefined)
+    onChange({ ...values, ...patch })
+  }
 
   return (
     <form
@@ -229,18 +237,22 @@ const DocumentForm = (props: {
       className="flex flex-col gap-(--space-16)"
       onSubmit={(event) => {
         event.preventDefault()
-        const found = DOCUMENT_RULE.validate(value, category)
+        const found = documentTypeError(values.document, values.documentType)
         setFieldError(found)
         if (!found) onSubmit()
       }}
     >
       <DocumentStep
-        value={value}
+        type={values.documentType}
+        value={values.document}
+        isMei={values.isMei}
         error={fieldError}
-        onChange={(next) => {
-          setFieldError(undefined)
-          onChange(next)
-        }}
+        // MEI só existe com CNPJ: trocar para CPF desfaz a marca.
+        onTypeChange={(documentType: BusinessDocumentType) =>
+          change({ documentType, isMei: documentType === 'Cnpj' && values.isMei })
+        }
+        onChange={(document) => change({ document })}
+        onMeiChange={(isMei) => change({ isMei })}
       />
       <Problem message={error} />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>

@@ -17,6 +17,13 @@ public sealed class Business : AggregateRoot, IAuditable
 
     public string Name { get; private set; } = null!;
     public Document Document { get; private set; } = null!;
+
+    /// <summary>CPF (autônomo) ou CNPJ (empresa): toda categoria aceita os dois (Versão B, ADR-028). Sai do documento.</summary>
+    public DocumentKind DocumentType { get; private set; }
+
+    /// <summary>Informativo, declarado pelo dono. Só faz sentido com CNPJ: MEI tem CNPJ.</summary>
+    public bool IsMei { get; private set; }
+
     public BusinessCategory Category { get; private set; }
     public BusinessStatus Status { get; private set; }
     public int SeatLimit { get; private set; }
@@ -72,17 +79,24 @@ public sealed class Business : AggregateRoot, IAuditable
     {
     }
 
-    public static Business Create(string name, Document document, BusinessCategory category)
+    public static Business Create(string name, Document document, BusinessCategory category, bool isMei = false)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new DomainException("business.name_required");
         }
 
+        if (isMei && document.Kind != DocumentKind.Cnpj)
+        {
+            throw new DomainException("business.mei_requires_cnpj");
+        }
+
         return new Business
         {
             Name = name.Trim(),
             Document = document,
+            DocumentType = document.Kind,
+            IsMei = isMei,
             Category = category,
             Status = BusinessStatus.Draft,
             VerificationLevel = VerificationLevel.Unverified,
