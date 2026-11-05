@@ -26,7 +26,8 @@ public static class CatalogConverter
             service.SuppliesNote,
             service.IsActive,
             [.. links.Where(l => l.ServiceId == service.Id).Select(l => ToResponse(l, service))],
-            images.For(service.ImageKey));
+            images.For(service.ImageKey),
+            service.ShowPhotoInShowcase);
 
     public static PublicServiceResponse ToPublic(Service service, IEnumerable<ServiceProfessional> links, IImageUrls images) =>
         new(
@@ -36,5 +37,5 @@ public static class CatalogConverter
             service.DurationMinutes,
             service.PriceCents,
             [.. links.Where(l => l.ServiceId == service.Id).Select(l => ToResponse(l, service))],
-            images.For(service.ImageKey));
+            images.For(service.ShowcaseImageKey));
 }

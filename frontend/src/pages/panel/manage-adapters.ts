@@ -104,6 +104,7 @@ export const toSaveServiceRequest = (
   priceCents: draft.priceCents,
   suppliesNote: existing?.suppliesNote ?? null,
   isActive: draft.isActive,
+  showPhotoInShowcase: draft.showPhotoInShowcase,
 })
 
 /** Quem ligar e quem desligar para o serviço ficar com exatamente `wanted`. */

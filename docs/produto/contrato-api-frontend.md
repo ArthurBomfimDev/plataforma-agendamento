@@ -526,6 +526,10 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - Frontend: `ImageUploader` em "Editar serviço" (no cadastro: "Salve o serviço primeiro"); a vitrine mostra a foto ao lado do
   serviço, e o ícone da categoria quando não há. Em Saúde, aviso no envio: não enviar imagem de pacientes.
 - Migration `AddServiceImage` (não aplicada): `catalog.service.image_key varchar(200) NULL`.
+- **Mostrar foto na vitrine (05/11):** `showPhotoInShowcase` (`bool`, padrão `true`) entra em `SaveServiceRequest` e
+  `ServiceResponse`. Desligado, `PublicServiceResponse.photo` e a foto do serviço em `GET /api/professionals/{id}` saem
+  nulas; o dono continua recebendo `photo` no painel. Migration `AddServiceShowPhotoInShowcase` (não aplicada):
+  `catalog.service.show_photo_in_showcase boolean NOT NULL DEFAULT TRUE`.
 
 ## 4.16 Página pública do profissional, remoção de perfil e sair do estabelecimento (Fase 4, bloco 4, 04/11) — **escrito sem Docker e sem navegador, não verificado**
 

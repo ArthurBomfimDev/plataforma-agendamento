@@ -53,7 +53,7 @@ public sealed class ServiceCatalog(BookingDbContext context) : IServiceCatalog
             .. services.Select(s =>
             {
                 ServiceProfessional link = links.First(l => l.ServiceId == s.Id);
-                return new ProfessionalServiceInfo(s.Id, s.Name, link.EffectiveDurationMinutes(s), link.EffectivePriceCents(s), s.ImageKey);
+                return new ProfessionalServiceInfo(s.Id, s.Name, link.EffectiveDurationMinutes(s), link.EffectivePriceCents(s), s.ShowcaseImageKey);
             }),
         ];
     }
