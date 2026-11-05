@@ -1,5 +1,6 @@
 import type { BusinessService } from '@pages/customer/business-detail/screen/types'
 import type { ImageSet } from '@api/models'
+import type { SensitiveConsentProps } from '@components/sensitive-consent'
 
 export type BookingBusiness = {
   name: string
@@ -25,4 +26,6 @@ export type BookingReviewScreenProps = {
   submitting?: boolean
   onBack?: () => void
   onSubmit?: (note: string) => void
+  /** O servidor pediu consentimento (Saúde): a tela mostra o bloco no lugar de "Enviar pedido". */
+  consent?: SensitiveConsentProps
 }

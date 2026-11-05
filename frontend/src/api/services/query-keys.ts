@@ -23,6 +23,9 @@ export const queryKeys = {
   appointments: ['appointments'] as const,
   myAppointments: ['appointments', 'mine'] as const,
   me: ['me'] as const,
+  // Sob `me`: sai do cache ao trocar de conta.
+  consents: ['me', 'consents'] as const,
+  consentVersions: ['consent-versions'] as const,
   // Avaliações (ADR-032). As públicas moram sob `reviews`; as do consumidor, sob `appointments` (saem do cache ao trocar de conta).
   reviews: ['reviews'] as const,
   myReviews: ['appointments', 'reviews', 'mine'] as const,

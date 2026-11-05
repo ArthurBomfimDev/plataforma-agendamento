@@ -19,5 +19,5 @@ public sealed class ListMyConsentsQuery(IConsentRecordRepository consents, IActo
 
 public sealed class GetConsentVersionsQuery
 {
-    public ConsentVersionsResponse Execute() => new(ConsentTexts.SensitiveSchedulingVersion);
+    public ConsentVersionsResponse Execute() => new(ConsentTexts.SensitiveSchedulingVersion, ConsentTexts.SensitiveSchedulingText);
 }

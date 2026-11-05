@@ -1,6 +1,7 @@
 import { ErrorState, LoadingState } from '@components/screen-state'
-import type { MyAccountScreenProps } from './types'
+import type { ConsentsData, MyAccountScreenProps } from './types'
 import { type PasswordErrors, validatePasswordChange } from './consts'
+import { format } from 'date-fns'
 
 import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
@@ -37,6 +38,9 @@ export const MyAccountScreen = (props: MyAccountScreenProps) => {
           <>
             <NameForm fullName={data.fullName} email={data.email} onSave={props.onSaveName} />
             <PasswordForm onChange={props.onChangePassword} />
+            {props.consents && (
+              <ConsentsCard consents={props.consents} onRevoke={props.onRevokeConsent} />
+            )}
           </>
         )}
 
@@ -88,6 +92,79 @@ export const MyAccountScreen = (props: MyAccountScreenProps) => {
         onConfirm={onSignOut}
       />
     </main>
+  )
+}
+
+const CONSENT_LABELS: Record<string, string> = {
+  SensitiveScheduling: 'Agendar em estabelecimentos de saúde',
+}
+
+const dateLabel = (iso: string) => format(new Date(iso), 'dd/MM/yyyy')
+
+/** Os consentimentos da conta. Revogar não cancela o que já foi agendado, mas bloqueia pedidos novos em Saúde. */
+const ConsentsCard = (props: {
+  consents: ConsentsData
+  onRevoke: MyAccountScreenProps['onRevokeConsent']
+}) => {
+  const { consents, onRevoke } = props
+  const [target, setTarget] = useState<string | null>(null)
+  const [error, setError] = useState<string>()
+
+  const revoke = async () => {
+    if (!target) return
+    setError(undefined)
+    const failure = (await onRevoke?.(target)) ?? null
+    setTarget(null)
+    if (failure) setError(failure)
+  }
+
+  return (
+    <section aria-labelledby="account-consents" className={CARD}>
+      <h2 id="account-consents" className="type-label text-(--text-strong)">
+        Consentimentos
+      </h2>
+      {consents.status === 'loading' && <LoadingState label="Carregando os consentimentos…" />}
+      {consents.status === 'error' && (
+        <ErrorState message={consents.message} onRetry={consents.onRetry} />
+      )}
+      {consents.status === 'ready' && consents.items.length === 0 && (
+        <p className="type-body text-(--text-muted)">
+          Você ainda não deu nenhum consentimento. Ele é pedido quando você agenda em saúde.
+        </p>
+      )}
+      {consents.status === 'ready' && consents.items.length > 0 && (
+        <ul className="flex flex-col gap-(--space-12)">
+          {consents.items.map((consent) => (
+            <li key={consent.id} className="flex flex-col items-start gap-(--space-4)">
+              <p className="type-body text-(--text-strong)">
+                {CONSENT_LABELS[consent.purpose] ?? consent.purpose}
+              </p>
+              <p className="type-caption text-(--text-muted)">
+                {consent.revokedAt
+                  ? `Revogado em ${dateLabel(consent.revokedAt)}`
+                  : `Em vigor desde ${dateLabel(consent.grantedAt)}`}{' '}
+                · versão {consent.version}
+              </p>
+              {!consent.revokedAt && (
+                <Button variant="secondary" onClick={() => setTarget(consent.purpose)}>
+                  Revogar
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Feedback error={error} />
+      <ConfirmDialog
+        open={target !== null}
+        onOpenChange={(open) => !open && setTarget(null)}
+        title="Revogar o consentimento?"
+        description="Os agendamentos já feitos continuam. Novos pedidos em estabelecimentos de saúde ficam bloqueados até você consentir de novo."
+        confirmLabel="Revogar"
+        dismissLabel="Manter"
+        onConfirm={() => void revoke()}
+      />
+    </section>
   )
 }
 

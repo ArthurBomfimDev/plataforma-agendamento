@@ -26,6 +26,27 @@ const screen = (overrides: Partial<BookingReviewScreenProps> = {}) =>
   )
 
 describe('BookingReviewScreen', () => {
+  it('sem consentimento pendente, não há bloco e "Enviar pedido" aparece', () => {
+    const html = screen()
+
+    expect(html).not.toContain('Dar consentimento e continuar')
+    expect(html).toContain('Enviar pedido')
+  })
+
+  it('consentimento pendente: mostra o bloco e tira "Enviar pedido", que seria recusado', () => {
+    const html = screen({
+      consent: {
+        text: { status: 'ready', value: 'Autorizo o tratamento dos dados.' },
+        busy: false,
+        onAccept: () => undefined,
+      },
+    })
+
+    expect(html).toContain('Autorizo o tratamento dos dados.')
+    expect(html).toContain('Dar consentimento e continuar')
+    expect(html).not.toContain('Enviar pedido')
+  })
+
   it('mostra o logotipo do estabelecimento; sem ele, a ilustração da categoria (7CF)', () => {
     const logo = {
       small: 'businesses/b1/k-s.webp',

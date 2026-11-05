@@ -629,6 +629,12 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - Migration `AddBusinessDocumentType` (não aplicada): `document_type`, `is_mei`, `ck_business_mei_requires_cnpj`; quem já existe
   recebe o tipo pelo tamanho do documento.
 
+## 4.19 Consentimento para agendar em Saúde (05/11)
+
+- `GET /api/consents/versions` (anônima) devolve `{ sensitiveScheduling, sensitiveSchedulingText }`: a versão vigente e **o texto** (campo novo, aditivo). Rascunho em `docs/legal/consentimento-agendamento-saude.md`.
+- `POST /api/consents` `{ purpose, version }`, `GET /api/consents` e `DELETE /api/consents/{purpose}` já existiam; agora têm tela.
+- "Revise seu pedido": `compliance.consent_required` não vira toast, e sim o bloco de consentimento; ao aceitar, grava e reenvia com a mesma chave de idempotência.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
