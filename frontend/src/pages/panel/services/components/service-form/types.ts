@@ -1,3 +1,5 @@
+import type { ImageSet } from '@api/models'
+
 /**
  * O que está nos campos, como foi digitado. Os tempos vêm como "30 min" e o preço como "R$ 45,00";
  * `toServiceDraft` converte para números.
@@ -49,6 +51,13 @@ export type ServiceFormScreenProps = {
   /** Estabelecimento de saúde: avisa que nome e descrição vão para a vitrine pública. */
   sensitive?: boolean
   professionals: ServiceProfessionalOption[]
+  /**
+   * Foto do serviço (opcional). Só a edição envia: o serviço precisa existir. Ausente `onUploadPhoto`, o formulário não
+   * mostra o cartão (testes, cadastro).
+   */
+  photo?: ImageSet | null
+  onUploadPhoto?: (file: File, onProgress: (fraction: number) => void) => Promise<ImageSet | null>
+  onRemovePhoto?: () => Promise<void>
   initialValues: ServiceFormValues
   /** Expediente para a pré-visualização. Nulo: ninguém tem jornada ainda, e a tela diz isso. */
   previewHours: PreviewHours | null

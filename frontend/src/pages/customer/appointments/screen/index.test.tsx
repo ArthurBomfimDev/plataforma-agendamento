@@ -36,6 +36,59 @@ describe('AppointmentsScreen', () => {
     expect(html).toContain('Avaliar atendimento')
   })
 
+  describe('avaliação (ADR-032)', () => {
+    const reviewed = (canEdit: boolean): AppointmentsList => ({
+      status: 'ready',
+      items: createMockAppointments().map((item) =>
+        item.status === 'completed'
+          ? {
+              ...item,
+              reviewable: false,
+              review: {
+                id: 'r1',
+                appointmentId: item.id,
+                businessId: 'b1',
+                professionalId: 'p1',
+                rating: 4,
+                professionalRating: null,
+                comment: null,
+                serviceName: null,
+                reviewedAt: '2026-11-04T12:00:00Z',
+                editedAt: canEdit ? null : '2026-11-05T12:00:00Z',
+                canEdit,
+              },
+            }
+          : item,
+      ),
+    })
+
+    it('com o botão ligado à gaveta: "Avaliar atendimento" leva o nome do estabelecimento', () => {
+      const html = render(<AppointmentsScreen list={ready} onSaveReview={async () => null} />)
+
+      expect(html).toContain('aria-label="Avaliar atendimento em Salão Vila Rica"')
+      expect(html).toContain('Você tem 30 dias para avaliar.')
+    })
+
+    it('já avaliado e ainda editável: mostra a nota dada e "Editar avaliação", sem pedir de novo', () => {
+      const html = render(
+        <AppointmentsScreen list={reviewed(true)} onSaveReview={async () => null} />,
+      )
+
+      expect(html).toContain('Você avaliou: 4 de 5')
+      expect(html).toContain('Editar avaliação')
+      expect(html).not.toContain('Avaliar atendimento')
+    })
+
+    it('avaliação já editada: mostra a nota e não oferece editar de novo', () => {
+      const html = render(<AppointmentsScreen list={reviewed(false)} />)
+
+      // A edição única já foi usada: o concluído sai de "Próximos" e a nota só aparece em "Passados" (aba que o
+      // servidor não renderiza); o que importa aqui é não oferecer a ação.
+      expect(html).not.toContain('Editar avaliação')
+      expect(html).not.toContain('Avaliar atendimento')
+    })
+  })
+
   it('marca "Agendamentos" como a aba atual da navegação', () => {
     expect(render(<AppointmentsScreen list={ready} />)).toMatch(
       /<button[^>]*aria-current="page"[^>]*>.*?Agendamentos<\/button>/,

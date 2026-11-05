@@ -1,6 +1,7 @@
 using Booking.Application.Common.Media;
 using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
+using Booking.Application.Contracts.Notifications;
 using Booking.Application.Module.Tenancy.Converter;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Module.Tenancy;
@@ -19,7 +20,8 @@ public sealed class AdminBusinessCommands(
     IActorContext actor,
     IUnitOfWork unitOfWork,
     TimeProvider clock,
-    IImageUrls images)
+    IImageUrls images,
+    IBusinessStatusNotifier notifier)
 {
     /// <summary>Em análise → ativo, com o selo de verificado e o registro de quem aprovou.</summary>
     public Task<AdminBusinessDetailResponse> ApproveAsync(Guid businessId, string? note, CancellationToken ct = default) =>
@@ -27,7 +29,7 @@ public sealed class AdminBusinessCommands(
         {
             business.Approve();
             business.Verify(adminId, Clean(note), now);
-        }, ct);
+        }, BusinessStatusChange.Approved, ct);
 
     /// <summary>Em análise → rascunho, com o motivo. A nota é obrigatória: o dono precisa saber o que corrigir.</summary>
     public Task<AdminBusinessDetailResponse> RejectAsync(Guid businessId, string? note, CancellationToken ct = default) =>
@@ -35,21 +37,21 @@ public sealed class AdminBusinessCommands(
         {
             business.RejectVerification(adminId, note?.Trim() ?? string.Empty, now);
             business.ReturnToDraft();
-        }, ct);
+        }, BusinessStatusChange.Rejected, ct);
 
     /// <summary>
     /// Ativo → suspenso, com o motivo (obrigatório), quem decidiu e quando. Some da busca e da vitrine
     /// (<see cref="Business.IsBookable"/>).
     /// </summary>
     public Task<AdminBusinessDetailResponse> SuspendAsync(Guid businessId, string? reason, CancellationToken ct = default) =>
-        DecideAsync(businessId, (business, adminId, now) => business.Suspend(adminId, reason ?? string.Empty, now), ct);
+        DecideAsync(businessId, (business, adminId, now) => business.Suspend(adminId, reason ?? string.Empty, now), BusinessStatusChange.Suspended, ct);
 
     /// <summary>Suspenso → ativo.</summary>
     public Task<AdminBusinessDetailResponse> ReinstateAsync(Guid businessId, CancellationToken ct = default) =>
-        DecideAsync(businessId, (business, _, _) => business.Reactivate(), ct);
+        DecideAsync(businessId, (business, _, _) => business.Reactivate(), change: null, ct);
 
     private async Task<AdminBusinessDetailResponse> DecideAsync(
-        Guid businessId, Action<Business, Guid, DateTimeOffset> decision, CancellationToken ct)
+        Guid businessId, Action<Business, Guid, DateTimeOffset> decision, BusinessStatusChange? change, CancellationToken ct)
     {
         Guid adminId = actor.RequirePlatformAdmin();
 
@@ -57,6 +59,12 @@ public sealed class AdminBusinessCommands(
             ?? throw new DomainException("business.not_found");
 
         decision(business, adminId, clock.GetUtcNow());
+
+        // O aviso ao dono entra na outbox no mesmo SaveChanges da decisão; se a decisão falhar, não há aviso.
+        if (change is BusinessStatusChange status)
+        {
+            await notifier.NotifyAsync(BusinessConverter.ToStatusFacts(business), status, ct);
+        }
 
         await unitOfWork.SaveChangesAsync(ct);
         return BusinessConverter.ToAdminDetail(business, await checklist.EvaluateAsync(business, ct), images);

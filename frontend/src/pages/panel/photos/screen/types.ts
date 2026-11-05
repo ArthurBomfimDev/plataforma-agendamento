@@ -5,8 +5,6 @@ export type PhotoProfessional = {
   name: string
   specialty: string | null
   photo: ImageSet | null
-  /** A foto só aparece na vitrine com o perfil completo, que exige o consentimento do profissional. */
-  isPubliclyVisible: boolean
 }
 
 export type PhotosData =

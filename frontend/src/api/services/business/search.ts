@@ -16,7 +16,7 @@ export const MAX_SEARCH_RADIUS_KM: SearchRadius = 20
 export type SearchDistance = SearchRadius | 'city'
 export const DEFAULT_DISTANCE: SearchDistance = 'city'
 
-export type SearchSort = 'distance' | 'price'
+export type SearchSort = 'distance' | 'price' | 'rating'
 
 /** Filtros da busca, todos com backend (`SearchBusinessesRequest`). */
 export type SearchFilters = {

@@ -6,6 +6,7 @@ using Booking.Application.Contracts.Compliance;
 using Booking.Application.Contracts.Identity;
 using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.People;
+using Booking.Application.Contracts.Reputation;
 using Booking.Application.Contracts.Scheduling;
 using Booking.Application.Contracts.Tenancy;
 using Booking.Application.Module.Availability.Commands;
@@ -17,12 +18,16 @@ using Booking.Application.Module.Compliance.Commands;
 using Booking.Application.Module.Compliance.Integration;
 using Booking.Application.Module.Compliance.Queries;
 using Booking.Application.Module.Identity.Commands;
+using Booking.Application.Module.Identity.Integration;
 using Booking.Application.Module.Identity.Queries;
 using Booking.Application.Module.Notifications.Commands;
 using Booking.Application.Module.Notifications.Email;
 using Booking.Application.Module.Notifications.Integration;
 using Booking.Application.Module.People.Commands;
+using Booking.Application.Module.People.Integration;
 using Booking.Application.Module.People.Queries;
+using Booking.Application.Module.Reputation.Commands;
+using Booking.Application.Module.Reputation.Queries;
 using Booking.Application.Module.Scheduling.Commands;
 using Booking.Application.Module.Scheduling.Integration;
 using Booking.Application.Module.Scheduling.Queries;
@@ -35,6 +40,7 @@ using Booking.Domain.Interface.Repository.Module.Compliance;
 using Booking.Domain.Interface.Repository.Module.Identity;
 using Booking.Domain.Interface.Repository.Module.Notifications;
 using Booking.Domain.Interface.Repository.Module.People;
+using Booking.Domain.Interface.Repository.Module.Reputation;
 using Booking.Domain.Interface.Repository.Module.Scheduling;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
 using Booking.Infrastructure.Module.Availability.Repository;
@@ -49,6 +55,8 @@ using Booking.Infrastructure.Module.Notifications;
 using Booking.Infrastructure.Module.Notifications.Repository;
 using Booking.Infrastructure.Module.People;
 using Booking.Infrastructure.Module.People.Repository;
+using Booking.Infrastructure.Module.Reputation;
+using Booking.Infrastructure.Module.Reputation.Repository;
 using Booking.Infrastructure.Module.Scheduling;
 using Booking.Infrastructure.Module.Scheduling.Repository;
 using Booking.Infrastructure.Module.Tenancy;
@@ -87,6 +95,7 @@ public static class DependencyInjection
         services.AddCatalogModule();
         services.AddAvailabilityModule();
         services.AddSchedulingModule();
+        services.AddReputationModule();
         services.AddComplianceModule();
         services.AddNotificationsModule(configuration, isDevelopment);
         services.AddGeo(configuration);
@@ -186,6 +195,7 @@ public static class DependencyInjection
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddScoped<IUserDirectory, UserDirectory>();
+        services.AddScoped<IAccountProvisioner, AccountProvisioner>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -210,6 +220,8 @@ public static class DependencyInjection
     {
         services.AddScoped<IBusinessRepository, BusinessRepository>();
         services.AddScoped<IBusinessMembershipRepository, BusinessMembershipRepository>();
+        services.AddScoped<IBusinessReportRepository, BusinessReportRepository>();
+        services.AddScoped<IBusinessInvitationRepository, BusinessInvitationRepository>();
         services.AddScoped<IBusinessDirectory, BusinessDirectory>();
 
         services.AddScoped<CurrentBusinessLoader>();
@@ -223,22 +235,44 @@ public static class DependencyInjection
         services.AddScoped<ConfirmLocationCommand>();
         services.AddScoped<SubmitBusinessCommand>();
         services.AddScoped<PublishBusinessCommand>();
+        services.AddScoped<GetCurrentChecklistQuery>();
+        services.AddScoped<ReportBusinessCommand>();
+        services.AddScoped<ListBusinessReportsQuery>();
+        services.AddScoped<ResolveBusinessReportCommand>();
         services.AddScoped<SetResponsibleCommand>();
         services.AddScoped<AcceptTermsCommand>();
         services.AddScoped<GetCurrentBusinessQuery>();
         services.AddScoped<GetPublicBusinessQuery>();
         services.AddScoped<SearchBusinessesQuery>();
+
+        services.AddScoped<LeaveBusinessCommand>();
+        services.AddScoped<InviteMemberCommand>();
+        services.AddScoped<ResendInvitationCommand>();
+        services.AddScoped<RevokeInvitationCommand>();
+        services.AddScoped<ListInvitationsQuery>();
+        services.AddScoped<GetSeatsQuery>();
+        services.AddScoped<PreviewInvitationQuery>();
+        services.AddScoped<InvitationAcceptance>();
+        services.AddScoped<AcceptInvitationCommand>();
+        services.AddScoped<AcceptInvitationWithNewAccountCommand>();
     }
 
     private static void AddPeopleModule(this IServiceCollection services)
     {
         services.AddScoped<IProfessionalRepository, ProfessionalRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IProfessionalRemovalRequestRepository, ProfessionalRemovalRequestRepository>();
         services.AddScoped<IPeopleDirectory, PeopleDirectory>();
+        services.AddScoped<IProfessionalLinker, ProfessionalLinker>();
 
         services.AddScoped<CreateProfessionalCommand>();
         services.AddScoped<UpdateProfessionalCommand>();
-        services.AddScoped<SetPublicProfileConsentCommand>();
+        services.AddScoped<GetPublicProfessionalQuery>();
+        services.AddScoped<RequestProfessionalRemovalCommand>();
+        services.AddScoped<ListProfessionalRemovalRequestsQuery>();
+        services.AddScoped<ResolveProfessionalRemovalRequestCommand>();
+        services.AddScoped<GetMyProfessionalProfileQuery>();
+        services.AddScoped<UpdateMyProfessionalProfileCommand>();
         services.AddScoped<RegisterCustomerCommand>();
         services.AddScoped<ListProfessionalsQuery>();
         services.AddScoped<ListPublicProfessionalsQuery>();
@@ -251,6 +285,7 @@ public static class DependencyInjection
         services.AddScoped<IServiceProfessionalRepository, ServiceProfessionalRepository>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
 
+        services.AddScoped<ServiceImageCommand>();
         services.AddScoped<CreateServiceCommand>();
         services.AddScoped<UpdateServiceCommand>();
         services.AddScoped<EnableProfessionalCommand>();
@@ -268,6 +303,7 @@ public static class DependencyInjection
         services.AddScoped<AddWorkScheduleCommand>();
         services.AddScoped<UpdateWorkScheduleCommand>();
         services.AddScoped<RemoveWorkScheduleCommand>();
+        services.AddScoped<AgendaScope>();
         services.AddScoped<AddScheduleExceptionCommand>();
         services.AddScoped<RemoveScheduleExceptionCommand>();
         services.AddScoped<ListWorkSchedulesQuery>();
@@ -294,6 +330,29 @@ public static class DependencyInjection
         services.AddScoped<GetAgendaQuery>();
         services.AddScoped<ListPendingAppointmentsQuery>();
         services.AddScoped<ListMyAppointmentsQuery>();
+    }
+
+    /// <summary>Avaliações (ADR-032). O Scheduling só entra pelo contrato <see cref="IAppointmentReviewLookup"/>.</summary>
+    private static void AddReputationModule(this IServiceCollection services)
+    {
+        services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IRatingSummaryRepository, RatingSummaryRepository>();
+        services.AddScoped<IAppointmentReviewLookup, AppointmentReviewLookup>();
+        services.AddScoped<IReputationDirectory, ReputationDirectory>();
+
+        services.AddScoped<RatingAggregator>();
+        services.AddScoped<CreateReviewCommand>();
+        services.AddScoped<UpdateReviewCommand>();
+        services.AddScoped<ListBusinessReviewsQuery>();
+        services.AddScoped<ListProfessionalReviewsQuery>();
+        services.AddScoped<GetBusinessRatingQuery>();
+        services.AddScoped<GetProfessionalRatingQuery>();
+        services.AddScoped<ListMyReviewsQuery>();
+        services.AddScoped<GetMyReviewQuery>();
+        services.AddScoped<ReportReviewCommand>();
+        services.AddScoped<ModerateReviewCommand>();
+        services.AddScoped<ListOwnerReviewsQuery>();
+        services.AddScoped<ListReviewsForModerationQuery>();
     }
 
     private static void AddComplianceModule(this IServiceCollection services)
@@ -359,7 +418,10 @@ public static class DependencyInjection
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddScoped<IIdentityMailer, IdentityMailer>();
+        services.AddScoped<IInvitationMailer, InvitationMailer>();
         services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
+        services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
+        services.AddScoped<IProfessionalRemovalNotifier, ProfessionalRemovalNotifier>();
         services.AddScoped<DispatchOutboxCommand>();
     }
 }

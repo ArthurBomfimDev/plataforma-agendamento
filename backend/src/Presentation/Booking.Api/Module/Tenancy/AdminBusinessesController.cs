@@ -24,8 +24,27 @@ public sealed class AdminBusinessesController : ControllerBase
         CancellationToken ct,
         [FromQuery] string? status = null,
         [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? category = null) =>
+        Ok(await query.ExecuteAsync(status, category, new PageRequest(page, pageSize), ct));
+
+    /// <summary>Fila de denúncias, as abertas por padrão (<c>status=Open|Resolved</c>).</summary>
+    [HttpGet("reports")]
+    [ProducesResponseType<PagedResult<BusinessReportResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Reports(
+        [FromServices] ListBusinessReportsQuery query,
+        CancellationToken ct,
+        [FromQuery] string? status = null,
+        [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20) =>
         Ok(await query.ExecuteAsync(status, new PageRequest(page, pageSize), ct));
+
+    /// <summary>Encerra uma denúncia, com uma anotação opcional. Suspender o estabelecimento é uma decisão à parte.</summary>
+    [HttpPost("reports/{reportId:guid}/resolve")]
+    [ProducesResponseType<BusinessReportResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ResolveReport(
+        Guid reportId, AdminDecisionRequest request, [FromServices] ResolveBusinessReportCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(reportId, request.Note, ct));
 
     [HttpGet("{businessId:guid}")]
     [ProducesResponseType<AdminBusinessDetailResponse>(StatusCodes.Status200OK)]

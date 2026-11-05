@@ -11,8 +11,8 @@ import { TeamPhotosCard } from './components/team-photos-card'
  * o `ImageUploader` (escolher, pré-visualizar, enviar com progresso, remover com confirmação, e os erros de
  * formato e tamanho do 19b). Só o dono (`RequireOwner`).
  *
- * A foto do profissional só vai para a página pública com o perfil completo dele, que exige o consentimento do
- * próprio profissional (decisões de 22/09 §3). Sem isso, a foto fica guardada e só aparece aqui.
+ * A foto do profissional ativo vai para a página pública (ADR-031). Para quem não tem login, o servidor exige antes a
+ * declaração do dono (checkbox em Profissionais → Editar); sem ela, o envio é recusado.
  */
 export const PhotosScreen = (props: PhotosScreenProps) => {
   const {

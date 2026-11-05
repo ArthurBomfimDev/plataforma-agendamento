@@ -1,5 +1,5 @@
 import type { AppointmentsScreenProps, CustomerAppointment } from './types'
-import { HourglassIcon, LocationIcon, StarIcon } from '@assets/icons'
+import { HourglassIcon, LocationIcon, StarFilledIcon, StarIcon } from '@assets/icons'
 import { addMinutes, differenceInMinutes, format, parse } from 'date-fns'
 
 import { AddToCalendarMenu } from '@components/add-to-calendar-menu'
@@ -9,6 +9,7 @@ import { Button } from '@components/button'
 import { APP_NAVIGATION_ITEMS, CONTENT_BOTTOM_PADDING } from '@components/bottom-navigation/consts'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { REVIEW_WINDOW_DAYS } from './consts'
+import { ReviewDrawer } from '@components/review-drawer'
 import { PageContainer } from '@components/page-container'
 import { TabBar } from '@components/tab-bar'
 import { distanceFormat } from '@components/card-establishment/consts'
@@ -51,18 +52,20 @@ const PRIMARY_ON_DESKTOP =
  * Tela 08 · Meus agendamentos (Figma, 390px; desktop: 08D, 1440px).
  */
 export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
-  const { list: state, onCancel, onNavigate } = props
+  const { list: state, onCancel, onNavigate, onSaveReview } = props
 
   const now = useNow()
   const addToCalendar = useAddToCalendar()
   const [cancelTarget, setCancelTarget] = useState<CustomerAppointment | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  const [reviewTarget, setReviewTarget] = useState<CustomerAppointment | null>(null)
 
   const appointments = state.status === 'ready' ? state.items : []
 
   const upcoming = appointments.filter(({ status }) => UPCOMING.includes(status))
+  // Concluídos que pedem uma ação: avaliar, ou editar a avaliação enquanto a edição única ainda vale (7 dias).
   const toReview = appointments.filter(
-    ({ status, reviewable }) => status === 'completed' && reviewable,
+    ({ status, reviewable, review }) => status === 'completed' && (reviewable || review?.canEdit),
   )
   const past = appointments.filter(
     ({ status }) => !UPCOMING.includes(status) && status !== 'cancelled',
@@ -172,6 +175,39 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
 
     const reviewable = status === 'completed' && appointment.reviewable
     const reviewWindow = `Você tem ${REVIEW_WINDOW_DAYS} dias para avaliar.`
+    const { review } = appointment
+
+    // Já avaliado (ADR-032): mostra a nota dada; "Editar avaliação" só enquanto vale a edição única de 7 dias.
+    if (status === 'completed' && review) {
+      return (
+        <AppointmentCard
+          {...common}
+          detail={
+            <p className="type-caption flex items-center gap-(--space-4) text-(--text-muted)">
+              <StarFilledIcon
+                aria-hidden="true"
+                className="size-4 shrink-0 text-(--status-pending-fg)"
+              />
+              Você avaliou: {review.rating} de 5
+            </p>
+          }
+          actions={
+            review.canEdit ? (
+              <Button
+                variant="secondary"
+                className="w-full lg:w-auto"
+                aria-label={`Editar avaliação de ${businessName}`}
+                onClick={() => setReviewTarget(appointment)}
+              >
+                Editar avaliação
+              </Button>
+            ) : (
+              <p className="type-caption text-(--text-muted)">Avaliação enviada. Obrigado!</p>
+            )
+          }
+        />
+      )
+    }
 
     return (
       <AppointmentCard
@@ -186,9 +222,14 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
         }
         actions={
           reviewable && (
-            // TODO: a tela de avaliação ainda não existe; o botão não faz nada.
             <div className="flex flex-col gap-(--space-12)">
-              <Button className="w-full">Avaliar atendimento</Button>
+              <Button
+                className="w-full"
+                aria-label={`Avaliar atendimento em ${businessName}`}
+                onClick={() => setReviewTarget(appointment)}
+              >
+                Avaliar atendimento
+              </Button>
               <p className="type-caption text-(--text-muted) lg:hidden">{reviewWindow}</p>
             </div>
           )
@@ -311,6 +352,22 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
         dismissLabel={cancelTarget?.status === 'pending' ? 'Manter pedido' : 'Manter agendamento'}
         onConfirm={() => void confirmCancel()}
       />
+
+      {onSaveReview && (
+        <ReviewDrawer
+          open={reviewTarget !== null}
+          onOpenChange={(open) => !open && setReviewTarget(null)}
+          businessName={reviewTarget?.businessName ?? ''}
+          sensitive={reviewTarget?.sensitive ?? false}
+          existing={reviewTarget?.review ?? null}
+          onSubmit={async (request) => {
+            if (!reviewTarget) return null
+            const failure = await onSaveReview(reviewTarget, request)
+            if (!failure) setReviewTarget(null)
+            return failure
+          }}
+        />
+      )}
 
       <BottomNavigation
         items={APP_NAVIGATION_ITEMS}

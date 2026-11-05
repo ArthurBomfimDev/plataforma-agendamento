@@ -16,8 +16,11 @@ public interface IBusinessRepository
     /// </summary>
     Task<IReadOnlyList<Business>> FindBookableNearbyAsync(GeoPoint center, double radiusMeters, int limit, CancellationToken ct = default);
 
-    /// <summary>Fila do Admin: todos os estabelecimentos no estado pedido, mais antigos primeiro.</summary>
-    Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, PageRequest page, CancellationToken ct = default);
+    /// <summary>
+    /// Fila do Admin: os estabelecimentos no estado pedido, mais antigos primeiro. <paramref name="category"/> filtra por
+    /// categoria quando informada.
+    /// </summary>
+    Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, BusinessCategory? category, PageRequest page, CancellationToken ct = default);
 
     void Add(Business business);
 }

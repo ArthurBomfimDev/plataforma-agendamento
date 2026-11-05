@@ -1,5 +1,5 @@
-using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.Scheduling;
+using Booking.Application.Module.Availability.Commands;
 using Booking.Arguments.Module.Availability;
 using Booking.Domain.Entity.Base;
 using Booking.Domain.ValueObject;
@@ -10,12 +10,12 @@ namespace Booking.Application.Module.Availability.Queries;
 /// Prévia de um bloqueio: os agendamentos <c>Pending</c>/<c>Confirmed</c> que cairiam dentro dele. Não grava nada
 /// além do log de acesso a agendamento sensível.
 /// </summary>
-public sealed class PreviewAffectedAppointmentsQuery(IAffectedAppointments affected, IActorContext actor)
+public sealed class PreviewAffectedAppointmentsQuery(IAffectedAppointments affected, AgendaScope scope)
 {
     public async Task<PagedResult<AffectedAppointmentResponse>> ExecuteAsync(
         Guid? professionalId, DateTimeOffset startsAt, DateTimeOffset endsAt, PageRequest page, CancellationToken ct = default)
     {
-        actor.RequireOwner();
+        await scope.EnsureCanActOnAsync(professionalId, ct);
         TimeRange period = TimeRange.Of(startsAt, endsAt);
 
         PagedResult<AffectedAppointment> result = await affected.ListAsync(professionalId, period.Start, period.End, page, ct);

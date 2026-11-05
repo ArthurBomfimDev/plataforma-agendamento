@@ -1,12 +1,14 @@
 using Booking.Application.Common.Media;
 using Booking.Application.Common.Search;
 using Booking.Application.Contracts.Catalog;
+using Booking.Application.Contracts.Reputation;
 using Booking.Application.Module.Tenancy.Queries;
 using Booking.Arguments.Common;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Base;
 using Booking.Domain.Entity.Module.Tenancy;
 using Booking.Domain.Enum.Module.Tenancy;
+using Booking.Domain.Exceptions;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
 using Booking.Domain.ValueObject;
 
@@ -37,12 +39,95 @@ public sealed class SearchBusinessesQueryTests
             [_clinic.Id] = ["Consulta de psicologia"],
         };
 
-        _query = new SearchBusinessesQuery(
-            new FakeBusinesses([_zeBarbearia, _silva, _ana, _clinic]), new FakeCatalog(services), new NoImages());
+        _services = services;
+        _query = NewQuery(new Dictionary<Guid, RatingInfo>());
     }
+
+    private readonly Dictionary<Guid, string[]> _services;
+
+    private SearchBusinessesQuery NewQuery(IReadOnlyDictionary<Guid, RatingInfo> ratings) => new(
+        new FakeBusinesses([_zeBarbearia, _silva, _ana, _clinic]), new FakeCatalog(_services), new FakeRatings(ratings), new NoImages());
 
     private async Task<PagedResult<BusinessSearchItemResponse>> SearchAsync(string term) =>
         await _query.ExecuteAsync(new SearchBusinessesRequest(_center.Latitude, _center.Longitude, Term: term));
+
+    private Task<PagedResult<BusinessSearchItemResponse>> SearchAsync(IReadOnlyDictionary<Guid, RatingInfo> ratings, string? sortBy = null, int? minRating = null) =>
+        NewQuery(ratings).ExecuteAsync(new SearchBusinessesRequest(_center.Latitude, _center.Longitude, SortBy: sortBy, MinRating: minRating));
+
+    [Fact]
+    public async Task Sorting_by_rating_puts_the_best_first_and_the_new_ones_after_in_distance_order()
+    {
+        var ratings = new Dictionary<Guid, RatingInfo>
+        {
+            [_silva.Id] = new(4.2, 10),
+            [_ana.Id] = new(4.8, 3),
+            [_zeBarbearia.Id] = new(null, 2),
+        };
+
+        PagedResult<BusinessSearchItemResponse> result = await SearchAsync(ratings, sortBy: "rating");
+
+        Guid[] order = [.. result.Items.Select(i => i.Id)];
+        Assert.Equal([_ana.Id, _silva.Id], order[..2]);
+        Assert.Equal(2, result.Items.Single(i => i.Id == _zeBarbearia.Id).RatingCount);
+        Assert.Null(result.Items.Single(i => i.Id == _zeBarbearia.Id).RatingAverage);
+        Assert.Equal(4.8, result.Items.Single(i => i.Id == _ana.Id).RatingAverage);
+    }
+
+    [Fact]
+    public async Task Equal_averages_are_broken_by_the_number_of_reviews()
+    {
+        var ratings = new Dictionary<Guid, RatingInfo> { [_silva.Id] = new(4.5, 4), [_ana.Id] = new(4.5, 40) };
+
+        PagedResult<BusinessSearchItemResponse> result = await SearchAsync(ratings, sortBy: "rating");
+
+        Assert.Equal(_ana.Id, result.Items[0].Id);
+        Assert.Equal(_silva.Id, result.Items[1].Id);
+    }
+
+    [Fact]
+    public async Task Minimum_rating_leaves_out_lower_averages_and_the_new_ones()
+    {
+        var ratings = new Dictionary<Guid, RatingInfo>
+        {
+            [_silva.Id] = new(4.2, 10),
+            [_ana.Id] = new(3.4, 8),
+            [_zeBarbearia.Id] = new(null, 1),
+        };
+
+        PagedResult<BusinessSearchItemResponse> result = await SearchAsync(ratings, minRating: 4);
+
+        BusinessSearchItemResponse only = Assert.Single(result.Items);
+        Assert.Equal(_silva.Id, only.Id);
+        Assert.Equal(1, result.TotalCount);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(6)]
+    public async Task Minimum_rating_out_of_range_is_refused(int minRating)
+    {
+        DomainException error = await Assert.ThrowsAsync<DomainException>(
+            () => SearchAsync(new Dictionary<Guid, RatingInfo>(), minRating: minRating));
+
+        Assert.Equal("search.min_rating_invalid", error.Code);
+    }
+
+    [Fact]
+    public async Task Default_order_still_shows_the_rating_of_the_page_items()
+    {
+        var ratings = new Dictionary<Guid, RatingInfo> { [_silva.Id] = new(4.0, 5) };
+
+        PagedResult<BusinessSearchItemResponse> result = await SearchAsync(ratings);
+
+        Assert.Equal(4.0, result.Items.Single(i => i.Id == _silva.Id).RatingAverage);
+        Assert.Equal(0, result.Items.Single(i => i.Id == _ana.Id).RatingCount);
+    }
+
+    private sealed class FakeRatings(IReadOnlyDictionary<Guid, RatingInfo> ratings) : IReputationDirectory
+    {
+        public Task<IReadOnlyDictionary<Guid, RatingInfo>> GetBusinessRatingsAsync(IReadOnlyCollection<Guid> businessIds, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, RatingInfo>>(ratings.Where(r => businessIds.Contains(r.Key)).ToDictionary(r => r.Key, r => r.Value));
+    }
 
     [Theory]
     [InlineData("barbeiro")]
@@ -76,16 +161,16 @@ public sealed class SearchBusinessesQueryTests
     }
 
     [Fact]
-    public async Task Health_result_never_carries_the_service_that_matched_the_term()
+    public async Task Health_result_shows_the_service_and_the_price_like_every_other_category()
     {
         PagedResult<BusinessSearchItemResponse> result = await SearchAsync("psicologa");
 
         BusinessSearchItemResponse clinic = Assert.Single(result.Items);
         Assert.Equal(_clinic.Id, clinic.Id);
-        Assert.Null(clinic.ServiceId);
-        Assert.Null(clinic.ServiceName);
-        Assert.Null(clinic.DurationMinutes);
-        Assert.NotNull(clinic.FromPriceCents); // o "a partir de" continua
+        Assert.NotNull(clinic.ServiceId);
+        Assert.Equal("Consulta de psicologia", clinic.ServiceName);
+        Assert.Equal(30, clinic.DurationMinutes);
+        Assert.Equal(5000, clinic.FromPriceCents);
     }
 
     [Fact]
@@ -114,7 +199,7 @@ public sealed class SearchBusinessesQueryTests
 
         public Task<bool> ExistsByDocumentAsync(Document document, CancellationToken ct = default) => throw new NotSupportedException();
 
-        public Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, PageRequest page, CancellationToken ct = default) =>
+        public Task<PagedResult<Business>> ListByStatusAsync(BusinessStatus status, BusinessCategory? category, PageRequest page, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
         public void Add(Business business) => throw new NotSupportedException();
@@ -123,6 +208,9 @@ public sealed class SearchBusinessesQueryTests
     // Imita o ServiceCatalog de produção: a mesma comparação (SearchText), em memória.
     private sealed class FakeCatalog(Dictionary<Guid, string[]> services) : IServiceCatalog
     {
+        public Task<IReadOnlyList<ProfessionalServiceInfo>> ListForProfessionalAsync(Guid businessId, Guid professionalId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<IReadOnlySet<Guid>> FilterBusinessesOfferingAsync(IReadOnlyCollection<Guid> businessIds, string term, CancellationToken ct = default)
         {
             IReadOnlyList<string> wanted = SearchText.Expand(term);

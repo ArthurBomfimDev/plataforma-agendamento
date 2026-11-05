@@ -3,6 +3,7 @@ using Booking.Application.Common.Persistence;
 using Booking.Application.Common.Tenancy;
 using Booking.Application.Contracts.Availability;
 using Booking.Application.Contracts.Catalog;
+using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.People;
 using Booking.Application.Module.Tenancy.Converter;
 using Booking.Arguments.Module.Tenancy;
@@ -132,7 +133,7 @@ public sealed class AcceptTermsCommand(CurrentBusinessLoader loader, IUnitOfWork
 /// Saúde recusa (<c>business.requires_review</c>) e usa o envio para análise.
 /// </summary>
 public sealed class PublishBusinessCommand(
-    CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images)
+    CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images, IBusinessStatusNotifier notifier)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(CancellationToken ct = default)
     {
@@ -152,6 +153,7 @@ public sealed class PublishBusinessCommand(
         }
 
         business.Publish();
+        await notifier.NotifyAsync(BusinessConverter.ToStatusFacts(business), BusinessStatusChange.Published, ct);
 
         await unitOfWork.SaveChangesAsync(ct);
         return BusinessConverter.ToDetail(business, images);
@@ -160,7 +162,7 @@ public sealed class PublishBusinessCommand(
 
 /// <summary>Envia para análise depois de conferir a checklist de ativação nos outros módulos.</summary>
 public sealed class SubmitBusinessCommand(
-    CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images)
+    CurrentBusinessLoader loader, ActivationChecklist checklist, IUnitOfWork unitOfWork, IImageUrls images, IBusinessStatusNotifier notifier)
 {
     public async Task<BusinessDetailResponse> ExecuteAsync(CancellationToken ct = default)
     {
@@ -174,6 +176,7 @@ public sealed class SubmitBusinessCommand(
         }
 
         business.Submit();
+        await notifier.NotifyAsync(BusinessConverter.ToStatusFacts(business), BusinessStatusChange.SubmittedForReview, ct);
 
         await unitOfWork.SaveChangesAsync(ct);
         return BusinessConverter.ToDetail(business, images);

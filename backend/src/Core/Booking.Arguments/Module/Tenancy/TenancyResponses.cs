@@ -44,7 +44,9 @@ public sealed record BusinessDetailResponse(
     ImageSetResponse? Cover = null,
     string? StatusReason = null,
     bool TermsAccepted = false,
-    bool ResponsibleInformed = false);
+    bool ResponsibleInformed = false,
+    string? DocumentType = null,
+    bool IsMei = false);
 
 /// <summary>
 /// Visão pública da vitrine. Sem documento. Da política, só o que o consumidor precisa ver antes de pedir:
@@ -83,7 +85,9 @@ public sealed record BusinessSearchItemResponse(
     int? DurationMinutes = null,
     long? FromPriceCents = null,
     ImageSetResponse? Logo = null,
-    ImageSetResponse? Cover = null);
+    ImageSetResponse? Cover = null,
+    double? RatingAverage = null,
+    int RatingCount = 0);
 
 /// <summary>Item da checklist de ativação. <c>RequiredForSubmit</c> diz se a submissão já exige o item hoje.</summary>
 public sealed record ChecklistItemResponse(string Key, bool Done, bool RequiredForSubmit);
@@ -101,6 +105,19 @@ public sealed record AdminBusinessDetailResponse(
     DateTimeOffset? SuspendedAt = null,
     DateTimeOffset? TermsAcceptedAt = null,
     string? TermsVersion = null);
+
+/// <summary>Uma denúncia na fila do Admin. Sem IP nem dado do aparelho; <c>ReporterUserId</c> só se a pessoa estava logada.</summary>
+public sealed record BusinessReportResponse(
+    Guid Id,
+    Guid BusinessId,
+    string BusinessName,
+    string Reason,
+    string Status,
+    DateTimeOffset ReportedAt,
+    Guid? ReporterUserId,
+    Guid? ResolvedByUserId,
+    DateTimeOffset? ResolvedAt,
+    string? Resolution);
 
 /// <summary>Responsável de Saúde e registro no conselho. Só o Admin recebe; nunca é público nem vai para log.</summary>
 public sealed record ResponsibleResponse(string Name, string Council, string CouncilNumber, string CouncilState);

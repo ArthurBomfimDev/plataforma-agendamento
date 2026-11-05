@@ -4,9 +4,12 @@
  */
 export const PANEL_PAGE_LOADERS = {
   agenda: () => import('@pages/panel/agenda'),
+  blocks: () => import('@pages/panel/blocks'),
+  profile: () => import('@pages/panel/profile'),
   more: () => import('@pages/panel/more'),
   photos: () => import('@pages/panel/photos'),
   requests: () => import('@pages/panel/requests'),
+  reviews: () => import('@pages/panel/reviews'),
   schedules: () => import('@pages/panel/schedules'),
   services: () => import('@pages/panel/services'),
   settings: () => import('@pages/panel/settings'),

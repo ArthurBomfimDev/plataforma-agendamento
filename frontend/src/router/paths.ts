@@ -43,6 +43,11 @@ export const ROUTES = {
   panelSchedules: '/panel/schedules',
   panelPhotos: '/panel/photos',
   panelSettings: '/panel/settings',
+  panelReviews: '/panel/reviews',
+  /** Folgas e bloqueios de atendente (todos os profissionais) e de profissional (os próprios). */
+  panelBlocks: '/panel/blocks',
+  /** "Meu perfil" do profissional com conta: bio, foto e registro. */
+  panelProfile: '/panel/profile',
   /** "Mais", no celular: as seções que não cabem nas abas, e a conta. */
   panelMore: '/panel/more',
   /**
@@ -52,6 +57,14 @@ export const ROUTES = {
   chooseContext: '/context',
   /** Minha conta (Onda 7CF): nome, e-mail, trocar a senha, sair. */
   account: '/account',
+  /** Cadastrar meu estabelecimento (ondas finais, Fase 3). `?retomar=1` volta ao rascunho que já existe. */
+  registerBusiness: '/cadastrar-estabelecimento',
+  /** Página pública do profissional (ADR-031): `#/profissional/:professionalId`. */
+  professional: '/profissional/:professionalId',
+  /** Link do e-mail de convite de equipe (ADR-029): `#/convite?token=`. Não mudar sem mudar o e-mail. */
+  invitation: '/convite',
+  /** Administração da plataforma: estabelecimentos e denúncias. Só o Admin (guard na tela e no servidor). */
+  adminBusinesses: '/admin/estabelecimentos',
   // Os dois caminhos abaixo estão no e-mail ao dono (Onda 5B, `AppointmentNotifier`) e só redirecionam
   // para as rotas do painel: não mudar sem mudar o e-mail.
   emailPanelRequests: '/painel/pedidos',
@@ -67,6 +80,9 @@ export const PANEL_PATHS: Record<PanelSection | PanelBottomItem, string> = {
   schedules: ROUTES.panelSchedules,
   photos: ROUTES.panelPhotos,
   settings: ROUTES.panelSettings,
+  reviews: ROUTES.panelReviews,
+  blocks: ROUTES.panelBlocks,
+  profile: ROUTES.panelProfile,
   // No celular, "Mais" lista as outras seções e leva à conta (trocar de contexto e sair).
   more: ROUTES.panelMore,
 }
@@ -81,7 +97,19 @@ export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
   'schedules',
   'photos',
   'settings',
+  'reviews',
 ]
+
+/**
+ * O que cada papel não vê no menu. O dono não tem "Folgas e bloqueios" (está em Jornadas) nem "Meu perfil"; o atendente
+ * não gere o estabelecimento nem tem perfil; o profissional não gere, mas tem folgas próprias e perfil.
+ */
+export const hiddenSectionsFor = (role: BusinessRole): ReadonlyArray<PanelSection> =>
+  role === 'Owner'
+    ? ['blocks', 'profile']
+    : role === 'Attendant'
+      ? [...OWNER_ONLY_SECTIONS, 'profile']
+      : OWNER_ONLY_SECTIONS
 
 /**
  * Seção do menu de um endereço do painel. Subpáginas contam como a seção ("Novo serviço" é Serviços);
@@ -97,6 +125,10 @@ export const panelSectionOf = (pathname: string): PanelSection | 'more' => {
 
 /** Só o dono gere o estabelecimento (matriz de permissões); o profissional opera a própria agenda. */
 export const canManageBusiness = (role: BusinessRole) => role === 'Owner'
+
+/** Dono e atendente operam a agenda de todos os profissionais (ADR-030); o profissional, só a própria. */
+export const canOperateWholeAgenda = (role: BusinessRole) =>
+  role === 'Owner' || role === 'Attendant'
 
 export const editServicePath = (serviceId: string) =>
   `${ROUTES.panelServices}/${encodeURIComponent(serviceId)}`
@@ -189,6 +221,17 @@ export const returnPathFor = (pathname: string, search = '') => {
   return entry.includes(pathname) ? undefined : safeRedirect(here) === null ? undefined : here
 }
 
+/** O assistente de cadastro. Com `resume`, continua o rascunho do estabelecimento atual em vez de começar outro. */
+export const registerBusinessPath = (resume = false) =>
+  withSearch(ROUTES.registerBusiness, { retomar: resume ? '1' : null })
+
+export const professionalPath = (professionalId: string) =>
+  `/profissional/${encodeURIComponent(professionalId)}`
+
+/** O link do convite, com o token; serve de `redirect` depois de entrar. */
+export const invitationPath = (token: string) =>
+  withSearch(ROUTES.invitation, { [SEARCH_PARAMS.token]: token })
+
 export const signInPath = (redirect?: string) =>
   withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })
 
@@ -214,6 +257,9 @@ export const searchPath = (filters: Partial<SearchFilters>) => {
  * Lê os filtros da URL. Valor que não existe no backend (link editado à mão) é ignorado, em vez de virar
  * erro 400 na tela. Distância: a da URL; sem ela, a guardada no aparelho (`stored`); sem as duas, Cidade.
  */
+const sortFrom = (value: string | null): SearchFilters['sortBy'] =>
+  value === 'price' || value === 'rating' ? value : 'distance'
+
 export const readSearchFilters = (
   params: URLSearchParams,
   stored: SearchDistance | null = null,
@@ -226,7 +272,7 @@ export const readSearchFilters = (
     term: term ? term.slice(0, 100) : null,
     category: SEARCH_CATEGORIES.find((c) => c === category) ?? null,
     maxPriceCents: Number.isInteger(maxPrice) && maxPrice > 0 ? maxPrice : null,
-    sortBy: params.get('sort') === 'price' ? 'price' : 'distance',
+    sortBy: sortFrom(params.get('sort')),
     distance: parseDistance(params.get('radius')) ?? stored ?? DEFAULT_DISTANCE,
   }
 }

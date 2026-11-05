@@ -140,6 +140,22 @@ public sealed class TestWorld(IntegrationFixture fixture)
         return new TestUser(user.Id, null, tokens.Issue(user, now, new BusinessContext(business.Id, "Professional")).Value, user.Email.Address);
     }
 
+    /// <summary>Atendente do estabelecimento: vínculo ativo no papel Attendant, sem perfil de profissional.</summary>
+    public async Task<TestUser> NewAttendantAsync(TestBusiness business)
+    {
+        await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
+        BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        IAccessTokenIssuer tokens = scope.ServiceProvider.GetRequiredService<IAccessTokenIssuer>();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        User user = ConfirmedUser("it-attendant", "Atendente de teste", now);
+        db.Add(user);
+        db.Add(BusinessMembership.CreateAccepted(business.Id, user.Id, BusinessMembershipRole.Attendant, now));
+        await db.SaveChangesAsync();
+
+        return new TestUser(user.Id, null, tokens.Issue(user, now, new BusinessContext(business.Id, "Attendant")).Value, user.Email.Address);
+    }
+
     /// <summary>Usuário sem perfil de consumidor: o dono, antes de criar o estabelecimento.</summary>
     public async Task<TestUser> NewUserAsync(string fullName)
     {

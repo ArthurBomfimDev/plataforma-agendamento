@@ -8,7 +8,7 @@ namespace Booking.IntegrationTests.Tenancy;
 
 /// <summary>
 /// Cadastro do estabelecimento (Fase 3): publicar na hora (Beleza) × análise (Saúde), checklist, termos, responsável de
-/// Saúde, motivo de suspensão e o limite por conta. ESCRITOS SEM DOCKER: ainda não foram rodados (docs/verificacao-pendente.md).
+/// Saúde, motivo de suspensão e o limite por conta.
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed class OnboardingTests(IntegrationFixture fixture)
@@ -147,6 +147,23 @@ public sealed class OnboardingTests(IntegrationFixture fixture)
         BusinessDetailResponse mine = await _world.SendOkAsync<BusinessDetailResponse>(
             HttpMethod.Get, "/api/businesses/current", null, business.OwnerToken);
         Assert.Equal("Denúncia procedente", mine.StatusReason);
+    }
+
+    [Fact]
+    public async Task P8_the_owner_reads_the_checklist_and_a_non_owner_does_not()
+    {
+        TestBusiness draft = await _world.NewBusinessAsync(1, [new ServiceSpec(60)], submit: false);
+        TestUser customer = await _world.NewCustomerAsync();
+
+        IReadOnlyList<ChecklistItemResponse> items = (await _world.SendOkAsync<PagedResult<ChecklistItemResponse>>(
+            HttpMethod.Get, "/api/businesses/current/checklist", null, draft.OwnerToken)).Items;
+
+        Assert.Contains(items, i => i.Key == "terms" && i.Done);
+        Assert.Contains(items, i => i.Key == "location_confirmed" && i.Done);
+        Assert.DoesNotContain(items, i => i.Key == "responsible"); // Beleza não tem este item
+
+        using HttpResponseMessage refused = await _world.SendAsync(HttpMethod.Get, "/api/businesses/current/checklist", null, customer.Token);
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
     }
 
     [Fact]

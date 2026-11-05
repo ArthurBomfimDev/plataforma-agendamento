@@ -1,6 +1,13 @@
-import { draftOf, optional } from '../../consts'
+import {
+  DECLARATION_REQUIRED_MESSAGE,
+  DECLARATION_TEXT,
+  draftOf,
+  needsDeclaration,
+  optional,
+} from '../../consts'
 
 import { Button } from '@components/button'
+import { Checkbox } from '@components/checkbox'
 import { PanelSheet } from '@components/panel-sheet'
 import { SwitchField } from '@components/switch-field'
 import { TextAreaField } from '@components/text-area-field'
@@ -11,11 +18,11 @@ import type { TeamMemberSheetProps } from './types'
 import { useState } from 'react'
 
 /**
- * Editar um profissional: perfil, situação, perfil público e serviços. O perfil completo na vitrine só
- * liga com o consentimento do próprio profissional; o dono vê o porquê, não um botão que falha.
+ * Editar um profissional: perfil, situação e serviços. O perfil é sempre público (ADR-031). Para quem não tem login, salvar
+ * a apresentação exige a declaração do dono de que tem a autorização da pessoa; quem tem login controla os próprios dados.
  */
 export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
-  const { member, services, onOpenChange, onSave } = props
+  const { member, services, showRegistration = false, onOpenChange, onSave } = props
 
   const [draft, setDraft] = useState<TeamMemberDraft | null>(member && draftOf(member))
   const [lastId, setLastId] = useState(member?.id)
@@ -35,7 +42,16 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
     setDraft((current) => current && { ...current, ...patch })
   const nameError =
     touched && draft && !draft.displayName.trim() ? 'Informe o nome do profissional.' : undefined
-  const consent = member?.hasPublicProfileConsent ?? false
+  // A declaração só vale para quem não tem login; é obrigatória quando há apresentação a salvar.
+  const declarable = member !== null && !member.hasAccount
+  const declarationError =
+    touched &&
+    draft &&
+    member &&
+    needsDeclaration(member, draft.bio) &&
+    !draft.authorizationDeclared
+      ? DECLARATION_REQUIRED_MESSAGE
+      : undefined
 
   return (
     <PanelSheet
@@ -51,6 +67,7 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
             event.preventDefault()
             setTouched(true)
             if (!draft.displayName.trim()) return
+            if (needsDeclaration(member, draft.bio) && !draft.authorizationDeclared) return
             setSaving(true)
             setError(undefined)
             const failure = await onSave({
@@ -58,7 +75,8 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
               displayName: draft.displayName.trim(),
               specialty: optional(draft.specialty ?? ''),
               bio: optional(draft.bio ?? ''),
-              showFullProfile: draft.isActive && consent && draft.showFullProfile,
+              registration: optional(draft.registration ?? ''),
+              authorizationDeclared: declarable && draft.authorizationDeclared,
             })
             setSaving(false)
             if (failure) setError(failure)
@@ -85,6 +103,35 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
             value={draft.bio ?? ''}
             onChange={(event) => set({ bio: event.target.value })}
           />
+          {showRegistration && (
+            <TextField
+              id="team-member-registration"
+              label="Registro profissional (opcional)"
+              helper="Ex.: CRP 06/123456. Aparece na página pública."
+              autoComplete="off"
+              maxLength={40}
+              value={draft.registration ?? ''}
+              onChange={(event) => set({ registration: event.target.value })}
+            />
+          )}
+          {declarable && (
+            <div className="flex flex-col gap-(--space-4)">
+              <Checkbox
+                checked={draft.authorizationDeclared}
+                onCheckedChange={(checked) => set({ authorizationDeclared: checked === true })}
+                label={DECLARATION_TEXT}
+              />
+              <p className="type-caption text-(--text-muted)">
+                Especialidade, apresentação e foto ficam visíveis para qualquer pessoa. Fica
+                registrado quem declarou e quando.
+              </p>
+              {declarationError && (
+                <p role="alert" className="type-label text-(--status-rejected-fg)">
+                  {declarationError}
+                </p>
+              )}
+            </div>
+          )}
 
           <SwitchField
             id="team-member-active"
@@ -92,18 +139,6 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
             description="Desativado, sai da agenda e da vitrine e não recebe pedidos novos."
             checked={draft.isActive}
             onCheckedChange={(isActive) => set({ isActive })}
-          />
-          <SwitchField
-            id="team-member-public"
-            label="Perfil completo na vitrine"
-            description={
-              consent
-                ? 'Especialidade, apresentação e foto aparecem para o consumidor.'
-                : 'Precisa do consentimento do próprio profissional; o dono não pode dar por ele. Sem consentimento, a vitrine mostra só o nome.'
-            }
-            checked={consent && draft.isActive && draft.showFullProfile}
-            disabled={!consent || !draft.isActive}
-            onCheckedChange={(showFullProfile) => set({ showFullProfile })}
           />
 
           <ToggleChips

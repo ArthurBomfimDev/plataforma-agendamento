@@ -15,6 +15,7 @@ namespace Booking.Api.Module.Tenancy;
 public sealed class BusinessesController : ControllerBase
 {
     [HttpPost]
+    [EnableRateLimiting(RateLimits.BusinessCreate)]
     [ProducesResponseType<BusinessResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Register(
         RegisterBusinessRequest request, [FromServices] RegisterBusinessCommand command, CancellationToken ct)
@@ -30,9 +31,28 @@ public sealed class BusinessesController : ControllerBase
         return CreatedAtAction(nameof(GetPublic), new { businessId = business.Id }, business);
     }
 
+    /// <summary>
+    /// "Sair do estabelecimento": profissional ou atendente remove o próprio vínculo; o perfil sai da vitrine na hora.
+    /// O dono recebe 409 (<c>business_membership.cannot_remove_owner</c>). Depois, o token do painel deixa de valer
+    /// para este estabelecimento nas rotas que conferem o vínculo: o frontend volta ao contexto de consumidor.
+    /// </summary>
+    [HttpPost("current/leave")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Leave([FromServices] LeaveBusinessCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(ct);
+        return NoContent();
+    }
+
     [HttpGet("current")]
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCurrent([FromServices] GetCurrentBusinessQuery query, CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(ct));
+
+    /// <summary>A checklist de envio e publicação (o que falta), só para o Owner.</summary>
+    [HttpGet("current/checklist")]
+    [ProducesResponseType<PagedResult<ChecklistItemResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetChecklist([FromServices] GetCurrentChecklistQuery query, CancellationToken ct) =>
         Ok(await query.ExecuteAsync(ct));
 
     [HttpPut("current/scheduling-policy")]
@@ -112,6 +132,21 @@ public sealed class BusinessesController : ControllerBase
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Publish([FromServices] PublishBusinessCommand command, CancellationToken ct) =>
         Ok(await command.ExecuteAsync(ct));
+
+    /// <summary>
+    /// "Denunciar" na página pública. Sem login; limite de taxa por IP. Cai na fila do Admin e responde 204; só se
+    /// denuncia estabelecimento ativo (os outros respondem 404).
+    /// </summary>
+    [HttpPost("{businessId:guid}/reports")]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimits.Report)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Report(
+        Guid businessId, ReportBusinessRequest request, [FromServices] ReportBusinessCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(businessId, request, ct);
+        return NoContent();
+    }
 
     [HttpGet("{businessId:guid}")]
     [AllowAnonymous]

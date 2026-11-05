@@ -29,6 +29,9 @@ public sealed class Service : BaseEntity, IAuditable, ITenantScoped
 
     public bool IsActive { get; private set; }
 
+    /// <summary>Foto do serviço (ADR-023): só a referência ao armazenamento, nunca os bytes. Opcional.</summary>
+    public string? ImageKey { get; private set; }
+
     private Service()
     {
     }
@@ -87,6 +90,14 @@ public sealed class Service : BaseEntity, IAuditable, ITenantScoped
         SlotStepMinutes = slotStepMinutes;
         PriceCents = priceCents;
         SuppliesNote = string.IsNullOrWhiteSpace(suppliesNote) ? null : suppliesNote.Trim();
+    }
+
+    /// <summary>Troca (ou remove, com nulo) a foto. Devolve a referência anterior, para apagar os arquivos velhos.</summary>
+    public string? ReplaceImage(string? key)
+    {
+        string? previous = ImageKey;
+        ImageKey = key is null ? null : ValueObject.ImageKey.Ensure(key);
+        return previous;
     }
 
     public void Activate() => IsActive = true;

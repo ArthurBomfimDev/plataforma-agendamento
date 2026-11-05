@@ -201,6 +201,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("duration_minutes");
 
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("image_key");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
@@ -639,6 +644,19 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AuthorizationDeclarationVersion")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("authorization_declaration_version");
+
+                    b.Property<DateTimeOffset?>("AuthorizationDeclaredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("authorization_declared_at");
+
+                    b.Property<Guid?>("AuthorizationDeclaredByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("authorization_declared_by_user_id");
+
                     b.Property<string>("Bio")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
@@ -666,18 +684,15 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<bool>("IsPubliclyVisible")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_publicly_visible");
-
                     b.Property<string>("PhotoImageKey")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("photo_image_key");
 
-                    b.Property<DateTimeOffset?>("PublicProfileConsentAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("public_profile_consent_at");
+                    b.Property<string>("Registration")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("registration");
 
                     b.Property<string>("Specialty")
                         .HasMaxLength(100)
@@ -700,6 +715,276 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasFilter("business_membership_id IS NOT NULL");
 
                     b.ToTable("professional", "people");
+                });
+
+            modelBuilder.Entity("Booking.Domain.Entity.Module.People.ProfessionalRemovalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<string>("Contact")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("contact");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ProfessionalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("professional_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<string>("Resolution")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("resolution");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_professional_removal_request");
+
+                    b.HasIndex("ProfessionalId")
+                        .HasDatabaseName("ix_professional_removal_request_professional_id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_professional_removal_request_status");
+
+                    b.ToTable("professional_removal_request", "people");
+                });
+
+            modelBuilder.Entity("Booking.Domain.Entity.Module.Reputation.RatingSummary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer")
+                        .HasColumnName("count");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Stars1")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars1");
+
+                    b.Property<int>("Stars2")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars2");
+
+                    b.Property<int>("Stars3")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars3");
+
+                    b.Property<int>("Stars4")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars4");
+
+                    b.Property<int>("Stars5")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars5");
+
+                    b.Property<long>("Sum")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sum");
+
+                    b.Property<string>("Target")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("target");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rating_summary");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("ix_rating_summary_business_id");
+
+                    b.HasIndex("Target", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_rating_summary_target");
+
+                    b.ToTable("rating_summary", "reputation");
+                });
+
+            modelBuilder.Entity("Booking.Domain.Entity.Module.Reputation.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AppointmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("appointment_id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTimeOffset?>("EditedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("edited_at");
+
+                    b.Property<DateTimeOffset?>("HiddenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("hidden_at");
+
+                    b.Property<Guid?>("HiddenByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("hidden_by_user_id");
+
+                    b.Property<string>("HiddenReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("hidden_reason");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_hidden");
+
+                    b.Property<bool>("IsSensitive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_sensitive");
+
+                    b.Property<Guid>("ProfessionalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("professional_id");
+
+                    b.Property<int?>("ProfessionalRating")
+                        .HasColumnType("integer")
+                        .HasColumnName("professional_rating");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<DateTimeOffset?>("ReportClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("report_closed_at");
+
+                    b.Property<string>("ReportReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("report_reason");
+
+                    b.Property<DateTimeOffset?>("ReportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reported_at");
+
+                    b.Property<Guid?>("ReportedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reported_by_user_id");
+
+                    b.Property<DateTimeOffset>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("ReviewerName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("reviewer_name");
+
+                    b.Property<string>("ServiceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("service_name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_review");
+
+                    b.HasIndex("AppointmentId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_review_appointment");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("ix_review_business_id");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_review_customer_id");
+
+                    b.HasIndex("BusinessId", "IsHidden", "ReviewedAt")
+                        .HasDatabaseName("ix_review_business_id_is_hidden_reviewed_at");
+
+                    b.HasIndex("ProfessionalId", "IsHidden", "ReviewedAt")
+                        .HasDatabaseName("ix_review_professional_id_is_hidden_reviewed_at");
+
+                    b.ToTable("review", "reputation", t =>
+                        {
+                            t.HasCheckConstraint("ck_review_professional_rating", "professional_rating IS NULL OR professional_rating BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("ck_review_rating", "rating BETWEEN 1 AND 5");
+                        });
                 });
 
             modelBuilder.Entity("Booking.Domain.Entity.Module.Scheduling.Appointment", b =>
@@ -974,9 +1259,19 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(14)")
                         .HasColumnName("document_number");
 
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("document_type");
+
                     b.Property<DateTimeOffset?>("GeocodedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("geocoded_at");
+
+                    b.Property<bool>("IsMei")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_mei");
 
                     b.Property<Point>("Location")
                         .HasColumnType("geography (point)")
@@ -1128,7 +1423,105 @@ namespace Booking.Infrastructure.Persistence.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
 
-                    b.ToTable("business", "tenancy");
+                    b.ToTable("business", "tenancy", t =>
+                        {
+                            t.HasCheckConstraint("ck_business_mei_requires_cnpj", "NOT is_mei OR document_type = 'Cnpj'");
+                        });
+                });
+
+            modelBuilder.Entity("Booking.Domain.Entity.Module.Tenancy.BusinessInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<Guid?>("AcceptedUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("accepted_user_id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("InvitedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invited_by_user_id");
+
+                    b.Property<string>("InviteeName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("invitee_name");
+
+                    b.Property<DateTimeOffset>("LastSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sent_at");
+
+                    b.Property<Guid?>("ProfessionalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("professional_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<DateTimeOffset?>("TermsAcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("terms_accepted_at");
+
+                    b.Property<string>("TermsVersion")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("terms_version");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_business_invitation");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("ix_business_invitation_business_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_business_invitation_token_hash");
+
+                    b.HasIndex("BusinessId", "Email")
+                        .HasDatabaseName("ix_business_invitation_business_id_email");
+
+                    b.ToTable("business_invitation", "tenancy");
                 });
 
             modelBuilder.Entity("Booking.Domain.Entity.Module.Tenancy.BusinessMembership", b =>
@@ -1184,6 +1577,69 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_business_membership_business_id_user_id");
 
                     b.ToTable("business_membership", "tenancy");
+                });
+
+            modelBuilder.Entity("Booking.Domain.Entity.Module.Tenancy.BusinessReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("business_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("ReportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reported_at");
+
+                    b.Property<Guid?>("ReporterUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reporter_user_id");
+
+                    b.Property<string>("Resolution")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("resolution");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_business_report");
+
+                    b.HasIndex("BusinessId")
+                        .HasDatabaseName("ix_business_report_business_id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_business_report_status");
+
+                    b.ToTable("business_report", "tenancy");
                 });
 
             modelBuilder.Entity("Booking.Domain.Entity.Module.Catalog.ServiceProfessional", b =>

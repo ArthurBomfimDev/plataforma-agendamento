@@ -42,12 +42,18 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
         "auth.invalid_credentials" or "auth.invalid_refresh_token" or "auth.refresh_token_reused"
             or "auth.unauthenticated" => StatusCodes.Status401Unauthorized,
         "auth.account_not_active" or "identity.email_not_confirmed" or "auth.forbidden" or "tenant.missing"
-            or "compliance.consent_required" or "appointment.customer_context_required" => StatusCodes.Status403Forbidden,
+            or "compliance.consent_required" or "appointment.customer_context_required" or "invitation.email_mismatch"
+            or "review.not_allowed" => StatusCodes.Status403Forbidden,
         "user.email_already_registered" or "business.document_already_registered"
             or "appointment.slot_no_longer_available" or "customer.already_registered"
             or "work_schedule.overlaps" or "business.requires_review" or "business.account_limit_reached"
-            => StatusCodes.Status409Conflict,
-        "appointment.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
+            or "business.seat_limit_reached" or "invitation.already_pending" or "invitation.already_member"
+            or "invitation.account_exists" or "invitation.already_used" or "invitation.professional_not_linkable"
+            or "review.already_reviewed" or "review.not_completed" or "review.window_expired" or "review.already_edited"
+            or "review.edit_window_expired" or "review.already_reported" or "review.no_open_report"
+            or "review.already_hidden" or "review.not_hidden" => StatusCodes.Status409Conflict,
+        "invitation.expired" or "invitation.revoked" => StatusCodes.Status410Gone,
+        "appointment.contention_try_again" or "review.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
         "image.too_large" => StatusCodes.Status413PayloadTooLarge,
         "image.unsupported_type" => StatusCodes.Status415UnsupportedMediaType,
         _ when code.EndsWith(".not_found", StringComparison.Ordinal) => StatusCodes.Status404NotFound,

@@ -9,8 +9,17 @@ import { NotFoundScreen } from '@pages/not-found'
 import { PANEL_PAGE_LOADERS } from './panel-pages'
 import { ROUTES } from './paths'
 import { RequireOwner } from './guards/require-owner'
+import { RequireRoles } from './guards/require-roles'
 
 // Moldura do consumidor e 404 vão no chunk inicial (são a porta de entrada); o painel inteiro e cada página, não.
+const AdminBusinessesRoute = lazyPage(
+  () => import('@pages/admin/businesses'),
+  'AdminBusinessesRoute',
+)
+const RegisterBusinessRoute = lazyPage(
+  () => import('@pages/onboarding/register'),
+  'RegisterBusinessRoute',
+)
 const AppointmentsRoute = lazyPage(
   () => import('@pages/customer/appointments'),
   'AppointmentsRoute',
@@ -43,12 +52,16 @@ const ForgotPasswordRoute = lazyPage(
   'ForgotPasswordRoute',
 )
 const HomeRoute = lazyPage(() => import('@pages/customer/home'), 'HomeRoute')
+const InvitationRoute = lazyPage(() => import('@pages/auth/invitation'), 'InvitationRoute')
 const MyAccountRoute = lazyPage(() => import('@pages/account'), 'MyAccountRoute')
 const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
+const PanelBlocksRoute = lazyPage(PANEL_PAGE_LOADERS.blocks, 'PanelBlocksRoute')
+const PanelProfileRoute = lazyPage(PANEL_PAGE_LOADERS.profile, 'PanelProfileRoute')
 const PanelLayout = lazyPage(() => import('@layouts/panel-layout'), 'PanelLayout')
 const PanelMoreRoute = lazyPage(PANEL_PAGE_LOADERS.more, 'PanelMoreRoute')
 const PanelPhotosRoute = lazyPage(PANEL_PAGE_LOADERS.photos, 'PanelPhotosRoute')
 const PanelRequestsRoute = lazyPage(PANEL_PAGE_LOADERS.requests, 'PanelRequestsRoute')
+const PanelReviewsRoute = lazyPage(PANEL_PAGE_LOADERS.reviews, 'PanelReviewsRoute')
 const PanelSchedulesRoute = lazyPage(PANEL_PAGE_LOADERS.schedules, 'PanelSchedulesRoute')
 const PanelServiceFormRoute = lazyPage(PANEL_PAGE_LOADERS.services, 'PanelServiceFormRoute')
 const PanelServicesRoute = lazyPage(PANEL_PAGE_LOADERS.services, 'PanelServicesRoute')
@@ -57,6 +70,10 @@ const PanelTeamRoute = lazyPage(PANEL_PAGE_LOADERS.team, 'PanelTeamRoute')
 const ResetPasswordRoute = lazyPage(
   () => import('@pages/auth/reset-password'),
   'ResetPasswordRoute',
+)
+const ProfessionalPageRoute = lazyPage(
+  () => import('@pages/customer/professional'),
+  'ProfessionalPageRoute',
 )
 const SearchRoute = lazyPage(() => import('@pages/customer/search'), 'SearchRoute')
 const SignInRoute = lazyPage(() => import('@pages/auth/sign-in'), 'SignInRoute')
@@ -82,6 +99,7 @@ export const AppRoutes = () => {
           <Route path={ROUTES.bookingSent} element={<BookingSentRoute />} />
           <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
           <Route path={ROUTES.search} element={<SearchRoute />} />
+          <Route path={ROUTES.professional} element={<ProfessionalPageRoute />} />
           <Route path="*" element={<NotFoundScreen />} />
         </Route>
         {/* Fora da moldura: entrar e criar conta não têm barra superior. */}
@@ -91,8 +109,11 @@ export const AppRoutes = () => {
         <Route path={ROUTES.forgotPassword} element={<ForgotPasswordRoute />} />
         <Route path={ROUTES.confirmEmail} element={<ConfirmEmailRoute />} />
         <Route path={ROUTES.resetPassword} element={<ResetPasswordRoute />} />
+        <Route path={ROUTES.invitation} element={<InvitationRoute />} />
         <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
         <Route path={ROUTES.account} element={<MyAccountRoute />} />
+        <Route path={ROUTES.registerBusiness} element={<RegisterBusinessRoute />} />
+        <Route path={ROUTES.adminBusinesses} element={<AdminBusinessesRoute />} />
         <Route
           path={ROUTES.emailPanelRequests}
           element={<Navigate to={ROUTES.panelRequests} replace />}
@@ -103,6 +124,13 @@ export const AppRoutes = () => {
           <Route index element={<PanelAgendaRoute />} />
           <Route path={ROUTES.panelRequests} element={<PanelRequestsRoute />} />
           <Route path={ROUTES.panelMore} element={<PanelMoreRoute />} />
+          {/* Atendente e profissional (o dono tem Jornadas); o servidor recusa o resto com 403. */}
+          <Route element={<RequireRoles allow={['Attendant', 'Professional']} />}>
+            <Route path={ROUTES.panelBlocks} element={<PanelBlocksRoute />} />
+          </Route>
+          <Route element={<RequireRoles allow={['Professional']} />}>
+            <Route path={ROUTES.panelProfile} element={<PanelProfileRoute />} />
+          </Route>
           {/* Gestão do estabelecimento (Onda 7D): só o dono. */}
           <Route element={<RequireOwner />}>
             <Route path={ROUTES.panelServices} element={<PanelServicesRoute />} />
@@ -112,6 +140,7 @@ export const AppRoutes = () => {
             <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
             <Route path={ROUTES.panelPhotos} element={<PanelPhotosRoute />} />
             <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />
+            <Route path={ROUTES.panelReviews} element={<PanelReviewsRoute />} />
           </Route>
         </Route>
       </Routes>

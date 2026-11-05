@@ -1,6 +1,10 @@
 namespace Booking.Arguments.Module.Tenancy;
 
-public sealed record RegisterBusinessRequest(string Name, string Document, string Category);
+/// <summary>
+/// Cadastro. <c>Document</c>: CPF ou CNPJ, em qualquer categoria. <c>DocumentType</c>: <c>Cpf</c> ou <c>Cnpj</c>, conferido com
+/// o documento; sem ele, vale o que o documento é. <c>IsMei</c>: informativo, só com CNPJ.
+/// </summary>
+public sealed record RegisterBusinessRequest(string Name, string Document, string Category, string? DocumentType = null, bool IsMei = false);
 
 public sealed record UpdateSchedulingPolicyRequest(
     bool AutoConfirm,
@@ -37,10 +41,14 @@ public sealed record SearchBusinessesRequest(
     string? Category = null,
     long? MaxPriceCents = null,
     string? SortBy = null,
-    string? City = null);
+    string? City = null,
+    int? MinRating = null);
 
 /// <summary>Profissional responsável e registro no conselho (Saúde). <c>Council</c>: Crm, Crp, Crefito, Crn, Crefono ou Cro.</summary>
 public sealed record SetResponsibleRequest(string Name, string Council, string CouncilNumber, string CouncilState);
+
+/// <summary>Denúncia na página pública: o motivo, de 5 a 500 caracteres.</summary>
+public sealed record ReportBusinessRequest(string Reason);
 
 /// <summary>Aceite dos termos pelo dono. <c>Version</c> é a versão do texto exibido.</summary>
 public sealed record AcceptTermsRequest(string Version);

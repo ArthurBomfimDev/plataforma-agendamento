@@ -13,7 +13,10 @@ using Booking.Domain.ValueObject;
 
 namespace Booking.Application.Module.Availability.Commands;
 
-/// <summary>Jornada, bloqueios e férias: só o proprietário edita (matriz de permissões).</summary>
+/// <summary>
+/// Jornada: só o proprietário edita (matriz de permissões). Bloqueios e férias: o proprietário e o atendente, de todos
+/// os profissionais; o profissional, os próprios (<see cref="AgendaScope"/>).
+/// </summary>
 public sealed class AddWorkScheduleCommand(
     IWorkScheduleRepository schedules,
     IPeopleDirectory people,
@@ -98,12 +101,13 @@ public sealed class AddScheduleExceptionCommand(
     IScheduleExceptionRepository exceptions,
     IPeopleDirectory people,
     IAffectedAppointments affected,
-    IActorContext actor,
+    AgendaScope scope,
     IUnitOfWork unitOfWork)
 {
     public async Task<ScheduleExceptionResponse> ExecuteAsync(AddScheduleExceptionRequest r, CancellationToken ct = default)
     {
-        Guid businessId = actor.RequireOwner();
+        // Dono e atendente bloqueiam qualquer profissional ou o estabelecimento todo; o profissional, só a própria agenda.
+        Guid businessId = await scope.EnsureCanActOnAsync(r.ProfessionalId, ct);
 
         if (!System.Enum.TryParse(r.Kind, ignoreCase: true, out ScheduleExceptionKind kind))
         {
@@ -149,14 +153,15 @@ public sealed class AddScheduleExceptionCommand(
     };
 }
 
-public sealed class RemoveScheduleExceptionCommand(IScheduleExceptionRepository exceptions, IActorContext actor, IUnitOfWork unitOfWork)
+public sealed class RemoveScheduleExceptionCommand(IScheduleExceptionRepository exceptions, AgendaScope scope, IUnitOfWork unitOfWork)
 {
     public async Task ExecuteAsync(Guid exceptionId, CancellationToken ct = default)
     {
-        actor.RequireOwner();
-
         ScheduleException exception = await exceptions.GetByIdAsync(exceptionId, ct)
             ?? throw new DomainException("schedule_exception.not_found");
+
+        // O profissional só remove o que é dele; o bloqueio do estabelecimento todo é de dono e atendente.
+        await scope.EnsureCanActOnAsync(exception.ProfessionalId, ct);
 
         exceptions.Remove(exception);
         await unitOfWork.SaveChangesAsync(ct);

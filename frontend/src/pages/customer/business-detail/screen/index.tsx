@@ -1,9 +1,13 @@
-import { LocationIcon, ScheduleIcon, StarIcon } from '@assets/icons'
-import { distanceFormat, ratingFormat } from '@components/card-establishment/consts'
+import { LocationIcon, ScheduleIcon } from '@assets/icons'
+
+import { distanceFormat } from '@components/card-establishment/consts'
+import { RatingLabel } from '@components/rating-label'
+import { ReviewsSection } from '@components/reviews-section'
 
 import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { BusinessDetailScreenProps } from './types'
 import { Button } from '@components/button'
+import { ReportBusiness } from '@components/report-business'
 import { ServiceIcon } from '@components/image-defaults/service-icon'
 import { SmartImage } from '@components/smart-image'
 import { PageContainer } from '@components/page-container'
@@ -11,6 +15,7 @@ import { ServiceCard } from '@components/service-card'
 import { TabBar } from '@components/tab-bar'
 import { TimeSlotChip } from '@components/time-slot-chip'
 import { VerifiedBadge } from '@components/card-establishment/components/verified-badge'
+import { ProfessionalsList } from './components/professionals-list'
 import { useRef } from 'react'
 const comingSoon = <p className="type-body text-(--text-muted)">Em breve.</p>
 
@@ -18,7 +23,15 @@ const comingSoon = <p className="type-body text-(--text-muted)">Em breve.</p>
  * Tela 03 · Página do estabelecimento (Figma, 390px; desktop: 03D, 1440px).
  */
 export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
-  const { business, nextFreeSlots = [], onBookService } = props
+  const {
+    business,
+    nextFreeSlots = [],
+    onBookService,
+    onReport,
+    professionals,
+    onOpenProfessional,
+    reviews,
+  } = props
 
   const servicesRef = useRef<HTMLUListElement>(null)
 
@@ -89,15 +102,10 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
               </div>
 
               <div className="flex flex-wrap items-center gap-(--space-8) lg:gap-(--space-12)">
-                {rating !== undefined && reviewCount ? (
-                  <p className="type-caption tabular flex items-center gap-(--space-8) text-(--text-muted) lg:text-(length:--size-label)! lg:leading-(--line-height-label)! lg:font-medium! lg:text-(--text-body)">
-                    <StarIcon aria-hidden="true" className="size-4" />
-                    <span>
-                      <span className="sr-only">Nota </span>
-                      {ratingFormat.format(rating)} ({reviewCount})
-                    </span>
-                  </p>
-                ) : null}
+                {/* Sem contagem = a nota ainda não foi lida (carregando ou erro): não afirma nada. */}
+                {reviewCount !== undefined && (
+                  <RatingLabel average={rating ?? null} count={reviewCount} />
+                )}
                 {verified && <VerifiedBadge />}
                 {openUntilChip('hidden lg:flex')}
               </div>
@@ -127,11 +135,23 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                         ref={servicesRef}
                         className="flex scroll-mt-(--space-24) flex-col gap-(--space-12) lg:gap-(--space-16)"
                       >
-                        {business.services.map(({ id, ...service }) => (
+                        {business.services.map(({ id, photo, ...service }) => (
                           <li key={id}>
                             <ServiceCard
                               {...service}
-                              leading={<ServiceIcon category={business.category} />}
+                              leading={
+                                <SmartImage
+                                  image={photo}
+                                  alt=""
+                                  sizes="48px"
+                                  width={48}
+                                  height={48}
+                                  className="size-12 shrink-0 rounded-md"
+                                  fallback={
+                                    <ServiceIcon category={business.category} className="size-12" />
+                                  }
+                                />
+                              }
                               onBook={() => onBookService?.(id)}
                             />
                           </li>
@@ -140,11 +160,33 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
                     ),
                   },
                   // TODO: Profissionais e Avaliações não têm wireframe ainda.
-                  { id: 'professionals', label: 'Profissionais', content: comingSoon },
-                  { id: 'reviews', label: 'Avaliações', content: comingSoon },
+                  {
+                    id: 'professionals',
+                    label: 'Profissionais',
+                    content: (
+                      <ProfessionalsList
+                        professionals={professionals}
+                        onOpen={(id) => onOpenProfessional?.(id)}
+                      />
+                    ),
+                  },
+                  {
+                    id: 'reviews',
+                    label: 'Avaliações',
+                    content: reviews ? (
+                      <ReviewsSection
+                        title="Avaliações"
+                        summary={reviews.summary}
+                        list={reviews.list}
+                      />
+                    ) : (
+                      comingSoon
+                    ),
+                  },
                 ]}
               />
             </main>
+            {onReport && <ReportBusiness onSubmit={onReport} />}
           </div>
 
           {/* Desktop: card fixo ao rolar, com os próximos horários (03D). */}

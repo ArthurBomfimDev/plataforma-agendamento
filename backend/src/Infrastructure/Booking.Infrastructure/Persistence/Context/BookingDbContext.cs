@@ -5,6 +5,7 @@ using Booking.Domain.Entity.Base;
 using Booking.Domain.Entity.Module.Scheduling;
 using Booking.Domain.Exceptions;
 using Booking.Infrastructure.Persistence.Mapping.Base;
+using Booking.Infrastructure.Persistence.Mapping.Module.Reputation;
 using Booking.Infrastructure.Persistence.Mapping.Module.Scheduling;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -151,17 +152,27 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options,
     /// A constraint de exclusão recusou a sobreposição (ADR-005): vira erro de domínio e HTTP 409, nunca 500.
     /// A violação do índice de idempotência é o toque duplo que chegou ao mesmo tempo.
     /// </summary>
+    /// <remarks>
+    /// Avaliação (ADR-032): a segunda avaliação do mesmo agendamento é <c>review.already_reviewed</c>; a disputa pelo
+    /// resumo de nota (índice do alvo ou linha alterada no meio) é transitória e vira 503 para tentar de novo.
+    /// </remarks>
     private static DomainException? Translate(DbUpdateException exception) =>
-        exception.InnerException is PostgresException postgres
-            ? (postgres.SqlState, postgres.ConstraintName) switch
-            {
-                (PostgresErrorCodes.ExclusionViolation, AppointmentMapping.NoOverlapConstraint) =>
-                    new DomainException("appointment.slot_no_longer_available"),
-                (PostgresErrorCodes.UniqueViolation, AppointmentMapping.IdempotencyIndex) =>
-                    new DomainException("appointment.duplicate_request"),
-                _ => null,
-            }
-            : null;
+        exception is DbUpdateConcurrencyException
+            ? new DomainException("review.contention_try_again")
+            : exception.InnerException is PostgresException postgres
+                ? (postgres.SqlState, postgres.ConstraintName) switch
+                {
+                    (PostgresErrorCodes.ExclusionViolation, AppointmentMapping.NoOverlapConstraint) =>
+                        new DomainException("appointment.slot_no_longer_available"),
+                    (PostgresErrorCodes.UniqueViolation, AppointmentMapping.IdempotencyIndex) =>
+                        new DomainException("appointment.duplicate_request"),
+                    (PostgresErrorCodes.UniqueViolation, ReviewMapping.AppointmentIndex) =>
+                        new DomainException("review.already_reviewed"),
+                    (PostgresErrorCodes.UniqueViolation, RatingSummaryMapping.TargetIndex) =>
+                        new DomainException("review.contention_try_again"),
+                    _ => null,
+                }
+                : null;
 
     private void StampAuditColumns()
     {

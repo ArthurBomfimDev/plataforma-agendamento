@@ -1,5 +1,6 @@
 import type {
   AffectedAppointmentResponse,
+  InvitationResponse,
   ProfessionalResponse,
   SaveServiceRequest,
   SaveWorkScheduleRequest,
@@ -29,7 +30,7 @@ import { dateKeyIn, instantIn, timeIn } from '@utils/time-zone'
 
 import { CATEGORY_LABELS } from '@pages/customer/search/screen/consts'
 import type { ServiceListItem } from './services/screen/types'
-import type { TeamMember } from './team/screen/types'
+import type { PendingInvite, TeamMember } from './team/screen/types'
 import { workHoursOn } from './adapters'
 
 /** Da API para as telas de gestão do painel (Onda 7D). */
@@ -139,6 +140,16 @@ export const workSummaryOf = (schedules: WorkScheduleResponse[], today: string):
   return `${dayLabel} · ${start}–${end}`
 }
 
+const INVITE_ROLE_LABELS = { Professional: 'Profissional', Attendant: 'Atendente' } as const
+
+export const toPendingInvite = (invitation: InvitationResponse): PendingInvite => ({
+  id: invitation.id,
+  name: invitation.name,
+  email: invitation.email,
+  roleLabel: INVITE_ROLE_LABELS[invitation.role],
+  validUntil: new Date(invitation.expiresAt).toLocaleDateString('pt-BR'),
+})
+
 export const toTeamMember = (
   professional: ProfessionalResponse,
   services: ServiceResponse[],
@@ -150,8 +161,8 @@ export const toTeamMember = (
   specialty: professional.specialty,
   bio: professional.bio,
   isActive: professional.isActive,
-  isPubliclyVisible: professional.isPubliclyVisible,
-  hasPublicProfileConsent: professional.hasPublicProfileConsent,
+  authorizationDeclared: professional.authorizationDeclared,
+  registration: professional.registration,
   hasAccount: professional.membershipId !== null,
   photo: professional.photo,
   workSummary: workSummaryOf(schedules, today),

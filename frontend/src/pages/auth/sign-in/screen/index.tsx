@@ -192,6 +192,9 @@ export const SignInScreen = (props: SignInScreenProps) => {
                     Criar conta
                   </button>
                 </p>
+                <p className="type-label text-center text-(--text-muted)">
+                  Recebeu um convite? Use o link do e-mail.
+                </p>
               </div>
             </motion.form>
 

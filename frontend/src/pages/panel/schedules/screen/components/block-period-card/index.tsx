@@ -40,7 +40,14 @@ const ANSWER_FIELDS = new Set<keyof BlockPeriodValues>(['conflictAction', 'cance
  * o estado com foco dentro do cartão.
  */
 export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
-  const { professionalId, today, onPreview, onConfirm, className } = props
+  const {
+    professionalId,
+    today,
+    onPreview,
+    onConfirm,
+    className,
+    allowWholeBusiness = true,
+  } = props
 
   const [values, setValues] = useState(newBlock)
   const [submitted, setSubmitted] = useState(false)
@@ -178,13 +185,15 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
                 onCheckedChange={(allDay) => setField('allDay', allDay)}
               />
             )}
-            <Checkbox
-              id={BLOCK_FIELD_IDS.wholeBusiness}
-              label="Estabelecimento inteiro"
-              checked={values.wholeBusiness}
-              onCheckedChange={(wholeBusiness) => setField('wholeBusiness', wholeBusiness)}
-              aria-describedby={errors.wholeBusiness ? 'block-whole-business-error' : undefined}
-            />
+            {allowWholeBusiness && (
+              <Checkbox
+                id={BLOCK_FIELD_IDS.wholeBusiness}
+                label="Estabelecimento inteiro"
+                checked={values.wholeBusiness}
+                onCheckedChange={(wholeBusiness) => setField('wholeBusiness', wholeBusiness)}
+                aria-describedby={errors.wholeBusiness ? 'block-whole-business-error' : undefined}
+              />
+            )}
           </div>
           {errors.wholeBusiness && (
             <p

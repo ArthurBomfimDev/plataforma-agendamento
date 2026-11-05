@@ -10,4 +10,9 @@ export type BlockPeriodCardProps = {
   /** Grava. Se cancela agendamentos, só depois do diálogo de confirmação. */
   onConfirm: (draft: ExceptionDraft, choice: ExceptionChoice) => Outcome
   className?: string
+  /**
+   * Mostra "Estabelecimento inteiro". O profissional só bloqueia a própria agenda (o servidor responde 403 ao resto),
+   * então para ele a opção não existe.
+   */
+  allowWholeBusiness?: boolean
 }

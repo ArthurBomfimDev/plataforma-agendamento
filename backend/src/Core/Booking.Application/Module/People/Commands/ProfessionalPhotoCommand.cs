@@ -11,8 +11,8 @@ using Booking.Domain.Interface.Repository.Module.People;
 namespace Booking.Application.Module.People.Commands;
 
 /// <summary>
-/// Foto do profissional (ADR-023). Quem pode: o dono do estabelecimento, ou o próprio profissional (pelo vínculo da
-/// conta). Profissional de outro estabelecimento não é encontrado (filtro de tenant): 404.
+/// Foto do profissional (ADR-023). Quem pode: o dono do estabelecimento (com a declaração de autorização, se a pessoa não
+/// tem conta), ou o próprio profissional (pelo vínculo da conta). Profissional de outro estabelecimento não é encontrado (filtro de tenant): 404.
 /// </summary>
 public sealed class ProfessionalPhotoCommand(
     IProfessionalRepository professionals,
@@ -24,6 +24,12 @@ public sealed class ProfessionalPhotoCommand(
     public async Task<ProfessionalResponse> SetAsync(Guid professionalId, Stream upload, CancellationToken ct = default)
     {
         (Professional professional, Guid businessId) = await LoadAllowedAsync(professionalId, ct);
+
+        // Foto de quem não tem conta: o dono precisa ter declarado a autorização da pessoa (ADR-031).
+        if (actor.IsOwner() && professional.RequiresOwnerDeclaration && !professional.HasAuthorizationDeclaration)
+        {
+            throw new DomainException("professional.declaration_required");
+        }
 
         string key = await store.StoreAsync(upload, $"businesses/{businessId:N}/professionals", ct);
         string? previous = professional.ReplacePhoto(key);

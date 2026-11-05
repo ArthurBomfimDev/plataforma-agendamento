@@ -37,6 +37,7 @@ const service: ServiceResponse = {
   professionals: [
     { professionalId: 'p1', priceCents: 4_500, durationMinutes: 30, hasOverride: false },
   ],
+  photo: null,
 }
 
 const schedule = (fields: Partial<WorkScheduleResponse>): WorkScheduleResponse => ({
@@ -112,9 +113,9 @@ describe('serviços', () => {
         specialty: null,
         bio: null,
         isActive: false,
-        isPubliclyVisible: false,
-        hasPublicProfileConsent: false,
         membershipId: null,
+        authorizationDeclared: false,
+        registration: null,
         photo: null,
       },
     ])
@@ -147,9 +148,9 @@ describe('equipe', () => {
         specialty: null,
         bio: null,
         isActive: true,
-        isPubliclyVisible: false,
-        hasPublicProfileConsent: true,
         membershipId: 'm1',
+        authorizationDeclared: true,
+        registration: null,
         photo: null,
       },
       [service, { ...service, id: 's2', professionals: [] }],
@@ -157,7 +158,7 @@ describe('equipe', () => {
 
     expect(member.serviceIds).toEqual(['s1'])
     expect(member.hasAccount).toBe(true)
-    expect(member.hasPublicProfileConsent).toBe(true)
+    expect(member.authorizationDeclared).toBe(true)
   })
 
   it('resume a jornada de hoje: dias seguidos viram intervalo e o horário vai da entrada à saída', () => {

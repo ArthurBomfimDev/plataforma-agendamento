@@ -3,7 +3,7 @@ import { useChangePassword, useUpdateMe } from '@api/services/auth/hooks'
 
 import type { MyAccountData } from './screen/types'
 import { MyAccountScreen } from './screen'
-import { ROUTES } from '@router/paths'
+import { ROUTES, registerBusinessPath } from '@router/paths'
 import { RequireSession } from '@router/guards/require-session'
 import { errorMessage } from '@api/base'
 import { useNavigate } from 'react-router'
@@ -49,6 +49,7 @@ const MyAccount = () => {
       }
       onSignOut={leave}
       onOpenPanel={onOpenPanel}
+      onRegisterBusiness={() => navigate(registerBusinessPath())}
       onSwitchContext={several ? () => navigate(ROUTES.chooseContext) : undefined}
     />
   )

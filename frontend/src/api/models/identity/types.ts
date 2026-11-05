@@ -11,7 +11,8 @@ export type UserResponse = {
   emailConfirmed: boolean
 }
 
-export type BusinessRole = 'Owner' | 'Professional'
+/** `Attendant` (atendente): opera a agenda de todos os profissionais, sem editar o estabelecimento (ADR-030). */
+export type BusinessRole = 'Owner' | 'Professional' | 'Attendant'
 
 /** Estabelecimento em que a conta tem vínculo ativo: um item do seletor de contexto. */
 export type UserBusinessResponse = { businessId: string; name: string; role: BusinessRole }

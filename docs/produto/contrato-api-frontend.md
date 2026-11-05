@@ -45,7 +45,7 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `POST /api/businesses/current/services` · `PUT …/{id}` | `manageApi.createService` · `updateService` | ✅ desde a 7D (§4.7) |
 | `PUT` · `DELETE …/services/{id}/professionals/{pid}` | `manageApi.enableProfessional` · `disableProfessional` | ✅ desde a 7D — o preço e a duração próprios por profissional ainda não têm tela |
 | `POST /api/businesses/current/professionals` · `PUT …/{id}` | `manageApi.createProfessional` · `updateProfessional` | ✅ desde a 7D |
-| `PUT` · `DELETE …/professionals/{id}/public-profile-consent` | — | ⬜ só o próprio profissional dá; sem login de profissional (5D), não há tela |
+| ~~`PUT` · `DELETE …/professionals/{id}/public-profile-consent`~~ | — | **Removidas** (ADR-031, §4.13): o perfil é sempre público e a base é a declaração do dono |
 | `POST` · `PUT …/{id}` · `DELETE …/{id}` em `…/work-schedules` | `manageApi.addWorkSchedule` · `updateWorkSchedule` · `removeWorkSchedule` | ✅ desde a 7D |
 | `GET` · `POST` · `DELETE …/{id}` em `…/schedule-exceptions`, `GET …/affected-appointments` | `manageApi.exceptions` · `addException` · `removeException` · `affectedAppointments` | ✅ desde a 7D |
 | `PUT /api/businesses/current/scheduling-policy` | `manageApi.updatePolicy` (`timeZone: null` mantém o fuso) | ✅ desde a 7D |
@@ -401,6 +401,233 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
 - **CORS:** o site não precisa mais dele (mesma origem). A origem `http://localhost:8080` continua liberada para quem
   chama a 8081 direto.
 - Sem mudança de rota nem de JSON. Guia de operação: `docs/operacao/demo-publica.md`.
+
+## 4.10 Cadastro do estabelecimento (ondas finais, 04/11) — **backend escrito sem Docker, não verificado**
+
+Ciclo e regra: ADR-028. Todas as rotas `current/*` exigem o contexto de estabelecimento com papel `Owner`.
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `POST /api/businesses` | conta logada | cria o estabelecimento em `Draft` e o vínculo `Owner`. **409 `business.account_limit_reached`** no 4º; limite de 5 por hora por conta (429) |
+| `POST /api/businesses/current/terms` `{ version }` | Owner | aceita os termos (data e versão); a checklist exige |
+| `PUT /api/businesses/current/responsible` `{ name, council, councilNumber, councilState }` | Owner, só Saúde | `council`: `Crm`, `Crp`, `Crefito`, `Crn`, `Crefono`, `Cro`. Outra categoria: `business.responsible_only_for_health` |
+| `POST /api/businesses/current/publish` | Owner, não-Saúde | `Draft → Active` com a checklist completa. Saúde: **409 `business.requires_review`** |
+| `POST /api/businesses/current/submit` | Owner | `Draft → PendingReview` com a checklist completa (`business.activation_checklist_incomplete` + `missing`) |
+| `GET /api/businesses/current` | Owner | agora traz `statusReason` (motivo da suspensão ou da reprovação), `termsAccepted`, `responsibleInformed` |
+| `POST /api/businesses/{id}/reports` `{ reason }` | **anônimo** | denuncia estabelecimento **ativo** (5 a 500 caracteres). 204; 404 se não ativo; 5 por hora por IP (429) |
+| `GET /api/admin/businesses?status=&category=` | Admin | fila por status (padrão `PendingReview`) e categoria |
+| `GET /api/admin/businesses/{id}` | Admin | detalhe com `checklist`, `responsible` (**só aqui**), `suspensionReason`, `suspendedByUserId`, `suspendedAt`, `termsAcceptedAt`, `termsVersion` |
+| `POST /api/admin/businesses/{id}/suspend` `{ note }` | Admin | **o motivo é obrigatório** (`business.suspension_requires_reason`) |
+| `GET /api/admin/businesses/reports?status=Open\|Resolved` | Admin | fila de denúncias |
+| `POST /api/admin/businesses/reports/{reportId}/resolve` `{ note? }` | Admin | encerra a denúncia (409 se já resolvida); suspender é uma decisão à parte |
+
+- **Checklist** (`ActivationChecklist`): `terms` (todas as categorias), `responsible` (só Saúde), localização confirmada,
+  ≥ 1 profissional, ≥ 1 serviço com profissional habilitado, ≥ 1 jornada.
+- **"Reprovado" não é status:** é `Draft` com `verificationLevel: "Rejected"`; o motivo vem em `statusReason`.
+- **Privacidade:** o registro no conselho só sai para o Admin; o dono recebe `responsibleInformed`; documento, registro e
+  denunciante nunca vão para log. Denúncia guarda a conta só se logada, nunca o IP.
+- **E-mails ao dono** (outbox): cadastro recebido (Saúde), aprovado, reprovado com motivo, suspenso com motivo, publicado.
+  Em Saúde o assunto não cita o nome do estabelecimento nem serviço.
+- **Busca:** serviço e preço aparecem em todas as categorias, Saúde inclusa (ADR-024).
+- **`GET /api/businesses/current/checklist` devolve `PagedResult`** (uma página com todos os itens), como manda a
+  ADR-010; o serviço do frontend lê `.items`. Corrigido na Fase 4 (o teste de paginação estava vermelho).
+
+## 4.11 Convites de equipe (Fase 4, bloco 1, 04/11) — **backend escrito sem Docker, não verificado**
+
+Ciclo e regra: ADR-029. O convite é **opcional**: o caminho principal é o dono cadastrar o profissional sem conta.
+Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca é convidável).
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `POST /api/businesses/current/invitations` `{ name, email, role, professionalId? }` | Owner | 201 `InvitationResponse`. **409** `business.seat_limit_reached`, `invitation.already_pending`, `invitation.already_member`, `invitation.professional_not_linkable`. 400 `invitation.role_invalid`. 30 por hora por conta (429) |
+| `GET /api/businesses/current/invitations?page=&pageSize=` | Owner | `PagedResult<InvitationResponse>` só dos **pendentes** |
+| `GET /api/businesses/current/seats` | Owner | `{ used, limit }`: contas ativas + convites pendentes contra o `SeatLimit` (15) |
+| `POST /api/businesses/current/invitations/{id}/resend` | Owner | token novo e prazo novo (o link antigo deixa de valer). Expirado volta a ocupar vaga |
+| `DELETE /api/businesses/current/invitations/{id}` | Owner | revoga. 204. Convite de outro estabelecimento responde **404** |
+| `POST /api/invitations/preview` `{ token }` | **anônimo** | `{ businessName, inviterName, inviteeName, email, role, accountExists, termsVersion, termsRequired }` |
+| `POST /api/invitations/accept` `{ token, acceptTerms }` | conta logada | a conta precisa ter o e-mail do convite (**403** `invitation.email_mismatch`) |
+| `POST /api/invitations/accept-new-account` `{ token, fullName, password, acceptTerms }` | **anônimo** | cria a conta com e-mail já confirmado e aceita. **409** `invitation.account_exists` se já há conta. Depois, o frontend faz o login com as mesmas credenciais |
+
+- **Token no corpo, nunca na URL** (log de acesso, histórico). Rotas do link: 20 por hora por IP (429).
+- **Erros do link:** `invitation.not_found` (404, token que não existe ou de outro estabelecimento), `invitation.expired`
+  e `invitation.revoked` (**410**), `invitation.already_used` (409), `invitation.terms_required` (400, só `Professional`).
+- `AcceptedInvitationResponse` = `{ businessId, businessName, role }`. Depois do aceite o frontend troca de contexto
+  (`switch-context`) para o novo estabelecimento.
+- **E-mail** pelo outbox, link `#/convite?token=`. O texto cita o estabelecimento e o papel, nunca categoria nem serviço.
+- **Migration `AddBusinessInvitation`** (não aplicada): tabela `tenancy.business_invitation` e `seat_limit` 1 → 15.
+
+## 4.12 Papel Atendente (Fase 4, bloco 2, 04/11) — **backend escrito sem Docker, não verificado**
+
+Regra: ADR-030. O token de contexto passa a levar `ctx: "Attendant"` (o `switch-context` devolve `role: "Attendant"`).
+
+| Rota (todas em `/api/businesses/current/…`) | Dono | Atendente | Profissional |
+|---|---|---|---|
+| `appointments` (agenda do dia), `appointments/pending`, `confirm`, `reject`, `cancel`, `complete`, `no-show`, `counter` | todos | **todos** | só os próprios |
+| `schedule-exceptions` (bloqueios, férias), `schedule-exceptions/affected-appointments` | sim | **sim**, de todos | **só os próprios** (`professionalId` = o seu perfil; o de outro ou o do estabelecimento todo dá 403) |
+| `GET/PUT professionals/me` `{ specialty, bio }` | só com perfil ligado | **403** (não tem perfil) | **sim**, o próprio. Nome e situação seguem do dono; a foto usa `PUT professionals/{id}/photo` |
+| `professionals` e `services` (GET), `work-schedules` (GET), `schedule-exceptions` (GET) | sim | sim | sim |
+| `work-schedules` (POST/PUT/DELETE), `services` (POST/PUT e vínculo com profissional), `professionals` (POST/PUT) | sim | **403** | 403 |
+| `professionals/{id}/photo` | sim | **403** | só a própria |
+| `GET current`, `checklist`, `scheduling-policy`, `address`, `location`, `logo`, `cover`, `submit`, `publish`, `terms`, `responsible` | sim | **403** | 403 |
+| `invitations`, `seats` | sim | **403** | 403 |
+| `/api/admin/*` | 403 | 403 | 403 |
+
+- O atendente **não** agenda como consumidor no contexto do painel (`appointment.customer_context_required`, 403).
+- **Para o frontend:** o painel do atendente não pode chamar `GET current` nem `checklist` (403). Para o nome do
+  estabelecimento use `GET /api/users/me`.
+
+## 4.13 Perfil público sempre ligado e a declaração do dono (Fase 4, bloco 3, 04/11) — **backend escrito sem Docker, não verificado**
+
+Decisão e justificativa: ADR-031. **Quebra de contrato** (o frontend desta branch já acompanha):
+
+| Antes | Agora |
+|---|---|
+| `ProfessionalResponse.isPubliclyVisible`, `hasPublicProfileConsent` | **Removidos.** Entram `authorizationDeclared` (o dono já declarou) e `registration` (registro profissional, opcional) |
+| `UpdateProfessionalRequest.showFullProfile` | **Removido.** Entra `authorizationDeclared` (bool, padrão `false`) e `registration` (opcional) |
+| `CreateProfessionalRequest` | ganha `authorizationDeclared` e `registration` (opcionais) |
+| `PUT/DELETE professionals/{id}/public-profile-consent` | **Removidas** (404) |
+| `PublicProfessionalResponse`: só o nome sem consentimento | **Sempre** nome, `specialty`, `bio`, `photo` e `registration` de todo profissional **ativo** |
+| `PUT professionals/me` `{ specialty, bio }` | ganha `registration` (opcional) |
+
+- **Declaração do dono:** "Declaro ter autorização desta pessoa para exibir estes dados publicamente." Para salvar a **bio**
+  de quem **não tem conta**, `authorizationDeclared: true` é obrigatório na primeira vez (400 `professional.declaration_required`).
+  Registra-se quem declarou, quando e a versão do texto (`declaracao-dono-2026-11-rascunho`, sem IP). Declarar de novo atualiza.
+- **Foto de quem não tem conta, enviada pelo dono:** exige a declaração antes (400 `professional.declaration_required`).
+- **Quem tem conta** controla a própria bio e foto e **não** depende da declaração.
+- **Desativar nunca é barrado** pela declaração (inclui cadastros anteriores a ela). Desativado, o profissional sai da vitrine na hora.
+- **Migration `ReplaceProfessionalConsentWithDeclaration`** (não aplicada): remove `is_publicly_visible` e
+  `public_profile_consent_at` e cria `authorization_declared_at`, `authorization_declared_by_user_id`,
+  `authorization_declaration_version` e `registration`. **Efeito de dados:** depois dela, todo profissional ativo, com ou sem
+  consentimento antigo, passa a aparecer completo na vitrine.
+
+## 4.14 Telas da equipe (Fase 4, 04/11) — **frontend escrito sem navegador, não verificado**
+
+Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já documentam:
+
+| Tela | Rota do frontend | Quem | API |
+|---|---|---|---|
+| Convidar, pendentes, reenviar, revogar, vagas | seção **Convites** em `#/panel/professionals` | Owner | `invitations`, `invitations/{id}/resend`, `DELETE invitations/{id}`, `seats` |
+| Folgas e bloqueios | `#/panel/blocks` | Attendant (todos e estabelecimento inteiro) e Professional (só os próprios) | `schedule-exceptions`, `…/affected-appointments` |
+| Meu perfil | `#/panel/profile` | Professional | `professionals/me` (GET/PUT) e `professionals/{id}/photo` |
+| Registro profissional | Editar (dono) e Meu perfil, só em Saúde | Owner e Professional | campo `registration` |
+
+- O menu esconde por papel (`hiddenSectionsFor`): o dono não vê "Folgas e bloqueios" (tem Jornadas) nem "Meu perfil".
+- O profissional descobre o próprio id por `professionals/me` e filtra a lista de bloqueios por ele no cliente; o servidor
+  recusa o resto com 403.
+
+## 4.15 Foto de serviço (Fase 4, bloco 5, 04/11) — **backend e frontend escritos sem Docker, não verificados**
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `PUT /api/businesses/current/services/{id}/image` | **só o Owner** | `multipart/form-data`, campo `file`. As mesmas validações do logotipo (ADR-023): assinatura do arquivo (não o nome nem o `Content-Type`), 5 MB, JPEG/PNG/WebP, EXIF removido, três variantes WebP, nome GUID. Devolve `ServiceResponse` com `photo`. 20 envios por hora por conta |
+| `DELETE /api/businesses/current/services/{id}/image` | Owner | remove e apaga os arquivos. Serviço de outro estabelecimento: 404 |
+
+- `photo` (`ImageSet | null`) entra em `ServiceResponse` (painel) e `PublicServiceResponse` (vitrine). **Aditivo**: nada quebra.
+- Frontend: `ImageUploader` em "Editar serviço" (no cadastro: "Salve o serviço primeiro"); a vitrine mostra a foto ao lado do
+  serviço, e o ícone da categoria quando não há. Em Saúde, aviso no envio: não enviar imagem de pacientes.
+- Migration `AddServiceImage` (não aplicada): `catalog.service.image_key varchar(200) NULL`.
+
+## 4.16 Página pública do profissional, remoção de perfil e sair do estabelecimento (Fase 4, bloco 4, 04/11) — **escrito sem Docker e sem navegador, não verificado**
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `GET /api/professionals/{id}` | **anônimo** | `ProfessionalPageResponse`: `displayName`, `specialty`, `bio`, `registration` (só se informado), `photo`, `business { id, name, addressLine, category, timeZone }` e `services[]` com o preço e a duração **do profissional** (override aplicado) e a foto do serviço. **404** para profissional inativo, estabelecimento fora da vitrine ou id que não existe: os três respondem igual |
+| `POST /api/professionals/{id}/removal-requests` `{ reason, contact? }` | **anônimo** | 204. Motivo de 5 a 500 caracteres (400 `removal_request.reason_invalid`); contato opcional de até 150. **5 por hora por IP** (429). E-mail aos donos pela outbox (em Saúde o assunto não cita nome) e entra na fila do Admin. **Nada é desativado sozinho.** 404 se o perfil não é público |
+| `GET /api/admin/professional-removals?status=Open\|Resolved` | Admin | fila paginada; traz `contact` (só o Admin e o dono veem) |
+| `POST /api/admin/professional-removals/{id}/resolve` `{ note? }` | Admin | encerra (409 se já resolvido). Desativar o perfil é decisão do dono |
+| `POST /api/businesses/current/leave` | Professional ou Attendant | 204. Remove o próprio vínculo; o perfil de profissional é **desativado** e sai da vitrine na hora; o histórico de agendamentos permanece. **O dono recebe 409** `business_membership.cannot_remove_owner`. Depois, o frontend volta ao contexto de consumidor |
+
+- Frontend: `#/profissional/:professionalId` (foto ou iniciais, serviços, horários de hoje e amanhã, estabelecimento,
+  "Solicitar remoção deste perfil"); a aba **Profissionais** da página do estabelecimento deixa de ser "Em breve" e lista os
+  ativos, cada um com "Ver perfil"; aba **Remoções de perfil** em `#/admin/estabelecimentos`; **Sair do estabelecimento** em
+  Meu perfil (profissional) e em "Mais" (profissional e atendente, no celular).
+- O espaço da **nota do profissional** existe e fica escondido até haver média (módulo de avaliações).
+- Migration `AddProfessionalRemovalRequest` (não aplicada): `people.professional_removal_request`.
+
+## 4.17 Avaliações (Fase 8, fatia 1 de 5, 04/11) — **backend escrito sem Docker, não verificado** (ADR-032, Proposto)
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `GET /api/appointments/{id}/review` | consumidor | `MyReviewResponse` com `canEdit`. 404 `review.not_found` se não existe ou é de outra pessoa |
+| `POST /api/appointments/{id}/review` `{ rating, professionalRating?, comment? }` | consumidor | 201. Agendamento **concluído**, do próprio consumidor, em até 30 dias. **10 por hora por conta** (429) |
+| `PUT /api/appointments/{id}/review` (mesmo corpo) | consumidor | 200. **Uma única edição**, em até 7 dias |
+| `GET /api/reviews/mine?page&pageSize` | consumidor | `PagedResult<MyReviewResponse>` |
+| `GET /api/businesses/{id}/reviews?page&pageSize` | **anônimo** | `PagedResult<PublicReviewResponse>`, mais recentes primeiro, sem as ocultas. 404 se o estabelecimento não está na vitrine |
+| `GET /api/businesses/{id}/rating` | **anônimo** | `{ average, count, distribution[5], isNew }`. `average` é nulo e `isNew` verdadeiro com menos de 3 avaliações |
+| `GET /api/professionals/{id}/reviews` e `/rating` | **anônimo** | idem, só com as notas em que o consumidor avaliou o profissional. 404 para profissional inativo |
+
+- `PublicReviewResponse`: `id`, `rating`, `professionalRating?`, `comment?`, `reviewerName` (**"Ana S."**), `serviceName?`
+  (**nulo em Saúde**), `reviewedAt`. Nunca traz id de consumidor nem de agendamento.
+- Erros: 400 `review.rating_invalid` / `review.comment_too_long`; 403 `appointment.customer_context_required` (token de
+  painel) e `review.not_allowed` (dono ou equipe do estabelecimento); 404 `review.not_found`; 409 `review.not_completed`,
+  `review.window_expired`, `review.already_reviewed`, `review.already_edited`, `review.edit_window_expired`; 503
+  `review.contention_try_again` (duas avaliações no mesmo alvo ao mesmo tempo: tentar de novo).
+- **Limitações registradas:** o dono não responde; o consumidor não apaga a avaliação.
+- Migration `AddReputation` (não aplicada): `reputation.review` e `reputation.rating_summary`.
+
+### 4.17.4 Moderação (Fase 8, fatia 5 de 5) — **backend rodado com Docker; telas não vistas no navegador**
+
+| Rota | Quem | O que faz |
+|---|---|---|
+| `GET /api/businesses/current/reviews?page&pageSize` | dono | `PagedResult<OwnerReviewResponse>`: a avaliação e `reported` |
+| `POST /api/businesses/current/reviews/{id}/report` `{ reason }` | dono | 204. Motivo de 5 a 500 caracteres. Uma denúncia por avaliação (409 `review.already_reported`). Outro estabelecimento: 404. **Nada sai do ar sozinho** |
+| `GET /api/admin/reviews?status=Open\|Hidden` | Admin | fila: denúncias abertas, as mais antigas primeiro, ou as ocultas |
+| `POST /api/admin/reviews/{id}/hide` `{ reason }` | Admin | oculta: sai da lista pública e da média na mesma transação; grava quem decidiu, quando e o motivo (obrigatório). Fecha a denúncia |
+| `POST /api/admin/reviews/{id}/unhide` | Admin | reexibe: volta à lista e à média |
+| `POST /api/admin/reviews/{id}/dismiss-report` | Admin | mantém no ar e fecha a denúncia (409 `review.no_open_report` sem denúncia aberta) |
+
+- Telas: **Avaliações** no painel, só do dono (`#/panel/reviews`), e a aba **Avaliações** em `#/admin/estabelecimentos`.
+- A fila do Admin não traz id de consumidor: decide-se pelo texto, com o nome abreviado.
+- Migration `AddReviewReport` (não aplicada): `reported_by_user_id`, `reported_at`, `report_reason`, `report_closed_at`.
+
+### 4.17.3 E-mail "Como foi?" (Fase 8, fatia 4 de 5) — **escrito sem Docker, não verificado**
+
+- **Quando:** o estabelecimento conclui o agendamento (`POST …/complete`). Vai pela **outbox**, no mesmo `SaveChanges` da
+  conclusão. Balcão sem conta e "falta" não recebem.
+- **Conteúdo:** convite para avaliar, prazo de 30 dias, edição única em 7, botão **Avaliar atendimento** (`#/appointments`).
+- **Saúde (LGPD, Art. 11):** assunto "Como foi o seu atendimento?" e prévia "Abra para avaliar." **sem** estabelecimento, serviço
+  nem categoria; o corpo também não traz o serviço e avisa para não escrever dado de saúde.
+- **Seed:** avaliações nos 3 primeiros estabelecimentos (5, 3 e 2 avaliações: média, média no limite e "Novo") e um
+  atendimento concluído sem avaliação para `consumidor@example.com`.
+
+### 4.17.2 Telas das avaliações (Fase 8, fatia 3 de 5) — **frontend escrito sem navegador, não verificado**
+
+- **Componentes novos:** `StarRatingInput` (grupo de opções `role="radiogroup"`, 5 estrelas de 44 px, setas trocam a nota),
+  `RatingLabel` ("★ 4,8 (12)" ou **"Novo"**), `ReviewsSection` (nota, distribuição e lista paginada, com carregando, erro,
+  vazio e sucesso) e `ReviewDrawer` (gaveta "Avaliar atendimento" / "Editar avaliação").
+- **Meus agendamentos:** concluído e dentro de 30 dias → **Avaliar atendimento**; já avaliado e ainda editável (edição única,
+  7 dias) → "Você avaliou: N de 5" e **Editar avaliação**. O formulário avisa que a avaliação é pública e, em Saúde, para não
+  escrever dado de saúde.
+- **Busca:** chip **Melhor avaliados** (`sort=rating` na URL); o cartão mostra a nota ou "Novo".
+- **Página do estabelecimento:** o cabeçalho mostra a nota ou "Novo"; a aba **Avaliações** traz a nota, a distribuição e a lista
+  paginada. **Página do profissional:** o espaço da nota passou a aparecer e há a seção "Avaliações de NOME".
+- O filtro `minRating` existe no backend e **não tem controle na tela** (cortado de propósito nesta rodada).
+- Erros traduzidos: `review.*` em `api/base/errors.ts`.
+
+### 4.17.1 Busca por nota (Fase 8, fatia 2 de 5) — **escrito sem Docker, não verificado**
+
+| Parâmetro / campo | Detalhe |
+|---|---|
+| `sortBy=rating` | melhores primeiro; empate de média decidido pelo número de avaliações. Estabelecimento **sem média** ("Novo", menos de 3 avaliações) vem **depois**, na ordem de distância |
+| `minRating=1..5` | só estabelecimentos com média **maior ou igual**. Os "Novos" ficam de fora (não se afirma uma nota que não existe). Fora de 1 a 5: 400 `search.min_rating_invalid` |
+| `ratingAverage` (novo, aditivo) | média com 1 casa; **nulo** enquanto "Novo" |
+| `ratingCount` (novo, aditivo) | quantas avaliações; 0 se nenhuma. A tela mostra "Novo" quando `ratingAverage` é nulo |
+
+- Sem `sortBy=rating` nem `minRating`, a nota só é lida dos itens da página exibida (uma consulta a mais, por ids).
+- A busca lê a nota pelo contrato `IReputationDirectory`; o módulo Tenancy não conhece `RatingSummary`.
+- Os campos novos são aditivos: o frontend atual os ignora.
+
+## 4.18 Documento do cadastro, Versão B (04/11) — **backend rodado com Docker; tela não vista no navegador** (ADR-028)
+
+`POST /api/businesses` `{ name, document, category, documentType?, isMei? }`:
+
+- Toda categoria aceita CPF ou CNPJ (numérico ou alfanumérico). `documentType` é `Cpf` ou `Cnpj`, conferido com o documento; sem
+  ele, vale o que o documento é. `isMei` é informativo.
+- 400: `document.expected_cpf`, `document.expected_cnpj`, `document.type_invalid`, `business.mei_requires_cnpj`, além dos que já
+  existiam (`document.required`, `document.invalid_length`, `document.invalid_check_digit`).
+- `GET /api/businesses/current` e o detalhe do Admin ganham `documentType` e `isMei`. **Nenhuma resposta pública traz documento.**
+- Migration `AddBusinessDocumentType` (não aplicada): `document_type`, `is_mei`, `ck_business_mei_requires_cnpj`; quem já existe
+  recebe o tipo pelo tamanho do documento.
 
 ## 5. Resumo para fechar o lado do frontend
 

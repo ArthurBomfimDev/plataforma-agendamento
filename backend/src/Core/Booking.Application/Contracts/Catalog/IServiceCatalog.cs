@@ -12,12 +12,22 @@ public sealed record BookableService(
     int SlotStepMinutes,
     long PriceCents);
 
+/// <summary>
+/// Serviço que um profissional executa, com o preço e a duração dele (overrides aplicados). <c>ImageKey</c> é a
+/// referência da foto; quem monta a URL é o <c>IImageUrls</c>.
+/// </summary>
+public sealed record ProfessionalServiceInfo(Guid ServiceId, string Name, int DurationMinutes, long PriceCents, string? ImageKey);
+
 /// <summary>O serviço que representa um estabelecimento num resultado de busca.</summary>
 public sealed record ServiceHighlight(Guid BusinessId, Guid ServiceId, string Name, int DurationMinutes, long FromPriceCents);
 
 /// <summary>Superfície pública do módulo Catalog.</summary>
 public interface IServiceCatalog
 {
+    /// <summary>Serviços ativos que o profissional executa, por nome: a página pública dele.</summary>
+    Task<IReadOnlyList<ProfessionalServiceInfo>> ListForProfessionalAsync(
+        Guid businessId, Guid professionalId, CancellationToken ct = default);
+
     /// <summary>Nulo se o serviço não existe, está inativo ou o profissional não está habilitado nele.</summary>
     Task<BookableService?> GetBookableAsync(Guid businessId, Guid serviceId, Guid professionalId, CancellationToken ct = default);
 

@@ -9,6 +9,7 @@ import type {
   SaveWorkScheduleRequest,
   ScheduleExceptionResponse,
   ServiceResponse,
+  UpdateMyProfessionalProfileRequest,
   UpdateProfessionalRequest,
   UpdateSchedulingPolicyRequest,
   WorkScheduleResponse,
@@ -53,6 +54,13 @@ export const managementService = {
       url: managementEndpoints.service(serviceId),
       data: request,
     }),
+  uploadServiceImage: (serviceId: string, file: File, onProgress?: UploadProgress) =>
+    upload<ServiceResponse>(managementEndpoints.serviceImage(serviceId), file, onProgress),
+  removeServiceImage: (serviceId: string) =>
+    authRequest<ServiceResponse>({
+      method: 'DELETE',
+      url: managementEndpoints.serviceImage(serviceId),
+    }),
   /** Habilita o profissional no serviço, com o preço e a duração do serviço. */
   enableProfessional: (serviceId: string, professionalId: string) =>
     authRequest<ServiceResponse>({
@@ -69,6 +77,15 @@ export const managementService = {
     authRequest<ProfessionalResponse>({
       method: 'POST',
       url: managementEndpoints.professionals,
+      data: request,
+    }),
+  /** "Meu perfil": quem não tem perfil de profissional ligado à conta recebe 403. */
+  myProfile: (signal?: AbortSignal) =>
+    authRequest<ProfessionalResponse>({ url: managementEndpoints.myProfile, signal }),
+  updateMyProfile: (request: UpdateMyProfessionalProfileRequest) =>
+    authRequest<ProfessionalResponse>({
+      method: 'PUT',
+      url: managementEndpoints.myProfile,
       data: request,
     }),
   updateProfessional: (professionalId: string, request: UpdateProfessionalRequest) =>

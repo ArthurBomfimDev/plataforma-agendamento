@@ -13,6 +13,12 @@ public sealed class PeopleDirectory(BookingDbContext context) : IPeopleDirectory
             .Select(x => new ProfessionalInfo(x.Id, x.BusinessId, x.DisplayName, x.IsActive, x.BusinessMembershipId))
             .FirstOrDefaultAsync(ct);
 
+    public Task<Guid?> FindActiveProfessionalBusinessAsync(Guid professionalId, CancellationToken ct = default) =>
+        context.AcrossTenants<Professional>().AsNoTracking()
+            .Where(x => x.Id == professionalId && x.IsActive)
+            .Select(x => (Guid?)x.BusinessId)
+            .FirstOrDefaultAsync(ct);
+
     public Task<int> CountActiveProfessionalsAsync(Guid businessId, CancellationToken ct = default) =>
         context.OfBusiness<Professional>(businessId).CountAsync(x => x.IsActive, ct);
 

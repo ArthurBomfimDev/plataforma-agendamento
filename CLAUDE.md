@@ -344,3 +344,18 @@ sozinho e o `graph.json` volta a dar conflito em merge.
 A ferramenta é instalada fora do repositório (`uv tool install graphifyy`, ou um venv dedicado).
 Extração de código é local, via tree-sitter, sem rede. Extração semântica de documento usa o modelo
 da própria sessão. **`graphify extract` com chave de API só com aprovação humana** — é credencial.
+
+## 10. Regras permanentes de sessão
+
+Valem para qualquer sessão, humana ou de IA, em qualquer tarefa. São o resumo operacional; os detalhes estão nas seções acima.
+
+1. **Português em tudo:** interface, mensagens, commits, PRs e documentação. Código e domínio seguem em inglês (§4.5).
+2. **Nunca editar arquivo pelo PowerShell.** Use as ferramentas de edição. Gravar por `Set-Content`, `Out-File` ou `>` já
+   produziu arquivo com BOM e codificação errada.
+3. **Sem trailer de IA** em commits e descrições de PR (§5, "Commits").
+4. **Conventional Commits**, escopo pelo módulo (§5).
+5. **Nunca imprimir, registrar ou commitar segredos** (senha, chave, token, `.env` com valor real) (§4.1).
+6. **Não mergear PR nenhum sem autorização expressa** do Arthur, para aquele PR. A autorização de um não vale para outro.
+7. **Migration em commit próprio**, com o SQL no corpo do PR e a marca **NÃO APLICADA** enquanto ninguém a tiver rodado num banco.
+8. **Documento e dado pessoal nunca em log** (CPF, CNPJ, registro profissional, e-mail do consumidor, token de convite).
+9. **Toda tela nova tem teste de componente** cobrindo carregando, erro, vazio e sucesso.

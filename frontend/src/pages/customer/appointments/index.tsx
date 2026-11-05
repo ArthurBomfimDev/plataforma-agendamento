@@ -1,6 +1,7 @@
 import { NAVIGATION_PATHS, ROUTES, signInPath } from '@router/paths'
 import { useBusinesses } from '@api/services/business/hooks'
 import { useCancelAppointment, useMyAppointments } from '@api/services/appointment/hooks'
+import { useMyReviews, useSaveReview } from '@api/services/review/hooks'
 
 import type { AppointmentsList } from './screen/types'
 import { AppointmentsScreen } from './screen'
@@ -24,12 +25,18 @@ const Appointments = () => {
   const signedIn = useSessionStore((state) => state.session !== null)
   const appointments = useMyAppointments()
   const cancel = useCancelAppointment()
+  const myReviews = useMyReviews()
+  const saveReview = useSaveReview()
 
   // A resposta traz só o id do estabelecimento; nome, endereço e fuso vêm da vitrine (em cache).
   const businessIds = [...new Set((appointments.data ?? []).map(({ businessId }) => businessId))]
   const businesses = useBusinesses(businessIds)
   const businessById = new Map(
     businesses.flatMap((query) => (query.data ? [[query.data.id, query.data] as const] : [])),
+  )
+
+  const reviewByAppointment = new Map(
+    (myReviews.data ?? []).map((review) => [review.appointmentId, review] as const),
   )
 
   const list: AppointmentsList = !signedIn
@@ -40,7 +47,7 @@ const Appointments = () => {
           message: errorMessage(appointments.error),
           onRetry: () => void appointments.refetch(),
         }
-      : appointments.data && businesses.every((query) => !query.isPending)
+      : appointments.data && !myReviews.isPending && businesses.every((query) => !query.isPending)
         ? {
             status: 'ready',
             items: appointments.data.map((appointment) =>
@@ -48,6 +55,7 @@ const Appointments = () => {
                 appointment,
                 businessById.get(appointment.businessId),
                 DEFAULT_TIME_ZONE,
+                reviewByAppointment.get(appointment.id) ?? null,
               ),
             ),
           }
@@ -64,6 +72,19 @@ const Appointments = () => {
           )
         } catch (error) {
           notify.error(error)
+        }
+      }}
+      onSaveReview={async (appointment, request) => {
+        try {
+          await saveReview.mutateAsync({
+            appointmentId: appointment.id,
+            request,
+            edit: appointment.review != null,
+          })
+          notify.success(appointment.review ? 'Avaliação atualizada' : 'Obrigado pela avaliação!')
+          return null
+        } catch (error) {
+          return errorMessage(error)
         }
       }}
       onNavigate={(item) => {

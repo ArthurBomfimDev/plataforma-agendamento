@@ -41,6 +41,13 @@ describe('MyAccountScreen', () => {
     expect(render({ onOpenPanel: () => undefined })).toContain('Meu painel')
   })
 
+  it('oferece "Cadastrar meu estabelecimento" quando a ação é passada', () => {
+    expect(render()).not.toContain('Cadastrar meu estabelecimento')
+    expect(render({ onRegisterBusiness: () => undefined })).toContain(
+      'Cadastrar meu estabelecimento',
+    )
+  })
+
   it('"Sair" só pede confirmação quando tocado: o diálogo começa fechado', () => {
     const html = render()
 

@@ -15,9 +15,9 @@ const professional = (id: string, displayName: string): ProfessionalResponse => 
   specialty: null,
   bio: null,
   isActive: true,
-  isPubliclyVisible: false,
-  hasPublicProfileConsent: false,
   membershipId: null,
+  authorizationDeclared: false,
+  registration: null,
   photo: null,
 })
 

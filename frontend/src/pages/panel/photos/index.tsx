@@ -40,7 +40,6 @@ export const PanelPhotosRoute = () => {
             name: professional.displayName,
             specialty: professional.specialty,
             photo: professional.photo,
-            isPubliclyVisible: professional.isPubliclyVisible,
           })),
         }
       : { status: 'loading' }

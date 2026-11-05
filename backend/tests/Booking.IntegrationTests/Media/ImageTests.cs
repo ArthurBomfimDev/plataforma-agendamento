@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Booking.Application.Common.Media;
 using Booking.Arguments.Common;
+using Booking.Arguments.Module.Catalog;
 using Booking.Arguments.Module.People;
 using Booking.Arguments.Module.Tenancy;
 using Booking.Domain.Entity.Base;
@@ -174,6 +175,9 @@ public sealed class ImageTests(IntegrationFixture fixture)
             $"/api/businesses/current/professionals/{mine}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
         Assert.NotNull(self.Photo);
 
+        // Foto de quem não tem conta: o dono declara a autorização antes (ADR-031; a recusa sem ela é o P8).
+        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{colleague}",
+            new UpdateProfessionalRequest("Profissional 2", null, null, IsActive: true, AuthorizationDeclared: true), business.OwnerToken);
         await UploadOkAsync<ProfessionalResponse>(
             $"/api/businesses/current/professionals/{colleague}/photo", TestImages.Jpeg(300, 300), "f.jpg", "image/jpeg", business.OwnerToken);
 
@@ -189,22 +193,66 @@ public sealed class ImageTests(IntegrationFixture fixture)
     }
 
     [Fact]
-    public async Task P8_public_route_hides_the_professional_photo_without_consent_and_full_profile()
+    public async Task P8_the_professional_photo_is_public_at_once_and_the_owner_needs_the_declaration_for_someone_without_an_account()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(2, [new ServiceSpec(30)]);
+        TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
+        Guid withAccount = business.ProfessionalIds[0];
+        Guid withoutAccount = business.ProfessionalIds[1];
+
+        // Quem tem conta controla a própria foto: sem declaração do dono, sem consentimento por perfil (ADR-031).
+        await UploadOkAsync<ProfessionalResponse>(
+            $"/api/businesses/current/professionals/{withAccount}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
+        Assert.NotNull((await PublicProfessionalAsync(business, withAccount)).Photo);
+
+        // O dono enviando a foto de quem não tem conta precisa ter declarado a autorização da pessoa.
+        using HttpResponseMessage refused = await UploadAsync(
+            $"/api/businesses/current/professionals/{withoutAccount}/photo", TestImages.Jpeg(300, 300), "ele.jpg", "image/jpeg", business.OwnerToken);
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Equal("professional.declaration_required", await TestWorld.ErrorCodeAsync(refused));
+
+        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{withoutAccount}",
+            new UpdateProfessionalRequest("Profissional 2", null, null, IsActive: true, AuthorizationDeclared: true), business.OwnerToken);
+        await UploadOkAsync<ProfessionalResponse>(
+            $"/api/businesses/current/professionals/{withoutAccount}/photo", TestImages.Jpeg(300, 300), "ele.jpg", "image/jpeg", business.OwnerToken);
+        Assert.NotNull((await PublicProfessionalAsync(business, withoutAccount)).Photo);
+    }
+
+    [Fact]
+    public async Task P12_service_photo_only_the_owner_validated_like_the_logo_and_shown_in_the_showcase()
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        TestBusiness other = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
         TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
-        Guid professionalId = business.ProfessionalIds[0];
+        Guid serviceId = business.Services[0].Id;
+        string path = $"/api/businesses/current/services/{serviceId}/image";
 
-        await UploadOkAsync<ProfessionalResponse>(
-            $"/api/businesses/current/professionals/{professionalId}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
+        ServiceResponse saved = await UploadOkAsync<ServiceResponse>(path, TestImages.Jpeg(400, 300), "corte.jpg", "image/jpeg", business.OwnerToken);
+        Assert.NotNull(saved.Photo);
 
-        Assert.Null((await PublicProfessionalAsync(business, professionalId)).Photo);
+        PublicServiceResponse shown = Assert.Single(
+            (await _world.SendOkAsync<PagedResult<PublicServiceResponse>>(HttpMethod.Get, $"/api/businesses/{business.Id}/services", null, null!)).Items,
+            s => s.Id == serviceId);
+        Assert.NotNull(shown.Photo);
 
-        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{professionalId}/public-profile-consent", null, staff.Token);
-        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{professionalId}",
-            new UpdateProfessionalRequest("Profissional 1", null, null, IsActive: true, ShowFullProfile: true), business.OwnerToken);
+        // Tipo conferido pelo conteúdo, não pelo nome; profissional e outro estabelecimento não mexem.
+        using (HttpResponseMessage fake = await UploadAsync(path, [0x4D, 0x5A, 0x90, 0x00], "corte.jpg", "image/jpeg", business.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.UnsupportedMediaType, fake.StatusCode);
+        }
 
-        Assert.NotNull((await PublicProfessionalAsync(business, professionalId)).Photo);
+        using (HttpResponseMessage byStaff = await UploadAsync(path, TestImages.Jpeg(50, 50), "f.jpg", "image/jpeg", staff.Token))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, byStaff.StatusCode);
+        }
+
+        using (HttpResponseMessage crossTenant = await UploadAsync(path, TestImages.Jpeg(50, 50), "f.jpg", "image/jpeg", other.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.NotFound, crossTenant.StatusCode);
+        }
+
+        ServiceResponse removed = await _world.SendOkAsync<ServiceResponse>(HttpMethod.Delete, path, null, business.OwnerToken);
+        Assert.Null(removed.Photo);
     }
 
     [Fact]

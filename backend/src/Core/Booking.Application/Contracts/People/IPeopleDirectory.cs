@@ -11,6 +11,12 @@ public interface IPeopleDirectory
     /// <summary>Profissional de um estabelecimento informado explicitamente.</summary>
     Task<ProfessionalInfo?> GetProfessionalAsync(Guid businessId, Guid professionalId, CancellationToken ct = default);
 
+    /// <summary>
+    /// O estabelecimento de um profissional <b>ativo</b>, achado só pelo id (páginas e listas públicas, sem tenant no
+    /// token). Nulo se não existe ou está inativo.
+    /// </summary>
+    Task<Guid?> FindActiveProfessionalBusinessAsync(Guid professionalId, CancellationToken ct = default);
+
     Task<int> CountActiveProfessionalsAsync(Guid businessId, CancellationToken ct = default);
 
     Task<Guid?> FindProfessionalIdByMembershipAsync(Guid businessId, Guid membershipId, CancellationToken ct = default);

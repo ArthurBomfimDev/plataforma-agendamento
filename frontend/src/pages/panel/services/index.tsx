@@ -28,6 +28,8 @@ import { ServicesScreen } from './screen'
 import { managementService } from '@api/services/management'
 import { notify } from '@components/toaster/notify'
 import { usePanelContext } from '@layouts/panel-layout/context'
+import { queryKeys } from '@api/services/query-keys'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 /** Painel — Serviços (Onda 7D): a lista. Pausar e ativar ficam na edição do serviço. Só o dono (`RequireOwner`). */
@@ -79,6 +81,10 @@ export const PanelServiceFormRoute = () => {
   const team = usePanelTeam(context.businessId)
   const detail = usePanelBusinessDetail(context.businessId)
   const [error, setError] = useState<string>()
+  const queryClient = useQueryClient()
+  // Depois de enviar ou remover a foto, o painel busca o serviço de novo (a foto vem na resposta da lista).
+  const refreshPanel = () =>
+    void queryClient.invalidateQueries({ queryKey: queryKeys.panel(context.businessId) })
 
   const save = usePanelMutation(context.businessId, async ({ draft, existing }: SaveInput) => {
     const request = toSaveServiceRequest(draft, existing)
@@ -162,6 +168,29 @@ export const PanelServiceFormRoute = () => {
             name: `${nameOf(professionalId)} (desativado)`,
           })),
       )}
+      photo={existing?.photo ?? null}
+      // Só o serviço que já existe recebe foto (a rota é por id).
+      onUploadPhoto={
+        existing
+          ? async (file, onProgress) => {
+              const updated = await managementService.uploadServiceImage(
+                existing.id,
+                file,
+                onProgress,
+              )
+              refreshPanel()
+              return updated.photo
+            }
+          : undefined
+      }
+      onRemovePhoto={
+        existing
+          ? async () => {
+              await managementService.removeServiceImage(existing.id)
+              refreshPanel()
+            }
+          : undefined
+      }
       initialValues={existing ? toFormValues(existing) : EMPTY_SERVICE_VALUES}
       previewHours={previewHoursOf(schedules, today)}
       saving={save.isPending}

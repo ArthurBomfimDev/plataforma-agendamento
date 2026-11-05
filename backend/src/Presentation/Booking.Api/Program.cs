@@ -42,6 +42,30 @@ builder.Services.AddRateLimiter(limiter =>
         context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
 
+    // Cadastro de estabelecimento (Fase 3): criar custa pouco e abre porta para abuso. 5 por hora por conta.
+    limiter.AddPolicy(RateLimits.BusinessCreate, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
+
+    // Denúncia na página pública (Fase 3): rota anônima, então por IP. 5 por hora. O IP real vem do proxy confiável.
+    limiter.AddPolicy(RateLimits.Report, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
+
+    // Convites (Fase 4): o dono envia no máximo 30 por hora (e-mail custa e abre porta para spam); as rotas públicas do
+    // link (prévia e aceite) são por IP, 20 por hora, porque o aceite cria conta com senha.
+    limiter.AddPolicy(RateLimits.InvitationSend, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromHours(1) }));
+    limiter.AddPolicy(RateLimits.InvitationLink, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+
+    // Avaliações (Fase 8): texto livre público. 10 por hora por conta, contra spam e script.
+    limiter.AddPolicy(RateLimits.Review, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromHours(1) }));
+
     // Trocar a senha (Onda 7CF): quem tem um token roubado não pode testar senhas atuais à vontade. 5 por 15 minutos
     // por conta, que é o que importa aqui (o IP muda; a conta, não).
     limiter.AddPolicy("password", context => RateLimitPartition.GetFixedWindowLimiter(
@@ -83,9 +107,10 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseMediaFiles();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+// Depois da autenticação: antes dela context.User é anônimo, e toda política "por conta" cairia no IP.
+app.UseRateLimiter();
 app.MapControllers();
 app.MapHealthChecks("/health");
 

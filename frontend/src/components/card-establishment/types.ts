@@ -2,8 +2,9 @@ import type { ImageSet } from '@api/models'
 
 export type CardEstablishmentProps = {
   name: string
-  /** Nota média, de 0 a 5. Ausente (sem avaliações ainda) = o card não mostra a nota. */
+  /** Nota média, de 1 a 5. Ausente com `reviewCount` presente = "Novo" (menos de 3 avaliações). */
   rating?: number
+  /** Presente = a nota foi lida. Ausente = o card não diz nada sobre nota. */
   reviewCount?: number
   /** Ausente quando não se sabe de onde o consumidor está buscando. */
   distanceKm?: number
