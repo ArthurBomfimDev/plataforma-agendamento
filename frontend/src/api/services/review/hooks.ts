@@ -42,6 +42,33 @@ export const useMyReviews = () =>
     enabled: useSessionStore((state) => state.session !== null),
   })
 
+/** Fila de moderação do Admin: denúncias abertas ou avaliações ocultas. */
+export const useAdminReviews = (status: 'Open' | 'Hidden') =>
+  useService({
+    queryKey: queryKeys.adminReviews(status),
+    service: async (signal) => (await reviewService.admin.list(status, signal)).items,
+  })
+
+/** Ocultar e reexibir mexem na lista pública e na média; as três decisões mexem na fila. */
+export const useModerateReview = () =>
+  useServiceMutation({
+    service: ({
+      reviewId,
+      action,
+      reason,
+    }: {
+      reviewId: string
+      action: 'hide' | 'unhide' | 'dismiss'
+      reason?: string
+    }) =>
+      action === 'hide'
+        ? reviewService.admin.hide(reviewId, reason ?? '')
+        : action === 'unhide'
+          ? reviewService.admin.unhide(reviewId)
+          : reviewService.admin.dismiss(reviewId),
+    invalidates: [queryKeys.admin, queryKeys.reviews, queryKeys.searches],
+  })
+
 /** Avaliar (POST) ou editar (PUT) muda a lista pública, a nota e a média mostrada na busca. */
 export const useSaveReview = () =>
   useServiceMutation({

@@ -33,6 +33,37 @@ export type MyReviewResponse = {
   canEdit: boolean
 }
 
+/** A avaliação como o dono a vê no painel. `reported`: ele já denunciou (uma vez só). */
+export type OwnerReviewResponse = {
+  id: string
+  rating: number
+  professionalRating: number | null
+  comment: string | null
+  reviewerName: string
+  serviceName: string | null
+  reviewedAt: string
+  reported: boolean
+}
+
+/** Item da fila do Admin. `reportOpen`: a denúncia ainda espera decisão. */
+export type ModerationReviewResponse = {
+  id: string
+  businessId: string
+  businessName: string
+  rating: number
+  professionalRating: number | null
+  comment: string | null
+  reviewerName: string
+  reviewedAt: string
+  reportReason: string | null
+  reportedAt: string | null
+  reportOpen: boolean
+  isHidden: boolean
+  hiddenReason: string | null
+  hiddenAt: string | null
+  hiddenByUserId: string | null
+}
+
 export type SaveReviewRequest = {
   rating: number
   professionalRating: number | null

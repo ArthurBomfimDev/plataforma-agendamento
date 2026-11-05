@@ -21,6 +21,7 @@ public sealed class Review : BaseEntity, IAuditable, ITenantScoped
     public const int MaxCommentLength = 500;
     public const int ReviewWindowDays = 30;
     public const int EditWindowDays = 7;
+    public const int MinReportReasonLength = 5;
 
     public Guid BusinessId { get; private set; }
     public Guid AppointmentId { get; private set; }
@@ -43,6 +44,14 @@ public sealed class Review : BaseEntity, IAuditable, ITenantScoped
     public Guid? HiddenByUserId { get; private set; }
     public DateTimeOffset? HiddenAt { get; private set; }
     public string? HiddenReason { get; private set; }
+
+    // --- Denúncia do dono: abre a fila do Admin. O dono não oculta nem edita; quem decide é o Admin ---
+    public Guid? ReportedByUserId { get; private set; }
+    public DateTimeOffset? ReportedAt { get; private set; }
+    public string? ReportReason { get; private set; }
+    public DateTimeOffset? ReportClosedAt { get; private set; }
+
+    public bool HasOpenReport => ReportedAt is not null && ReportClosedAt is null;
 
     private Review()
     {
@@ -96,6 +105,37 @@ public sealed class Review : BaseEntity, IAuditable, ITenantScoped
 
     public bool CanEdit(DateTimeOffset now) => EditedAt is null && now <= ReviewedAt.AddDays(EditWindowDays);
 
+    /// <summary>O dono denuncia uma vez: de 5 a 500 caracteres de motivo. Nada some sozinho, a avaliação segue pública.</summary>
+    public void Report(Guid ownerUserId, string reason, DateTimeOffset now)
+    {
+        if (ReportedAt is not null)
+        {
+            throw new DomainException("review.already_reported");
+        }
+
+        string text = (reason ?? string.Empty).Trim();
+
+        if (text.Length is < MinReportReasonLength or > MaxCommentLength)
+        {
+            throw new DomainException("review.report_reason_invalid");
+        }
+
+        ReportedByUserId = ownerUserId;
+        ReportedAt = now;
+        ReportReason = text;
+    }
+
+    /// <summary>O Admin mantém a avaliação no ar e encerra a denúncia.</summary>
+    public void DismissReport(DateTimeOffset now)
+    {
+        if (!HasOpenReport)
+        {
+            throw new DomainException("review.no_open_report");
+        }
+
+        ReportClosedAt = now;
+    }
+
     public void Hide(Guid adminUserId, string reason, DateTimeOffset now)
     {
         if (IsHidden)
@@ -112,6 +152,11 @@ public sealed class Review : BaseEntity, IAuditable, ITenantScoped
         HiddenByUserId = adminUserId;
         HiddenAt = now;
         HiddenReason = reason.Trim();
+
+        if (HasOpenReport)
+        {
+            ReportClosedAt = now;
+        }
     }
 
     public void Unhide(Guid adminUserId, DateTimeOffset now)

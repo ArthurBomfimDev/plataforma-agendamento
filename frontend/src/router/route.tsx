@@ -61,6 +61,7 @@ const PanelLayout = lazyPage(() => import('@layouts/panel-layout'), 'PanelLayout
 const PanelMoreRoute = lazyPage(PANEL_PAGE_LOADERS.more, 'PanelMoreRoute')
 const PanelPhotosRoute = lazyPage(PANEL_PAGE_LOADERS.photos, 'PanelPhotosRoute')
 const PanelRequestsRoute = lazyPage(PANEL_PAGE_LOADERS.requests, 'PanelRequestsRoute')
+const PanelReviewsRoute = lazyPage(PANEL_PAGE_LOADERS.reviews, 'PanelReviewsRoute')
 const PanelSchedulesRoute = lazyPage(PANEL_PAGE_LOADERS.schedules, 'PanelSchedulesRoute')
 const PanelServiceFormRoute = lazyPage(PANEL_PAGE_LOADERS.services, 'PanelServiceFormRoute')
 const PanelServicesRoute = lazyPage(PANEL_PAGE_LOADERS.services, 'PanelServicesRoute')
@@ -139,6 +140,7 @@ export const AppRoutes = () => {
             <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
             <Route path={ROUTES.panelPhotos} element={<PanelPhotosRoute />} />
             <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />
+            <Route path={ROUTES.panelReviews} element={<PanelReviewsRoute />} />
           </Route>
         </Route>
       </Routes>

@@ -244,6 +244,86 @@ public sealed class ReviewTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task V9_owner_reports_admin_hides_and_the_average_follows_then_unhide_restores_it()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
+        TestBusiness other = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
+        TestUser admin = await _world.NewAdminAsync();
+        TestUser attendant = await _world.NewAttendantAsync(business);
+        IReadOnlyList<TestUser> customers = await _world.NewCustomersAsync(2);
+
+        for (int i = 0; i < 2; i++)
+        {
+            AppointmentResponse appointment = await CompletedAsync(customers[i], business, hour: 9 + i);
+            (await ReviewAsync(customers[i], appointment.Id, i == 0 ? 5 : 1, comment: i == 0 ? null : "Ofensa")).Dispose();
+        }
+
+        PagedResult<OwnerReviewResponse> mine = await _world.SendOkAsync<PagedResult<OwnerReviewResponse>>(
+            HttpMethod.Get, "/api/businesses/current/reviews", null, business.OwnerToken);
+        OwnerReviewResponse target = Assert.Single(mine.Items, r => r.Comment == "Ofensa");
+        Assert.False(target.Reported);
+
+        string reportPath = $"/api/businesses/current/reviews/{target.Id}/report";
+        var report = new ReportReviewRequest("Comentário ofensivo.");
+
+        // Só o dono, e só o do estabelecimento.
+        using (HttpResponseMessage byAttendant = await _world.SendAsync(HttpMethod.Post, reportPath, report, attendant.Token))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, byAttendant.StatusCode);
+        }
+
+        using (HttpResponseMessage crossTenant = await _world.SendAsync(HttpMethod.Post, reportPath, report, other.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.NotFound, crossTenant.StatusCode);
+        }
+
+        using (HttpResponseMessage reported = await _world.SendAsync(HttpMethod.Post, reportPath, report, business.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, reported.StatusCode);
+        }
+
+        using (HttpResponseMessage again = await _world.SendAsync(HttpMethod.Post, reportPath, report, business.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        }
+
+        // A denúncia não tira nada do ar.
+        Assert.Equal(2, (await RatingAsync(business.Id)).Count);
+
+        using (HttpResponseMessage notAdmin = await _world.SendAsync(HttpMethod.Get, "/api/admin/reviews", null, business.OwnerToken))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, notAdmin.StatusCode);
+        }
+
+        PagedResult<ModerationReviewResponse> queue = await _world.SendOkAsync<PagedResult<ModerationReviewResponse>>(
+            HttpMethod.Get, "/api/admin/reviews?pageSize=100", null, admin.Token);
+        ModerationReviewResponse item = Assert.Single(queue.Items, r => r.Id == target.Id);
+        Assert.Equal(business.Name, item.BusinessName);
+        Assert.Equal("Comentário ofensivo.", item.ReportReason);
+
+        using (HttpResponseMessage noReason = await _world.SendAsync(HttpMethod.Post, $"/api/admin/reviews/{target.Id}/hide", new HideReviewRequest(" "), admin.Token))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, noReason.StatusCode);
+        }
+
+        ModerationReviewResponse hidden = await _world.SendOkAsync<ModerationReviewResponse>(
+            HttpMethod.Post, $"/api/admin/reviews/{target.Id}/hide", new HideReviewRequest("Ofensa"), admin.Token);
+        Assert.True(hidden.IsHidden);
+        Assert.Equal(admin.UserId, hidden.HiddenByUserId);
+        Assert.False(hidden.ReportOpen);
+
+        RatingSummaryResponse afterHide = await RatingAsync(business.Id);
+        Assert.Equal(1, afterHide.Count);
+        Assert.Equal([0, 0, 0, 0, 1], afterHide.Distribution);
+        PagedResult<PublicReviewResponse> list = (await _world.Client.GetFromJsonAsync<PagedResult<PublicReviewResponse>>(
+            $"/api/businesses/{business.Id}/reviews", TestWorld.Json))!;
+        Assert.DoesNotContain(list.Items, r => r.Id == target.Id);
+
+        await _world.SendOkAsync(HttpMethod.Post, $"/api/admin/reviews/{target.Id}/unhide", null, admin.Token);
+        Assert.Equal(2, (await RatingAsync(business.Id)).Count);
+    }
+
+    [Fact]
     public async Task V8_search_sorts_by_rating_filters_by_minimum_and_keeps_the_new_ones_after()
     {
         TestLocation here = TestLocation.Isolated();

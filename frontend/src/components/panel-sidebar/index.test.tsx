@@ -104,12 +104,14 @@ describe('PanelSidebar', () => {
     expect(withoutLogo).not.toContain('bg-(--bg-disabled)')
   })
 
-  it('não tem item sem tela: Avaliações e Relatórios saíram (Onda 7D)', () => {
+  it('não tem item sem tela: Relatórios saiu (Onda 7D); Avaliações voltou com tela, só para o dono', () => {
     const html = sidebar(hiddenSectionsFor('Owner'))
 
-    expect(html).not.toContain('Avaliações')
+    expect(html).toContain('Avaliações')
     expect(html).not.toContain('Relatórios')
-    expect(html.match(/<button/g)).toHaveLength(7)
+    expect(html.match(/<button/g)).toHaveLength(8)
+    expect(sidebar(hiddenSectionsFor('Attendant'))).not.toContain('Avaliações')
+    expect(sidebar(hiddenSectionsFor('Professional'))).not.toContain('Avaliações')
   })
 })
 

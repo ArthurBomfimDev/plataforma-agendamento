@@ -1,5 +1,7 @@
 import type {
+  ModerationReviewResponse,
   MyReviewResponse,
+  OwnerReviewResponse,
   PagedResult,
   PublicReviewResponse,
   RatingSummaryResponse,
@@ -32,6 +34,38 @@ export const reviewService = {
       params: { pageSize: 100 },
       signal,
     }),
+  owner: (page: number, signal?: AbortSignal) =>
+    authRequest<PagedResult<OwnerReviewResponse>>({
+      url: reviewEndpoints.owner,
+      params: { page, pageSize: REVIEWS_PAGE_SIZE },
+      signal,
+    }),
+  report: (reviewId: string, reason: string) =>
+    authRequest<void>({ method: 'POST', url: reviewEndpoints.report(reviewId), data: { reason } }),
+  admin: {
+    list: (status: 'Open' | 'Hidden', signal?: AbortSignal) =>
+      authRequest<PagedResult<ModerationReviewResponse>>({
+        url: reviewEndpoints.admin.list,
+        params: { status, pageSize: 100 },
+        signal,
+      }),
+    hide: (reviewId: string, reason: string) =>
+      authRequest<ModerationReviewResponse>({
+        method: 'POST',
+        url: reviewEndpoints.admin.hide(reviewId),
+        data: { reason },
+      }),
+    unhide: (reviewId: string) =>
+      authRequest<ModerationReviewResponse>({
+        method: 'POST',
+        url: reviewEndpoints.admin.unhide(reviewId),
+      }),
+    dismiss: (reviewId: string) =>
+      authRequest<ModerationReviewResponse>({
+        method: 'POST',
+        url: reviewEndpoints.admin.dismiss(reviewId),
+      }),
+  },
   businessReviews: (businessId: string, page: number, signal?: AbortSignal) =>
     request<PagedResult<PublicReviewResponse>>({
       url: reviewEndpoints.businessReviews(businessId),

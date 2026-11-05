@@ -50,7 +50,8 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
             or "business.seat_limit_reached" or "invitation.already_pending" or "invitation.already_member"
             or "invitation.account_exists" or "invitation.already_used" or "invitation.professional_not_linkable"
             or "review.already_reviewed" or "review.not_completed" or "review.window_expired" or "review.already_edited"
-            or "review.edit_window_expired" => StatusCodes.Status409Conflict,
+            or "review.edit_window_expired" or "review.already_reported" or "review.no_open_report"
+            or "review.already_hidden" or "review.not_hidden" => StatusCodes.Status409Conflict,
         "invitation.expired" or "invitation.revoked" => StatusCodes.Status410Gone,
         "appointment.contention_try_again" or "review.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
         "image.too_large" => StatusCodes.Status413PayloadTooLarge,

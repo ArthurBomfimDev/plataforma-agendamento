@@ -2,6 +2,7 @@ import type {
   AdminBusinessDetailResponse,
   BusinessReportResponse,
   BusinessResponse,
+  ModerationReviewResponse,
   ProfessionalRemovalResponse,
 } from '@api/models'
 
@@ -11,7 +12,7 @@ export type Load<T> =
   | { status: 'error'; message: string; onRetry: () => void }
   | { status: 'ready'; data: T }
 
-export type AdminTab = 'businesses' | 'reports' | 'removals'
+export type AdminTab = 'businesses' | 'reports' | 'removals' | 'reviews'
 
 export type AdminFilters = { status: string; category: string }
 
@@ -44,4 +45,14 @@ export type AdminBusinessesScreenProps = {
   onRemovalStatusChange?: (status: 'Open' | 'Resolved') => void
   removals?: Load<ProfessionalRemovalResponse[]>
   onResolveRemoval?: (requestId: string, note: string | null) => DecisionResult
+
+  /** Moderação de avaliações (ADR-032): denúncias abertas e as ocultas, que podem ser reexibidas. */
+  reviewStatus?: 'Open' | 'Hidden'
+  onReviewStatusChange?: (status: 'Open' | 'Hidden') => void
+  moderation?: Load<ModerationReviewResponse[]>
+  onModerate?: (
+    reviewId: string,
+    action: 'hide' | 'unhide' | 'dismiss',
+    reason?: string,
+  ) => DecisionResult
 }

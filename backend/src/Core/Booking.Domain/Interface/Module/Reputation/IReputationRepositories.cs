@@ -18,6 +18,18 @@ public interface IReviewRepository
     /// <summary>As avaliações que o consumidor fez.</summary>
     Task<PagedResult<Review>> ListOfCustomerAsync(Guid customerId, PageRequest page, CancellationToken ct = default);
 
+    /// <summary>Por id, em qualquer estabelecimento: o Admin modera fora do tenant.</summary>
+    Task<Review?> GetByIdAsync(Guid reviewId, CancellationToken ct = default);
+
+    /// <summary>Por id, só dentro do estabelecimento: a de outro responde como inexistente.</summary>
+    Task<Review?> GetOfBusinessAsync(Guid businessId, Guid reviewId, CancellationToken ct = default);
+
+    /// <summary>Fila do Admin: denúncias abertas, as mais antigas primeiro.</summary>
+    Task<PagedResult<Review>> ListWithOpenReportAsync(PageRequest page, CancellationToken ct = default);
+
+    /// <summary>As ocultas, as mais recentes primeiro: o Admin pode reexibir.</summary>
+    Task<PagedResult<Review>> ListHiddenAsync(PageRequest page, CancellationToken ct = default);
+
     void Add(Review review);
 }
 

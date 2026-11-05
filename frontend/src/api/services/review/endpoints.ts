@@ -3,6 +3,18 @@ export const reviewEndpoints = {
   ofAppointment: (appointmentId: string) =>
     `/api/appointments/${encodeURIComponent(appointmentId)}/review`,
   mine: '/api/reviews/mine',
+  /** Do dono: lista e denúncia. */
+  owner: '/api/businesses/current/reviews',
+  report: (reviewId: string) =>
+    `/api/businesses/current/reviews/${encodeURIComponent(reviewId)}/report`,
+  /** Do Admin. */
+  admin: {
+    list: '/api/admin/reviews',
+    hide: (reviewId: string) => `/api/admin/reviews/${encodeURIComponent(reviewId)}/hide`,
+    unhide: (reviewId: string) => `/api/admin/reviews/${encodeURIComponent(reviewId)}/unhide`,
+    dismiss: (reviewId: string) =>
+      `/api/admin/reviews/${encodeURIComponent(reviewId)}/dismiss-report`,
+  },
   /** Anônimas: vitrine. */
   businessReviews: (businessId: string) =>
     `/api/businesses/${encodeURIComponent(businessId)}/reviews`,

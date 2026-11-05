@@ -11,7 +11,7 @@ import {
 } from './consts'
 import { ErrorState, LoadingState } from '@components/screen-state'
 import type { AdminBusinessesScreenProps, AdminTab, Load } from './types'
-import type { ProfessionalRemovalResponse } from '@api/models'
+import type { ModerationReviewResponse, ProfessionalRemovalResponse } from '@api/models'
 
 import type { AdminBusinessDetailResponse, BusinessReportResponse } from '@api/models'
 import { Button } from '@components/button'
@@ -24,6 +24,7 @@ const TABS: ReadonlyArray<{ id: AdminTab; label: string }> = [
   { id: 'businesses', label: 'Estabelecimentos' },
   { id: 'reports', label: 'Denúncias' },
   { id: 'removals', label: 'Remoções de perfil' },
+  { id: 'reviews', label: 'Avaliações' },
 ]
 
 const CARD =
@@ -80,8 +81,10 @@ export const AdminBusinessesScreen = (props: AdminBusinessesScreenProps) => {
           <BusinessesTab {...props} />
         ) : tab === 'reports' ? (
           <ReportsTab {...props} />
-        ) : (
+        ) : tab === 'removals' ? (
           <RemovalsTab {...props} />
+        ) : (
+          <ReviewsTab {...props} />
         )}
       </div>
     </main>
@@ -416,6 +419,141 @@ const RemovalCard = (props: {
           <Button variant="secondary" disabled={busy} onClick={() => void resolve()}>
             {busy ? 'Resolvendo…' : 'Resolver pedido'}
           </Button>
+        </>
+      )}
+    </article>
+  )
+}
+
+/**
+ * Moderação de avaliações (ADR-032). Na denúncia aberta o Admin oculta (motivo obrigatório) ou mantém; a oculta pode ser
+ * reexibida. Ocultar tira a nota da média na hora. Fica registrado quem decidiu.
+ */
+const ReviewsTab = (props: AdminBusinessesScreenProps) => {
+  const {
+    reviewStatus = 'Open',
+    onReviewStatusChange,
+    moderation = { status: 'ready', data: [] },
+    onModerate,
+  } = props
+
+  return (
+    <div className="flex flex-col gap-(--space-12)">
+      <SelectField
+        id="admin-review-status"
+        label="Situação"
+        options={[
+          { value: 'Open', label: 'Denúncias abertas' },
+          { value: 'Hidden', label: 'Ocultas' },
+        ]}
+        value={reviewStatus}
+        onChange={(event) => onReviewStatusChange?.(event.target.value as 'Open' | 'Hidden')}
+      />
+      <Loaded load={moderation}>
+        {(items) =>
+          items.length === 0 ? (
+            <p className="type-body text-(--text-muted)">
+              {reviewStatus === 'Open'
+                ? 'Nenhuma avaliação denunciada.'
+                : 'Nenhuma avaliação oculta.'}
+            </p>
+          ) : (
+            <ul aria-label="Avaliações para moderar" className="flex flex-col gap-(--space-8)">
+              {items.map((review) => (
+                <li key={review.id}>
+                  <ModerationCard
+                    review={review}
+                    onModerate={(id, action, reason) =>
+                      onModerate?.(id, action, reason) ?? Promise.resolve(null)
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </Loaded>
+    </div>
+  )
+}
+
+const ModerationCard = (props: {
+  review: ModerationReviewResponse
+  onModerate: NonNullable<AdminBusinessesScreenProps['onModerate']>
+}) => {
+  const { review, onModerate } = props
+  const [reason, setReason] = useState('')
+  const [fieldError, setFieldError] = useState<string>()
+  const [error, setError] = useState<string>()
+  const [busy, setBusy] = useState(false)
+
+  const decide = async (action: 'hide' | 'unhide' | 'dismiss') => {
+    if (action === 'hide' && !reason.trim()) {
+      setFieldError('Informe o motivo para ocultar.')
+      return
+    }
+    setError(undefined)
+    setBusy(true)
+    const failure = await onModerate(review.id, action, reason.trim() || undefined)
+    setBusy(false)
+    if (failure) setError(failure)
+  }
+
+  return (
+    <article className={CARD}>
+      <h3 className="type-label text-(--text-strong)">
+        {review.businessName || 'Estabelecimento'} · {review.rating} de 5 · {review.reviewerName}
+      </h3>
+      {review.comment && <p className="type-body break-words">{review.comment}</p>}
+      <p className="type-caption text-(--text-muted)">
+        Avaliada em {formatDate(review.reviewedAt)}
+      </p>
+      {review.reportReason && (
+        <p className="type-caption text-(--text-muted)">
+          Denúncia do dono: {review.reportReason}
+          {review.reportedAt && ` (${formatDate(review.reportedAt)})`}
+        </p>
+      )}
+      {review.isHidden ? (
+        <>
+          <p className="type-caption text-(--text-muted)">
+            Oculta em {review.hiddenAt ? formatDate(review.hiddenAt) : '—'}
+            {review.hiddenReason ? `: ${review.hiddenReason}` : ''}
+          </p>
+          {error && (
+            <p role="alert" className="type-label text-(--status-rejected-fg)">
+              {error}
+            </p>
+          )}
+          <Button variant="secondary" disabled={busy} onClick={() => void decide('unhide')}>
+            {busy ? 'Reexibindo…' : 'Reexibir avaliação'}
+          </Button>
+        </>
+      ) : (
+        <>
+          <TextField
+            id={`hide-reason-${review.id}`}
+            label="Motivo para ocultar"
+            value={reason}
+            error={fieldError}
+            onChange={(event) => {
+              setReason(event.target.value)
+              setFieldError(undefined)
+            }}
+          />
+          {error && (
+            <p role="alert" className="type-label text-(--status-rejected-fg)">
+              {error}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-(--space-8)">
+            <Button variant="secondary" disabled={busy} onClick={() => void decide('hide')}>
+              Ocultar avaliação
+            </Button>
+            <Button variant="ghost" disabled={busy} onClick={() => void decide('dismiss')}>
+              Manter no ar
+            </Button>
+          </div>
         </>
       )}
     </article>

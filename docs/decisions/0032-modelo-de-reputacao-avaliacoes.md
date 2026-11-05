@@ -48,8 +48,9 @@ perder contagem quando duas avaliações chegam juntas.
    a segunda perde a corrida e responde **503** `review.contention_try_again` para tentar de novo, em vez de perder uma
    contagem. Duas avaliações do mesmo agendamento: 409 `review.already_reviewed`.
 10. **Limite de taxa.** 10 avaliações ou edições por hora por conta.
-11. **Moderação (fatia 5).** Dono denuncia; **Admin** oculta ou reexibe (`is_hidden`, quem decidiu, quando, motivo).
-    Avaliação oculta sai da lista e da média. O dono **não** apaga nem edita avaliação.
+11. **Moderação.** O dono denuncia uma vez, e a avaliação segue pública até a decisão. O **Admin** oculta ou reexibe
+    (`is_hidden`, quem decidiu, quando, motivo) ou mantém no ar. Avaliação oculta sai da lista e da média, na mesma
+    transação. O dono **não** apaga nem edita avaliação.
 
 ## Alternativas consideradas
 

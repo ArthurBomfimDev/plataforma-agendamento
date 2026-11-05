@@ -43,6 +43,7 @@ export const ROUTES = {
   panelSchedules: '/panel/schedules',
   panelPhotos: '/panel/photos',
   panelSettings: '/panel/settings',
+  panelReviews: '/panel/reviews',
   /** Folgas e bloqueios de atendente (todos os profissionais) e de profissional (os próprios). */
   panelBlocks: '/panel/blocks',
   /** "Meu perfil" do profissional com conta: bio, foto e registro. */
@@ -79,6 +80,7 @@ export const PANEL_PATHS: Record<PanelSection | PanelBottomItem, string> = {
   schedules: ROUTES.panelSchedules,
   photos: ROUTES.panelPhotos,
   settings: ROUTES.panelSettings,
+  reviews: ROUTES.panelReviews,
   blocks: ROUTES.panelBlocks,
   profile: ROUTES.panelProfile,
   // No celular, "Mais" lista as outras seções e leva à conta (trocar de contexto e sair).
@@ -95,6 +97,7 @@ export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
   'schedules',
   'photos',
   'settings',
+  'reviews',
 ]
 
 /**

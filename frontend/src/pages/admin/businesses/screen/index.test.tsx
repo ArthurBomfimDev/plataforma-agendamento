@@ -2,6 +2,7 @@ import type {
   AdminBusinessDetailResponse,
   BusinessReportResponse,
   BusinessResponse,
+  ModerationReviewResponse,
   OwnerBusinessResponse,
   ProfessionalRemovalResponse,
 } from '@api/models'
@@ -185,6 +186,77 @@ describe('AdminBusinessesScreen — remoções de perfil', () => {
 
     expect(html).toContain('Falei com o dono.')
     expect(html).not.toContain('Resolver pedido')
+  })
+})
+
+describe('AdminBusinessesScreen — moderação de avaliações', () => {
+  const review = (overrides: Partial<ModerationReviewResponse> = {}): ModerationReviewResponse => ({
+    id: 'rv1',
+    businessId: 'b1',
+    businessName: 'Barbearia do Zé',
+    rating: 1,
+    professionalRating: null,
+    comment: 'Comentário ofensivo.',
+    reviewerName: 'Ana S.',
+    reviewedAt: '2026-11-02T15:00:00Z',
+    reportReason: 'Ofende a equipe.',
+    reportedAt: '2026-11-03T15:00:00Z',
+    reportOpen: true,
+    isHidden: false,
+    hiddenReason: null,
+    hiddenAt: null,
+    hiddenByUserId: null,
+    ...overrides,
+  })
+
+  it('carregando, erro e vazio', () => {
+    expect(render({ tab: 'reviews', moderation: { status: 'loading' } })).toContain('Carregando')
+    expect(
+      render({
+        tab: 'reviews',
+        moderation: { status: 'error', message: 'Sem conexão com o servidor.', onRetry: noop },
+      }),
+    ).toContain('Sem conexão com o servidor.')
+    expect(render({ tab: 'reviews', moderation: { status: 'ready', data: [] } })).toContain(
+      'Nenhuma avaliação denunciada.',
+    )
+    expect(
+      render({ tab: 'reviews', reviewStatus: 'Hidden', moderation: { status: 'ready', data: [] } }),
+    ).toContain('Nenhuma avaliação oculta.')
+  })
+
+  it('denúncia aberta: mostra o texto, o motivo do dono e as duas decisões', () => {
+    const html = render({ tab: 'reviews', moderation: { status: 'ready', data: [review()] } })
+
+    expect(html).toContain('Barbearia do Zé · 1 de 5 · Ana S.')
+    expect(html).toContain('Comentário ofensivo.')
+    expect(html).toContain('Denúncia do dono: Ofende a equipe.')
+    expect(html).toContain('Motivo para ocultar')
+    expect(html).toContain('Ocultar avaliação')
+    expect(html).toContain('Manter no ar')
+    expect(html).not.toContain('Reexibir')
+  })
+
+  it('oculta: mostra o motivo e oferece reexibir, sem as decisões da denúncia', () => {
+    const html = render({
+      tab: 'reviews',
+      reviewStatus: 'Hidden',
+      moderation: {
+        status: 'ready',
+        data: [
+          review({
+            isHidden: true,
+            reportOpen: false,
+            hiddenReason: 'Ofensa',
+            hiddenAt: '2026-11-04T15:00:00Z',
+          }),
+        ],
+      },
+    })
+
+    expect(html).toContain('Ofensa')
+    expect(html).toContain('Reexibir avaliação')
+    expect(html).not.toContain('Manter no ar')
   })
 })
 
