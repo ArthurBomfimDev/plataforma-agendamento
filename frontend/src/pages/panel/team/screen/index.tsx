@@ -29,6 +29,7 @@ import { useState } from 'react'
 export const TeamScreen = (props: TeamScreenProps) => {
   const { data, businessName, onCreate, onSave, onOpenSchedules } = props
   const { invites, onInvite, onResendInvite, onRevokeInvite, showRegistration = false } = props
+  const { photo } = props
 
   const [inviting, setInviting] = useState(false)
   const [selectedId, setSelectedId] = useState<string>()
@@ -101,6 +102,7 @@ export const TeamScreen = (props: TeamScreenProps) => {
                 member={selected}
                 services={services}
                 busy={busyId === selected.id}
+                photo={photo}
                 onBack={() => setShowDetail(false)}
                 onEdit={() => setEditing(selected)}
                 onOpenSchedules={onOpenSchedules}
@@ -135,9 +137,11 @@ export const TeamScreen = (props: TeamScreenProps) => {
       />
 
       <TeamMemberSheet
-        member={editing}
+        // A lista atualizada: a foto enviada na gaveta aparece sem fechar e abrir.
+        member={members.find(({ id }) => id === editing?.id) ?? editing}
         services={services}
         showRegistration={showRegistration}
+        photo={photo}
         onOpenChange={(open) => !open && setEditing(null)}
         onSave={async (draft) => {
           if (!editing) return 'Escolha um profissional.'

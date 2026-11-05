@@ -1,3 +1,4 @@
+import type { MemberPhotoActions } from '../member-photo'
 import type { TeamMember, TeamService } from '../../types'
 
 export type MemberDetailProps = {
@@ -5,6 +6,8 @@ export type MemberDetailProps = {
   services: TeamService[]
   /** Salvando a situação: o botão fica desligado. */
   busy: boolean
+  /** Enviar e remover a foto. Ausente: a ficha não mostra o campo. */
+  photo?: MemberPhotoActions
   /** Só no celular e no tablet: volta da ficha para a lista da equipe. */
   onBack: () => void
   /** Abre a gaveta de edição (nome, perfil, serviços). */

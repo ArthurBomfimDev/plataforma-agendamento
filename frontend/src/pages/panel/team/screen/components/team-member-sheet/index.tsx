@@ -8,6 +8,7 @@ import {
 
 import { Button } from '@components/button'
 import { Checkbox } from '@components/checkbox'
+import { MemberPhoto } from '../member-photo'
 import { PanelSheet } from '@components/panel-sheet'
 import { SwitchField } from '@components/switch-field'
 import { TextAreaField } from '@components/text-area-field'
@@ -22,7 +23,7 @@ import { useState } from 'react'
  * a apresentação exige a declaração do dono de que tem a autorização da pessoa; quem tem login controla os próprios dados.
  */
 export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
-  const { member, services, showRegistration = false, onOpenChange, onSave } = props
+  const { member, services, showRegistration = false, photo, onOpenChange, onSave } = props
 
   const [draft, setDraft] = useState<TeamMemberDraft | null>(member && draftOf(member))
   const [lastId, setLastId] = useState(member?.id)
@@ -59,6 +60,8 @@ export const TeamMemberSheet = (props: TeamMemberSheetProps) => {
       onOpenChange={onOpenChange}
       title={member ? `Editar ${member.displayName}` : 'Editar profissional'}
     >
+      {/* Fora do formulário: a foto grava na hora, sem esperar o "Salvar". */}
+      {member && photo && <MemberPhoto place="sheet" member={member} {...photo} />}
       {member && draft && (
         <form
           noValidate
