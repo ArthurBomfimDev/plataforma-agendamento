@@ -924,6 +924,23 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rating");
 
+                    b.Property<DateTimeOffset?>("ReportClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("report_closed_at");
+
+                    b.Property<string>("ReportReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("report_reason");
+
+                    b.Property<DateTimeOffset?>("ReportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reported_at");
+
+                    b.Property<Guid?>("ReportedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reported_by_user_id");
+
                     b.Property<DateTimeOffset>("ReviewedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("reviewed_at");
