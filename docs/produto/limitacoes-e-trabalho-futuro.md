@@ -81,8 +81,8 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
 - **Prova.** `RateLimitTests.L1` falhou antes da correção e passa depois: duas contas no mesmo IP têm contadores separados, e a
   mesma conta recebe 429 ao passar do limite. `L2` prova que trocar de conta não abre outro contador numa política por IP.
 - **Consequência da nova ordem.** Pedido sem token numa rota protegida recebe 401 antes do limitador e não conta para o limite.
-- **Lição.** Só o teste de integração enxergava o defeito: teste unitário não passa pelo pipeline do ASP.NET. O erro ficou sete PRs
-  sem ser notado porque aquelas fatias foram escritas sem Docker e o CI vermelho não foi lido.
+- **Lição.** Só o teste de integração enxergava o defeito: teste unitário não passa pelo pipeline do ASP.NET. O erro atravessou
+  do #41 ao #53 sem ser notado porque aquelas fatias foram escritas sem Docker e o CI vermelho não foi lido.
 
 ## Verificação
 
