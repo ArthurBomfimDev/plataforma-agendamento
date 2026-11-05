@@ -175,6 +175,9 @@ public sealed class ImageTests(IntegrationFixture fixture)
             $"/api/businesses/current/professionals/{mine}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
         Assert.NotNull(self.Photo);
 
+        // Foto de quem não tem conta: o dono declara a autorização antes (ADR-031; a recusa sem ela é o P8).
+        await _world.SendOkAsync(HttpMethod.Put, $"/api/businesses/current/professionals/{colleague}",
+            new UpdateProfessionalRequest("Profissional 2", null, null, IsActive: true, AuthorizationDeclared: true), business.OwnerToken);
         await UploadOkAsync<ProfessionalResponse>(
             $"/api/businesses/current/professionals/{colleague}/photo", TestImages.Jpeg(300, 300), "f.jpg", "image/jpeg", business.OwnerToken);
 

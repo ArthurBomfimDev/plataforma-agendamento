@@ -145,7 +145,7 @@ public sealed class SearchTests(IntegrationFixture fixture)
     {
         TestLocation here = TestLocation.Isolated();
 
-        foreach ((string extra, string code) in new[] { ("&sortBy=rating", "search.sort_invalid"), ("&category=Pet", "business.category_invalid") })
+        foreach ((string extra, string code) in new[] { ("&sortBy=popularidade", "search.sort_invalid"), ("&category=Pet", "business.category_invalid") })
         {
             using HttpResponseMessage response = await _world.SendAsync(
                 HttpMethod.Get,

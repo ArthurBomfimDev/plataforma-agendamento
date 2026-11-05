@@ -6,8 +6,7 @@ using Booking.IntegrationTests.Infrastructure;
 namespace Booking.IntegrationTests.Tenancy;
 
 /// <summary>
-/// Convite de equipe (Fase 4, bloco 1): do e-mail ao aceite, e as recusas de segurança. ESCRITOS SEM DOCKER: ainda não
-/// foram rodados (docs/verificacao-pendente.md).
+/// Convite de equipe (Fase 4, bloco 1): do e-mail ao aceite, e as recusas de segurança.
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed partial class InvitationTests(IntegrationFixture fixture)

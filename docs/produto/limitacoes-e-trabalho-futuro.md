@@ -64,6 +64,26 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
 - A página do profissional mostra os horários de hoje e amanhã do **primeiro serviço** dele; a escolha de verdade acontece
   no fluxo de agendamento.
 
+## Limites de taxa
+
+### Defeito encontrado e corrigido: limites "por conta" caíam no IP (04/11)
+
+- **Sintoma.** O job `backend / build-test` ficou vermelho do #41 em diante: 100 de 138 testes de integração falhavam, 98 deles
+  com `POST /api/businesses → 429`.
+- **Causa.** Em `Program.cs`, `UseRateLimiter()` rodava **antes** de `UseAuthentication()`. Na hora do limitador `context.User`
+  ainda era anônimo, então `FindFirst("sub")` vinha nulo e toda política "por conta" caía no IP. Como todo pedido de teste vem do
+  mesmo IP, o limite de 5 criações por hora, novo no #41, estourou para a suíte inteira.
+- **Efeito em produção.** Os limites de criar estabelecimento, enviar imagem, convidar, avaliar e trocar a senha eram por IP, não
+  por conta. Atrás do túnel, se o IP real não chegasse, viravam limites **globais**: uma pessoa bloquearia todas. Quem tem vários
+  IPs, por outro lado, escapava do limite da conta.
+- **Correção.** `UseRateLimiter()` depois de `UseAuthentication()` e `UseAuthorization()`. As políticas por IP (`auth`, `geo`,
+  `report`, `invitation-link`) não mudam: leem o IP, e `UseForwardedHeaders()` continua antes de tudo.
+- **Prova.** `RateLimitTests.L1` falhou antes da correção e passa depois: duas contas no mesmo IP têm contadores separados, e a
+  mesma conta recebe 429 ao passar do limite. `L2` prova que trocar de conta não abre outro contador numa política por IP.
+- **Consequência da nova ordem.** Pedido sem token numa rota protegida recebe 401 antes do limitador e não conta para o limite.
+- **Lição.** Só o teste de integração enxergava o defeito: teste unitário não passa pelo pipeline do ASP.NET. O erro atravessou
+  do #41 ao #53 sem ser notado porque aquelas fatias foram escritas sem Docker e o CI vermelho não foi lido.
+
 ## Verificação
 
 - Tudo escrito em 04/11 sem Docker e sem navegador está em `docs/verificacao-pendente.md` com o que ainda não tem prova.

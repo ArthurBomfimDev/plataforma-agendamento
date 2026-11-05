@@ -1,24 +1,32 @@
 using System.Net;
 using Booking.Arguments.Module.Availability;
+using Booking.Arguments.Module.Catalog;
+using Booking.Arguments.Module.People;
 using Booking.Arguments.Module.Scheduling;
+using Booking.Arguments.Module.Tenancy;
 using Booking.IntegrationTests.Infrastructure;
 
 namespace Booking.IntegrationTests.Tenancy;
 
 /// <summary>
 /// Papel Atendente (Fase 4, bloco 2): opera a agenda e os pedidos de todos os profissionais; não edita serviços, equipe,
-/// jornadas, fotos, convites nem configurações. ESCRITOS SEM DOCKER: ainda não foram rodados (docs/verificacao-pendente.md).
+/// jornadas, fotos, convites nem configurações.
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed class AttendantTests(IntegrationFixture fixture)
 {
     private readonly TestWorld _world = new(fixture);
 
-    /// <summary>Toda rota do estabelecimento fora da permissão do atendente, com o corpo mínimo que o binding aceita.</summary>
-    private static IEnumerable<(HttpMethod Method, string Path, object? Body)> ForbiddenRoutes()
+    /// <summary>
+    /// Toda rota do estabelecimento fora da permissão do atendente, com um corpo válido: quem recusa é o caso de uso, e o
+    /// <c>[ApiController]</c> responde 400 antes dele se faltar campo obrigatório.
+    /// </summary>
+    private static IEnumerable<(HttpMethod Method, string Path, object? Body)> ForbiddenRoutes(Guid professionalId)
     {
         var id = Guid.NewGuid();
         var empty = new { };
+        var service = new SaveServiceRequest("Serviço", null, 30, 0, 0, 15, 1000, null);
+        var address = new UpdateAddressRequest("Rua", "1", "Centro", "Garça", "SP", "17400000");
 
         return
         [
@@ -27,31 +35,31 @@ public sealed class AttendantTests(IntegrationFixture fixture)
             (HttpMethod.Put, $"/api/businesses/current/work-schedules/{id}", empty),
             (HttpMethod.Delete, $"/api/businesses/current/work-schedules/{id}", null),
             // Serviços
-            (HttpMethod.Post, "/api/businesses/current/services", empty),
-            (HttpMethod.Put, $"/api/businesses/current/services/{id}", empty),
+            (HttpMethod.Post, "/api/businesses/current/services", service),
+            (HttpMethod.Put, $"/api/businesses/current/services/{id}", service),
             (HttpMethod.Delete, $"/api/businesses/current/services/{id}/image", null),
-            (HttpMethod.Put, $"/api/businesses/current/services/{id}/professionals/{id}", null),
+            (HttpMethod.Put, $"/api/businesses/current/services/{id}/professionals/{id}", new EnableProfessionalRequest(null, null)),
             (HttpMethod.Delete, $"/api/businesses/current/services/{id}/professionals/{id}", null),
             // Equipe e fotos
-            (HttpMethod.Post, "/api/businesses/current/professionals", empty),
-            (HttpMethod.Put, $"/api/businesses/current/professionals/{id}", empty),
-            (HttpMethod.Delete, $"/api/businesses/current/professionals/{id}/photo", null),
+            (HttpMethod.Post, "/api/businesses/current/professionals", new CreateProfessionalRequest("Pessoa", null, null, IsMe: false)),
+            (HttpMethod.Put, $"/api/businesses/current/professionals/{id}", new UpdateProfessionalRequest("Pessoa", null, null, IsActive: true)),
+            (HttpMethod.Delete, $"/api/businesses/current/professionals/{professionalId}/photo", null),
             // Estabelecimento: leitura do dono, configurações, fotos e publicação
             (HttpMethod.Get, "/api/businesses/current", null),
             (HttpMethod.Get, "/api/businesses/current/checklist", null),
-            (HttpMethod.Put, "/api/businesses/current/scheduling-policy", empty),
-            (HttpMethod.Put, "/api/businesses/current/address", empty),
-            (HttpMethod.Put, "/api/businesses/current/location", empty),
+            (HttpMethod.Put, "/api/businesses/current/scheduling-policy", new UpdateSchedulingPolicyRequest(false, 12, 2, 60, 24, TestWorld.TimeZone)),
+            (HttpMethod.Put, "/api/businesses/current/address", address),
+            (HttpMethod.Put, "/api/businesses/current/location", new ConfirmLocationRequest(-22.2, -49.6, "Rooftop", "teste")),
             (HttpMethod.Delete, "/api/businesses/current/logo", null),
             (HttpMethod.Delete, "/api/businesses/current/cover", null),
             (HttpMethod.Post, "/api/businesses/current/submit", null),
-            (HttpMethod.Put, "/api/businesses/current/responsible", empty),
-            (HttpMethod.Post, "/api/businesses/current/terms", empty),
+            (HttpMethod.Put, "/api/businesses/current/responsible", new SetResponsibleRequest("Dra. Teste", "Crm", "12345", "SP")),
+            (HttpMethod.Post, "/api/businesses/current/terms", new AcceptTermsRequest("2026-11")),
             (HttpMethod.Post, "/api/businesses/current/publish", null),
             // Convites e vagas
             (HttpMethod.Get, "/api/businesses/current/invitations", null),
             (HttpMethod.Get, "/api/businesses/current/seats", null),
-            (HttpMethod.Post, "/api/businesses/current/invitations", empty),
+            (HttpMethod.Post, "/api/businesses/current/invitations", new InviteMemberRequest("Pessoa", "pessoa@exemplo.test", "Attendant")),
             (HttpMethod.Post, $"/api/businesses/current/invitations/{id}/resend", null),
             (HttpMethod.Delete, $"/api/businesses/current/invitations/{id}", null),
             // Plataforma
@@ -66,7 +74,7 @@ public sealed class AttendantTests(IntegrationFixture fixture)
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         TestUser attendant = await _world.NewAttendantAsync(business);
 
-        foreach ((HttpMethod method, string path, object? body) in ForbiddenRoutes())
+        foreach ((HttpMethod method, string path, object? body) in ForbiddenRoutes(business.ProfessionalIds[0]))
         {
             using HttpResponseMessage response = await _world.SendAsync(method, path, body, attendant.Token);
             Assert.True(response.StatusCode == HttpStatusCode.Forbidden, $"{method} {path} devia dar 403 para o atendente, deu {(int)response.StatusCode}");

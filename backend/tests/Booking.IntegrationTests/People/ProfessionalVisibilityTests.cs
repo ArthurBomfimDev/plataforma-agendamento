@@ -8,7 +8,7 @@ namespace Booking.IntegrationTests.People;
 /// <summary>
 /// Perfil público sempre ligado (Fase 4, bloco 3, ADR-031): todo profissional ativo aparece na vitrine com especialidade e
 /// bio; inativo sai dela; salvar a bio de quem não tem conta exige a declaração do dono. Substitui os testes do
-/// consentimento por perfil (R1 e R2 da Onda 7C). ESCRITOS SEM DOCKER: ainda não foram rodados.
+/// consentimento por perfil (R1 e R2 da Onda 7C).
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed class ProfessionalVisibilityTests(IntegrationFixture fixture)
