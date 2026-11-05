@@ -10,6 +10,26 @@ Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondent
 
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
+## Rodada 2 do teste de 05/11 (PR #58)
+
+Provado por script no navegador (Chrome do Windows, via Playwright), numa pilha isolada com banco novo: agenda em lista do
+Atendente, Meu perfil do Atendente, Equipe, convite sem papel marcado, recorte e envio do logotipo, tema persistente, imagem do
+agendamento em 390 px e a auditoria de 44 telas em 390 e 1280 px. **Migration `AddServiceShowPhotoInShowcase`: NÃO APLICADA no
+ambiente do Arthur.**
+
+Falta conferir com olho humano:
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | No banco onde o Rafa foi testado, ver o papel dele (`tenancy.business_membership.role`) | `Professional` confirma a causa do B1; `Attendant` quer dizer que há outra causa, e ela não foi achada |
+| 2 | Se for `Professional`: revogar o acesso e convidar de novo como Atendente, pelo painel | agenda de todos, sem perfil público. Não apagar dado direto no banco |
+| 3 | Celular real: arrastar a imagem no recorte e usar o zoom | move sem travar a página; a foto enviada é o quadrado visto |
+| 4 | Recorte de foto em Editar serviço, na ficha da equipe e em Meu perfil | mesma tela do logotipo. **Só o logotipo foi provado no navegador** |
+| 5 | Editar serviço: desligar "Mostrar foto na vitrine" e abrir a vitrine | ícone da categoria no lugar da foto (a API está provada por teste; a tela, não) |
+| 6 | Agenda do Dono no desktop com a grade de 144 px por hora | a tela ficou com o dobro da altura: conferir se a leitura continua boa |
+| 7 | Gavetas, diálogos e menus abertos em 390 px, claro e escuro | a auditoria mediu só o estado inicial de cada tela, no tema claro |
+| 8 | Convite real por e-mail, aceito pela tela `#/convite` | o aceite foi provado por API e teste de integração, não pela tela |
+
 ## Correções do teste de 05/11
 
 Lógica provada por teste; **nada foi visto no navegador**. Sem migration.
