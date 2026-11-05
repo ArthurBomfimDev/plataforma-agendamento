@@ -6,8 +6,7 @@ using Booking.IntegrationTests.Infrastructure;
 namespace Booking.IntegrationTests.People;
 
 /// <summary>
-/// Página pública do profissional, pedido de remoção e "Sair do estabelecimento" (ADR-031). ESCRITOS SEM DOCKER: ainda não
-/// foram rodados (docs/verificacao-pendente.md).
+/// Página pública do profissional, pedido de remoção e "Sair do estabelecimento" (ADR-031).
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed class ProfessionalPublicPageTests(IntegrationFixture fixture)

@@ -8,7 +8,7 @@ namespace Booking.IntegrationTests.Tenancy;
 
 /// <summary>
 /// Cadastro do estabelecimento (Fase 3): publicar na hora (Beleza) × análise (Saúde), checklist, termos, responsável de
-/// Saúde, motivo de suspensão e o limite por conta. ESCRITOS SEM DOCKER: ainda não foram rodados (docs/verificacao-pendente.md).
+/// Saúde, motivo de suspensão e o limite por conta.
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed class OnboardingTests(IntegrationFixture fixture)
@@ -155,8 +155,8 @@ public sealed class OnboardingTests(IntegrationFixture fixture)
         TestBusiness draft = await _world.NewBusinessAsync(1, [new ServiceSpec(60)], submit: false);
         TestUser customer = await _world.NewCustomerAsync();
 
-        ChecklistItemResponse[] items = await _world.SendOkAsync<ChecklistItemResponse[]>(
-            HttpMethod.Get, "/api/businesses/current/checklist", null, draft.OwnerToken);
+        IReadOnlyList<ChecklistItemResponse> items = (await _world.SendOkAsync<PagedResult<ChecklistItemResponse>>(
+            HttpMethod.Get, "/api/businesses/current/checklist", null, draft.OwnerToken)).Items;
 
         Assert.Contains(items, i => i.Key == "terms" && i.Done);
         Assert.Contains(items, i => i.Key == "location_confirmed" && i.Done);

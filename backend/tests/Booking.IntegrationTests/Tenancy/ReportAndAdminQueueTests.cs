@@ -8,12 +8,15 @@ namespace Booking.IntegrationTests.Tenancy;
 
 /// <summary>
 /// Denúncia na página pública, fila do Admin, filtro por categoria e os e-mails de status ao dono (Fase 3).
-/// ESCRITOS SEM DOCKER: ainda não foram rodados (docs/verificacao-pendente.md).
+/// A denúncia é limitada a 5 por hora por IP, e todo pedido de teste vem do mesmo IP: cada teste denuncia pela própria API.
 /// </summary>
 [Collection(IntegrationCollection.Name)]
 public sealed class ReportAndAdminQueueTests(IntegrationFixture fixture)
 {
     private readonly TestWorld _world = new(fixture);
+
+    private static Task<HttpResponseMessage> ReportAsync(HttpClient client, Guid businessId, string reason, string? token) =>
+        client.SendAsync(TestWorld.Build(HttpMethod.Post, $"/api/businesses/{businessId}/reports", new ReportBusinessRequest(reason), token));
 
     [Fact]
     public async Task R1_anyone_can_report_an_active_business_and_only_the_admin_reads_the_queue()
@@ -21,16 +24,20 @@ public sealed class ReportAndAdminQueueTests(IntegrationFixture fixture)
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         TestUser admin = await _world.NewAdminAsync();
         TestUser customer = await _world.NewCustomerAsync();
+        await using BookingApiFactory api = fixture.NewApi();
+        using HttpClient client = api.CreateClient();
 
         // Sem login.
-        using (HttpResponseMessage anonymous = await _world.SendAsync(
-            HttpMethod.Post, $"/api/businesses/{business.Id}/reports", new ReportBusinessRequest("Fotos de outra empresa."), null))
+        using (HttpResponseMessage anonymous = await ReportAsync(client, business.Id, "Fotos de outra empresa.", null))
         {
             Assert.Equal(HttpStatusCode.NoContent, anonymous.StatusCode);
         }
 
         // Logado.
-        await _world.SendOkAsync(HttpMethod.Post, $"/api/businesses/{business.Id}/reports", new ReportBusinessRequest("Endereço falso."), customer.Token);
+        using (HttpResponseMessage signedIn = await ReportAsync(client, business.Id, "Endereço falso.", customer.Token))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, signedIn.StatusCode);
+        }
 
         PagedResult<BusinessReportResponse> queue = await _world.SendOkAsync<PagedResult<BusinessReportResponse>>(
             HttpMethod.Get, "/api/admin/businesses/reports?pageSize=100", null, admin.Token);
@@ -54,16 +61,16 @@ public sealed class ReportAndAdminQueueTests(IntegrationFixture fixture)
     {
         TestBusiness draft = await _world.NewBusinessAsync(1, [new ServiceSpec(60)], submit: false);
         TestBusiness active = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
+        await using BookingApiFactory api = fixture.NewApi();
+        using HttpClient client = api.CreateClient();
 
         foreach (Guid id in new[] { draft.Id, Guid.NewGuid() })
         {
-            using HttpResponseMessage missing = await _world.SendAsync(
-                HttpMethod.Post, $"/api/businesses/{id}/reports", new ReportBusinessRequest("Conteúdo enganoso."), null);
+            using HttpResponseMessage missing = await ReportAsync(client, id, "Conteúdo enganoso.", null);
             Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         }
 
-        using HttpResponseMessage tooShort = await _world.SendAsync(
-            HttpMethod.Post, $"/api/businesses/{active.Id}/reports", new ReportBusinessRequest("não"), null);
+        using HttpResponseMessage tooShort = await ReportAsync(client, active.Id, "não", null);
         Assert.Equal(HttpStatusCode.BadRequest, tooShort.StatusCode);
         Assert.Equal("report.reason_invalid", await TestWorld.ErrorCodeAsync(tooShort));
     }
@@ -73,7 +80,12 @@ public sealed class ReportAndAdminQueueTests(IntegrationFixture fixture)
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         TestUser admin = await _world.NewAdminAsync();
-        await _world.SendOkAsync(HttpMethod.Post, $"/api/businesses/{business.Id}/reports", new ReportBusinessRequest("Perfil falso."), null!);
+        await using BookingApiFactory api = fixture.NewApi();
+        using HttpClient client = api.CreateClient();
+        using (HttpResponseMessage reported = await ReportAsync(client, business.Id, "Perfil falso.", null))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, reported.StatusCode);
+        }
 
         PagedResult<BusinessReportResponse> open = await _world.SendOkAsync<PagedResult<BusinessReportResponse>>(
             HttpMethod.Get, "/api/admin/businesses/reports?pageSize=100", null, admin.Token);

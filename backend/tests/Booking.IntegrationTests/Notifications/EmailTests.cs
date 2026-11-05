@@ -80,16 +80,17 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60, Name: "Corte de teste")]);
         TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
         TestUser customer = await _world.NewCustomerAsync();
+        int setup = await SetupMailsAsync(business);
 
         await _world.BookAsync(customer, business, business.Services[0], business.ProfessionalIds[0], TestCalendar.At(10));
 
         // Gravado na outbox, não enviado na requisição.
-        Assert.Empty(_world.Emails.To(business.OwnerEmail));
+        Assert.Equal(setup, _world.Emails.To(business.OwnerEmail).Count);
         await _world.DispatchAllAsync();
 
-        foreach (string recipient in new[] { business.OwnerEmail, staff.Email })
+        foreach ((string recipient, int before) in new[] { (business.OwnerEmail, setup), (staff.Email, 0) })
         {
-            EmailMessage message = Assert.Single(_world.Emails.To(recipient));
+            EmailMessage message = Assert.Single(_world.Emails.To(recipient).Skip(before));
             Assert.StartsWith("Novo pedido: Corte de teste", message.Subject);
             Assert.Contains("#/painel/pedidos", message.TextBody);
         }
@@ -122,13 +123,14 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
         await _world.SendOkAsync(HttpMethod.Put, "/api/businesses/current/scheduling-policy",
             new UpdateSchedulingPolicyRequest(AutoConfirm: true, 12, 2, 60, 24, TestWorld.TimeZone), business.OwnerToken);
         TestUser customer = await _world.NewCustomerAsync();
+        int setup = await SetupMailsAsync(business);
 
         AppointmentResponse appointment = await _world.BookAsync(customer, business, business.Services[0], business.ProfessionalIds[0], TestCalendar.At(10));
         await _world.DispatchAllAsync();
 
         Assert.Equal("Confirmed", appointment.Status);
         AssertIcs(Assert.Single(_world.Emails.To(customer.Email)), appointment.Id);
-        Assert.Empty(_world.Emails.To(business.OwnerEmail));
+        Assert.Empty(_world.Emails.To(business.OwnerEmail).Skip(setup));
     }
 
     [Theory]
@@ -216,12 +218,13 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
         TestUser customer = await _world.NewCustomerAsync();
         ConsentVersionsResponse versions = await _world.SendOkAsync<ConsentVersionsResponse>(HttpMethod.Get, "/api/consents/versions", null, customer.Token);
         await _world.SendOkAsync(HttpMethod.Post, "/api/consents", new GrantConsentRequest("SensitiveScheduling", versions.SensitiveScheduling), customer.Token);
+        int setup = await SetupMailsAsync(clinic);
 
         AppointmentResponse appointment = await _world.BookAsync(customer, clinic, clinic.Services[0], clinic.ProfessionalIds[0], TestCalendar.At(10));
         await _world.SendOkAsync(HttpMethod.Post, $"/api/businesses/current/appointments/{appointment.Id}/confirm", null, clinic.OwnerToken);
         await _world.DispatchAllAsync();
 
-        EmailMessage toOwner = Assert.Single(_world.Emails.To(clinic.OwnerEmail));
+        EmailMessage toOwner = Assert.Single(_world.Emails.To(clinic.OwnerEmail).Skip(setup));
         EmailMessage toCustomer = Assert.Single(_world.Emails.To(customer.Email));
 
         foreach (EmailMessage message in new[] { toOwner, toCustomer })
@@ -243,6 +246,7 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
     {
         TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
         IReadOnlyList<TestUser> customers = await _world.NewCustomersAsync(2);
+        int setup = await SetupMailsAsync(business);
 
         await _world.BookAsync(customers[0], business, business.Services[0], business.ProfessionalIds[0], TestCalendar.At(10));
         using (HttpResponseMessage taken = await _world.Client.SendAsync(
@@ -254,7 +258,17 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
         await _world.DispatchAllAsync();
 
         // Um pedido gravado, um aviso. O recusado não deixou linha na outbox.
-        Assert.Single(_world.Emails.To(business.OwnerEmail));
+        Assert.Single(_world.Emails.To(business.OwnerEmail).Skip(setup));
+    }
+
+    /// <summary>
+    /// O cadastro já avisa o dono ("recebemos", "aprovado", ADR da Fase 3). Entrega esses e devolve quantos foram, para o
+    /// teste olhar só os e-mails do agendamento.
+    /// </summary>
+    private async Task<int> SetupMailsAsync(TestBusiness business)
+    {
+        await _world.DispatchAllAsync();
+        return _world.Emails.To(business.OwnerEmail).Count;
     }
 
     // --- Despacho ---
@@ -294,12 +308,13 @@ public sealed partial class EmailTests(IntegrationFixture fixture)
         await _world.DispatchAllAsync();
         Assert.Equal(1L, await CountAsync("SELECT attempts FROM notifications.outbox WHERE id = @id", ("id", id)));
 
-        await ExecuteAsync("UPDATE notifications.outbox SET next_attempt_at = now() WHERE id = @id", ("id", id));
+        // Um minuto atrás, e não now(): o relógio do banco e o da API não são o mesmo, e o da API pode estar atrás.
+        await ExecuteAsync("UPDATE notifications.outbox SET next_attempt_at = now() - interval '1 minute' WHERE id = @id", ("id", id));
         await _world.DispatchAllAsync();
         Assert.Equal(1L, await CountAsync(
             "SELECT count(*) FROM notifications.outbox WHERE id = @id AND attempts = 2 AND next_attempt_at > now() + interval '50 seconds'", ("id", id)));
 
-        await ExecuteAsync("UPDATE notifications.outbox SET next_attempt_at = now() WHERE id = @id", ("id", id));
+        await ExecuteAsync("UPDATE notifications.outbox SET next_attempt_at = now() - interval '1 minute' WHERE id = @id", ("id", id));
         await _world.DispatchAllAsync();
 
         Assert.Single(_world.Emails.To(recipient));
