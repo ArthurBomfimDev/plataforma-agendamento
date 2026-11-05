@@ -1,6 +1,6 @@
 import { ErrorState, LoadingState } from '@components/screen-state'
 import type { ConsentsData, MyAccountScreenProps } from './types'
-import { type PasswordErrors, validatePasswordChange } from './consts'
+import { type PasswordErrors, REVOKE_CONSENT_TEXT, validatePasswordChange } from './consts'
 import { format } from 'date-fns'
 
 import { Button } from '@components/button'
@@ -146,9 +146,12 @@ const ConsentsCard = (props: {
                 · versão {consent.version}
               </p>
               {!consent.revokedAt && (
-                <Button variant="secondary" onClick={() => setTarget(consent.purpose)}>
-                  Revogar
-                </Button>
+                <>
+                  <p className="type-caption text-(--text-muted)">{REVOKE_CONSENT_TEXT}</p>
+                  <Button variant="secondary" onClick={() => setTarget(consent.purpose)}>
+                    Revogar
+                  </Button>
+                </>
               )}
             </li>
           ))}
@@ -159,7 +162,7 @@ const ConsentsCard = (props: {
         open={target !== null}
         onOpenChange={(open) => !open && setTarget(null)}
         title="Revogar o consentimento?"
-        description="Os agendamentos já feitos continuam. Novos pedidos em estabelecimentos de saúde ficam bloqueados até você consentir de novo."
+        description={REVOKE_CONSENT_TEXT}
         confirmLabel="Revogar"
         dismissLabel="Manter"
         onConfirm={() => void revoke()}

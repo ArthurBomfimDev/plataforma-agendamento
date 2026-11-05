@@ -46,6 +46,9 @@ describe('MyAccountScreen — consentimentos', () => {
     expect(html).toContain('Em vigor desde 05/11/2026')
     expect(html).toContain('versão 2026-10-v1')
     expect(html).toMatch(/<button[^>]*>Revogar<\/button>/)
+    expect(html).toContain(
+      'Você deixa de poder agendar em estabelecimentos de saúde. Agendamentos já feitos continuam valendo.',
+    )
   })
 
   it('revogado: diz quando e não oferece revogar de novo', () => {
