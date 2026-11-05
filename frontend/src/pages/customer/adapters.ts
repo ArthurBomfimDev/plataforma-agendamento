@@ -138,6 +138,9 @@ export const toCustomerAppointment = (
   return {
     id: appointment.id,
     businessName: business?.name ?? 'Estabelecimento',
+    // A miniatura é quadrada: o logotipo primeiro, como na revisão do pedido.
+    businessImage: business ? (business.logo ?? business.cover) : null,
+    category: business?.category,
     serviceName: appointment.serviceName,
     status: STATUS[appointment.status],
     date: dateKeyIn(appointment.startsAt, timeZone),

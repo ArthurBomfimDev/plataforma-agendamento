@@ -1,4 +1,6 @@
 import type { AppointmentCardProps } from './types'
+import { BusinessIllustration } from '@components/image-defaults/business-illustration'
+import { SmartImage } from '@components/smart-image'
 import { StatusChip } from '@components/status-chip'
 import { cn } from 'cn'
 
@@ -16,7 +18,8 @@ export const AppointmentCard = (props: AppointmentCardProps) => {
     detail,
     actions,
     highlight,
-    imageUrl,
+    image,
+    category,
     className,
   } = props
 
@@ -28,18 +31,16 @@ export const AppointmentCard = (props: AppointmentCardProps) => {
         className,
       )}
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          className="hidden size-18 shrink-0 rounded-md object-cover lg:block"
-        />
-      ) : (
-        <div
-          aria-hidden="true"
-          className="hidden size-18 shrink-0 rounded-md bg-(--bg-disabled) lg:block"
-        />
-      )}
+      {/* Logotipo (ou a capa); sem imagem, a ilustração da categoria, como na revisão do pedido. */}
+      <SmartImage
+        image={image ?? null}
+        alt=""
+        sizes="72px"
+        width={1}
+        height={1}
+        fallback={<BusinessIllustration category={category ?? 'Beleza'} />}
+        className="hidden size-18 shrink-0 rounded-md lg:block"
+      />
 
       <div className="flex flex-col gap-(--space-12) lg:min-w-0 lg:flex-1 lg:gap-(--space-4)">
         <div className="flex items-center gap-(--space-12) lg:gap-(--space-8)">
