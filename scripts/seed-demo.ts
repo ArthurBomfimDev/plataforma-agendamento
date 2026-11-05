@@ -833,12 +833,12 @@ function seedHistory() {
   if (source.businesses.length === 0) throw new Error('Nenhum estabelecimento de demonstração ativo. Rode o seed sem --historico antes.')
   if (!source.demo_customer_hash) throw new Error(`A conta ${CUSTOMER.email} não existe. Rode o seed sem --historico antes.`)
 
-  // Horários que as avaliações de demonstração (`seedReviews`) já ocupam: o histórico passa por cima deles, senão a
-  // constraint de exclusão derruba a transação inteira se o seed rodar de novo com --historico.
+  // Horários que já têm agendamento (a agenda de hoje e as avaliações de um seed anterior): o histórico desvia deles,
+  // senão a constraint de exclusão derruba a transação inteira ao rodar --historico depois do seed normal.
   const reserved = (
     JSON.parse(
       psql(`SELECT coalesce(json_agg(json_build_object('p', professional_id, 's', blocked_starts_at, 'e', blocked_ends_at)), '[]')
-            FROM scheduling.appointment WHERE customer_notes = ${sqlText(REVIEW_MARKER)};`),
+            FROM scheduling.appointment;`),
     ) as { p: string; s: string; e: string }[]
   ).map((slot) => ({ professionalId: slot.p, from: Date.parse(slot.s), to: Date.parse(slot.e) }))
 

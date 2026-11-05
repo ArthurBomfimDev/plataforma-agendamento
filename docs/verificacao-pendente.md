@@ -3,6 +3,11 @@
 Checklist único do que foi escrito **sem Docker e sem navegador** nas ondas finais (04/11/2026) e ainda não tem prova.
 Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondente e descreva o que viu.
 
+> **Atualização de 05/11.** A seção 1 já tem prova: o CI do [acumulado] está verde, com 155 de 155 testes de integração contra
+> PostGIS, as migrations aplicadas em banco vazio e o limite de taxa por conta corrigido (#54). O seed com avaliações rodou numa
+> pilha isolada. **Falta o que só se vê com olho humano:** telas (390 px, claro e escuro) e e-mails no Mailpit. Nas tabelas abaixo,
+> os passos de API e SQL escritos antes disso servem de conferência, não de pendência.
+
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
 ## 0. Preparar a pilha isolada (uma vez por rodada)
@@ -292,7 +297,7 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | # | Passo | Esperado |
 |---|---|---|
 | 1 | A migration sobe com a pilha. `SELECT table_name FROM information_schema.tables WHERE table_schema='reputation';` | `review` e `rating_summary`; **sem** coluna `xmin` criada à mão em `rating_summary` (`xmin` é do sistema) |
-| 2 | `dotnet test Booking.slnx --filter FullyQualifiedName~Reputation` | verdes (testes unitários, rodaram sem Docker). **Não há teste de integração nesta fatia**: a trava `ux_review_appointment`, o `xmin` e o 503 de disputa só se provam com o banco, pelos passos 4 e 12 abaixo |
+| 2 | `dotnet test Booking.slnx --filter FullyQualifiedName~Reputation` | verdes. `Reputation.ReviewTests` (V1 a V9) prova com banco a trava `ux_review_appointment`, o `xmin` e o 503 de disputa |
 | 3 | Concluir um agendamento e `POST /api/appointments/{id}/review` `{ "rating": 5, "professionalRating": 4 }` com a conta do consumidor | 201; `rating_summary` ganha 1 linha do estabelecimento e 1 do profissional (`count = 1`) |
 | 4 | Repetir o POST | 409 `review.already_reviewed` |
 | 5 | POST com token de painel (dono) | 403 `appointment.customer_context_required` |
@@ -347,11 +352,12 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 7 | Busca sem filtro | **os mesmos 30 estabelecimentos** de antes, na mesma ordem |
 | 8 | Busca com `sortBy=rating` | o 1º estabelecimento (5 avaliações, média ≈ 4,6) primeiro; o 2º (exatamente 3, média 4,0); o 3º (2 avaliações) aparece como **"Novo"** depois dos que têm média |
 | 9 | Entrar como `consumidor@example.com` → Meus agendamentos | um atendimento concluído do 1º estabelecimento com **Avaliar atendimento** |
-| 10 | `bun scripts/seed-demo.ts --historico` depois do seed de avaliações | não dá erro de sobreposição (o histórico evita os horários das avaliações) |
+| 10 | `bun scripts/seed-demo.ts --historico` depois do seed normal | não dá erro de sobreposição (o histórico desvia de todo agendamento que já existe) |
 | 11 | `SELECT target, count, sum FROM reputation.rating_summary;` | bate com as avaliações inseridas (conferir à mão) |
 
-> O `seed-demo.ts` **só foi compilado** (`bun build`): o SQL das avaliações nunca rodou, e a lógica de pular horários ocupados
-> (`ON CONFLICT DO NOTHING`) também não. Se algum passo acima falhar, o primeiro suspeito é o SQL do seed.
+> Os passos 6, 7, 8, 10 e 11 **rodaram** em 05/11, numa pilha isolada (`booking0`): 11 atendimentos, 10 avaliações, os 30
+> estabelecimentos na busca, Estúdio Duartina 4,6 e Espaço Helena Unhas 4,0. Os passos 2 a 5 têm prova em
+> `ReviewInviteEmailTests` e `ReviewTests.V7`; falta só olhar o e-mail no Mailpit.
 
 ### Avaliações — moderação (Fase 8, fatia 5; migration `AddReviewReport`)
 
