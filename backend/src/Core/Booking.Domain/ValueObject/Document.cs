@@ -6,8 +6,8 @@ public sealed record Document
 {
     public string Number { get; }
 
-    // Derivado do tamanho, nunca persistido separadamente — 11 caracteres só pode ser CPF válido,
-    // 14 só pode ser CNPJ válido (numérico ou alfanumérico), porque o dígito verificador já foi conferido no Of().
+    // Derivado do tamanho: 11 caracteres só pode ser CPF válido, 14 só pode ser CNPJ válido (numérico ou alfanumérico),
+    // porque o dígito verificador já foi conferido no Of(). `Business.DocumentType` guarda este valor para consulta.
     public DocumentKind Kind => Number.Length == 11 ? DocumentKind.Cpf : DocumentKind.Cnpj;
 
     private Document(string number)

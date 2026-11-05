@@ -17,6 +17,10 @@ export type RegisterBusinessRequest = {
   name: string
   document: string
   category: BusinessCategoryName
+  /** Conferido com o documento no servidor. */
+  documentType: 'Cnpj' | 'Cpf'
+  /** Informativo, só com CNPJ. */
+  isMei: boolean
 }
 
 /** Item das listas do Admin e resposta de `POST /api/businesses`. */

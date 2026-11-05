@@ -602,6 +602,18 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - A busca lê a nota pelo contrato `IReputationDirectory`; o módulo Tenancy não conhece `RatingSummary`.
 - Os campos novos são aditivos: o frontend atual os ignora.
 
+## 4.18 Documento do cadastro, Versão B (04/11) — **backend rodado com Docker; tela não vista no navegador** (ADR-028)
+
+`POST /api/businesses` `{ name, document, category, documentType?, isMei? }`:
+
+- Toda categoria aceita CPF ou CNPJ (numérico ou alfanumérico). `documentType` é `Cpf` ou `Cnpj`, conferido com o documento; sem
+  ele, vale o que o documento é. `isMei` é informativo.
+- 400: `document.expected_cpf`, `document.expected_cnpj`, `document.type_invalid`, `business.mei_requires_cnpj`, além dos que já
+  existiam (`document.required`, `document.invalid_length`, `document.invalid_check_digit`).
+- `GET /api/businesses/current` e o detalhe do Admin ganham `documentType` e `isMei`. **Nenhuma resposta pública traz documento.**
+- Migration `AddBusinessDocumentType` (não aplicada): `document_type`, `is_mei`, `ck_business_mei_requires_cnpj`; quem já existe
+  recebe o tipo pelo tamanho do documento.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

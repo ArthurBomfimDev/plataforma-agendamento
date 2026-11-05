@@ -67,7 +67,7 @@ const RegisterBusiness = () => {
       onCreate={(business, document) =>
         attempt(async () => {
           if (!me.data) throw new Error('Carregando a sua conta. Tente de novo em instantes.')
-          const created = await register.mutateAsync({ ...business, document })
+          const created = await register.mutateAsync({ ...business, ...document })
           // O estabelecimento nasce em rascunho; o painel e as rotas `current/*` dependem do contexto dele.
           await switchContext.mutateAsync({
             userId: me.data.id,

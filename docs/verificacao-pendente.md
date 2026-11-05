@@ -116,7 +116,7 @@ Escrito sem navegador: só teste de componente com API simulada. **Visual, 390 p
 | 2 | Logado: menu da conta → **Cadastrar meu estabelecimento**; e em Minha conta o mesmo botão | abre `#/cadastrar-estabelecimento` |
 | 3 | Sem sessão, abrir `#/cadastrar-estabelecimento` | vai para "Entrar" e volta ao assistente |
 | 4 | Passo 1: nome vazio → Continuar | erro "Informe o nome do estabelecimento." no campo |
-| 5 | Passo 2 (Documento): texto "Regra do documento **em definição**"; digitar `123` | erro do formato; `12.ABC.345/01DE-35` é aceito |
+| 5 | Passo 2 (Documento, Versão B): "Empresa (CNPJ)" e "Autônomo(a) (CPF)", o texto do Portal do Empreendedor; digitar `123` com CNPJ; digitar um CNPJ em "Autônomo(a) (CPF)"; marcar "Sou MEI" e trocar para CPF | "O CNPJ tem 14 caracteres."; "Este número é um CNPJ…"; a marca de MEI some; `12.ABC.345/01DE-35` é aceito em CNPJ |
 | 6 | **Criar e continuar** | cria o rascunho (`POST /api/businesses`) e passa para o contexto dele; CNPJ repetido mostra "Já existe um estabelecimento…" |
 | 7 | Passo 3: CEP `17400-000` → **Buscar CEP** | preenche rua/bairro/cidade/UF quando o CEP traz; CEP não achado mostra o aviso e deixa digitar |
 | 8 | **Salvar e confirmar a localização** | `PUT address` + `PUT location`; endereço que não geocodifica mostra "Não foi possível localizar o endereço." |

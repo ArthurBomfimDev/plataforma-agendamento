@@ -20,6 +20,11 @@ public sealed class BusinessMapping : BaseMapping<Business>
             .HasMaxLength(14)
             .IsRequired();
 
+        // Nunca em resposta pública nem em log: só o dono e o Admin veem o documento e o tipo dele.
+        builder.Property(x => x.DocumentType).HasConversion<string>().HasMaxLength(4).IsRequired();
+        builder.Property(x => x.IsMei).IsRequired();
+        builder.ToTable(t => t.HasCheckConstraint("ck_business_mei_requires_cnpj", "NOT is_mei OR document_type = 'Cnpj'"));
+
         builder.Property(x => x.Category).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(x => x.SeatLimit).IsRequired();

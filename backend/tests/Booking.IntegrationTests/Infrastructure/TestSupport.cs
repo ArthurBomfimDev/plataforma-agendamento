@@ -54,6 +54,23 @@ public static class Cnpj
     }
 }
 
+public static class Cpf
+{
+    public static string Random()
+    {
+        int[] digits = [.. Enumerable.Range(0, 9).Select(_ => RandomNumberGenerator.GetInt32(10))];
+        int first = Check(digits, [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+        int second = Check([.. digits, first], [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]);
+        return string.Concat(digits.Append(first).Append(second));
+    }
+
+    private static int Check(int[] digits, int[] weights)
+    {
+        int rest = digits.Select((d, i) => d * weights[i]).Sum() % 11;
+        return rest < 2 ? 0 : 11 - rest;
+    }
+}
+
 /// <summary>
 /// Solta todas as requisições no mesmo instante: cada tarefa já está rodando e parada na barreira antes de a
 /// barreira abrir. Sem <c>Thread.Sleep</c>.

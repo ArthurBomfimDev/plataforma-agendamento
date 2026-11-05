@@ -1,4 +1,5 @@
 import type { BusinessCategoryName, PostalCodeResponse, ProfessionalCouncilName } from '@api/models'
+import type { BusinessDocumentType } from './components/document-step/consts'
 
 export type WizardStep = 'business' | 'document' | 'address' | 'responsible' | 'review'
 
@@ -6,6 +7,13 @@ export type WizardStep = 'business' | 'document' | 'address' | 'responsible' | '
 export type StepResult = Promise<string | null>
 
 export type BusinessValues = { name: string; category: BusinessCategoryName }
+
+/** O documento do passo 2: CPF ou CNPJ em qualquer categoria; `isMei` só com CNPJ. */
+export type DocumentValues = {
+  document: string
+  documentType: BusinessDocumentType
+  isMei: boolean
+}
 
 export type AddressValues = {
   postalCode: string
@@ -31,7 +39,7 @@ export type RegisterScreenProps = {
   /** Endereço já salvo, para retomar sem digitar de novo. */
   savedAddress?: Partial<AddressValues>
   /** Cria o estabelecimento (nome, categoria e documento) e passa o contexto para ele. */
-  onCreate: (business: BusinessValues, document: string) => StepResult
+  onCreate: (business: BusinessValues, document: DocumentValues) => StepResult
   /** Salva o endereço e confirma a localização. */
   onSaveAddress: (address: AddressValues) => StepResult
   onSaveResponsible: (responsible: ResponsibleValues) => StepResult
