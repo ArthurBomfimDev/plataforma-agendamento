@@ -33,6 +33,7 @@ import { DocumentStep } from './components/document-step'
 import { RadioOptionGroup } from '@components/radio-option-group'
 import { SelectField } from '@components/select-field'
 import { TextField } from '@components/text-field'
+import { ThemeToggle } from '@components/theme-toggle'
 
 const EMPTY_ADDRESS: AddressValues = {
   postalCode: '',
@@ -87,9 +88,12 @@ export const RegisterBusinessScreen = (props: RegisterScreenProps) => {
     <main className="min-h-dvh bg-(--bg-page) px-(--space-16) pt-[calc(var(--space-24)+env(safe-area-inset-top))] pb-[calc(var(--space-24)+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-120 flex-col gap-(--space-16)">
         <header className="flex flex-col gap-(--space-4)">
-          <p className="type-caption tabular text-(--text-muted)">
-            Passo {position} de {steps.length} · {STEP_LABELS[step]}
-          </p>
+          <div className="flex items-center justify-between gap-(--space-12)">
+            <p className="type-caption tabular min-w-0 text-(--text-muted)">
+              Passo {position} de {steps.length} · {STEP_LABELS[step]}
+            </p>
+            <ThemeToggle />
+          </div>
           <h1 className="type-heading text-(--text-strong)">Cadastrar meu estabelecimento</h1>
           <ol aria-label="Passos do cadastro" className="flex gap-(--space-4)">
             {steps.map((item, index) => (
