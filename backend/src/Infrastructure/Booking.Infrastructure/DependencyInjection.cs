@@ -250,6 +250,7 @@ public static class DependencyInjection
         services.AddScoped<ResendInvitationCommand>();
         services.AddScoped<RevokeInvitationCommand>();
         services.AddScoped<ListInvitationsQuery>();
+        services.AddScoped<ListTeamMembersQuery>();
         services.AddScoped<GetSeatsQuery>();
         services.AddScoped<PreviewInvitationQuery>();
         services.AddScoped<InvitationAcceptance>();

@@ -47,6 +47,7 @@ export const PanelAgendaRoute = () => {
   const filters = readAgendaFilters(searchParams)
   // Dono e atendente veem a equipe toda e filtram por profissional; o profissional só tem a própria agenda.
   const owner = canOperateWholeAgenda(context.role)
+  const attendant = context.role === 'Attendant'
   const view = filters.view
   const period = view === 'day' ? null : agendaPeriod(view, date)
   const days = period ? daysOf(period.from, period.to) : [date]
@@ -156,8 +157,9 @@ export const PanelAgendaRoute = () => {
             schedules,
             appointments: filterAgenda(agenda.data, filters),
             pending: pendingItems,
-            // Com filtro, só quem tem item no recorte; sem filtro, o dono vê a equipe toda.
-            onlyWithItems: !owner || hasAgendaFilters(filters),
+            // Com filtro, só quem tem item no recorte; sem filtro, o dono vê a equipe toda. A lista do atendente não tem
+            // coluna vazia para mostrar.
+            onlyWithItems: !owner || attendant || hasAgendaFilters(filters),
           }),
         }
       : { status: 'loading' }
@@ -174,6 +176,7 @@ export const PanelAgendaRoute = () => {
       onCounterBooking={panel.openCounterBooking}
       controls={controls}
       filtered={hasAgendaFilters(filters)}
+      timeline={attendant}
     />
   )
 }

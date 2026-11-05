@@ -327,6 +327,8 @@ public sealed class ProfessionalPublicPageTests
 
         public Task<int> CountSeatsAsync(CancellationToken ct = default) => throw new NotSupportedException();
 
+        public Task<PagedResult<BusinessMembership>> ListActiveAsync(PageRequest page, CancellationToken ct = default) => throw new NotSupportedException();
+
         public void Add(BusinessMembership added) => throw new NotSupportedException();
     }
 

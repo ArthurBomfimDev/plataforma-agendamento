@@ -182,7 +182,7 @@ const Feedback = ({ error, done }: { error?: string; done?: string }) =>
     </p>
   ) : null
 
-const NameForm = (props: {
+export const NameForm = (props: {
   fullName: string
   email: string
   onSave: MyAccountScreenProps['onSaveName']
@@ -235,7 +235,7 @@ const NameForm = (props: {
   )
 }
 
-const PasswordForm = (props: { onChange: MyAccountScreenProps['onChangePassword'] }) => {
+export const PasswordForm = (props: { onChange: MyAccountScreenProps['onChangePassword'] }) => {
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [confirm, setConfirm] = useState('')

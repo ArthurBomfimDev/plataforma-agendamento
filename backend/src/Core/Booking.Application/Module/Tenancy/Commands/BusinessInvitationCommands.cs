@@ -56,8 +56,8 @@ internal static class InvitationRules
 }
 
 /// <summary>
-/// O Owner convida por e-mail. Respeita o <c>SeatLimit</c>. O convite é opcional: o caminho principal continua sendo o
-/// dono cadastrar o profissional sem conta.
+/// O Owner convida por e-mail. Respeita o <c>SeatLimit</c>. É o único caminho para entrar na equipe: o registro de
+/// profissional nasce no aceite, e o atendente nunca tem um.
 /// </summary>
 public sealed class InviteMemberCommand(
     IBusinessRepository businesses,
@@ -208,6 +208,27 @@ public sealed class ListInvitationsQuery(IBusinessInvitationRepository invitatio
 
         return new PagedResult<InvitationResponse>(
             [.. result.Items.Select(x => InvitationRules.ToResponse(x, now))], result.Page, result.PageSize, result.TotalCount);
+    }
+}
+
+/// <summary>
+/// A seção Equipe: quem tem conta no estabelecimento e com que papel. É diferente de Profissionais, que lista os perfis
+/// públicos: o atendente aparece aqui e não lá.
+/// </summary>
+public sealed class ListTeamMembersQuery(IBusinessMembershipRepository memberships, IUserDirectory users, IActorContext actor)
+{
+    public async Task<PagedResult<TeamMemberResponse>> ExecuteAsync(PageRequest page, CancellationToken ct = default)
+    {
+        actor.RequireOwner();
+
+        PagedResult<BusinessMembership> result = await memberships.ListActiveAsync(page, ct);
+        IReadOnlyDictionary<Guid, string> names = await users.GetFullNamesAsync([.. result.Items.Select(x => x.UserId)], ct);
+
+        return new PagedResult<TeamMemberResponse>(
+            [.. result.Items.Select(x => new TeamMemberResponse(x.Id, names.GetValueOrDefault(x.UserId, "Sem nome"), x.Role.ToString()))],
+            result.Page,
+            result.PageSize,
+            result.TotalCount);
     }
 }
 

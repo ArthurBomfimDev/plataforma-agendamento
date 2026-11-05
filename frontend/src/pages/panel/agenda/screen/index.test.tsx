@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest'
 
 import { BusinessAgendaScreen } from '.'
 import { renderToString } from 'react-dom/server'
+import { timelineOf } from './components/day-timeline/consts'
 
 const ready = (): AgendaData => ({ status: 'ready', day: createFixtureAgendaDay() })
 
@@ -47,6 +48,36 @@ describe('BusinessAgendaScreen', () => {
     expect(html).toContain('Bloqueio recorrente')
     expect(html).toMatch(/Carla Menezes · expira em [67] h/)
     expect(html).toContain('Fora do expediente')
+  })
+
+  it('atendente: lista única em ordem de horário, com o profissional em cada item e sem colunas', () => {
+    const html = render({ timeline: true })
+    const day = createFixtureAgendaDay()
+
+    expect(html).toContain('Agenda do dia, em ordem de horário')
+    for (const { name } of day.professionals) expect(html).toContain(`Com ${name}`)
+    expect(html).not.toContain('aria-pressed')
+
+    const starts = timelineOf(day.professionals).map(({ entry }) => entry.start)
+    expect(starts).toEqual(starts.toSorted())
+    expect(starts.length).toBe(day.professionals.flatMap(({ entries }) => entries).length)
+  })
+
+  it('atendente: carregando, erro e dia vazio', () => {
+    expect(render({ timeline: true, agenda: { status: 'loading' } })).toContain(
+      'Carregando a agenda…',
+    )
+    expect(
+      render({
+        timeline: true,
+        agenda: { status: 'error', message: 'Sem conexão.', onRetry: () => undefined },
+      }),
+    ).toContain('Sem conexão.')
+    const empty: AgendaData = {
+      status: 'ready',
+      day: { ...createFixtureAgendaDay(), professionals: [], summary: summarize([]) },
+    }
+    expect(render({ timeline: true, agenda: empty })).toContain('Nenhum agendamento hoje.')
   })
 
   it('marca o primeiro profissional como escolhido no seletor', () => {

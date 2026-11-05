@@ -1,12 +1,9 @@
-import type { AgendaEntry, AgendaRow } from '../../types'
-import { CARD, INTERACTIVE } from './consts'
-import { AddIcon, LockIcon, PersonIcon, ScheduleIcon } from '@assets/icons'
-import { buildRows, expiryLabel, freeLabel, minutesToExpire } from '../../consts'
-
+import { AddIcon } from '@assets/icons'
+import type { AgendaRow } from '../../types'
+import { CARD } from './consts'
 import type { DayListProps } from './types'
-import { STATUS_TEXT } from './consts'
-import { StatusChip } from '@components/status-chip'
-import { cardTitle } from './components/card-title'
+import { EntryCard } from './components/entry-card'
+import { buildRows, freeLabel } from '../../consts'
 import { cn } from 'cn'
 import { motion } from 'framer-motion'
 import { timeColumn } from './components/time-column'
@@ -18,84 +15,12 @@ import { timeColumn } from './components/time-column'
 export const DayList = (props: DayListProps) => {
   const { professional, now, onOpen, onFitIn } = props
 
-  const renderEntry = (entry: AgendaEntry) => {
-    if (entry.kind === 'block') {
-      return (
-        <div
-          className={cn(
-            CARD,
-            'border border-l-3 border-(--agenda-blocked-border) bg-(--agenda-blocked-bg)',
-          )}
-        >
-          {cardTitle(
-            <LockIcon aria-hidden="true" className="size-4 shrink-0 text-(--text-muted)" />,
-            entry.label,
-            'text-(--text-muted)',
-          )}
-          {entry.detail && <p className="type-caption text-(--text-muted)">{entry.detail}</p>}
-        </div>
-      )
-    }
-
-    if (entry.status === 'pending') {
-      const remaining = minutesToExpire(entry, now)
-
-      return (
-        <button
-          type="button"
-          onClick={() => onOpen(entry.id)}
-          className={cn(
-            CARD,
-            INTERACTIVE,
-            'border border-l-3 border-(--status-pending-fg) bg-(--status-pending-bg)',
-          )}
-        >
-          {cardTitle(
-            <ScheduleIcon
-              aria-hidden="true"
-              className="size-4 shrink-0 text-(--status-pending-fg)"
-            />,
-            entry.serviceName,
-            'text-(--status-pending-fg)',
-            <StatusChip status="pending" className="shrink-0" />,
-          )}
-          <p className="type-caption tabular text-(--status-pending-fg)">
-            {entry.customerName} ·{' '}
-            {remaining > 0 ? `expira em ${expiryLabel(remaining)}` : 'prazo encerrado'}
-          </p>
-        </button>
-      )
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => onOpen(entry.id)}
-        className={cn(
-          CARD,
-          INTERACTIVE,
-          'border border-(--agenda-busy-border) bg-(--agenda-busy-bg)',
-        )}
-      >
-        {cardTitle(
-          <PersonIcon aria-hidden="true" className="size-4 shrink-0 text-(--text-strong)" />,
-          entry.serviceName,
-          'text-(--text-strong)',
-          entry.status !== 'confirmed' && <StatusChip status={entry.status} className="shrink-0" />,
-        )}
-        <p className="type-caption text-(--text-muted)">
-          {entry.customerName} · {STATUS_TEXT[entry.status]}
-        </p>
-      </button>
-    )
-  }
-
   const renderRow = (row: AgendaRow) => {
     if (row.type === 'entry') {
       return (
         <div className="flex items-start gap-(--space-12)">
           {timeColumn(row.entry.start, `${row.entry.durationMinutes} min`)}
-          {renderEntry(row.entry)}
+          <EntryCard entry={row.entry} now={now} onOpen={onOpen} />
         </div>
       )
     }

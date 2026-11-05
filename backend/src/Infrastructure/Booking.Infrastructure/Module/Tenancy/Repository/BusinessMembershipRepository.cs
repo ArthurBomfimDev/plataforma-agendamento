@@ -1,3 +1,4 @@
+using Booking.Domain.Entity.Base;
 using Booking.Domain.Entity.Module.Tenancy;
 using Booking.Domain.Enum.Module.Tenancy;
 using Booking.Domain.Interface.Repository.Module.Tenancy;
@@ -23,6 +24,12 @@ public sealed class BusinessMembershipRepository(BookingDbContext context) : IBu
     public Task<int> CountSeatsAsync(CancellationToken ct = default) =>
         context.Set<BusinessMembership>()
             .CountAsync(x => x.Status == BusinessMembershipStatus.Active || x.Status == BusinessMembershipStatus.Invited, ct);
+
+    public Task<PagedResult<BusinessMembership>> ListActiveAsync(PageRequest page, CancellationToken ct = default) =>
+        context.Set<BusinessMembership>().AsNoTracking()
+            .Where(x => x.Status == BusinessMembershipStatus.Active)
+            .OrderBy(x => x.Id)
+            .ToPagedAsync(page, ct);
 
     public void Add(BusinessMembership membership) => context.Set<BusinessMembership>().Add(membership);
 }

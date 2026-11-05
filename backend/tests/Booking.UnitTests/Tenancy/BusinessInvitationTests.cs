@@ -476,6 +476,9 @@ public sealed class BusinessInvitationTests
             Task.FromResult(Items.Count(x => x.BusinessId == currentBusiness()
                 && x.Status is BusinessMembershipStatus.Active or BusinessMembershipStatus.Invited));
 
+        public Task<PagedResult<BusinessMembership>> ListActiveAsync(PageRequest page, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public void Add(BusinessMembership membership) => Items.Add(membership);
     }
 

@@ -30,6 +30,12 @@ export const usePanelSeats = (businessId: string, enabled: boolean) =>
     enabled,
   })
 
+export const usePanelMembers = (businessId: string) =>
+  useService({
+    queryKey: queryKeys.panelMembers(businessId),
+    service: async (signal) => (await invitationService.members(signal)).items,
+  })
+
 /** Uma escrita nos convites: depois dela (também no erro), pendentes e vagas são buscados de novo. */
 export const useInvitationMutation = <TVariables, TResult>(
   businessId: string,

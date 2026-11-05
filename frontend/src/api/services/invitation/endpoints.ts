@@ -6,6 +6,7 @@ export const invitationEndpoints = {
   // Do dono, no contexto do estabelecimento.
   list: '/api/businesses/current/invitations',
   seats: '/api/businesses/current/seats',
+  members: '/api/businesses/current/members',
   one: (invitationId: string) =>
     `/api/businesses/current/invitations/${encodeURIComponent(invitationId)}`,
   resend: (invitationId: string) =>

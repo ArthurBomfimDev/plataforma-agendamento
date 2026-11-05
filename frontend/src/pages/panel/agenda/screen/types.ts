@@ -98,6 +98,8 @@ export type BusinessAgendaScreenProps = {
   controls?: AgendaControls
   /** Há filtro aplicado: o dia vazio diz isso, em vez de "nenhum agendamento". */
   filtered?: boolean
+  /** Atendente: lista única em ordem de horário, com o profissional em cada item, no lugar das colunas. */
+  timeline?: boolean
 }
 
 /**

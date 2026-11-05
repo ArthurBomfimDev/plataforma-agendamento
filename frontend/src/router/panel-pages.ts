@@ -6,6 +6,7 @@ export const PANEL_PAGE_LOADERS = {
   agenda: () => import('@pages/panel/agenda'),
   blocks: () => import('@pages/panel/blocks'),
   profile: () => import('@pages/panel/profile'),
+  members: () => import('@pages/panel/members'),
   more: () => import('@pages/panel/more'),
   photos: () => import('@pages/panel/photos'),
   requests: () => import('@pages/panel/requests'),

@@ -40,6 +40,7 @@ export const ROUTES = {
   panelNewService: '/panel/services/new',
   panelEditService: '/panel/services/:serviceId',
   panelProfessionals: '/panel/professionals',
+  panelMembers: '/panel/members',
   panelSchedules: '/panel/schedules',
   panelPhotos: '/panel/photos',
   panelSettings: '/panel/settings',
@@ -77,6 +78,7 @@ export const PANEL_PATHS: Record<PanelSection | PanelBottomItem, string> = {
   requests: ROUTES.panelRequests,
   services: ROUTES.panelServices,
   professionals: ROUTES.panelProfessionals,
+  members: ROUTES.panelMembers,
   schedules: ROUTES.panelSchedules,
   photos: ROUTES.panelPhotos,
   settings: ROUTES.panelSettings,
@@ -94,6 +96,7 @@ export const PANEL_PATHS: Record<PanelSection | PanelBottomItem, string> = {
 export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
   'services',
   'professionals',
+  'members',
   'schedules',
   'photos',
   'settings',
@@ -101,15 +104,11 @@ export const OWNER_ONLY_SECTIONS: ReadonlyArray<PanelSection> = [
 ]
 
 /**
- * O que cada papel não vê no menu. O dono não tem "Folgas e bloqueios" (está em Jornadas) nem "Meu perfil"; o atendente
- * não gere o estabelecimento nem tem perfil; o profissional não gere, mas tem folgas próprias e perfil.
+ * O que cada papel não vê no menu. O dono não tem "Folgas e bloqueios" (está em Jornadas) nem "Meu perfil". Atendente e
+ * profissional não gerem o estabelecimento; os dois têm "Meu perfil", mas o do atendente é só a conta, sem perfil público.
  */
 export const hiddenSectionsFor = (role: BusinessRole): ReadonlyArray<PanelSection> =>
-  role === 'Owner'
-    ? ['blocks', 'profile']
-    : role === 'Attendant'
-      ? [...OWNER_ONLY_SECTIONS, 'profile']
-      : OWNER_ONLY_SECTIONS
+  role === 'Owner' ? ['blocks', 'profile'] : OWNER_ONLY_SECTIONS
 
 /**
  * Seção do menu de um endereço do painel. Subpáginas contam como a seção ("Novo serviço" é Serviços);
