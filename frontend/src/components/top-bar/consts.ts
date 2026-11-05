@@ -1,5 +1,3 @@
-/**
- * Dado PROVISÓRIO, copiado dos wireframes: a cidade de onde o consumidor agenda. Sai quando a
- * localização vier do `useGeolocation` ou da escolha do consumidor.
- */
-export const MOCK_LOCATION = 'Duartina, SP'
+/** Texto da referência da busca na barra e na Home: sempre visível, sempre clicável para trocar. */
+export const locationReference = (label: string | null) =>
+  label ? `Perto de: ${label}` : 'Escolher localização'

@@ -1,0 +1,111 @@
+using Booking.Application.Module.Availability.Commands;
+using Booking.Application.Module.Availability.Queries;
+using Booking.Arguments.Module.Availability;
+using Booking.Domain.Entity.Base;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Booking.Api.Module.Availability;
+
+[ApiController]
+[Route("api/businesses/current/work-schedules")]
+[Authorize]
+public sealed class WorkSchedulesController : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType<PagedResult<WorkScheduleResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> List(
+        [FromQuery] Guid professionalId, [FromServices] ListWorkSchedulesQuery query, CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 50) =>
+        Ok(await query.ExecuteAsync(professionalId, new PageRequest(page, pageSize), ct));
+
+    [HttpPost]
+    [ProducesResponseType<WorkScheduleResponse>(StatusCodes.Status201Created)]
+    public async Task<IActionResult> Add(AddWorkScheduleRequest request, [FromServices] AddWorkScheduleCommand command, CancellationToken ct) =>
+        StatusCode(StatusCodes.Status201Created, await command.ExecuteAsync(request, ct));
+
+    /// <summary>409 <c>work_schedule.overlaps</c> se a nova faixa cruzar outra linha do mesmo profissional.</summary>
+    [HttpPut("{scheduleId:guid}")]
+    [ProducesResponseType<WorkScheduleResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Update(
+        Guid scheduleId, UpdateWorkScheduleRequest request, [FromServices] UpdateWorkScheduleCommand command, CancellationToken ct) =>
+        Ok(await command.ExecuteAsync(scheduleId, request, ct));
+
+    [HttpDelete("{scheduleId:guid}")]
+    public async Task<IActionResult> Remove(Guid scheduleId, [FromServices] RemoveWorkScheduleCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(scheduleId, ct);
+        return NoContent();
+    }
+}
+
+[ApiController]
+[Route("api/businesses/current/schedule-exceptions")]
+[Authorize]
+public sealed class ScheduleExceptionsController : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType<PagedResult<ScheduleExceptionResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> List(
+        [FromServices] ListScheduleExceptionsQuery query, CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) =>
+        Ok(await query.ExecuteAsync(new PageRequest(page, pageSize), ct));
+
+    /// <summary>Prévia do bloqueio: agendamentos pendentes e confirmados que cairiam no período. Não grava nada.</summary>
+    [HttpGet("affected-appointments")]
+    [ProducesResponseType<PagedResult<AffectedAppointmentResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AffectedAppointments(
+        [FromQuery] DateTimeOffset startsAt,
+        [FromQuery] DateTimeOffset endsAt,
+        [FromServices] PreviewAffectedAppointmentsQuery query,
+        CancellationToken ct,
+        [FromQuery] Guid? professionalId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20) =>
+        Ok(await query.ExecuteAsync(professionalId, startsAt, endsAt, new PageRequest(page, pageSize), ct));
+
+    /// <summary>
+    /// <c>existingAppointments</c>: <c>Keep</c> (padrão) ou <c>CancelAll</c> (com <c>cancellationReason</c>). Com
+    /// <c>CancelAll</c>, o bloqueio e os cancelamentos são gravados juntos.
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType<ScheduleExceptionResponse>(StatusCodes.Status201Created)]
+    public async Task<IActionResult> Add(
+        AddScheduleExceptionRequest request, [FromServices] AddScheduleExceptionCommand command, CancellationToken ct) =>
+        StatusCode(StatusCodes.Status201Created, await command.ExecuteAsync(request, ct));
+
+    [HttpDelete("{exceptionId:guid}")]
+    public async Task<IActionResult> Remove(Guid exceptionId, [FromServices] RemoveScheduleExceptionCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(exceptionId, ct);
+        return NoContent();
+    }
+}
+
+[ApiController]
+[Route("api/businesses/{businessId:guid}/availability")]
+[AllowAnonymous]
+public sealed class PublicAvailabilityController : ControllerBase
+{
+    [HttpGet]
+    [ProducesResponseType<AvailableSlotsResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Get(
+        Guid businessId,
+        [FromQuery] Guid serviceId,
+        [FromQuery] Guid professionalId,
+        [FromQuery] DateOnly date,
+        [FromServices] GetAvailableSlotsQuery query,
+        CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(businessId, serviceId, professionalId, date, ct));
+
+    [HttpGet("calendar")]
+    [ProducesResponseType<AvailabilityCalendarResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Calendar(
+        Guid businessId,
+        [FromQuery] Guid serviceId,
+        [FromQuery] Guid professionalId,
+        [FromQuery] DateOnly from,
+        [FromQuery] DateOnly to,
+        [FromServices] GetAvailabilityCalendarQuery query,
+        CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(businessId, serviceId, professionalId, from, to, ct));
+}

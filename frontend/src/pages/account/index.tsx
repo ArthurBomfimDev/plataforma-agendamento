@@ -1,0 +1,63 @@
+import { contextItems, useContextSwitch } from '@hooks/use-account-menu'
+import { useChangePassword, useUpdateMe } from '@api/services/auth/hooks'
+
+import type { MyAccountData } from './screen/types'
+import { MyAccountScreen } from './screen'
+import { ROUTES, registerBusinessPath } from '@router/paths'
+import { RequireSession } from '@router/guards/require-session'
+import { errorMessage } from '@api/base'
+import { useNavigate } from 'react-router'
+
+const MyAccount = () => {
+  const navigate = useNavigate()
+  const { me, context, choose, leave } = useContextSwitch()
+  const updateMe = useUpdateMe()
+  const changePassword = useChangePassword()
+  const several = me.data ? contextItems(me.data, context?.businessId ?? null).length > 1 : false
+
+  // "Meu painel": só para quem tem estabelecimento e está como consumidor. Com um só, abre direto; com vários, escolhe.
+  const businesses = me.data?.businesses ?? []
+  const onOpenPanel =
+    businesses.length > 0 && !context
+      ? () =>
+          businesses.length === 1
+            ? choose(businesses[0].businessId)
+            : navigate(ROUTES.chooseContext)
+      : undefined
+
+  const attempt = async (task: () => Promise<unknown>) => {
+    try {
+      await task()
+      return null
+    } catch (error) {
+      return errorMessage(error)
+    }
+  }
+
+  const data: MyAccountData = me.isError
+    ? { status: 'error', message: errorMessage(me.error), onRetry: () => void me.refetch() }
+    : me.data
+      ? { status: 'ready', fullName: me.data.fullName, email: me.data.email }
+      : { status: 'loading' }
+
+  return (
+    <MyAccountScreen
+      data={data}
+      onSaveName={(fullName) => attempt(() => updateMe.mutateAsync(fullName))}
+      onChangePassword={(current, next) =>
+        attempt(() => changePassword.mutateAsync({ current, next }))
+      }
+      onSignOut={leave}
+      onOpenPanel={onOpenPanel}
+      onRegisterBusiness={() => navigate(registerBusinessPath())}
+      onSwitchContext={several ? () => navigate(ROUTES.chooseContext) : undefined}
+    />
+  )
+}
+
+/** `#/account` (Onda 7CF): Minha conta. Exige sessão; vale para qualquer contexto. */
+export const MyAccountRoute = () => (
+  <RequireSession>
+    <MyAccount />
+  </RequireSession>
+)

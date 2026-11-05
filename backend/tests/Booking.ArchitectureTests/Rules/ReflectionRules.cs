@@ -93,7 +93,9 @@ internal static class ReflectionRules
             foreach (Type configuration in configurations)
             {
                 Type mapped = configuration.GetGenericArguments()[0];
-                if (!IsDomainType(mapped))
+
+                // BaseMapping<T> aberto: o T é parâmetro, não tipo mapeado. Quem fecha o genérico é verificado.
+                if (!mapped.IsGenericParameter && !IsDomainType(mapped))
                 {
                     violations.Add($"{type.FullName} mapeia {mapped.FullName}");
                 }
@@ -141,9 +143,12 @@ internal static class ReflectionRules
     private static bool IsBaseAbstraction(Type genericType)
     {
         string? ns = genericType.GetGenericTypeDefinition().Namespace;
+
+        // BaseMapping<T> é infraestrutura do EF, não o CRUD genérico que a decisão 2 restringe.
         return ns is not null
             && ns.StartsWith("Booking.", StringComparison.Ordinal)
-            && ns.EndsWith(".Base", StringComparison.Ordinal);
+            && ns.EndsWith(".Base", StringComparison.Ordinal)
+            && ns != "Booking.Infrastructure.Persistence.Mapping.Base";
     }
 
     private static bool IsQuerySurface(Type type)

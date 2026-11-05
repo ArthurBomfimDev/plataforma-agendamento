@@ -1,0 +1,49 @@
+import {
+  BlockIcon,
+  CheckIcon,
+  DoneAllIcon,
+  type IconComponent,
+  PersonOffIcon,
+  ScheduleIcon,
+} from '@assets/icons'
+import type { AppointmentStatus } from './types'
+
+/**
+ * Cada estado tem canal além da cor (Figma, "Chip de status"): Pending = borda tracejada + relógio
+ * (o único tracejado do sistema, "provisório"); Confirmed = preenchido + check; Completed = sem
+ * borda + check duplo; Cancelled = preenchido + barra.
+ */
+export const STATUS: Record<
+  AppointmentStatus,
+  { label: string; icon: IconComponent; className: string }
+> = {
+  pending: {
+    label: 'Pendente',
+    icon: ScheduleIcon,
+    className:
+      'border-dashed border-(--status-pending-fg) bg-(--status-pending-bg) text-(--status-pending-fg)',
+  },
+  confirmed: {
+    label: 'Confirmado',
+    icon: CheckIcon,
+    className:
+      'border-(--status-confirmed-fg) bg-(--status-confirmed-bg) text-(--status-confirmed-fg)',
+  },
+  completed: {
+    label: 'Concluído',
+    icon: DoneAllIcon,
+    className: 'border-transparent bg-(--status-completed-bg) text-(--status-completed-fg)',
+  },
+  // TODO(figma): o Cancelled não aparece em nenhuma tela; segue só a descrição do componente.
+  cancelled: {
+    label: 'Cancelado',
+    icon: BlockIcon,
+    className: 'border-transparent bg-(--status-cancelled-bg) text-(--status-cancelled-fg)',
+  },
+  // Painel (Onda 7A): o estabelecimento marca a falta. Ícone próprio, além da cor.
+  'no-show': {
+    label: 'Faltou',
+    icon: PersonOffIcon,
+    className: 'border-(--status-noshow-fg) bg-(--status-noshow-bg) text-(--status-noshow-fg)',
+  },
+}

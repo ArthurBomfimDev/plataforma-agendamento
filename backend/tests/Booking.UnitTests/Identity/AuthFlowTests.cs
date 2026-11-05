@@ -114,9 +114,24 @@ public sealed class AuthFlowTests
         Assert.Equal("auth.refresh_token_reused", await CodeOf(() => _f.Refresh().ExecuteAsync(
             new RefreshSessionRequest(first.RefreshToken))));
 
-        Assert.Equal("auth.refresh_token_reused", await CodeOf(() => _f.Refresh().ExecuteAsync(
+        // O reuso derrubou o `second` também, sem substituto: ele agora é só inválido (7CF), e nada volta a valer.
+        Assert.Equal("auth.invalid_refresh_token", await CodeOf(() => _f.Refresh().ExecuteAsync(
             new RefreshSessionRequest(second.RefreshToken))));
         Assert.All(_f.RefreshTokens.Items, t => Assert.NotNull(t.RevokedAt));
+    }
+
+    [Fact]
+    public async Task Refresh_after_a_mass_revocation_is_invalid_and_does_not_kill_the_new_session()
+    {
+        _f.SeedUser();
+        AuthResponse old = await _f.Login().ExecuteAsync(new LoginRequest("ana@exemplo.com", IdentityFixture.Password));
+        await _f.Logout().ExecuteAsync(new LogoutRequest(old.RefreshToken));
+        AuthResponse fresh = await _f.Login().ExecuteAsync(new LoginRequest("ana@exemplo.com", IdentityFixture.Password));
+
+        Assert.Equal("auth.invalid_refresh_token", await CodeOf(() => _f.Refresh().ExecuteAsync(
+            new RefreshSessionRequest(old.RefreshToken))));
+        // A sessão aberta depois continua valendo.
+        await _f.Refresh().ExecuteAsync(new RefreshSessionRequest(fresh.RefreshToken));
     }
 
     [Fact]
@@ -182,7 +197,9 @@ public sealed class AuthFlowTests
 
         Assert.Equal("user_token.invalid", await CodeOf(() => _f.ResetPassword().ExecuteAsync(
             new ResetPasswordRequest(raw, "outra-senha-789"))));
-        Assert.Equal("auth.refresh_token_reused", await CodeOf(() => _f.Refresh().ExecuteAsync(
+        // Sessão encerrada pela redefinição: inválida, não "reuso" — senão o aparelho antigo, ao tentar renovar,
+        // derrubaria também a sessão nova (7CF).
+        Assert.Equal("auth.invalid_refresh_token", await CodeOf(() => _f.Refresh().ExecuteAsync(
             new RefreshSessionRequest(session.RefreshToken))));
         Assert.Equal("auth.invalid_credentials", await CodeOf(() => _f.Login().ExecuteAsync(
             new LoginRequest("ana@exemplo.com", IdentityFixture.Password))));

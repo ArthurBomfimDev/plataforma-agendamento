@@ -1,147 +1,169 @@
-# Eixo de marca, paleta e tipografia — aprovado
+# Eixo de marca, paleta e tipografia
 
-> Fecha parte da pendência **D** do `PROJECT-CONTEXT.md`. Nada aqui depende do nome da marca (pendência A).
 > Arquivo Figma: `https://www.figma.com/design/E2M0TJehjcrSk4uaXlHI0s`
-> **Última atualização:** 2026-09-05 · Etapas 1–4 concluídas (eixo, paleta, tipografia, tokens no Figma).
+> **Última atualização:** 2026-10-09 · **Revisão 5 — marca Vagoo, paleta azul.**
 
-## 1. Eixo (Etapa 1 — aprovado)
+---
 
-Híbrido: **base "Precisão calma", calor de "Ofício"**.
+## 0. Histórico
+
+| | R1 (reprovada) | R2 | R3 | R4 | **R5** |
+|---|---|---|---|---|---|
+| Marca | sem nome | sem nome | sem nome | sem nome | **Vagoo** |
+| Neutros | bege quente | cinza quase puro | cinza quase puro | idem + rampa escura | **slate frio (azulado)** |
+| Primária | `#0F6E83` | `#0B7690` | `#0C7D99` | idem + `#4FC3DE` no escuro | **`#3B82F6` (azul)** |
+| Fundo escuro | — | — | — | `#121211` | **`#070B14`** |
+| Matizes de status | 6 | 3 | 3 | 3 | 3 |
+| Famílias tipográficas | 2 | 1 | 1 | 1 | 1 |
+| Célula de calendário | caixa por dia | caixa por dia | grade aberta, 5 estados | 7 estados + legenda | idem |
+| Tracejado | 8 usos | 8 usos | 2 usos | 2 usos | 2 usos |
+| Modos | 1 | 1 | 1 | 2 | 2 |
+
+Nenhuma revisão exigiu refazer tela. A R5 trocou a identidade inteira do produto — marca, matiz primária, temperatura dos neutros e fundo do tema escuro — e custou **uma edição de 35 primitivas**. Zero alias alterado, zero nó tocado, zero tela refeita, nas 8 páginas e ~50 telas. É a prova mais forte da arquitetura primitiva → alias semântico, e é o número que vai para o TCC.
+
+⚠️ **Hex antigos circulam em prompts e anotações.** Toda a paleta azul-água (`#0C7D99`, `#0F6E83`, `#0B7690`, `#4FC3DE`) e os neutros quentes (`#141413`, `#8C867B`) estão **mortos**. O arquivo Figma é a fonte da verdade.
+
+---
+
+## 1. Eixo
+
+Base **"Precisão calma"**, calor de **"Ofício"**.
 
 - **É:** clara · confiável · acolhedora
 - **Não é:** corporativa · fria · genérica
-- **Hierarquia dura:** quando calor e legibilidade brigarem, legibilidade ganha. O calor vive nos neutros, no raio, na tipografia e na vitrine do consumidor — **nunca na cor de status**.
-- Aproveitado do iFood/Airbnb: fundo claro dominante, neutro fazendo a maior parte do trabalho, uma cor sólida usada com disciplina, foto carregando o desejo. Isso é estrutura, não matiz.
+- Quando calor e legibilidade brigarem, **legibilidade ganha**.
 
-## 2. Decisão de risco registrada (para o capítulo de limitações)
+## 2. Decisão de risco registrada (capítulo de limitações)
 
-A primária foi definida como **azul-água assumido**, contra a recomendação inicial. Consequência declarada: **a marca será vizinha cromática de Calendly, Google Calendar e Doctoralia.** A diferenciação passa a depender de tipografia, forma e temperatura dos neutros.
+A R5 **revoga a proibição de azul corporativo** que valia até a R4. A marca Vagoo é azul, e o sistema segue a marca. O custo precisa ser declarado no TCC em vez de escondido: azul é a cor mais disputada da categoria — Calendly, Google Calendar, Doctoralia e metade do SaaS brasileiro moram nessa faixa. A diferenciação agora depende inteiramente de **tipografia, forma, densidade e dos neutros frios**, não da matiz.
 
-Mitigações embutidas:
-1. O azul-água é **escuro nos pontos de ação** (`#0F6E83`); o tom claro fica em superfície, nunca em botão.
-2. O neutro é **quente** (matiz ~40°), o que separa a interface do cinza-azulado padrão da categoria.
-3. A tipografia (Plex + Source Serif) é hoje a principal linha de separação da marca.
+## 3. Paleta — modo Light
 
-## 3. Paleta (Etapa 2 — aprovada)
+Nenhum par texto/fundo abaixo de **4,5:1**; nenhuma borda de componente interativo abaixo de **3:1**.
 
-Nenhum par texto/fundo abaixo de **4,5:1**; nenhuma borda de componente interativo abaixo de **3:1**. Meta do TCC: Lighthouse a11y ≥ 95 (RNF-04).
+**Primária (azul):** `50 #EFF6FF` · `100 #DBEAFE` · `200 #BFDBFE` · `300 #93C5FD` · `400 #60A5FA` · **`500 #3B82F6`** · **`600 #2563EB`** · `700 #1D4ED8` · `800 #1E40AF` · `900 #172554`
 
-### Primária — azul-água
-`50 #EAF7FA` · `100 #CDEDF3` · `200 #9CDBE7` · `300 #63C4D6` · `400 #34A8BF` · `500 #1B8AA1` · **`600 #0F6E83`** · `700 #0B5766` · `800 #09424D` · `900 #072F37`
+**O azul da marca não pode ser o preenchimento do botão.** `#3B82F6` com texto branco dá **3,68:1** e reprova em AA para texto de interface. Ele passa só como texto grande, que é exatamente o uso dele no logotipo — por isso o ícone do app funciona e um botão não funcionaria. Solução sem perder a marca:
 
-- **600 é a cor de ação** — branco sobre ela dá 5,87:1. Tons claros de azul-água (~`#7DD3E0`) ficam em ~1,9:1 e por isso **nunca** são fundo de botão.
-- 300 e 400 são decorativos: reprovam como texto.
+- `#3B82F6` mora em **`primary/500`** e é o azul da identidade: bordas, foco, ícones, estado selecionado, logotipo.
+- **`action/primary` aponta para `primary/600` = `#2563EB`** (texto branco em **5,17:1**). Mesma família de matiz, lido como "aquele azul".
 
-### Secundária — argila (calor da direção A)
-`100 #FBEFE6` · `300 #E9B98F` · `500 #C97F4A` (3,17:1 → só não-texto) · `700 #8E5426` (6,09:1 ✅)
+A alternativa seria manter `#3B82F6` no botão com texto quase preto. Reprova por outro motivo: contradiz o próprio logotipo, que é branco sobre azul.
 
-Matiz 24° dessaturado — afasta do vermelho de delivery (5–10° saturado) e do dourado sobre preto.
+**Neutros (slate frio):** `0 #FFFFFF` · `50 #F8FAFC` · `100 #F1F5F9` · `200 #E2E8F0` · `300 #CBD5E1` · `400 #94A3B8` · `500 #64748B` · `600 #475569` · `700 #334155` · `800 #1E293B` · `900 #0F172A`
 
-### Neutros quentes (11 passos)
-`0 #FFFFFF` · `50 #FAF9F7` · `100 #F4F2EE` · `200 #E8E5DF` · `300 #D6D2CA` · `400 #B3ADA3` · `500 #8C867B` · `600 #6B655B` · `700 #4E4941` · `800 #33302B` · `900 #1C1A17`
+Os neutros saíram de quentes para frios **por obrigação, não por gosto**: cinza bege ao lado de um fundo azul-marinho lê como sujeira. N500 (4,76 sobre branco) continua sendo borda de componente interativo e texto desabilitado.
 
-| Passo | /branco | Papel |
-|---|---|---|
-| 200 | — | **divisória decorativa** |
-| 400 | 2,23 | ícone decorativo, placeholder — ❌ texto |
-| 500 | **3,61** | **borda de componente interativo** (WCAG 1.4.11 ✅) |
-| 600 | 5,77 | texto secundário |
-| 700 | 8,92 | corpo |
-| 800 | 13,14 | títulos |
-| 900 | 17,36 | ênfase máxima |
+**Status — três matizes, dois canais sempre:**
 
-⚠️ Borda de campo/botão-fantasma usa **N500**, nunca N300 (1,51:1 reprova o critério de contraste não-textual — é onde o Lighthouse costuma derrubar a nota).
-
-### Status do agendamento — cor **+ segundo canal obrigatório**
-
-| Estado | fg | bg | Contraste | 2º canal (não-cor) |
+| Estado | fg | bg | Contraste | 2º canal |
 |---|---|---|---|---|
-| `Pending` | `#96560A` | `#FDF1DC` | 5,17 | borda **tracejada** + ícone relógio + contador "expira em Xh" |
-| `Confirmed` | `#1B7A4B` | `#E6F4EC` | 4,71 | preenchimento **sólido**, borda contínua + ícone check |
-| `Rejected` | `#B3261E` | `#FBEAE8` | 5,61 | ícone ✕ em círculo contornado |
-| `Expired` | `#6B655B` | `#F4F2EE` | 5,16 | borda tracejada + ícone ampulheta |
-| `Cancelled` | `#4E4941` | `#F4F2EE` | 7,98 | **texto do serviço riscado** + ícone barra |
-| `Completed` | `#33302B` | `#E8E5DF` | 10,45 | check duplo, chip sem matiz |
-| `NoShow` | `#7A2E6B` | `#F6E9F3` | 7,35 | ícone pessoa-✕ + borda pontilhada grossa |
+| `Pending` | `#92400E` | `#FEF3C7` | 6,37 | **borda tracejada** + relógio |
+| `Confirmed` | `#15803D` | `#DCFCE7` | 4,57 | preenchido + check |
+| `Rejected` | `#B91C1C` | `#FEE2E2` | 5,30 | preenchido + ✕ |
+| `NoShow` | `#B91C1C` | `#FEE2E2` | 5,30 | **borda de 2px** + pessoa-✕ |
+| `Expired` | `#475569` | — | 7,58 | **vazado** + ampulheta |
+| `Cancelled` | `#334155` | `#F1F5F9` | 9,90 | preenchido + barra |
+| `Completed` | `#1E293B` | `#E2E8F0` | 11,87 | sem borda + check duplo |
 
-**`Pending` vs `Confirmed` diferem em quatro canais** (matiz, forma da borda, ícone, preenchimento) — requisito duro, já que aprovação manual é o padrão do produto.
-**`Confirmed` não usa a primária de propósito:** se verde de confirmação e azul-água de ação fossem a mesma família, o chip de status competiria com o botão nas duas telas mais usadas.
+✅ **Pendência resolvida.** O amarelo-oliva reprovado (`#6B5A00`/`#FFF8E1`) saiu. O âmbar `#92400E` sobre `#FEF3C7` entrega os mesmos 6,4 de contraste e funciona porque agora há contraste de temperatura: um âmbar quente contra neutros frios e um primário azul **grita atenção** de um jeito que o oliva contra neutros bege não conseguia. A cor não mudou de legibilidade; mudou de vizinhança.
 
-### Estados da agenda
+**Regra do tracejado:** tracejado significa "provisório ou vazio". Dois usos: chip `Pending` e vão livre na agenda. Todo o resto usa borda sólida com barra de destaque à esquerda.
 
-| Estado | Fill | Borda | 2º canal |
+## 4. Paleta — modo Dark
+
+O modo escuro **não troca nenhum alias**: inverte o papel das primitivas.
+
+**Neutros (escuro):** `0 #0E1627` (superfície) · **`50 #070B14` (página)** · `100 #18233A` · `200 #243352` · `300 #334766` · `400 #46597A` · `500 #64748B` · `600 #8FA0B8` · `700 #B6C2D4` · `800 #D8E0EA` · `900 #F2F6FB`
+
+`#070B14` é o fundo da marca. A superfície `#0E1627` fica um degrau acima para que card e página se separem sem borda.
+
+**Primária (escuro):** `50 #0E1D33` · `100 #122742` · `200 #163257` · `300 #1C4480` · `400 #2563EB` · `500 #3B82F6` · **`600 #60A5FA`** · `700 #7FB6FB` · `800 #A6CCFC` · `900 #CBE1FE`
+
+| Par | Escuro |
+|---|---|
+| texto de corpo sobre a página | **10,92** |
+| texto secundário sobre superfície elevada | **6,54** |
+| borda interativa sobre a página | **4,14** (≥3 ✅) |
+| texto sobre o botão (`text/on-action` → `neutral/0`) | **7,10** |
+| link sobre a página | 7,74 |
+| link sobre superfície selecionada | 6,65 |
+
+**Status (escuro):** `Pending` `#FCD34D` / `#2B1F08` (11,18) · `Confirmed` `#6EE7B7` / `#06281C` (10,37) · `Rejected` e `NoShow` `#FCA5A5` / `#2D1114` (9,21).
+
+**A inversão automática resolve o botão sozinha.** `text/on-action` é `neutral/0`: branco no claro sobre azul profundo, azul-marinho quase preto no escuro sobre azul brilhante. Nenhuma regra extra.
+
+**Exceções de alias por modo — três, e só três:**
+
+- `bg/inverse` → `neutral/900` no claro, **`primary/200` no escuro** (senão os blocos ocupados da agenda viram três colunas de brilho)
+- `text/on-inverse` → `neutral/0` no claro, **`neutral/900` no escuro**
+- `bg/scrim` → `neutral/900` no claro, **`neutral/50` no escuro**
+
+## 5. Marca
+
+**Vagoo** — `AGENDE · ESCOLHA · VÁ`. O gradiente do logotipo (ciano → azul) existe como duas primitivas de escopo vazio, `primitive/brand/gradient-from` (`#22D3EE`) e `primitive/brand/gradient-to` (`#2563EB` no claro, `#3B82F6` no escuro). Elas são **exclusivas do logotipo e de peças de marca**. Gradiente não entra em interface: não tem como garantir contraste em cima de uma superfície que varia.
+
+A pendência A (ausência de nome e marca) está **encerrada**.
+
+## 6. Tipografia
+
+**IBM Plex Sans, família única**, OFL, Latin Extended. Estilos: `Regular`, `Medium`, `SemiBold` (sem espaço).
+
+| Token | px | Line-height | Peso |
 |---|---|---|---|
-| Livre | `#FFFFFF` | N500 contínua | rótulo do horário em N700 |
-| Ocupado | `#CDEDF3` | P600 contínua | nome do serviço + ícone pessoa |
-| Bloqueado | `#F4F2EE` + hachura diagonal N400 | N500 tracejada | ícone cadeado + motivo |
-| Fora do expediente | `#F4F2EE` liso | **sem borda** | célula não focável, sem rótulo |
-| Feriado | `#FBEFE6` | N500 + **faixa superior pontilhada `#8E5426`** | ícone bandeira + nome do feriado |
+| `display` | 32 | 38 | SemiBold |
+| `title` | 24 | 31 | SemiBold |
+| `heading` | 20 | 27 | SemiBold |
+| `body-lg` | 18 | 28 | Regular |
+| `body` | 16 | 24 | Regular/Medium |
+| `label` | 14 | 20 | Medium |
+| `caption` | 12 | 16 | Regular |
 
-Feriado **coexiste** com os demais: faixa e ícone permanecem mesmo quando a empresa abre e a célula está livre (regra do §5 do PROJECT-CONTEXT).
+Piso de 12px. **Campo de formulário obrigatoriamente 16px** (abaixo disso o Safari do iOS dá zoom no foco). Altura de linha em px, não unitless. Três pesos apenas.
 
-### Marcadores
+⚠️ O logotipo usa uma grotesca geométrica arredondada, que **não** é IBM Plex Sans. Isso é normal — logotipo é desenho, não tipografia de sistema. Não trocar a fonte da interface para imitá-lo.
 
-| Marcador | Cor | 2º canal |
+## 7. Tokens
+
+Quatro coleções. A de cor tem **dois modos: Light e Dark**. Zero `ALL_SCOPES`; todas com `codeSyntax` WEB.
+
+`color` 89 (37 primitivas de escopo `[]` + 52 semânticas por alias) · `space` 18 (inclui `size/touch-min: 44`) · `radius` 6 · `type` 18.
+
+Componentes e telas ligam **só** em tokens semânticos.
+
+## 8. Regra de geometria — permanente
+
+**Aplicar estilo nunca pode encolher um alvo de toque.** Origem: a `Célula de calendário` chegou a ficar 44×20 com padding zero. Hoje é grade aberta sem caixa por dia e continua **44×44**, ligada a `size/touch-min`.
+
+Alvo de 44px vale para botão, campo, chip de horário, célula de calendário, célula de agenda, item de navegação, item de lista e ícone clicável.
+
+## 9. Calendário — sete estados
+
+Grade aberta, sem caixa por dia. Cada estado tem marcador próprio abaixo do número, e o feriado usa um canal separado (barra no topo, posicionada em absoluto para não disputar os 44px).
+
+| Estado | Marcador | Significa |
 |---|---|---|
-| Estabelecimento verificado | `#0F6E83` | ícone escudo-check + rótulo "Verificado" |
-| Pedido expirando | `#96560A` / `#FDF1DC` | contador regressivo textual + borda tracejada animada |
-| Transbordo do expediente | `#8E5426` | borda pontilhada + rótulo "fora do horário" |
-| Categoria sensível (LGPD) | `#5B4B8A` / `#EFEBF7` | ícone cadeado + bloco de consentimento **que bloqueia o fluxo** |
+| Disponível | ponto cheio | tem horário livre |
+| Sem horário | anel vazado | abre, mas está lotado |
+| Não abre | traço | domingo ou dia sem jornada |
+| Passado | nenhum | data já foi |
+| Selecionado | círculo cheio | a data escolhida |
+| Feriado aberto | barra no topo + ponto | feriado com expediente |
+| Feriado fechado | barra no topo + traço | feriado sem expediente |
 
-Sensível é o único matiz fora das três famílias, de propósito: não pode ser confundido com status nem com marca (§14, Art. 11 da LGPD).
+**Legenda obrigatória** abaixo da grade — marcador sem legenda é enigma.
 
-## 4. Tipografia (Etapa 3 — aprovada)
+**Vários feriados no mês:** a barra no topo escala porque é canal independente. O que não escalava era a nota fixa; virou uma **linha de resumo do mês** ("Feriados em setembro: 7 · Independência"). A caixa que bloqueia fica reservada para quando o consumidor seleciona uma data de feriado.
 
-| Família | Papel | Licença | Eixos | Subsets |
-|---|---|---|---|---|
-| **IBM Plex Sans** | interface, corpo, dados, painel inteiro | **OFL** | `wght` 100–700, `wdth` 75–100 | latin, **latin-ext**, vietnamese, cyrillic, greek |
-| **Source Serif 4** | só `display` e `title` da vitrine do consumidor | **OFL** | `wght` 200–900, **`opsz` 8–60** | latin, **latin-ext**, vietnamese, cyrillic, greek |
+**Muitos horários:** períodos com contagem (`Tarde · 12 horários`), expandidos ou recolhidos, em grade que quebra linha com rolagem vertical. **Carrossel foi descartado**: esconde opções atrás de um gesto, quebra a varredura vertical, é ruim com leitor de tela e piora o RNF-05.
 
-Licenças e subsets **verificados** nos `METADATA.pb` do repositório `google/fonts`. Estilos confirmados no Figma: `Regular`, `Medium`, `SemiBold` (sem espaço).
+## 10. Estrutura de páginas do arquivo
 
-**Por que Plex Sans (legibilidade em 390px):** aberturas abertas em `a c e s`; `1 l I` desambiguados; **figuras tabulares (`tnum`)** — o produto empilha número em coluna (grade de horários, agenda do dia, quatro números do relatório) e sem largura fixa de dígito a coluna treme; eixo de largura 75–100 dá cabeçalho de tabela condensado no painel sem uma terceira família; Latin Extended com glifos desenhados para `ã õ ç â ê`.
-
-**Por que Source Serif 4, e restrita:** o eixo `opsz` 8–60 entrega um corte desenhado para 32px — serifada estática nesse tamanho fica pesada ou com hairline que some no subpixel do Android. **Regra dura: zero serifada no painel de 1280px** (densidade alta com serifada aumenta o tempo de varredura da agenda do dia).
-
-### Escala — 7 tamanhos
-
-| Token | px | Line-height | Razão | Família / peso | Uso |
-|---|---|---|---|---|---|
-| `display` | 32 | 38 | 1,19 | Source Serif 4 · SemiBold | título de tela da vitrine |
-| `title` | 24 | 31 | 1,29 | Source Serif 4 · SemiBold | título de seção, cabeçalho de modal |
-| `heading` | 20 | 27 | 1,35 | Plex Sans · SemiBold | título de card, cabeçalho do painel |
-| `body-lg` | 18 | 28 | 1,56 | Plex Sans · Regular | política de cancelamento, consentimento LGPD |
-| `body` | 16 | 24 | 1,50 | Plex Sans · Regular/Medium | corpo padrão, **todo campo de formulário** |
-| `label` | 14 | 20 | 1,43 | Plex Sans · Medium | rótulo, chip, botão, célula densa do painel |
-| `caption` | 12 | 16 | 1,33 | Plex Sans · Regular | metadado, timestamp |
-
-Regras da escala:
-
-- Piso de 12px; `caption` nunca carrega informação exclusiva.
-- **Campo de formulário obrigatoriamente 16px** — abaixo disso o Safari do iOS dá zoom no foco e desloca o layout (compromete o RNF-05).
-- Altura de linha em **px, não unitless**, porque a grade de slots é calculada e a célula precisa de altura previsível.
-- Três pesos apenas (Regular, Medium, SemiBold). Hierarquia vem de tamanho e cor.
-- Carga: dois arquivos variáveis, subset `latin` + `latin-ext`, `font-display: swap`, pré-carga só do Plex Sans (mantém folga no RNF-04 perf ≥ 85).
-
-## 5. Tokens no Figma (Etapa 4 — concluída)
-
-Quatro coleções, modo único **Light**, **128 variáveis**, **zero `ALL_SCOPES`**, todas com `codeSyntax` WEB (`var(--…)`).
-
-| Coleção | Variáveis | Conteúdo |
-|---|---|---|
-| `color` | 85 | 35 primitivas (escopo `[]`, invisíveis nos seletores) + 50 tokens semânticos por alias |
-| `space` | 18 | `space/2…64` (escopo `GAP`) + `size/*` incl. `size/touch-min: 44` (escopo `WIDTH_HEIGHT`) |
-| `radius` | 6 | `none · sm 6 · md 10 · lg 14 · xl 20 · full 999` (escopo `CORNER_RADIUS`) |
-| `type` | 19 | `family/*` · `weight/*` · `size/*` · `line-height/*` (escopos `FONT_FAMILY`, `FONT_STYLE`, `FONT_SIZE`, `LINE_HEIGHT`) |
-
-**Arquitetura:** primitiva → alias semântico. Componentes e telas ligam **só** em tokens semânticos; nenhuma primitiva aparece em seletor de propriedade. Trocar `primitive/primary/600` repropaga por todo o sistema.
-
-Grupos semânticos: `bg/*` · `text/*` · `border/*` · `action/*` · `status/<estado>/{fg,bg}` (7 estados) · `agenda/*` · `marker/*`.
-
-Modo escuro: **fora de escopo** por decisão, só se sobrar tempo.
-
-## 6. Próximas etapas
-
-5. Componentes base com variantes (botão, campo, card, chip de status, avatar, item de lista, célula de calendário, chip de horário, badge, divisória) — todas as propriedades ligadas a variáveis, zero valor hardcoded.
-6. Aplicação nas 12 telas existentes, em lotes pequenos validados por screenshot.
-7. Telas faltantes (login/cadastro, recuperação de senha, consentimento LGPD, onboarding da empresa, cancelamento, marcação de balcão, agenda do profissional, estados vazios e de erro).
+| Página | Conteúdo |
+|---|---|
+| `Design System` | 11 conjuntos de componentes, 18 ícones, estilos |
+| `Autenticação` | A01–A07 |
+| `Consumidor` | 01–14 mobile + 01D–08D desktop |
+| `Painel — mobile` | P01–P05 |
+| `Estabelecimento — onboarding` | E01 |
+| `Autenticação — Dark` · `Consumidor — Dark` · `Painel mobile — Dark` | clones com o modo Dark fixado |

@@ -1,5 +1,5 @@
 import type { AppointmentCardProps } from './types'
-import { StatusChip } from '../status-chip'
+import { StatusChip } from '@components/status-chip'
 import { cn } from 'cn'
 
 /**

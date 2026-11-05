@@ -4,9 +4,9 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogTitle,
-} from '../ui/alert-dialog'
+} from '@components/ui/alert-dialog'
 
-import { Button } from '../button'
+import { Button } from '@components/button'
 import type { ConfirmDialogProps } from './types'
 import { useRef } from 'react'
 

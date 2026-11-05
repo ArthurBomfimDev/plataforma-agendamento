@@ -1,4 +1,4 @@
-import type { AppointmentStatus } from '../status-chip/types'
+import type { AppointmentStatus } from '@components/status-chip/types'
 import type { ReactNode } from 'react'
 
 export type AppointmentCardProps = {

@@ -6,7 +6,7 @@
 # O GitHub NUNCA aceita aprovação do próprio autor do PR.
 #
 # Se um caminho tivesse um único owner, todo PR desse owner naquele caminho ficaria
-# SEM NINGUÉM QUE PUDESSE APROVAR. Na configuração anterior, com `/src/web/` só do
+# SEM NINGUÉM QUE PUDESSE APROVAR. Na configuração anterior, com `/frontend/` só do
 # Rafael, nenhum PR de frontend do Rafael seria mergeável — e ele, por não ser admin,
 # nem teria a válvula de emergência. O mesmo valeria para o Arthur no backend.
 #

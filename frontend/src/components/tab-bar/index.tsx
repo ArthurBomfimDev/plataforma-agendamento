@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 import type { TabBarProps } from './types'
