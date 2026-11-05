@@ -27,6 +27,13 @@ describe('AppointmentCard', () => {
     expect(render({ image, category: 'Beleza' })).toMatch(/<img[^>]*businesses\/b1\/k-/)
   })
 
+  it('a imagem aparece também no celular: nada a esconde abaixo do desktop', () => {
+    const html = render({ image: null, category: 'Beleza' })
+
+    expect(html).toContain('size-14')
+    expect(html).not.toMatch(/hidden size-1\d/)
+  })
+
   it('sem foto: a ilustração da categoria, e não o quadrado cinza', () => {
     const html = render({ image: null, category: 'Saude' })
 

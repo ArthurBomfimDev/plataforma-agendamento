@@ -31,28 +31,30 @@ export const AppointmentCard = (props: AppointmentCardProps) => {
         className,
       )}
     >
-      {/* Logotipo (ou a capa); sem imagem, a ilustração da categoria, como na revisão do pedido. */}
-      <SmartImage
-        image={image ?? null}
-        alt=""
-        sizes="72px"
-        width={1}
-        height={1}
-        fallback={<BusinessIllustration category={category ?? 'Beleza'} />}
-        className="hidden size-18 shrink-0 rounded-md lg:block"
-      />
+      <div className="flex min-w-0 items-start gap-(--space-12) lg:flex-1 lg:items-center lg:gap-(--space-20)">
+        {/* Logotipo (ou a capa); sem imagem, a ilustração da categoria, como na revisão do pedido. */}
+        <SmartImage
+          image={image ?? null}
+          alt=""
+          sizes="72px"
+          width={1}
+          height={1}
+          fallback={<BusinessIllustration category={category ?? 'Beleza'} />}
+          className="size-14 shrink-0 rounded-md lg:size-18"
+        />
 
-      <div className="flex flex-col gap-(--space-12) lg:min-w-0 lg:flex-1 lg:gap-(--space-4)">
-        <div className="flex items-center gap-(--space-12) lg:gap-(--space-8)">
-          <h3 className="type-body min-w-0 flex-1 text-(--text-strong) lg:flex-none">
-            {businessName}
-          </h3>
-          <StatusChip status={status} className="shrink-0" />
+        <div className="flex min-w-0 flex-1 flex-col gap-(--space-12) lg:gap-(--space-4)">
+          <div className="flex items-center gap-(--space-12) lg:gap-(--space-8)">
+            <h3 className="type-body min-w-0 flex-1 text-(--text-strong) lg:flex-none">
+              {businessName}
+            </h3>
+            <StatusChip status={status} className="shrink-0" />
+          </div>
+          <p className="type-caption tabular text-(--text-body) lg:hidden">{summary}</p>
+          <p className="type-caption tabular hidden text-(--text-muted) lg:block">{serviceLine}</p>
+          <p className="type-label tabular hidden text-(--text-body) lg:block">{whenLine}</p>
+          {detail}
         </div>
-        <p className="type-caption tabular text-(--text-body) lg:hidden">{summary}</p>
-        <p className="type-caption tabular hidden text-(--text-muted) lg:block">{serviceLine}</p>
-        <p className="type-label tabular hidden text-(--text-body) lg:block">{whenLine}</p>
-        {detail}
       </div>
 
       {actions && <div className="lg:shrink-0">{actions}</div>}
