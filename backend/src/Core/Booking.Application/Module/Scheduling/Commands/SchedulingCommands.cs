@@ -250,9 +250,10 @@ public sealed class ManageAppointmentCommand(
     public Task<AppointmentResponse> CancelAsync(Guid id, string? reason, CancellationToken ct = default) =>
         RunAsync(id, "cancel", (a, actor, now) => a.CancelByBusiness(actor, now, reason), AppointmentChange.CancelledByBusiness, ct);
 
-    // Concluir e marcar falta não avisam ninguém: o consumidor já esteve lá (ou não).
+    // Concluir convida o consumidor a avaliar ("Como foi?", ADR-032), pela outbox, no mesmo SaveChanges. Marcar falta não
+    // avisa ninguém: o consumidor não esteve lá.
     public Task<AppointmentResponse> CompleteAsync(Guid id, CancellationToken ct = default) =>
-        RunAsync(id, "complete", (a, actor, now) => a.Complete(actor, now), change: null, ct);
+        RunAsync(id, "complete", (a, actor, now) => a.Complete(actor, now), AppointmentChange.Completed, ct);
 
     public Task<AppointmentResponse> MarkNoShowAsync(Guid id, CancellationToken ct = default) =>
         RunAsync(id, "no_show", (a, actor, now) => a.MarkNoShow(actor, now), change: null, ct);

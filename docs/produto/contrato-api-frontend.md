@@ -565,6 +565,16 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - **Limitações registradas:** o dono não responde; o consumidor não apaga a avaliação.
 - Migration `AddReputation` (não aplicada): `reputation.review` e `reputation.rating_summary`.
 
+### 4.17.3 E-mail "Como foi?" (Fase 8, fatia 4 de 5) — **escrito sem Docker, não verificado**
+
+- **Quando:** o estabelecimento conclui o agendamento (`POST …/complete`). Vai pela **outbox**, no mesmo `SaveChanges` da
+  conclusão. Balcão sem conta e "falta" não recebem.
+- **Conteúdo:** convite para avaliar, prazo de 30 dias, edição única em 7, botão **Avaliar atendimento** (`#/appointments`).
+- **Saúde (LGPD, Art. 11):** assunto "Como foi o seu atendimento?" e prévia "Abra para avaliar." **sem** estabelecimento, serviço
+  nem categoria; o corpo também não traz o serviço e avisa para não escrever dado de saúde.
+- **Seed:** avaliações nos 3 primeiros estabelecimentos (5, 3 e 2 avaliações: média, média no limite e "Novo") e um
+  atendimento concluído sem avaliação para `consumidor@example.com`.
+
 ### 4.17.2 Telas das avaliações (Fase 8, fatia 3 de 5) — **frontend escrito sem navegador, não verificado**
 
 - **Componentes novos:** `StarRatingInput` (grupo de opções `role="radiogroup"`, 5 estrelas de 44 px, setas trocam a nota),

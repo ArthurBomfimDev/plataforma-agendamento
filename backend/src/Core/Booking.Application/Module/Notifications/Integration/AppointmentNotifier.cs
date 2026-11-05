@@ -51,6 +51,10 @@ public sealed class AppointmentNotifier(
                 await ToCustomerAsync(appointment, business, change, ct);
                 break;
 
+            case AppointmentChange.Completed:
+                await ReviewInviteAsync(appointment, business, ct);
+                break;
+
             case AppointmentChange.CancelledByCustomer:
                 await ToBusinessAsync(appointment, business, newRequest: false, ct);
                 break;
@@ -116,6 +120,54 @@ public sealed class AppointmentNotifier(
             details,
             action: change is AppointmentChange.Confirmed && mapUrl is not null ? new EmailAction("Ver no mapa", mapUrl) : null,
             attachment: ics));
+    }
+
+    /// <summary>
+    /// "Como foi?" depois da conclusão (ADR-032). Balcão sem conta não recebe. <b>Saúde:</b> assunto e prévia não citam o
+    /// estabelecimento, o serviço nem a categoria, e o corpo também não traz o serviço (a avaliação não o guarda); o texto
+    /// avisa para não escrever dado de saúde no comentário, que é público.
+    /// </summary>
+    private async Task ReviewInviteAsync(AppointmentFacts a, BusinessContactInfo business, CancellationToken ct)
+    {
+        if (a.CustomerId is not Guid customerId || await CustomerContactAsync(customerId, ct) is not (UserContact contact, string displayName))
+        {
+            return;
+        }
+
+        string subject = a.IsSensitive ? "Como foi o seu atendimento?" : $"Como foi? Avalie {business.Name}";
+        string preheader = a.IsSensitive ? "Abra para avaliar." : $"Conte como foi o atendimento em {business.Name}.";
+
+        List<string> paragraphs =
+        [
+            a.IsSensitive
+                ? "Seu atendimento foi concluído. Sua opinião ajuda outras pessoas a escolher."
+                : $"{business.Name} concluiu o seu atendimento. Sua opinião ajuda outras pessoas a escolher.",
+            "Você tem 30 dias para avaliar e pode editar a avaliação uma vez, em até 7 dias.",
+        ];
+
+        if (a.IsSensitive)
+        {
+            paragraphs.Add("A avaliação é pública: não escreva dados de saúde (diagnóstico, sintomas, tratamento) nem nomes de pessoas.");
+        }
+
+        List<EmailDetail> details = [new("Quando", EmailDates.Long(a.StartsAt, business.TimeZone))];
+        if (!a.IsSensitive)
+        {
+            details.Add(new EmailDetail("Serviço", a.ServiceName));
+            details.Add(new EmailDetail("Onde", business.Name));
+        }
+
+        outbox.Enqueue(EmailLayout.Build(
+            settings,
+            contact.Email,
+            displayName,
+            subject,
+            preheader,
+            "Como foi o seu atendimento?",
+            paragraphs,
+            details,
+            action: new EmailAction("Avaliar atendimento", settings.Link("appointments")),
+            attachment: null));
     }
 
     private async Task ToBusinessAsync(AppointmentFacts a, BusinessContactInfo business, bool newRequest, CancellationToken ct)

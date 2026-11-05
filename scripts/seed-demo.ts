@@ -833,6 +833,15 @@ function seedHistory() {
   if (source.businesses.length === 0) throw new Error('Nenhum estabelecimento de demonstração ativo. Rode o seed sem --historico antes.')
   if (!source.demo_customer_hash) throw new Error(`A conta ${CUSTOMER.email} não existe. Rode o seed sem --historico antes.`)
 
+  // Horários que as avaliações de demonstração (`seedReviews`) já ocupam: o histórico passa por cima deles, senão a
+  // constraint de exclusão derruba a transação inteira se o seed rodar de novo com --historico.
+  const reserved = (
+    JSON.parse(
+      psql(`SELECT coalesce(json_agg(json_build_object('p', professional_id, 's', blocked_starts_at, 'e', blocked_ends_at)), '[]')
+            FROM scheduling.appointment WHERE customer_notes = ${sqlText(REVIEW_MARKER)};`),
+    ) as { p: string; s: string; e: string }[]
+  ).map((slot) => ({ professionalId: slot.p, from: Date.parse(slot.s), to: Date.parse(slot.e) }))
+
   const random = seededRandom(1027)
   const now = Date.now()
   const lines: string[] = []
@@ -891,6 +900,10 @@ function seedHistory() {
             const blockedEnd = endsAt + offer.buffer_after * minute
 
             if (blockedEnd > windowEnd) break
+            if (reserved.some((slot) => slot.professionalId === professionalId && slot.from < blockedEnd && slot.to > blockedStart)) {
+              cursor = blockedEnd
+              continue
+            }
             if (random() > fill) {
               cursor += 30 * minute
               continue
@@ -1089,6 +1102,228 @@ async function seedDuartinaTeam() {
   }
 }
 
+/**
+ * Avaliações de demonstração (Fase 8, ADR-032): atendimentos concluídos nos 3 primeiros estabelecimentos, cada um com a
+ * sua avaliação, e um atendimento concluído **sem** avaliação do consumidor de demonstração (para ver "Avaliar
+ * atendimento" na tela). SQL direto, só no banco local do Docker, como o histórico: a API não deixa criar um
+ * atendimento no passado.
+ *
+ * Mostra os três estados da nota: o 1º estabelecimento com 5 avaliações (média na tela), o 2º com exatamente 3 (a média
+ * aparece pela primeira vez) e o 3º com 2 ("Novo"). Os outros 27 não ganham nada: a busca de sempre continua igual.
+ * Os atendimentos usam o primeiro horário de expediente de dias úteis passados, um por dia, e cedem a qualquer
+ * agendamento que já esteja lá (`ON CONFLICT DO NOTHING`); o histórico, por sua vez, evita estes horários.
+ */
+const REVIEW_MARKER = 'Avaliação de demonstração'
+const REVIEWED_BUSINESSES = 3
+
+const DEMO_REVIEWS: { business: number; rating: number; professionalRating: number | null; comment: string | null }[] = [
+  { business: 0, rating: 5, professionalRating: 5, comment: 'Atendimento excelente e pontual.' },
+  { business: 0, rating: 5, professionalRating: 5, comment: null },
+  { business: 0, rating: 4, professionalRating: 4, comment: 'Gostei do resultado. O ambiente é agradável.' },
+  { business: 0, rating: 5, professionalRating: null, comment: 'Voltarei com certeza.' },
+  { business: 0, rating: 4, professionalRating: 5, comment: null },
+  { business: 1, rating: 4, professionalRating: 4, comment: null },
+  { business: 1, rating: 5, professionalRating: 5, comment: 'Muito atenciosos.' },
+  { business: 1, rating: 3, professionalRating: null, comment: 'Demorou um pouco para começar.' },
+  { business: 2, rating: 5, professionalRating: 5, comment: 'Recomendo.' },
+  { business: 2, rating: 4, professionalRating: null, comment: null },
+]
+
+/** "Ana Souza Lima" → "Ana S." (a mesma regra de `Review.DisplayNameOf`). */
+const publicName = (fullName: string) => {
+  const [first, second] = fullName.split(' ')
+  return second ? `${first} ${second[0]!.toUpperCase()}.` : first!
+}
+
+type ReviewSource = {
+  businesses: { id: string; name: string; tz: string; category: string; professional_id: string; service_id: string; service_name: string; duration: number; buffer_before: number; buffer_after: number; price: number }[]
+  schedules: { professional_id: string; day: number; start: string }[]
+  demo_customer_id: string | null
+  demo_customer_hash: string | null
+}
+
+function seedReviews() {
+  console.log('\n• Avaliações (SQL direto, só banco local)')
+
+  const already = Number(psql(`SELECT count(*) FROM scheduling.appointment WHERE customer_notes = ${sqlText(REVIEW_MARKER)};`))
+  if (already > 0) {
+    console.log(`  já existem (${already} atendimentos) — pulando`)
+    return
+  }
+
+  const names = BUSINESSES.slice(0, REVIEWED_BUSINESSES).map((business) => business.name)
+  const source = JSON.parse(
+    psql(`
+      WITH picked AS (
+        SELECT DISTINCT ON (b.id) b.id, b.name, b.time_zone, b.category, sp.professional_id, s.id AS service_id, s.name AS service_name,
+               coalesce(sp.duration_override_minutes, s.duration_minutes) AS duration, s.buffer_before_minutes AS bb,
+               s.buffer_after_minutes AS ba, coalesce(sp.price_override_cents, s.price_cents) AS price
+        FROM tenancy.business b
+        JOIN catalog.service s ON s.business_id = b.id AND s.is_active
+        JOIN catalog.service_professional sp ON sp.service_id = s.id
+        WHERE b.status = 'Active' AND b.name IN (${names.map(sqlText).join(', ')})
+        ORDER BY b.id, s.name, sp.professional_id)
+      SELECT json_build_object(
+        'businesses', (SELECT coalesce(json_agg(json_build_object(
+            'id', id, 'name', name, 'tz', time_zone, 'category', category, 'professional_id', professional_id,
+            'service_id', service_id, 'service_name', service_name, 'duration', duration, 'buffer_before', bb,
+            'buffer_after', ba, 'price', price)), '[]') FROM picked),
+        'schedules', (SELECT coalesce(json_agg(json_build_object('professional_id', w.professional_id, 'day', w.day_of_week, 'start', w.start_time)), '[]')
+          FROM availability.work_schedule w WHERE w.professional_id IN (SELECT professional_id FROM picked) AND w.effective_to IS NULL),
+        'demo_customer_id', (SELECT c.id FROM people.customer c JOIN identity."user" u ON u.id = c.user_id WHERE u.email = ${sqlText(CUSTOMER.email)}),
+        'demo_customer_hash', (SELECT password_hash FROM identity."user" WHERE email = ${sqlText(CUSTOMER.email)}));
+    `),
+  ) as ReviewSource
+
+  if (!source.demo_customer_id || !source.demo_customer_hash) {
+    console.log(`  a conta ${CUSTOMER.email} não existe — pulando`)
+    return
+  }
+  const orderedBusinesses = names.flatMap((name) => source.businesses.filter((business) => business.name === name))
+  if (orderedBusinesses.length < REVIEWED_BUSINESSES) {
+    console.log('  os 3 primeiros estabelecimentos ainda não estão ativos — pulando')
+    return
+  }
+
+  const random = seededRandom(2026)
+  const now = Date.now()
+  const minute = 60_000
+  const iso = (ms: number) => `'${new Date(ms).toISOString()}'::timestamptz`
+  const uuid = (id: string) => `'${id}'::uuid`
+
+  /** Os próximos dias úteis do profissional, do mais recente ao mais antigo, com o instante do primeiro expediente. */
+  const workdays = (business: ReviewSource['businesses'][number]) => {
+    const found: number[] = []
+    for (let back = 1; back <= 28 && found.length < 8; back++) {
+      const date = daysFromToday(-back)
+      if (isNationalHoliday(date)) continue
+      const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
+      const window = source.schedules.find((s) => s.professional_id === business.professional_id && s.day === weekday)
+      if (window) found.push(zonedToUtc(date, window.start, business.tz).getTime() + business.buffer_before * minute)
+    }
+    return found
+  }
+
+  const userRows: string[] = []
+  const customerRows: string[] = []
+  const appointmentRows: string[] = []
+  const eventRows: string[] = []
+  const reviewRows: string[] = []
+
+  const addAppointment = (
+    business: ReviewSource['businesses'][number],
+    startsAt: number,
+    customerId: string,
+    customerUserId: string | null,
+    review: (typeof DEMO_REVIEWS)[number] | null,
+    reviewerName: string | null,
+  ) => {
+    const endsAt = startsAt + business.duration * minute
+    const blockedStart = startsAt - business.buffer_before * minute
+    const blockedEnd = endsAt + business.buffer_after * minute
+    const id = uuidV7(random, startsAt - 3 * 86_400_000)
+    const requestedAt = startsAt - 2 * 86_400_000
+    const confirmedAt = requestedAt + 30 * minute
+    const sensitive = business.category === 'Saude'
+
+    appointmentRows.push(
+      `(${uuid(id)}, ${uuid(business.id)}, ${uuid(business.professional_id)}, ${uuid(business.service_id)}, ${uuid(customerId)}, NULL, NULL, ` +
+        `${iso(startsAt)}, ${iso(endsAt)}, ${iso(blockedStart)}, ${iso(blockedEnd)}, ${sqlText(business.service_name)}, ` +
+        `${business.duration}, ${business.buffer_before}, ${business.buffer_after}, ${business.price}, ${sensitive}, 'Completed', ` +
+        `'Online', ${sqlText(REVIEW_MARKER)}, NULL, ${iso(requestedAt)}, ${iso(confirmedAt)}, NULL, ${iso(endsAt)}, NULL, NULL, NULL, NULL, ${iso(requestedAt)})`,
+    )
+    const event = (from: string | null, to: string, actor: string | null, role: string, at: number) =>
+      eventRows.push(
+        `(${uuid(uuidV7(random, at))}, ${uuid(business.id)}, ${uuid(id)}, ${from ? sqlText(from) : 'NULL::text'}, ${sqlText(to)}, ` +
+          `${actor ? uuid(actor) : 'NULL::uuid'}, ${sqlText(role)}, ${iso(at)}, NULL::text)`,
+      )
+    event(null, 'Pending', customerUserId, 'Customer', requestedAt)
+    event('Pending', 'Confirmed', null, 'Owner', confirmedAt)
+    event('Confirmed', 'Completed', null, 'Owner', endsAt)
+
+    if (review && reviewerName) {
+      const reviewedAt = Math.min(now - minute, endsAt + 2 * 60 * minute)
+      reviewRows.push(
+        `(${uuid(uuidV7(random, reviewedAt))}, ${uuid(business.id)}, ${uuid(id)}, ${uuid(business.professional_id)}, ${uuid(customerId)}, ` +
+          `${review.rating}, ${review.professionalRating ?? 'NULL::int'}, ${review.comment ? sqlText(review.comment) : 'NULL::text'}, ` +
+          `${sqlText(reviewerName)}, ${sensitive ? 'NULL::text' : sqlText(business.service_name)}, ${sensitive}, ${iso(reviewedAt)}, NULL::timestamptz, ` +
+          `false, NULL::uuid, NULL::timestamptz, NULL::text, ${iso(reviewedAt)}, NULL::timestamptz)`,
+      )
+    }
+  }
+
+  // 1. O atendimento concluído sem avaliação, do consumidor de demonstração, no 1º estabelecimento (o mais recente).
+  const days = orderedBusinesses.map(workdays)
+  const unreviewed = days[0]!.shift()
+  if (unreviewed !== undefined) addAppointment(orderedBusinesses[0]!, unreviewed, source.demo_customer_id, null, null, null)
+
+  // 2. Uma avaliação por atendimento, de consumidores fictícios (mesma senha de teste: o hash é copiado).
+  let reviewer = 0
+  for (const review of DEMO_REVIEWS) {
+    const startsAt = days[review.business]!.shift()
+    if (startsAt === undefined) continue
+
+    reviewer++
+    const fullName = `${pick(random, FIRST_NAMES)} ${pick(random, SURNAMES)}`
+    const userId = uuidV7(random, now - 40 * 86_400_000 + reviewer * 1000)
+    const customerId = uuidV7(random, now - 40 * 86_400_000 + reviewer * 1000 + 1)
+    userRows.push(`(${uuid(userId)}, ${sqlText(`consumidor.aval.${String(reviewer).padStart(2, '0')}@example.com`)}, ${sqlText(source.demo_customer_hash)}, ${sqlText(fullName)}, 'Active', now())`)
+    customerRows.push(`(${uuid(customerId)}, ${uuid(userId)}, '1990-01-15', now())`)
+    addAppointment(orderedBusinesses[review.business]!, startsAt, customerId, userId, review, publicName(fullName))
+  }
+
+  const lines: string[] = []
+  if (userRows.length > 0) {
+    lines.push(`INSERT INTO identity."user" (id, email, password_hash, full_name, status, created_at) VALUES\n${userRows.join(',\n')};`)
+    lines.push(`INSERT INTO people.customer (id, user_id, birth_date, created_at) VALUES\n${customerRows.join(',\n')};`)
+  }
+
+  const appointmentColumns =
+    'id, business_id, professional_id, service_id, customer_id, walk_in_name, walk_in_phone, starts_at, ends_at, ' +
+    'blocked_starts_at, blocked_ends_at, service_name_snapshot, duration_minutes, buffer_before_minutes, buffer_after_minutes, ' +
+    'price_cents, is_sensitive, status, source, customer_notes, business_notes, requested_at, confirmed_at, cancelled_at, ' +
+    'completed_at, cancelled_by, cancellation_reason, expires_at, idempotency_key, created_at'
+  // `ON CONFLICT DO NOTHING` cobre também a constraint de exclusão: se o horário já estiver ocupado, o atendimento é
+  // pulado, e eventos e avaliações abaixo só entram para os atendimentos que de fato existem.
+  lines.push(`INSERT INTO scheduling.appointment (${appointmentColumns}) VALUES\n${appointmentRows.join(',\n')}\nON CONFLICT DO NOTHING;`)
+
+  const exists = `EXISTS (SELECT 1 FROM scheduling.appointment a WHERE a.id = v.appointment_id AND a.customer_notes = ${sqlText(REVIEW_MARKER)})`
+  lines.push(`
+    INSERT INTO scheduling.appointment_event (id, business_id, appointment_id, from_status, to_status, actor_user_id, actor_role, occurred_at, note)
+    SELECT v.id, v.business_id, v.appointment_id, v.from_status, v.to_status, v.actor_user_id, v.actor_role, v.occurred_at, v.note
+    FROM (VALUES\n${eventRows.join(',\n')}) AS v(id, business_id, appointment_id, from_status, to_status, actor_user_id, actor_role, occurred_at, note)
+    WHERE ${exists};`)
+  lines.push(`
+    INSERT INTO reputation.review (id, business_id, appointment_id, professional_id, customer_id, rating, professional_rating, comment,
+        reviewer_name, service_name, is_sensitive, reviewed_at, edited_at, is_hidden, hidden_by_user_id, hidden_at, hidden_reason, created_at, updated_at)
+    SELECT v.id, v.business_id, v.appointment_id, v.professional_id, v.customer_id, v.rating, v.professional_rating, v.comment,
+        v.reviewer_name, v.service_name, v.is_sensitive, v.reviewed_at, v.edited_at, v.is_hidden, v.hidden_by_user_id, v.hidden_at, v.hidden_reason, v.created_at, v.updated_at
+    FROM (VALUES\n${reviewRows.join(',\n')}) AS v(id, business_id, appointment_id, professional_id, customer_id, rating, professional_rating, comment,
+        reviewer_name, service_name, is_sensitive, reviewed_at, edited_at, is_hidden, hidden_by_user_id, hidden_at, hidden_reason, created_at, updated_at)
+    WHERE ${exists};`)
+
+  // Os resumos saem das avaliações que de fato entraram (a média e a contagem do produto são atualizadas pela API; aqui
+  // o SQL faz o mesmo cálculo uma vez).
+  const stars = [1, 2, 3, 4, 5].map((n) => `count(*) FILTER (WHERE ${'{col}'} = ${n})`)
+  const summary = (target: 'Business' | 'Professional', targetColumn: string, ratingColumn: string, where: string) => `
+    INSERT INTO reputation.rating_summary (id, business_id, target, target_id, count, sum, stars1, stars2, stars3, stars4, stars5, created_at)
+    SELECT gen_random_uuid(), r.business_id, '${target}', r.${targetColumn}, count(*), sum(r.${ratingColumn}),
+        ${stars.map((s) => s.replaceAll('{col}', `r.${ratingColumn}`)).join(', ')}, now()
+    FROM reputation.review r
+    WHERE r.appointment_id IN (SELECT id FROM scheduling.appointment WHERE customer_notes = ${sqlText(REVIEW_MARKER)}) ${where}
+    GROUP BY r.business_id, r.${targetColumn};`
+  lines.push(summary('Business', 'business_id', 'rating', ''))
+  lines.push(summary('Professional', 'professional_id', 'professional_rating', 'AND r.professional_rating IS NOT NULL'))
+
+  // Uma transação só (-1): ou tudo entra, ou nada entra.
+  psql(lines.join('\n'))
+  const counts = psql(`
+    SELECT count(*) FROM scheduling.appointment WHERE customer_notes = ${sqlText(REVIEW_MARKER)}
+    UNION ALL SELECT count(*) FROM reputation.review WHERE appointment_id IN (SELECT id FROM scheduling.appointment WHERE customer_notes = ${sqlText(REVIEW_MARKER)});
+  `).split('\n')
+  console.log(`  ${counts[0]} atendimentos concluídos, ${counts[1]} avaliações (1 atendimento fica sem avaliação, do ${CUSTOMER.email})`)
+}
+
 async function main() {
   console.log(`Populando ${API} com dados de demonstração${WITH_HISTORY ? ' (com histórico)' : ''}\n`)
   await call('GET', '/health').catch(() => {
@@ -1107,6 +1342,8 @@ async function main() {
   // O histórico já traz hoje e os próximos 14 dias; sem ele, uma agenda pequena para o painel não abrir vazio.
   if (WITH_HISTORY) seedHistory()
   else await seedTodayAgenda()
+  // Depois do histórico e da agenda: as avaliações cedem a qualquer agendamento que já ocupe o horário.
+  seedReviews()
   printCounts()
 
   // A senha só aparece quando é a padrão (já pública) ou a aleatória do Admin, recém-criada; a de SEED_* é de quem
