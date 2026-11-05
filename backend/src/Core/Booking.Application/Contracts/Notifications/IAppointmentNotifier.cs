@@ -10,6 +10,9 @@ public enum AppointmentChange
     CancelledByBusiness,
     CancelledByCustomer,
     Expired,
+
+    /// <summary>Atendimento concluído: o consumidor recebe o convite para avaliar ("Como foi?", ADR-032).</summary>
+    Completed,
 }
 
 /// <summary>O agendamento como o Scheduling o conhece, sem expor a entidade a outro módulo.</summary>

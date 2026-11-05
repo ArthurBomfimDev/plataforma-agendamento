@@ -334,6 +334,25 @@ foco visível. Pilha isolada (seção 0), seed rodado. Contas: `dono.duartina@ex
 | 12 | Painel do dono (token de painel) tentando avaliar pela API | 403 `appointment.customer_context_required` |
 | 13 | 390 px, claro e escuro: gaveta, estrelas, lista, distribuição, chip | sem rolagem horizontal; alvos ≥ 44 px; foco visível; contraste da estrela cheia (âmbar) legível nos dois temas |
 
+### Avaliações — e-mail "Como foi?" e seed (Fase 8, fatia 4; sem migration)
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | `dotnet test --filter FullyQualifiedName~ReviewInviteEmailTests` | 3 testes verdes (rodaram, sem Docker) |
+| 2 | Como dono, **Concluir** um agendamento confirmado e já passado de um consumidor com conta | chega e-mail "Como foi? Avalie NOME" no Mailpit, com o botão **Avaliar atendimento** apontando para `#/appointments` |
+| 3 | Mesmo em estabelecimento de **Saúde** | assunto "Como foi o seu atendimento?", prévia "Abra para avaliar."; **nem o assunto, nem a prévia, nem o corpo** citam o estabelecimento ou o serviço; o corpo avisa para não escrever dado de saúde |
+| 4 | Concluir um agendamento de **balcão** (sem conta) | nenhum e-mail |
+| 5 | Marcar **falta** | nenhum e-mail |
+| 6 | `bun scripts/seed-demo.ts` (com a pilha de pé) e de novo | a 1ª vez imprime "10 avaliações" e "1 atendimento fica sem avaliação"; a 2ª diz "já existem — pulando" |
+| 7 | Busca sem filtro | **os mesmos 30 estabelecimentos** de antes, na mesma ordem |
+| 8 | Busca com `sortBy=rating` | o 1º estabelecimento (5 avaliações, média ≈ 4,6) primeiro; o 2º (exatamente 3, média 4,0); o 3º (2 avaliações) aparece como **"Novo"** depois dos que têm média |
+| 9 | Entrar como `consumidor@example.com` → Meus agendamentos | um atendimento concluído do 1º estabelecimento com **Avaliar atendimento** |
+| 10 | `bun scripts/seed-demo.ts --historico` depois do seed de avaliações | não dá erro de sobreposição (o histórico evita os horários das avaliações) |
+| 11 | `SELECT target, count, sum FROM reputation.rating_summary;` | bate com as avaliações inseridas (conferir à mão) |
+
+> O `seed-demo.ts` **só foi compilado** (`bun build`): o SQL das avaliações nunca rodou, e a lógica de pular horários ocupados
+> (`ON CONFLICT DO NOTHING`) também não. Se algum passo acima falhar, o primeiro suspeito é o SQL do seed.
+
 ### Integração com a agenda (Fase 5, bloco 4, parcial)
 
 | # | Passo | Esperado |
