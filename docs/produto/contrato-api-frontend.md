@@ -44,7 +44,7 @@ Legenda: ✅ igual · ➕ a API tem a mais (o frontend ignora) · ⚠️ diverge
 | `POST /api/businesses/current/appointments/counter` | `panelApi.counter` | ✅ desde a 7A |
 | `POST /api/businesses/current/services` · `PUT …/{id}` | `manageApi.createService` · `updateService` | ✅ desde a 7D (§4.7) |
 | `PUT` · `DELETE …/services/{id}/professionals/{pid}` | `manageApi.enableProfessional` · `disableProfessional` | ✅ desde a 7D — o preço e a duração próprios por profissional ainda não têm tela |
-| `POST /api/businesses/current/professionals` · `PUT …/{id}` | `manageApi.createProfessional` · `updateProfessional` | ✅ desde a 7D |
+| `POST /api/businesses/current/professionals` (só `isMe: true`, desde 05/11) · `PUT …/{id}` | `manageApi.createProfessional` · `updateProfessional` | ✅ desde a 7D |
 | ~~`PUT` · `DELETE …/professionals/{id}/public-profile-consent`~~ | — | **Removidas** (ADR-031, §4.13): o perfil é sempre público e a base é a declaração do dono |
 | `POST` · `PUT …/{id}` · `DELETE …/{id}` em `…/work-schedules` | `manageApi.addWorkSchedule` · `updateWorkSchedule` · `removeWorkSchedule` | ✅ desde a 7D |
 | `GET` · `POST` · `DELETE …/{id}` em `…/schedule-exceptions`, `GET …/affected-appointments` | `manageApi.exceptions` · `addException` · `removeException` · `affectedAppointments` | ✅ desde a 7D |
@@ -344,7 +344,7 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
 | Tela | Rota | O que faz | Limites que a tela aplica antes da API |
 |---|---|---|---|
 | Serviços | `#/panel/services`, `…/new`, `…/{id}` | Lista, ativa/desativa (pela edição, com `isActive`), cria e edita com o cadastro do Rafael (tela 11); depois de gravar, liga e desliga os profissionais | duração 1–480 min, intervalos 0–120, passo 5 até a duração, preço ≥ 0 (`Service.cs`) |
-| Profissionais | `#/panel/professionals` | Lista, cria (sem login), edita perfil, ativa/desativa, serviços de cada um, perfil completo só com consentimento | nome obrigatório |
+| Profissionais | `#/panel/professionals` | Lista só quem tem perfil público, convida (o perfil nasce no aceite), edita perfil, ativa/desativa, serviços de cada um, perfil completo só com consentimento | nome obrigatório |
 | Jornadas e bloqueios | `#/panel/schedules` | Jornada semanal de um profissional por vez; bloqueio em dois passos: prévia (`affected-appointments`) e, com agendamentos, manter ou cancelar todos com motivo | fim depois do início; data final depois da inicial; turno extra com profissional |
 | Fotos | `#/panel/photos` | Logotipo, capa e foto de cada profissional ativo, com o `ImageUploader` (§4.5) | JPEG, PNG ou WebP, até 5 MB (o `ImageUploader` confere) |
 | Configurações | `#/panel/settings` | Política de agendamento: confirmação automática e os quatro prazos; o fuso aparece e não muda | prazo do pendente 1–72 h, antecedência 0–72 h, horizonte 1–365 dias, cancelamento 0–48 h (`Business.cs`) |
@@ -434,7 +434,9 @@ Ciclo e regra: ADR-028. Todas as rotas `current/*` exigem o contexto de estabele
 
 ## 4.11 Convites de equipe (Fase 4, bloco 1, 04/11) — **backend escrito sem Docker, não verificado**
 
-Ciclo e regra: ADR-029. O convite é **opcional**: o caminho principal é o dono cadastrar o profissional sem conta.
+Ciclo e regra: ADR-029. **Desde 05/11 o convite é o único caminho para outra pessoa entrar na equipe**: o registro de
+profissional nasce no aceite, e o atendente nunca tem um. `POST /api/businesses/current/professionals` só aceita
+`isMe: true` (o perfil do próprio dono); com `isMe: false` responde **409** `professional.cannot_create_without_invitation`.
 Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca é convidável).
 
 | Rota | Quem | O que faz |
@@ -442,6 +444,7 @@ Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca 
 | `POST /api/businesses/current/invitations` `{ name, email, role, professionalId? }` | Owner | 201 `InvitationResponse`. **409** `business.seat_limit_reached`, `invitation.already_pending`, `invitation.already_member`, `invitation.professional_not_linkable`. 400 `invitation.role_invalid`. 30 por hora por conta (429) |
 | `GET /api/businesses/current/invitations?page=&pageSize=` | Owner | `PagedResult<InvitationResponse>` só dos **pendentes** |
 | `GET /api/businesses/current/seats` | Owner | `{ used, limit }`: contas ativas + convites pendentes contra o `SeatLimit` (15) |
+| `GET /api/businesses/current/members?page=&pageSize=` | Owner | `PagedResult<TeamMemberResponse>` `{ membershipId, name, role }`: quem tem conta ativa no estabelecimento. A seção Equipe (`#/panel/members`) |
 | `POST /api/businesses/current/invitations/{id}/resend` | Owner | token novo e prazo novo (o link antigo deixa de valer). Expirado volta a ocupar vaga |
 | `DELETE /api/businesses/current/invitations/{id}` | Owner | revoga. 204. Convite de outro estabelecimento responde **404** |
 | `POST /api/invitations/preview` `{ token }` | **anônimo** | `{ businessName, inviterName, inviteeName, email, role, accountExists, termsVersion, termsRequired }` |

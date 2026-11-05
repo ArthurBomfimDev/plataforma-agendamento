@@ -246,17 +246,15 @@ public sealed class TestWorld(IntegrationFixture fixture)
 
         for (int p = 0; p < professionals; p++)
         {
-            ProfessionalResponse professional = await SendOkAsync<ProfessionalResponse>(
-                HttpMethod.Post, "/api/businesses/current/professionals",
-                new CreateProfessionalRequest($"Profissional {p + 1}", null, null, IsMe: false), token);
-            professionalIds.Add(professional.Id);
+            Guid professionalId = await NewProfessionalRecordAsync(business.Id, $"Profissional {p + 1}");
+            professionalIds.Add(professionalId);
 
             // Jornada de 06:00 às 22:00 todos os dias: cobre qualquer horário que os testes usam.
             foreach (DayOfWeek day in Enum.GetValues<DayOfWeek>())
             {
                 WorkScheduleResponse schedule = await SendOkAsync<WorkScheduleResponse>(
                     HttpMethod.Post, "/api/businesses/current/work-schedules",
-                    new AddWorkScheduleRequest(professional.Id, day, new TimeOnly(6, 0), new TimeOnly(22, 0), today, null), token);
+                    new AddWorkScheduleRequest(professionalId, day, new TimeOnly(6, 0), new TimeOnly(22, 0), today, null), token);
                 scheduleIds.Add(schedule.Id);
             }
         }
@@ -299,6 +297,22 @@ public sealed class TestWorld(IntegrationFixture fixture)
         }
 
         return new TestBusiness(business.Id, name, token, professionalIds, scheduleIds, createdServices, owner.Email, owner.UserId);
+    }
+
+    /// <summary>
+    /// Registro de profissional sem conta, como os anteriores ao convite obrigatório. Direto no banco: a API só cria o
+    /// perfil no aceite do convite, e passar por ele em cada teste estouraria o limite de convites.
+    /// </summary>
+    private async Task<Guid> NewProfessionalRecordAsync(Guid businessId, string displayName)
+    {
+        await using AsyncServiceScope scope = fixture.Factory.Services.CreateAsyncScope();
+        BookingDbContext db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+
+        var professional = Professional.Create(businessId, displayName, null, null, null);
+        db.Add(professional);
+        await db.SaveChangesAsync();
+
+        return professional.Id;
     }
 
     /// <summary>

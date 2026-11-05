@@ -23,46 +23,61 @@ public sealed class ProfessionalDeclarationTests
     private static readonly Guid _ownerId = Guid.NewGuid();
 
     private static CreateProfessionalCommand Create(FakeRepo repo, FakeUnit unit) =>
-        new(repo, new FakeDirectory(), new Owner(), unit, new FixedClock(), new NoImages());
+        new(repo, new FakeDirectory(), new Owner(), unit, new NoImages());
 
     private static UpdateProfessionalCommand Update(FakeRepo repo, FakeUnit unit) =>
         new(repo, new Owner(), unit, new FixedClock(), new NoImages());
 
     [Fact]
-    public async Task Saving_a_bio_without_the_declaration_is_refused_and_nothing_is_saved()
+    public async Task Creating_someone_else_without_an_invitation_is_refused_and_nothing_is_saved()
     {
         var repo = new FakeRepo();
         var unit = new FakeUnit();
 
         DomainException refused = await Assert.ThrowsAsync<DomainException>(() =>
-            Create(repo, unit).ExecuteAsync(new CreateProfessionalRequest("Marcos", "Barbeiro", "Cortes há 10 anos.", false)));
+            Create(repo, unit).ExecuteAsync(new CreateProfessionalRequest("Marcos", "Barbeiro", null, false, AuthorizationDeclared: true, Registration: null)));
 
-        Assert.Equal("professional.declaration_required", refused.Code);
+        Assert.Equal("professional.cannot_create_without_invitation", refused.Code);
+        Assert.Empty(repo.Items);
         Assert.Equal(0, unit.Saves);
     }
 
     [Fact]
-    public async Task With_the_declaration_the_bio_is_saved_and_who_and_when_are_recorded()
+    public async Task The_owner_who_also_attends_creates_the_own_profile_with_no_declaration()
     {
         var repo = new FakeRepo();
         var unit = new FakeUnit();
 
-        ProfessionalResponse saved = await Create(repo, unit).ExecuteAsync(
-            new CreateProfessionalRequest("Marcos", "Barbeiro", "Cortes há 10 anos.", false, AuthorizationDeclared: true, Registration: null));
+        ProfessionalResponse saved = await Create(repo, unit).ExecuteAsync(new CreateProfessionalRequest("Dona", "Barbeira", "Bio.", true));
 
         Professional stored = Assert.Single(repo.Items);
-        Assert.True(saved.AuthorizationDeclared);
-        Assert.Equal(_ownerId, stored.AuthorizationDeclaredByUserId);
-        Assert.Equal(_now, stored.AuthorizationDeclaredAt);
+        Assert.NotNull(stored.BusinessMembershipId);
+        Assert.False(saved.AuthorizationDeclared);
         Assert.Equal(1, unit.Saves);
     }
 
     [Fact]
-    public async Task A_professional_without_a_bio_needs_no_declaration()
+    public async Task With_the_declaration_the_bio_of_an_old_record_is_saved_and_who_and_when_are_recorded()
     {
-        var repo = new FakeRepo();
+        var legacy = Professional.Create(_businessId, "Marcos", null, null, null);
+        var unit = new FakeUnit();
 
-        ProfessionalResponse saved = await Create(repo, new FakeUnit()).ExecuteAsync(new CreateProfessionalRequest("Marcos", "Barbeiro", null, false));
+        ProfessionalResponse saved = await Update(new FakeRepo(legacy), unit).ExecuteAsync(
+            legacy.Id, new UpdateProfessionalRequest("Marcos", "Barbeiro", "Cortes há 10 anos.", IsActive: true, AuthorizationDeclared: true));
+
+        Assert.True(saved.AuthorizationDeclared);
+        Assert.Equal(_ownerId, legacy.AuthorizationDeclaredByUserId);
+        Assert.Equal(_now, legacy.AuthorizationDeclaredAt);
+        Assert.Equal(1, unit.Saves);
+    }
+
+    [Fact]
+    public async Task An_old_record_without_a_bio_needs_no_declaration()
+    {
+        var legacy = Professional.Create(_businessId, "Marcos", null, null, null);
+
+        ProfessionalResponse saved = await Update(new FakeRepo(legacy), new FakeUnit()).ExecuteAsync(
+            legacy.Id, new UpdateProfessionalRequest("Marcos", "Barbeiro", null, IsActive: true));
 
         Assert.False(saved.AuthorizationDeclared);
     }

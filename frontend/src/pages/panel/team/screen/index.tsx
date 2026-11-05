@@ -18,13 +18,13 @@ import { useState } from 'react'
 
 /**
  * Painel — Profissionais (Onda 7D, Figma 17): a equipe à esquerda e a ficha do selecionado à direita, com
- * editar, desativar e os serviços de cada um. Só o dono (`RequireOwner`). Sem convite por e-mail: o
- * profissional cadastrado aqui não tem login (o convite é a Onda 5D).
+ * editar, desativar e os serviços de cada um. Só o dono (`RequireOwner`). Quem entra na equipe entra por convite: o
+ * perfil nasce quando a pessoa aceita. O dono cria só o próprio, em "Eu também atendo".
  *
  * No celular e no tablet a tela mostra uma coluna por vez: a lista e, ao escolher alguém, a ficha dele.
  *
- * O perfil é sempre público (ADR-031): para quem não tem login, o dono declara a autorização da pessoa ao salvar a
- * apresentação.
+ * O perfil é sempre público (ADR-031). Nos registros antigos, sem login, o dono declara a autorização da pessoa ao
+ * salvar a apresentação.
  */
 export const TeamScreen = (props: TeamScreenProps) => {
   const { data, businessName, onCreate, onSave, onOpenSchedules } = props
@@ -76,10 +76,13 @@ export const TeamScreen = (props: TeamScreenProps) => {
       ) : !selected ? (
         <div className="flex flex-col items-start gap-(--space-8)">
           <p role="status" className="type-body text-(--text-muted)">
-            Nenhum profissional cadastrado. Sem profissional, nenhum serviço tem horário.
+            Nenhum profissional na equipe. Sem profissional, nenhum serviço tem horário.
           </p>
-          <Button variant="secondary" onClick={() => setCreating(true)}>
-            Cadastrar o primeiro profissional
+          <Button variant="secondary" onClick={() => setInviting(true)}>
+            Convidar profissional
+          </Button>
+          <Button variant="ghost" onClick={() => setCreating(true)}>
+            Eu também atendo
           </Button>
         </div>
       ) : (
@@ -93,7 +96,8 @@ export const TeamScreen = (props: TeamScreenProps) => {
                 setSelectedId(id)
                 setShowDetail(true)
               }}
-              onNew={() => setCreating(true)}
+              onNew={() => setInviting(true)}
+              onSelf={() => setCreating(true)}
             />
           </div>
           <div className={cn('min-w-0 lg:flex-1', !showDetail && 'hidden lg:block')}>

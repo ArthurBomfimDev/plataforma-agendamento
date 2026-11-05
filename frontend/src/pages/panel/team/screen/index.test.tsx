@@ -60,7 +60,9 @@ describe('TeamScreen', () => {
     expect(html).toContain('Cabeleireira · 1 serviço')
     expect(html).toContain('sem jornada')
     expect(html).toContain('Inativo')
-    expect(html).toContain('Novo profissional')
+    expect(html).toContain('Convidar profissional')
+    expect(html).toContain('Eu também atendo')
+    expect(html).not.toContain('Novo profissional')
     // a ficha é a do primeiro (Marina): perfil público, controles e a saída da equipe
     expect(html).toContain('Editar nome')
     expect(html).toContain('Perfil público')
@@ -89,8 +91,11 @@ describe('TeamScreen', () => {
     expect(html).not.toContain('>Remover da equipe<')
   })
 
-  it('sem profissional, convida a cadastrar', () => {
-    expect(render({ data: ready([]) })).toContain('Cadastrar o primeiro profissional')
+  it('sem profissional, oferece o convite e o perfil do próprio dono', () => {
+    const html = render({ data: ready([]) })
+
+    expect(html).toContain('Convidar profissional')
+    expect(html).toContain('Eu também atendo')
   })
 
   it('mostra o carregando e o erro com "Tentar de novo"', () => {

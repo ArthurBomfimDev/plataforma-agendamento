@@ -38,31 +38,33 @@ internal static class OwnerDeclaration
     }
 }
 
+/// <summary>
+/// O perfil do próprio dono, quando ele também atende. Para qualquer outra pessoa o caminho é o convite: o registro de
+/// profissional só nasce quando ela aceita, e quem aceita controla os próprios dados.
+/// </summary>
 public sealed class CreateProfessionalCommand(
     IProfessionalRepository professionals,
     IBusinessDirectory businesses,
     IActorContext actor,
     IUnitOfWork unitOfWork,
-    TimeProvider clock,
     IImageUrls images)
 {
     public async Task<ProfessionalResponse> ExecuteAsync(CreateProfessionalRequest request, CancellationToken ct = default)
     {
         Guid businessId = actor.RequireOwner();
         Guid userId = actor.RequireUserId();
-        Guid? membershipId = null;
 
-        // O vínculo nunca vem do cliente: só o da própria conta, conferido aqui.
-        if (request.IsMe)
+        if (!request.IsMe)
         {
-            BusinessMembershipInfo membership = await businesses.FindActiveMembershipAsync(businessId, userId, ct)
-                ?? throw new DomainException("auth.forbidden");
-            membershipId = membership.MembershipId;
+            throw new DomainException("professional.cannot_create_without_invitation");
         }
 
-        Professional professional = Professional.Create(businessId, request.DisplayName, request.Specialty, request.Bio, membershipId);
+        // O vínculo nunca vem da requisição: só o da própria conta, conferido aqui.
+        BusinessMembershipInfo membership = await businesses.FindActiveMembershipAsync(businessId, userId, ct)
+            ?? throw new DomainException("auth.forbidden");
+
+        Professional professional = Professional.Create(businessId, request.DisplayName, request.Specialty, request.Bio, membership.MembershipId);
         professional.SetRegistration(request.Registration);
-        OwnerDeclaration.Apply(professional, request.AuthorizationDeclared, userId, clock.GetUtcNow());
         professionals.Add(professional);
 
         await unitOfWork.SaveChangesAsync(ct);

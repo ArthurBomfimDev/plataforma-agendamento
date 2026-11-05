@@ -139,7 +139,7 @@ export const PanelTeamRoute = () => {
       onCreate={async (draft) => {
         try {
           const created = await create.mutateAsync(draft)
-          notify.success(`${created.displayName} cadastrado. Ligue os serviços em "Editar".`)
+          notify.success(`Perfil de ${created.displayName} criado. Ligue os serviços em "Editar".`)
           return null
         } catch (error) {
           return errorMessage(error)
