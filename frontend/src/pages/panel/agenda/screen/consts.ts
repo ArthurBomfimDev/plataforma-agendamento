@@ -96,8 +96,8 @@ export const summarize = (
     .reduce((sum, { priceCents }) => sum + priceCents, 0),
 })
 
-/** Grade do desktop: 72px por hora, como na tela 09. */
-export const PX_PER_MINUTE = 72 / 60
+/** Grade do desktop: 144px por hora. Com os 72px da tela 09, o bloco de 20 min tinha 20px, abaixo do alvo de toque. */
+export const PX_PER_MINUTE = 144 / 60
 
 /** "09:30" → 570. */
 export const toMinutes = (time: string) => {

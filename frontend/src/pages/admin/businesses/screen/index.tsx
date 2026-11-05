@@ -62,7 +62,11 @@ export const AdminBusinessesScreen = (props: AdminBusinessesScreenProps) => {
           <ThemeToggle />
         </div>
 
-        <div role="tablist" aria-label="Seções da administração" className="flex gap-(--space-8)">
+        <div
+          role="tablist"
+          aria-label="Seções da administração"
+          className="flex flex-wrap gap-(--space-8)"
+        >
           {TABS.map(({ id, label }) => (
             <button
               key={id}

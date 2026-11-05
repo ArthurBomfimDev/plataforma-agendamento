@@ -294,14 +294,17 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
 
         <div className="flex items-center gap-(--space-8)">
           <div className="hidden flex-1 sm:block" />
-          <Button
-            type="button"
-            variant="ghost"
-            className="flex-1 sm:flex-none"
-            onClick={() => focusField(BLOCK_FIELD_IDS.from)}
-          >
-            Voltar e ajustar
-          </Button>
+          {/* Só depois da prévia há o que ajustar; antes disso, o botão só ocupava metade da linha. */}
+          {affected && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex-1 sm:flex-none"
+              onClick={() => focusField(BLOCK_FIELD_IDS.from)}
+            >
+              Voltar e ajustar
+            </Button>
+          )}
           <Button type="submit" className="flex-1 sm:flex-none" disabled={busy}>
             {busy ? 'Conferindo…' : 'Confirmar bloqueio'}
           </Button>

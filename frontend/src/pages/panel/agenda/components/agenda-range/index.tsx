@@ -101,10 +101,10 @@ export const AgendaRangeScreen = (props: AgendaRangeScreenProps) => {
                               {item.start}–{item.end}
                             </span>
                             <span className="flex min-w-0 flex-1 flex-col">
-                              <span className="type-body truncate text-(--text-strong)">
+                              <span className="type-body break-words text-(--text-strong)">
                                 {item.customerName}
                               </span>
-                              <span className="type-caption truncate text-(--text-muted)">
+                              <span className="type-caption break-words text-(--text-muted)">
                                 {item.serviceName} · {item.professionalName}
                               </span>
                             </span>

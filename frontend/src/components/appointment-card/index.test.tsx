@@ -30,9 +30,11 @@ describe('AppointmentCard', () => {
   it('a imagem aparece também no celular: nada a esconde abaixo do desktop', () => {
     const html = render({ image: null, category: 'Beleza' })
 
-    expect(html).toContain('size-14')
+    const frame = /class="([^"]*size-14[^"]*)"/.exec(html)?.[1] ?? ''
+
+    expect(frame).toContain('lg:size-18')
     // `overflow-hidden` da moldura não conta: só a classe `hidden` esconderia a imagem.
-    expect(html).not.toMatch(/[\s"]hidden\s/)
+    expect(frame.split(' ')).not.toContain('hidden')
   })
 
   it('sem foto: a ilustração da categoria, e não o quadrado cinza', () => {

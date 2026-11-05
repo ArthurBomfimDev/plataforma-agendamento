@@ -36,7 +36,7 @@ export const useServicesColumns = (onEdit?: (serviceId: string) => void) =>
               </p>
               <p
                 className={cn(
-                  'type-caption truncate',
+                  'type-caption whitespace-normal',
                   unassigned ? 'text-(--status-pending-fg)' : 'text-(--text-muted)',
                 )}
               >
