@@ -1,5 +1,6 @@
 import { ROUTES } from '@router/paths'
-import { errorMessage } from '@api/base'
+import { UserMessageError, errorMessage } from '@api/base'
+import { locateAddress } from './screen/components/address-location/consts'
 import {
   useAcceptTerms,
   useConfirmLocation,
@@ -66,7 +67,9 @@ const RegisterBusiness = () => {
       }
       onCreate={(business, document) =>
         attempt(async () => {
-          if (!me.data) throw new Error('Carregando a sua conta. Tente de novo em instantes.')
+          if (!me.data) {
+            throw new UserMessageError('Carregando a sua conta. Tente de novo em instantes.')
+          }
           const created = await register.mutateAsync({ ...business, ...document })
           // O estabelecimento nasce em rascunho; o painel e as rotas `current/*` dependem do contexto dele.
           await switchContext.mutateAsync({
@@ -75,9 +78,10 @@ const RegisterBusiness = () => {
           })
         })
       }
-      onSaveAddress={(address: AddressValues) =>
-        attempt(async () => {
-          const updated = await updateAddress.mutateAsync({
+      onLocateAddress={async (address: AddressValues) => {
+        try {
+          // O PUT só grava o endereço (e desfaz a confirmação anterior); quem acha o ponto é a busca.
+          await updateAddress.mutateAsync({
             street: address.street.trim(),
             streetNumber: address.streetNumber.trim(),
             district: address.district.trim(),
@@ -85,17 +89,24 @@ const RegisterBusiness = () => {
             state: address.state.trim().toUpperCase(),
             postalCode: address.postalCode.replace(/\D/g, ''),
           })
-          // O servidor geocodifica o endereço novo; o dono confirma o ponto que ele achou.
-          if (updated.latitude === null || updated.longitude === null) {
-            throw new Error('Não foi possível localizar o endereço. Confira os dados.')
-          }
-          await confirmLocation.mutateAsync({
-            latitude: updated.latitude,
-            longitude: updated.longitude,
-            precision: updated.locationPrecision ?? 'Street',
+          const places = await locateAddress(
+            address,
+            async (text) => (await geoService.search(text)).items,
+          )
+          return places.length > 0 ? { status: 'found', places } : { status: 'not-found' }
+        } catch (error) {
+          return { status: 'error', message: errorMessage(error) }
+        }
+      }}
+      onConfirmLocation={(place) =>
+        attempt(() =>
+          confirmLocation.mutateAsync({
+            latitude: place.latitude,
+            longitude: place.longitude,
+            precision: place.precision,
             source: 'owner-confirmed',
-          })
-        })
+          }),
+        )
       }
       onSaveResponsible={(responsible) => attempt(() => setResponsible.mutateAsync(responsible))}
       onFinish={() => attempt(() => acceptTerms.mutateAsync(TERMS_VERSION))}
