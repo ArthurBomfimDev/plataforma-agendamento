@@ -49,6 +49,14 @@ public sealed class IntegrationFixture : IAsyncLifetime
         DatabaseVersion = await DatabaseServer.VersionOfAsync(ConnectionString);
     }
 
+    /// <summary>
+    /// Outra instância da API sobre o mesmo banco, com os contadores do limitador zerados, para o teste de um limite por
+    /// IP não gastar o da suíte (todo pedido de teste vem do mesmo IP). Os tokens do <see cref="TestWorld"/> valem nela.
+    /// </summary>
+    public BookingApiFactory NewApi() => new(
+        ConnectionString,
+        settings: new Dictionary<string, string> { ["Jwt:SigningKey"] = Factory.SigningKey });
+
     public async Task DisposeAsync()
     {
         Client.Dispose();

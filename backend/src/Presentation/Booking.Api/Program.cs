@@ -107,9 +107,10 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseMediaFiles();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+// Depois da autenticação: antes dela context.User é anônimo, e toda política "por conta" cairia no IP.
+app.UseRateLimiter();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
