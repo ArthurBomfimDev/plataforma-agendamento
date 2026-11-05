@@ -1242,9 +1242,19 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(14)")
                         .HasColumnName("document_number");
 
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("document_type");
+
                     b.Property<DateTimeOffset?>("GeocodedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("geocoded_at");
+
+                    b.Property<bool>("IsMei")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_mei");
 
                     b.Property<Point>("Location")
                         .HasColumnType("geography (point)")
@@ -1396,7 +1406,10 @@ namespace Booking.Infrastructure.Persistence.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
 
-                    b.ToTable("business", "tenancy");
+                    b.ToTable("business", "tenancy", t =>
+                        {
+                            t.HasCheckConstraint("ck_business_mei_requires_cnpj", "NOT is_mei OR document_type = 'Cnpj'");
+                        });
                 });
 
             modelBuilder.Entity("Booking.Domain.Entity.Module.Tenancy.BusinessInvitation", b =>
