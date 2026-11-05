@@ -10,6 +10,24 @@ Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondent
 
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
+## Correções do teste de 05/11
+
+Lógica provada por teste; **nada foi visto no navegador**. Sem migration.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | Cadastro → Endereço com um endereço real → **Salvar e confirmar a localização** | "Procurando o endereço…"; depois o lugar achado, "Ver no mapa" (abre o OpenStreetMap em outra aba) e **Confirmar esta localização** |
+| 2 | Confirmar | segue para o passo seguinte; `location_confirmed` fica verde na checklist |
+| 3 | Endereço inexistente | "Não foi possível localizar o endereço. Confira os dados." e **Corrigir o endereço**, com o que foi digitado mantido |
+| 4 | Derrubar a rede e salvar | mensagem de conexão e **Tentar de novo**; nunca "Algo deu errado" |
+| 5 | Consumidor sem consentimento → serviço de **Saúde** → **Enviar pedido** | sem toast: aparece o bloco com o texto, a caixa desmarcada, e "Enviar pedido" some |
+| 6 | Clicar sem marcar; depois marcar e clicar | "Marque a caixa para continuar."; depois o pedido vai e abre "Pedido enviado", com a observação digitada |
+| 7 | Minha conta → **Consentimentos** | em vigor, com data e versão; **Revogar** pede confirmação e vira "Revogado em…" |
+| 8 | Agendar em Saúde de novo | o bloco volta |
+| 9 | Painel → Profissionais: na ficha e em Editar, enviar e remover foto | a foto aparece na hora nas duas, na aba Fotos e na vitrine; sem login e sem declaração, o erro de declaração aparece no campo |
+| 10 | Meus agendamentos, largura de desktop | logotipo do estabelecimento; sem logotipo, a capa; sem nenhum, a ilustração da categoria, sem quadrado cinza |
+| 11 | 390 px, claro e escuro: passo de confirmação do endereço, bloco de consentimento, seção Consentimentos, foto na ficha | sem rolagem horizontal; alvos ≥ 44 px; contraste do bloco de consentimento |
+
 ## 0. Preparar a pilha isolada (uma vez por rodada)
 
 ```powershell
