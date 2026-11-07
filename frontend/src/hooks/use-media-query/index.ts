@@ -1,5 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
+export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
+
 /**
  * A consulta de mídia casa agora? Acompanha mudanças (girar o aparelho, redimensionar a janela).
  * Fora do navegador, como na renderização dos testes, responde `false`.

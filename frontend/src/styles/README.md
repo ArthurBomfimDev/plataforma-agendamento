@@ -27,7 +27,10 @@ O **modo Dark** está no bloco `.dark` de `tokens.css`. Quem liga a classe `.dar
 (claro, escuro ou do sistema) e o alternador da barra superior.
 
 Lacunas marcadas com `TODO(figma)` no arquivo, **nenhuma preenchida por aproximação**:
-`action/primary-{active,disabled}` · `space/{48,64}` · `radius/{none,xl}` · `size/avatar-sm`.
+`action/primary-{active,disabled}` · `space/48` · `radius/none` · `size/avatar-sm`.
+
+Os tokens `--brand-*` são da superfície de marca (o palco das telas de conta): têm o mesmo valor em
+claro e em escuro, e nenhum componente de produto liga neles.
 
 O Figma também expõe as **primitivas** (`--primitive-*`), mas nenhum componente liga nelas.
 Este arquivo define só a camada semântica, que é onde os componentes devem ligar.

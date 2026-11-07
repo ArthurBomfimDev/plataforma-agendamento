@@ -10,13 +10,14 @@ import { useState } from 'react'
  * Campo de senha com o botão "Mostrar senha" dentro do campo. Mesma aparência e mesmos estados do
  * `TextField` (rótulo visível, ajuda e erro ligados por `aria-describedby`).
  *
- * O botão é um alternador: o nome acessível fica fixo ("Mostrar senha") e o estado vai em
- * `aria-pressed` — trocar o nome e o estado ao mesmo tempo faria o leitor de tela anunciar o
- * contrário do que acontece. É `<button>`, então Enter e Espaço funcionam sem código.
+ * O botão é um alternador: `aria-pressed` diz o estado e o nome acompanha a próxima ação ("Mostrar
+ * senha", "Ocultar senha"). Depois do clique o foco volta ao campo, para seguir digitando. É
+ * `<button>`, então Enter e Espaço funcionam sem código.
  */
 export const PasswordField = (props: PasswordFieldProps) => {
   const { id, label, helper, helperClassName, error, className, ...inputProps } = props
   const [visible, setVisible] = useState(false)
+  const toggleLabel = visible ? 'Ocultar senha' : 'Mostrar senha'
 
   const helperId = `${id}-helper`
   const describedBy = error || helper ? helperId : undefined
@@ -44,13 +45,19 @@ export const PasswordField = (props: PasswordFieldProps) => {
         />
         <button
           type="button"
-          aria-label="Mostrar senha"
+          aria-label={toggleLabel}
           aria-pressed={visible}
           aria-controls={id}
-          title={visible ? 'Ocultar senha' : 'Mostrar senha'}
+          title={toggleLabel}
           disabled={inputProps.disabled}
-          onClick={() => setVisible((current) => !current)}
-          className="absolute inset-y-0 right-0 flex min-h-(--size-touch-min) min-w-(--size-touch-min) items-center justify-center rounded-md text-(--text-muted) hover:text-(--text-strong) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--border-focus) disabled:opacity-50"
+          onClick={() => {
+            setVisible((current) => !current)
+            document.getElementById(id)?.focus()
+          }}
+          className={cn(
+            'absolute inset-y-0 right-0 flex min-h-(--size-touch-min) min-w-(--size-touch-min) items-center justify-center rounded-md hover:text-(--text-strong) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--border-focus) disabled:opacity-50',
+            visible ? 'text-(--text-link)' : 'text-(--text-muted)',
+          )}
         >
           {visible ? (
             <VisibilityOffIcon aria-hidden="true" className="size-5" />

@@ -202,7 +202,34 @@
   /* Lidos das variáveis do Figma nos frames desktop (01D–08D). */
   --space-32: 32px;
   --space-40: 40px;
-  /* TODO(figma): os passos 48 e 64 da coleção `space` ainda não foram lidos. Não inventar. */
+  /* Lido da variável do Figma no frame A01. */
+  --space-64: 64px;
+  /* TODO(figma): o passo 48 da coleção `space` ainda não foi lido. Não inventar. */
+
+  /* ===========================================================================
+   * MARCA — o palco das telas de conta (Figma, `primitive/brand/*`)
+   *
+   * Superfície de marca, como o logotipo: tem o mesmo valor em claro e em escuro, por isso não
+   * aparece no bloco `.dark`. Só o palco liga nestes tokens: botão, campo, foco, link e texto
+   * continuam na R5, e nenhum componente de produto usa ciano ou roxo.
+   * ======================================================================== */
+  --brand-ink: #070b14;
+  --brand-glow-a: #22a7ff;
+  --brand-glow-b: #6c4dff;
+  --brand-on-ink: #ffffff;
+  --brand-on-ink-muted: #94a3b8;
+  --brand-card: #0e1627;
+  --brand-line: #1e293b;
+  --brand-row: #162033;
+  --brand-text: #cbd5e1;
+  --brand-dim: #64748b;
+  --brand-accent: #3b82f6;
+  --brand-now: #f97316;
+  --brand-livre: #93c5fd;
+  --brand-pulse: #15803d;
+  --brand-pill-bg: #0e1c34;
+  --brand-pill-line: #234c90;
+  --brand-pill-text: #bfdbfe;
 
   /* ===========================================================================
    * TAMANHO
@@ -223,8 +250,10 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-full: 999px;
-  /* TODO(figma): radius/none e radius/xl (20) constam da coleção mas não
-     aparecem ligados nos component sets auditados. */
+  /* Lido da variável do Figma no frame A03. */
+  --radius-xl: 20px;
+  /* TODO(figma): radius/none consta da coleção mas não aparece ligado nos component sets
+     auditados. */
 
   /* ===========================================================================
    * TIPOGRAFIA

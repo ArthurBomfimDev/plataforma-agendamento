@@ -24,9 +24,9 @@ import { notify } from '@components/toaster/notify'
 const isPanelPath = (path: string | null) =>
   path === ROUTES.panel || Boolean(path?.startsWith(`${ROUTES.panel}/`))
 
-/** "Sou estabelecimento" ou um link do painel pedem o painel; outra tela de consumidor, consumidor. */
-const entryIntent = (role: 'customer' | 'business', redirect: string | null): EntryIntent =>
-  role === 'business' || isPanelPath(redirect) ? 'business' : redirect ? 'customer' : 'auto'
+/** Um link do painel pede o painel; outra tela de consumidor, consumidor. */
+const entryIntent = (redirect: string | null): EntryIntent =>
+  isPanelPath(redirect) ? 'business' : redirect ? 'customer' : 'auto'
 
 export const SignInRoute = () => {
   const navigate = useNavigate()
@@ -54,13 +54,13 @@ export const SignInRoute = () => {
           onError: (error) => notify.error(error),
         })
       }
-      onSubmit={({ email, password, role }) =>
+      onSubmit={({ email, password }) =>
         signIn.mutate(
           { email, password },
           {
             onSuccess: () =>
               // A tela inicial depende do contexto (decisão de 22/09, §2.0): ver `chooseEntry`.
-              enter.mutate(entryIntent(role, redirect), {
+              enter.mutate(entryIntent(redirect), {
                 onSuccess: (entry) => {
                   if (entry.kind === 'business') {
                     // Veio de um link do painel (e-mail ao dono): volta para ele.
@@ -70,7 +70,7 @@ export const SignInRoute = () => {
                   } else if (entry.kind === 'choose') {
                     navigate(ROUTES.chooseContext, { replace: true })
                   } else {
-                    if (role === 'business' || isPanelPath(redirect)) {
+                    if (isPanelPath(redirect)) {
                       notify.info(
                         'Esta conta não tem um estabelecimento. Você entrou como consumidor.',
                       )
