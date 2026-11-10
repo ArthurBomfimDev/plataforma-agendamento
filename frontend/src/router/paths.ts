@@ -60,6 +60,8 @@ export const ROUTES = {
   account: '/account',
   /** Cadastrar meu estabelecimento (ondas finais, Fase 3). `?retomar=1` volta ao rascunho que já existe. */
   registerBusiness: '/cadastrar-estabelecimento',
+  /** Página pública "Para estabelecimentos" (ADR-034): o que é, para quem e o começo do cadastro. */
+  forBusinesses: '/para-estabelecimentos',
   /** Página pública do profissional (ADR-031): `#/profissional/:professionalId`. */
   professional: '/profissional/:professionalId',
   /** Link do e-mail de convite de equipe (ADR-029): `#/convite?token=`. Não mudar sem mudar o e-mail. */
@@ -154,6 +156,8 @@ export const SEARCH_PARAMS = {
   sentAt: 'sentAt',
   /** Para onde voltar depois de entrar ou criar conta. Só caminho interno. */
   redirect: 'redirect',
+  /** Igual ao `redirect`, mas só para os destinos da lista fechada de `safeNext` (ADR-034). */
+  next: 'next',
   /** Token de uso único dos links de confirmação e de redefinição (e-mails da Onda 5B). */
   token: 'token',
 } as const
@@ -211,6 +215,37 @@ export const safeRedirect = (value: string | null) =>
   value && value.startsWith('/') && !value.startsWith('//') ? value : null
 
 /**
+ * Os únicos destinos que `next` aceita, e os parâmetros que cada um pode levar. Lista fechada: `next` atravessa a
+ * confirmação do e-mail e o login, então um valor montado por terceiros nunca decide para onde a pessoa vai.
+ */
+const NEXT_PATHS: ReadonlyArray<string> = [
+  ROUTES.registerBusiness,
+  ROUTES.invitation,
+  ROUTES.forBusinesses,
+  ROUTES.appointments,
+  ROUTES.account,
+]
+const NEXT_PARAMS: ReadonlyArray<string> = ['retomar', SEARCH_PARAMS.token]
+const NEXT_MAX_LENGTH = 800
+
+/** Só caminho interno da lista fechada, com parâmetros conhecidos. Qualquer outra coisa vira `null`. */
+export const safeNext = (value: string | null | undefined) => {
+  if (!value || value.length > NEXT_MAX_LENGTH) return null
+  if (!value.startsWith('/') || value.startsWith('//') || /[\\#\s]/.test(value)) return null
+
+  const cut = value.indexOf('?')
+  const path = cut === -1 ? value : value.slice(0, cut)
+  if (!NEXT_PATHS.includes(path)) return null
+
+  const keys = cut === -1 ? [] : [...new URLSearchParams(value.slice(cut + 1)).keys()]
+  return keys.every((key) => NEXT_PARAMS.includes(key)) ? value : null
+}
+
+/** Quem tem sessão vai direto ao assistente de cadastro; quem não tem, à página que explica antes. */
+export const businessEntryPath = (signedIn: boolean) =>
+  signedIn ? registerBusinessPath() : ROUTES.forBusinesses
+
+/**
  * Para onde "Entrar" e "Criar conta" devolvem a pessoa: a tela em que ela estava. A Home e as telas de entrada
  * não precisam de retorno (a Home é o destino padrão); o resultado passa por `safeRedirect` ao voltar.
  */
@@ -231,8 +266,11 @@ export const professionalPath = (professionalId: string) =>
 export const invitationPath = (token: string) =>
   withSearch(ROUTES.invitation, { [SEARCH_PARAMS.token]: token })
 
-export const signInPath = (redirect?: string) =>
-  withSearch(ROUTES.signIn, { [SEARCH_PARAMS.redirect]: redirect ?? null })
+export const signInPath = (redirect?: string, next?: string | null) =>
+  withSearch(ROUTES.signIn, {
+    [SEARCH_PARAMS.redirect]: redirect ?? null,
+    [SEARCH_PARAMS.next]: safeNext(next),
+  })
 
 export const signUpPath = (redirect?: string | null) =>
   withSearch(ROUTES.signUp, { [SEARCH_PARAMS.redirect]: redirect ?? null })

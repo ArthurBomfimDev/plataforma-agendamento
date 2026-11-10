@@ -10,4 +10,6 @@ export type CheckEmailScreenProps = {
   onResend?: () => void
   onUseAnotherEmail?: () => void
   onSignIn?: () => void
+  /** A conta nasceu no cadastro de estabelecimento: avisa que o cadastro continua depois da confirmação (ADR-034). */
+  continuesRegistration?: boolean
 }

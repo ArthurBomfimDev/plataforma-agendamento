@@ -39,6 +39,13 @@ describe('CheckEmailScreen', () => {
     )
   })
 
+  it('vindo do cadastro de estabelecimento, diz que o cadastro continua depois da confirmação', () => {
+    expect(html({ continuesRegistration: true })).toContain(
+      'O cadastro do seu estabelecimento continua depois da confirmação',
+    )
+    expect(html()).not.toContain('O cadastro do seu estabelecimento continua')
+  })
+
   it('sem o endereço, não oferece reenvio', () => {
     const page = html({ email: null })
 

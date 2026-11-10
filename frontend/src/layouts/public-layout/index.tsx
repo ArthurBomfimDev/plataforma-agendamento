@@ -5,7 +5,14 @@ import { Suspense } from 'react'
 import { AccountMenu } from '@components/account-menu'
 import { LocationPicker } from '@components/location-picker'
 import { MobileTopBar } from '@components/mobile-top-bar'
-import { ROUTES, returnPathFor, searchPath, signInPath, signUpPath } from '@router/paths'
+import {
+  ROUTES,
+  businessEntryPath,
+  returnPathFor,
+  searchPath,
+  signInPath,
+  signUpPath,
+} from '@router/paths'
 import { TopBar } from '@components/top-bar'
 import { useAccountMenu } from '@hooks/use-account-menu'
 import { useBusinessContext } from '@api/services/auth/hooks'
@@ -47,6 +54,7 @@ export const AppLayout = () => {
         onChooseLocation={openPicker}
         onHome={() => navigate(ROUTES.home)}
         onAppointments={() => navigate(ROUTES.appointments)}
+        onForBusinesses={() => navigate(businessEntryPath(signedIn))}
         onSignIn={() => navigate(signInPath(returnTo))}
         onSignOut={accountMenu?.onSignOut}
         accountMenu={accountMenu && <AccountMenu {...accountMenu} />}

@@ -12,8 +12,17 @@ import { formatCountdown } from './consts'
  * tela. Só o resultado do reenvio é anunciado.
  */
 export const CheckEmailScreen = (props: CheckEmailScreenProps) => {
-  const { email, secondsLeft, resending, status, error, onResend, onUseAnotherEmail, onSignIn } =
-    props
+  const {
+    email,
+    secondsLeft,
+    resending,
+    status,
+    error,
+    onResend,
+    onUseAnotherEmail,
+    onSignIn,
+    continuesRegistration = false,
+  } = props
   const waiting = secondsLeft > 0
 
   return (
@@ -34,6 +43,12 @@ export const CheckEmailScreen = (props: CheckEmailScreenProps) => {
           Abra o link para ativar a conta. Ele vale por 24 horas. Se não encontrar, olhe a caixa de
           spam.
         </p>
+        {continuesRegistration && (
+          <p className="type-body text-(--text-body)">
+            O cadastro do seu estabelecimento continua depois da confirmação: confirme, entre com o
+            seu e-mail e a sua senha, e você volta ao passo seguinte.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-(--space-12)">

@@ -78,6 +78,18 @@ export const useSignUp = () =>
     },
   })
 
+/**
+ * Criar a conta pelo assistente de cadastro de estabelecimento (ADR-034): o mesmo POST de cadastro, sem a data de
+ * nascimento. O perfil de consumidor só nasce quando a pessoa o completar; quem só administra um estabelecimento não
+ * precisa dele.
+ */
+export const useRegisterOwnerAccount = () =>
+  useServiceMutation({
+    service: async (values: { fullName: string; email: string; password: string }) => {
+      await authService.register(values.email, values.password, values.fullName)
+    },
+  })
+
 export const useConfirmEmail = () => useServiceMutation({ service: authService.confirmEmail })
 
 export const useResendConfirmation = () =>

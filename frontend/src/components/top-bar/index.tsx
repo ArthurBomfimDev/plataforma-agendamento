@@ -20,6 +20,7 @@ export const TopBar = (props: TopBarProps) => {
     showSearch,
     onHome,
     onAppointments,
+    onForBusinesses,
     onSignIn,
     signedIn,
     onSignOut,
@@ -88,9 +89,16 @@ export const TopBar = (props: TopBarProps) => {
             Voltar ao painel
           </Button>
         ) : (
-          <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
-            Meus agendamentos
-          </Button>
+          <>
+            {onForBusinesses && (
+              <Button variant="ghost" className="shrink-0" onClick={onForBusinesses}>
+                Para estabelecimentos
+              </Button>
+            )}
+            <Button variant="ghost" className="shrink-0" onClick={onAppointments}>
+              Meus agendamentos
+            </Button>
+          </>
         )}
         {/* TODO(figma): logado, o Figma prevê o avatar com menu; o menu é o da conta, sem avatar. */}
         {signedIn ? (

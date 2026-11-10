@@ -52,6 +52,10 @@ const ForgotPasswordRoute = lazyPage(
   'ForgotPasswordRoute',
 )
 const HomeRoute = lazyPage(() => import('@pages/customer/home'), 'HomeRoute')
+const ForBusinessesRoute = lazyPage(
+  () => import('@pages/customer/for-businesses'),
+  'ForBusinessesRoute',
+)
 const InvitationRoute = lazyPage(() => import('@pages/auth/invitation'), 'InvitationRoute')
 const MyAccountRoute = lazyPage(() => import('@pages/account'), 'MyAccountRoute')
 const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
@@ -101,6 +105,7 @@ export const AppRoutes = () => {
           <Route path={ROUTES.appointments} element={<AppointmentsRoute />} />
           <Route path={ROUTES.search} element={<SearchRoute />} />
           <Route path={ROUTES.professional} element={<ProfessionalPageRoute />} />
+          <Route path={ROUTES.forBusinesses} element={<ForBusinessesRoute />} />
           <Route path="*" element={<NotFoundScreen />} />
         </Route>
         {/* Fora da moldura: entrar e criar conta não têm barra superior. */}

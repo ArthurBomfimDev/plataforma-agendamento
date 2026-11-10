@@ -8,6 +8,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { SignUpScreen } from './screen'
+import { rememberNext } from '@router/pending-next'
 import { errorMessage } from '@api/base'
 import { useSignUp } from '@api/services/auth/hooks'
 
@@ -28,6 +29,8 @@ export const SignUpRoute = () => {
       onSubmit={(values) =>
         signUp.mutate(values, {
           onSuccess: () => {
+            // O link de confirmação não carrega o destino: guarda para o login levar a pessoa de volta.
+            rememberNext(values.email, redirect)
             const state: CheckEmailState = { email: values.email, sentAt: Date.now() }
             navigate(checkEmailPath(redirect), { replace: true, state })
           },

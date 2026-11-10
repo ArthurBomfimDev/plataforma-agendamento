@@ -1,4 +1,4 @@
-import { NAVIGATION_PATHS, businessPath, registerBusinessPath, searchPath } from '@router/paths'
+import { NAVIGATION_PATHS, businessEntryPath, businessPath, searchPath } from '@router/paths'
 
 import { HOME_CATEGORIES } from './consts'
 
@@ -14,6 +14,7 @@ import { SearchButton } from '@components/search-button'
 import { SearchField } from '@components/search-field'
 import { locationReference } from '@components/top-bar/consts'
 import { useNavigate } from 'react-router'
+import { useSessionStore } from '@store/session'
 import { useState } from 'react'
 
 /**
@@ -22,6 +23,7 @@ import { useState } from 'react'
 export const HomeScreen = (props: HomeScreenProps) => {
   const { locationLabel, nearby, onChooseLocation } = props
   const navigate = useNavigate()
+  const signedIn = useSessionStore((state) => state.session !== null)
   const [term, setTerm] = useState('')
 
   return (
@@ -159,7 +161,7 @@ export const HomeScreen = (props: HomeScreenProps) => {
             <p className="type-body text-(--text-muted)">
               Cadastre seu estabelecimento e receba agendamentos pela Vagoo.
             </p>
-            <Button variant="secondary" onClick={() => navigate(registerBusinessPath())}>
+            <Button variant="secondary" onClick={() => navigate(businessEntryPath(signedIn))}>
               Tenho um negócio
             </Button>
           </section>

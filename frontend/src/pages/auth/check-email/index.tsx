@@ -1,6 +1,8 @@
 import {
   type CheckEmailState,
+  ROUTES,
   SEARCH_PARAMS,
+  registerBusinessPath,
   safeRedirect,
   signInPath,
   signUpPath,
@@ -27,6 +29,7 @@ export const CheckEmailRoute = () => {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const redirect = safeRedirect(searchParams.get(SEARCH_PARAMS.redirect))
+  const continuesRegistration = redirect?.split('?')[0] === ROUTES.registerBusiness
   const initial = readState(location.state)
 
   const [sentAt, setSentAt] = useState(() => initial?.sentAt ?? Date.now())
@@ -51,7 +54,12 @@ export const CheckEmailRoute = () => {
           },
         })
       }}
-      onUseAnotherEmail={() => navigate(signUpPath(redirect), { replace: true })}
+      continuesRegistration={continuesRegistration}
+      onUseAnotherEmail={() =>
+        navigate(continuesRegistration ? registerBusinessPath() : signUpPath(redirect), {
+          replace: true,
+        })
+      }
       onSignIn={() => navigate(signInPath(redirect ?? undefined))}
     />
   )

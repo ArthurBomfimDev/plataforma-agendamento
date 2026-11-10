@@ -5,6 +5,8 @@ export type TopBarProps = {
   showSearch?: boolean
   onHome?: () => void
   onAppointments?: () => void
+  /** "Para estabelecimentos" (ADR-034): sem sessão leva à página que explica; com sessão, ao assistente. */
+  onForBusinesses?: () => void
   onSignIn?: () => void
   /** Com sessão, "Entrar" vira "Sair". */
   signedIn?: boolean

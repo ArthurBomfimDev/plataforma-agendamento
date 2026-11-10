@@ -14,10 +14,12 @@ import { useNavigate, useSearchParams } from 'react-router'
 
 import type { AddressValues } from './screen/types'
 import { ErrorScreen, LoadingScreen } from '@components/screen-state'
+import { OwnerAccount } from './account'
 import { RegisterBusinessScreen } from './screen'
 import { RequireSession } from '@router/guards/require-session'
 import { TERMS_VERSION } from './screen/consts'
 import { geoService } from '@api/services/geo'
+import { useSessionStore } from '@store/session'
 
 const RegisterBusiness = () => {
   const navigate = useNavigate()
@@ -122,9 +124,18 @@ const RegisterBusiness = () => {
   )
 }
 
-/** `#/cadastrar-estabelecimento`: cadastrar um estabelecimento. Exige sessão (e-mail confirmado, como todo login). */
-export const RegisterBusinessRoute = () => (
-  <RequireSession>
-    <RegisterBusiness />
-  </RequireSession>
-)
+/**
+ * `#/cadastrar-estabelecimento`: cadastrar um estabelecimento. Com sessão, é o assistente (e-mail confirmado, como todo
+ * login). Sem sessão, o primeiro passo é "Sua conta" (ADR-034), em vez de mandar a pessoa criar uma conta comum antes.
+ */
+export const RegisterBusinessRoute = () => {
+  const signedIn = useSessionStore((state) => state.session !== null)
+
+  return signedIn ? (
+    <RequireSession>
+      <RegisterBusiness />
+    </RequireSession>
+  ) : (
+    <OwnerAccount />
+  )
+}
