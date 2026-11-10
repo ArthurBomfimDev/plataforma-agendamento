@@ -1,32 +1,28 @@
-import { AnimatePresence, MotionConfig, motion, useAnimate, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   EASE_OUT,
-  PASSWORD_MIN_LENGTH,
-  ROLE_OPTIONS,
-  ROLE_SUBTITLES,
-  fadeUp,
-  stagger,
+  EMAIL_FORMAT_ERROR,
+  FORM_CLASSES,
+  LINK_CLASSES,
+  isValidEmail,
   validateSignIn,
 } from './consts'
-import type { SignInErrors, SignInRole, SignInScreenProps } from './types'
-import { useRef, useState } from 'react'
+import { REDUCED_MOTION_QUERY, useMediaQuery } from '@hooks/use-media-query'
+import type { SignInErrors, SignInScreenProps } from './types'
+import { useEffect, useRef, useState } from 'react'
 
+import { AuthLayout } from '@layouts/auth-layout'
 import { Button } from '@components/button'
-import { HeroPanel } from './components/hero-panel'
-import { Logotype } from '@components/logotype'
+import { InlineAlert } from '@components/inline-alert'
 import { PasswordField } from '@components/password-field'
-import { SegmentedControl } from '@components/segmented-control'
+import { SpinnerIcon } from '@assets/icons'
 import { TextField } from '@components/text-field'
-import { ThemeToggle } from '@components/theme-toggle'
-
-/** Link de texto com alvo de toque de 44px: 20px de linha + 12px acima e abaixo. */
-const LINK_CLASSES =
-  'type-label -my-(--space-12) min-w-(--size-touch-min) py-(--space-12) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)'
+import { cn } from 'cn'
 
 /**
- * Entrar (Figma, A03 · 390px; desktop: A01 · 1440px).
+ * Entrar (Figma, A01 · 1440px, A03 · 390px e os estados em A01s).
  *
- * Fica fora da moldura com a barra superior: a tela é a própria porta de entrada.
+ * Não há escolha de papel antes de entrar: a conta é única (§2.0) e a troca de contexto vem depois.
  */
 export const SignInScreen = (props: SignInScreenProps) => {
   const {
@@ -40,28 +36,25 @@ export const SignInScreen = (props: SignInScreenProps) => {
     resending,
   } = props
 
-  const [role, setRole] = useState<SignInRole>('customer')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<SignInErrors>({})
 
-  const [fieldsScope, animateFields] = useAnimate<HTMLDivElement>()
-  const reduceMotion = useReducedMotion()
-
   const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
+  const reducedMotion = useMediaQuery(REDUCED_MOTION_QUERY)
+
+  // Os campos ficam desabilitados no envio e perdem o foco: a recusa devolve ao primeiro deles.
+  useEffect(() => {
+    if (error) emailRef.current?.focus()
+  }, [error])
 
   const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const values = { role, email: email.trim(), password }
+    const values = { email: email.trim(), password }
     const nextErrors = validateSignIn(values)
     setErrors(nextErrors)
-
-    // Um tremor curto nos campos reforça o erro; a mensagem escrita continua sendo o canal principal.
-    if ((nextErrors.email || nextErrors.password) && !reduceMotion) {
-      void animateFields(fieldsScope.current, { x: [0, -8, 8, -5, 5, 0] }, { duration: 0.4 })
-    }
 
     // O foco vai para o primeiro campo com erro, e o leitor de tela lê a mensagem ligada a ele.
     if (nextErrors.email) emailRef.current?.focus()
@@ -69,148 +62,112 @@ export const SignInScreen = (props: SignInScreenProps) => {
     else onSubmit?.(values)
   }
 
-  const forgotPassword = (
-    <button type="button" onClick={onForgotPassword} className={LINK_CLASSES}>
-      Esqueci minha senha
-    </button>
-  )
-
   return (
-    // Quem pediu menos movimento no sistema vê tudo aparecer sem deslocamento nem zoom.
-    <MotionConfig reducedMotion="user">
-      <main className="min-h-dvh bg-(--bg-surface) lg:flex">
-        <HeroPanel />
-
-        <div className="relative px-(--space-16) pt-(--space-24) pb-[calc(var(--space-16)+env(safe-area-inset-bottom))] lg:flex lg:min-w-0 lg:flex-1 lg:items-center lg:justify-center lg:p-(--space-40)">
-          {/* A tela fica fora da moldura com a barra superior, então traz o próprio seletor de tema. */}
-          <ThemeToggle className="absolute top-(--space-16) right-(--space-16) lg:top-(--space-24) lg:right-(--space-24)" />
-
-          <motion.div
-            variants={stagger(0.2)}
-            initial="hidden"
-            animate="show"
-            className="mx-auto flex w-full max-w-md flex-col gap-(--space-16) lg:max-w-95.25"
+    <AuthLayout
+      title="Entrar"
+      description="Uma conta só: a mesma serve para agendar e para atender."
+      footnote="Ao entrar, você concorda com os Termos de Uso e a Política de Privacidade."
+    >
+      <form
+        noValidate
+        onSubmit={handleSubmit}
+        className={cn(FORM_CLASSES, submitting && '[&_label]:text-(--text-disabled)')}
+      >
+        {/* O alerta abre espaço aos poucos, em vez de empurrar os campos de uma vez. */}
+        <AnimatePresence initial={false}>
+          {error && (
+            <motion.div
+              key="error"
+              initial={reducedMotion ? false : { height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={reducedMotion ? undefined : { height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: EASE_OUT }}
+              className="overflow-hidden"
+            >
+              <InlineAlert>{error}</InlineAlert>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {/* Conta que ainda não confirmou o e-mail: a saída fica ao lado da mensagem. */}
+        {unconfirmed && (
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            disabled={resending}
+            onClick={() => onResendConfirmation?.(email.trim())}
           >
-            <motion.div variants={fadeUp} className="hidden self-start lg:block">
-              <Logotype tone="auto" className="h-11.75" alt="" />
-            </motion.div>
+            {resending ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
+          </Button>
+        )}
 
-            <motion.div variants={fadeUp} className="flex flex-col gap-(--space-4)">
-              <h1 className="type-title text-(--text-strong) lg:text-(length:--size-display)! lg:leading-(--line-height-display)!">
-                Bem-vindo de volta!
-              </h1>
-              {/* Troca junto com o seletor: o texto antigo sai por cima e o novo entra por baixo. */}
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p
-                  key={role}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18, ease: EASE_OUT }}
-                  className="type-body text-(--text-muted)"
-                >
-                  {ROLE_SUBTITLES[role]}
-                </motion.p>
-              </AnimatePresence>
-            </motion.div>
+        <TextField
+          ref={emailRef}
+          id="sign-in-email"
+          label="E-mail"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="voce@exemplo.com"
+          value={email}
+          disabled={submitting}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            setErrors((current) => ({ ...current, email: undefined }))
+          }}
+          // Só no blur: validar a cada tecla acusaria erro em todo e-mail pela metade. Campo vazio
+          // não é formato errado; quem cobra o preenchimento é o envio.
+          onBlur={() => {
+            if (email.trim() && !isValidEmail(email)) {
+              setErrors((current) => ({ ...current, email: EMAIL_FORMAT_ERROR }))
+            }
+          }}
+          error={errors.email}
+        />
+        <PasswordField
+          ref={passwordRef}
+          id="sign-in-password"
+          label="Senha"
+          autoComplete="current-password"
+          placeholder="Sua senha"
+          value={password}
+          disabled={submitting}
+          onChange={(event) => {
+            setPassword(event.target.value)
+            setErrors((current) => ({ ...current, password: undefined }))
+          }}
+          error={errors.password}
+        />
 
-            <motion.div variants={fadeUp}>
-              <SegmentedControl
-                label="Tipo de conta"
-                options={ROLE_OPTIONS}
-                value={role}
-                onValueChange={setRole}
-              />
-            </motion.div>
-
-            <motion.form
-              variants={fadeUp}
-              noValidate
-              onSubmit={handleSubmit}
-              className="flex flex-col gap-(--space-16)"
-            >
-              <div ref={fieldsScope} className="flex flex-col gap-(--space-12)">
-                <TextField
-                  ref={emailRef}
-                  id="sign-in-email"
-                  label="E-mail"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="voce@exemplo.com"
-                  value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value)
-                    setErrors((current) => ({ ...current, email: undefined }))
-                  }}
-                  // No celular o Figma reserva a linha de ajuda vazia; o texto só aparece no desktop.
-                  helper="Usamos para confirmar e avisar sobre o pedido."
-                  helperClassName="invisible lg:visible"
-                  error={errors.email}
-                />
-                <PasswordField
-                  ref={passwordRef}
-                  id="sign-in-password"
-                  label="Senha"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => {
-                    setPassword(event.target.value)
-                    setErrors((current) => ({ ...current, password: undefined }))
-                  }}
-                  helper={`Mínimo ${PASSWORD_MIN_LENGTH} caracteres.`}
-                  helperClassName="invisible lg:visible"
-                  error={errors.password}
-                />
-                <div className="hidden justify-end lg:flex">{forgotPassword}</div>
-              </div>
-
-              <div className="flex flex-col gap-(--space-16) lg:gap-(--space-12)">
-                {error && (
-                  <p role="alert" className="type-label text-(--status-rejected-fg)">
-                    {error}
-                  </p>
-                )}
-                {/* Conta que ainda não confirmou o e-mail: a saída fica ao lado da mensagem. */}
-                {unconfirmed && (
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="w-full"
-                    disabled={resending}
-                    onClick={() => onResendConfirmation?.(email.trim())}
-                  >
-                    {resending ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
-                  </Button>
-                )}
-                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                  {submitting ? 'Entrando…' : 'Entrar'}
-                </Button>
-                <p className="type-label flex justify-center gap-(--space-4) text-(--text-muted)">
-                  Não tem conta?
-                  <button type="button" onClick={onCreateAccount} className={LINK_CLASSES}>
-                    Criar conta
-                  </button>
-                </p>
-                <p className="type-label text-center text-(--text-muted)">
-                  Recebeu um convite? Use o link do e-mail.
-                </p>
-              </div>
-            </motion.form>
-
-            <motion.div variants={fadeUp} className="flex justify-center lg:hidden">
-              {forgotPassword}
-            </motion.div>
-
-            <motion.p
-              variants={fadeUp}
-              className="type-caption hidden text-center text-(--text-muted) lg:block"
-            >
-              Ao continuar, você concorda com os Termos de Uso e a Política de Privacidade.
-            </motion.p>
-          </motion.div>
+        <div className="flex justify-end">
+          <button type="button" onClick={onForgotPassword} className={LINK_CLASSES}>
+            Esqueci minha senha
+          </button>
         </div>
-      </main>
-    </MotionConfig>
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full disabled:bg-(--bg-disabled) disabled:text-(--text-disabled) disabled:opacity-100"
+          disabled={submitting}
+          aria-busy={submitting || undefined}
+        >
+          {submitting && (
+            <SpinnerIcon
+              aria-hidden="true"
+              className="size-5 animate-spin motion-reduce:animate-none"
+            />
+          )}
+          {submitting ? 'Entrando…' : 'Entrar'}
+        </Button>
+
+        <p className="type-body flex flex-wrap items-center justify-center gap-x-1.5 text-(--text-muted) auth:justify-start">
+          Ainda não tem conta?
+          <button type="button" onClick={onCreateAccount} className={LINK_CLASSES}>
+            Criar conta
+          </button>
+        </p>
+      </form>
+    </AuthLayout>
   )
 }

@@ -53,8 +53,8 @@ export type Entry =
   | { kind: 'choose' }
 
 /**
- * O que a pessoa pediu ao entrar: `business` = escolheu "Sou estabelecimento"; `customer` = veio de
- * uma tela de consumidor (o agendamento que pediu login); `auto` = nada em especial.
+ * O que a pessoa pediu ao entrar: `business` = veio de um link do painel; `customer` = veio de uma
+ * tela de consumidor (o agendamento que pediu login); `auto` = nada em especial.
  */
 export type EntryIntent = 'auto' | 'business' | 'customer'
 
@@ -63,7 +63,7 @@ export type EntryIntent = 'auto' | 'business' | 'customer'
  *
  * - Só consumidor → consumidor. Só estabelecimento, sem perfil de consumidor → o painel.
  * - Veio de uma tela de consumidor e tem perfil → consumidor, para terminar o que estava fazendo.
- * - Senão vale o último contexto lembrado ("Sou estabelecimento" ignora um "consumidor" lembrado).
+ * - Senão vale o último contexto lembrado (um link do painel ignora um "consumidor" lembrado).
  *   Na primeira vez de um dono, o painel.
  * - Vários estabelecimentos sem nada lembrado → a escolha.
  */

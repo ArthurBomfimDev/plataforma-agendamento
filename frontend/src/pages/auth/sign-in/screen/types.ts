@@ -1,8 +1,4 @@
-/** Quem está entrando. `Owner` e `Professional` entram pelo mesmo lado: "estabelecimento". */
-export type SignInRole = 'customer' | 'business'
-
 export type SignInValues = {
-  role: SignInRole
   email: string
   password: string
 }

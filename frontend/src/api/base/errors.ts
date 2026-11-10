@@ -27,7 +27,7 @@ export class UserMessageError extends Error {
 
 /** Mensagens para o consumidor, por código. O que não está aqui cai na mensagem genérica. */
 const MESSAGES: Record<string, string> = {
-  'auth.invalid_credentials': 'E-mail ou senha incorretos.',
+  'auth.invalid_credentials': 'E-mail ou senha incorretos. Confira e tente de novo.',
   'auth.account_not_active': 'Esta conta não está ativa.',
   'identity.email_not_confirmed':
     'Confirme seu e-mail para entrar. Enviamos o link quando você criou a conta.',

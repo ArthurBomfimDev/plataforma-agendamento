@@ -5,6 +5,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Onde as telas de conta viram duas colunas (Figma, A01): abaixo disso o palco vira faixa. */
+@theme {
+  --breakpoint-auth: 73.75rem;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--family-sans);
