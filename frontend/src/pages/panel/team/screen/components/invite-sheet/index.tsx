@@ -1,26 +1,32 @@
-import { NO_ROLE, ROLE_OPTIONS } from './consts'
+import {
+  EMPTY_INVITE,
+  type InviteErrors,
+  type InviteForm,
+  ROLE_OPTIONS,
+  SPECIALTY_MAX_LENGTH,
+  asksSpecialty,
+  toInviteDraft,
+  validateInvite,
+} from './consts'
 
 import { Button } from '@components/button'
 import type { InviteSheetProps } from './types'
 import { PanelSheet } from '@components/panel-sheet'
 import { SelectField } from '@components/select-field'
 import { TextField } from '@components/text-field'
-import { isValidEmail } from '../../consts'
 import { useState } from 'react'
 
 const NEW_PROFILE = ''
 
 /**
  * Convidar alguém para a equipe por e-mail (ADR-029): é o único caminho para outra pessoa entrar. O perfil do profissional
- * nasce no aceite; o atendente não tem perfil. Quem já tem registro antigo, sem conta, pode ser ligado a ele aqui.
+ * nasce no aceite, com a especialidade informada aqui; o atendente não tem perfil. Quem já tem registro antigo, sem
+ * conta, pode ser ligado a ele aqui.
  */
 export const InviteSheet = (props: InviteSheetProps) => {
   const { open, onOpenChange, linkable, onInvite } = props
 
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'Professional' | 'Attendant' | typeof NO_ROLE>(NO_ROLE)
-  const [professionalId, setProfessionalId] = useState(NEW_PROFILE)
+  const [form, setForm] = useState<InviteForm>(EMPTY_INVITE)
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
@@ -29,18 +35,14 @@ export const InviteSheet = (props: InviteSheetProps) => {
   if (open !== wasOpen) {
     setWasOpen(open)
     if (open) {
-      setName('')
-      setEmail('')
-      setRole(NO_ROLE)
-      setProfessionalId(NEW_PROFILE)
+      setForm(EMPTY_INVITE)
       setTouched(false)
       setError(undefined)
     }
   }
 
-  const nameError = touched && !name.trim() ? 'Informe o nome de quem você convida.' : undefined
-  const emailError = touched && !isValidEmail(email) ? 'Informe um e-mail válido.' : undefined
-  const roleError = touched && role === NO_ROLE ? 'Escolha o papel da pessoa.' : undefined
+  const set = (patch: Partial<InviteForm>) => setForm((current) => ({ ...current, ...patch }))
+  const errors: InviteErrors = touched ? validateInvite(form) : {}
 
   return (
     <PanelSheet
@@ -55,15 +57,10 @@ export const InviteSheet = (props: InviteSheetProps) => {
         onSubmit={async (event) => {
           event.preventDefault()
           setTouched(true)
-          if (!name.trim() || !isValidEmail(email) || role === NO_ROLE) return
+          if (Object.keys(validateInvite(form)).length > 0) return
           setSaving(true)
           setError(undefined)
-          const failure = await onInvite({
-            name: name.trim(),
-            email: email.trim(),
-            role,
-            professionalId: role === 'Professional' && professionalId ? professionalId : null,
-          })
+          const failure = await onInvite(toInviteDraft(form))
           setSaving(false)
           if (failure) setError(failure)
         }}
@@ -72,9 +69,9 @@ export const InviteSheet = (props: InviteSheetProps) => {
           id="invite-name"
           label="Nome"
           autoComplete="off"
-          value={name}
-          error={nameError}
-          onChange={(event) => setName(event.target.value)}
+          value={form.name}
+          error={errors.name}
+          onChange={(event) => set({ name: event.target.value })}
         />
         <TextField
           id="invite-email"
@@ -82,19 +79,21 @@ export const InviteSheet = (props: InviteSheetProps) => {
           type="email"
           inputMode="email"
           autoComplete="off"
-          value={email}
-          error={emailError}
-          onChange={(event) => setEmail(event.target.value)}
+          value={form.email}
+          error={errors.email}
+          onChange={(event) => set({ email: event.target.value })}
         />
         <SelectField
           id="invite-role"
           label="Papel"
           options={ROLE_OPTIONS}
-          value={role}
-          error={roleError}
-          onChange={(event) => setRole(event.target.value as 'Professional' | 'Attendant')}
+          value={form.role}
+          error={errors.role}
+          onChange={(event) =>
+            set({ role: event.target.value as InviteForm['role'], specialty: '' })
+          }
         />
-        {role === 'Professional' && linkable.length > 0 && (
+        {form.role === 'Professional' && linkable.length > 0 && (
           <SelectField
             id="invite-profile"
             label="Perfil de profissional"
@@ -103,8 +102,21 @@ export const InviteSheet = (props: InviteSheetProps) => {
               { value: NEW_PROFILE, label: 'Criar um perfil novo ao aceitar' },
               ...linkable.map(({ id, name: profileName }) => ({ value: id, label: profileName })),
             ]}
-            value={professionalId}
-            onChange={(event) => setProfessionalId(event.target.value)}
+            value={form.professionalId}
+            onChange={(event) => set({ professionalId: event.target.value })}
+          />
+        )}
+        {asksSpecialty(form) && (
+          <TextField
+            id="invite-specialty"
+            label="Especialidade"
+            autoComplete="off"
+            maxLength={SPECIALTY_MAX_LENGTH}
+            placeholder="Ex.: Barbeiro, Manicure"
+            helper="Aparece no perfil dela na página do estabelecimento. Ela pode mudar depois."
+            value={form.specialty}
+            error={errors.specialty}
+            onChange={(event) => set({ specialty: event.target.value })}
           />
         )}
 

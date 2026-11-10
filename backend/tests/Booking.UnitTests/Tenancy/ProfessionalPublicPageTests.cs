@@ -346,6 +346,6 @@ public sealed class ProfessionalPublicPageTests
 
         public Task LinkAsync(Guid businessId, Guid professionalId, Guid membershipId, CancellationToken ct = default) => throw new NotSupportedException();
 
-        public void Create(Guid businessId, string displayName, Guid membershipId) => throw new NotSupportedException();
+        public void Create(Guid businessId, string displayName, Guid membershipId, string? specialty) => throw new NotSupportedException();
     }
 }

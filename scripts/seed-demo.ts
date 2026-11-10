@@ -1062,6 +1062,12 @@ const TEAM = {
   professional: { fullName: 'Marcos Lima', email: 'profissional.duartina@example.com' },
   attendant: { fullName: 'Atendente Duartina', email: 'atendente.duartina@example.com' },
   invited: { name: 'Convidado Pendente', email: 'convidado.duartina@example.com' },
+  // Convite de profissional com especialidade (10/11): o perfil nasce no aceite, com ela.
+  invitedProfessional: {
+    name: 'Convidada Profissional',
+    email: 'convidada.profissional.duartina@example.com',
+    specialty: 'Manicure',
+  },
 }
 
 async function seedDuartinaTeam() {
@@ -1110,6 +1116,19 @@ async function seedDuartinaTeam() {
   } catch (error) {
     if (!(error instanceof ApiCallError) || error.code !== 'invitation.already_pending') throw error
     console.log('  o convite pendente já existia')
+  }
+
+  try {
+    await call(
+      'POST',
+      '/api/businesses/current/invitations',
+      { ...TEAM.invitedProfessional, role: 'Professional' },
+      accessToken,
+    )
+    console.log(`  convite de profissional (${TEAM.invitedProfessional.specialty}) para ${TEAM.invitedProfessional.email}`)
+  } catch (error) {
+    if (!(error instanceof ApiCallError) || error.code !== 'invitation.already_pending') throw error
+    console.log('  o convite de profissional pendente já existia')
   }
 }
 
@@ -1367,6 +1386,7 @@ async function main() {
   console.log(`  profissional ${TEAM.professional.email} — com conta, ligado ao perfil ${DUARTINA.professionalProfile}`)
   console.log(`  atendente    ${TEAM.attendant.email} — opera a agenda de todos`)
   console.log(`  convite      ${TEAM.invited.email} — pendente (e-mail no Mailpit)`)
+  console.log(`  convite      ${TEAM.invitedProfessional.email} — profissional, especialidade ${TEAM.invitedProfessional.specialty} (e-mail no Mailpit)`)
   if (ADMIN_PASSWORD_FROM_ENV) console.log(`  admin        ${ADMIN.email} (senha: a de SEED_ADMIN_PASSWORD)`)
   else if (adminCreated) console.log(`  admin        ${ADMIN.email} (senha gerada agora, anote — não aparece de novo: ${ADMIN_PASSWORD})`)
   else console.log(`  admin        ${ADMIN.email} (já existia; senha inalterada)`)

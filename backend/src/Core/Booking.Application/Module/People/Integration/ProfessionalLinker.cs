@@ -34,6 +34,6 @@ public sealed class ProfessionalLinker(IProfessionalRepository professionals) : 
         professional?.Deactivate();
     }
 
-    public void Create(Guid businessId, string displayName, Guid membershipId) =>
-        professionals.Add(Professional.Create(businessId, displayName, specialty: null, bio: null, membershipId));
+    public void Create(Guid businessId, string displayName, Guid membershipId, string? specialty) =>
+        professionals.Add(Professional.Create(businessId, displayName, specialty, bio: null, membershipId));
 }

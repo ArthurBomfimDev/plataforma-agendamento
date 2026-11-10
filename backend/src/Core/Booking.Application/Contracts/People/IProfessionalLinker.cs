@@ -17,6 +17,6 @@ public interface IProfessionalLinker
     /// </summary>
     Task DeactivateByMembershipAsync(Guid membershipId, CancellationToken ct = default);
 
-    /// <summary>Cria o perfil do profissional já ligado ao vínculo.</summary>
-    void Create(Guid businessId, string displayName, Guid membershipId);
+    /// <summary>Cria o perfil do profissional já ligado ao vínculo, com a especialidade do convite.</summary>
+    void Create(Guid businessId, string displayName, Guid membershipId, string? specialty);
 }

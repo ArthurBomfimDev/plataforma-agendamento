@@ -44,6 +44,73 @@ public sealed class BusinessInvitationTests
             BusinessInvitation.Create(Guid.NewGuid(), "a@b.com", "A", BusinessMembershipRole.Attendant, Guid.NewGuid(), Guid.NewGuid(), "h", _now)).Message);
     }
 
+    // --- Especialidade (rodada de 10/11) ---
+
+    [Fact]
+    public void The_specialty_of_a_professional_invitation_is_trimmed_and_blank_becomes_null()
+    {
+        BusinessInvitation Make(string? specialty) =>
+            BusinessInvitation.Create(Guid.NewGuid(), "a@b.com", "A", BusinessMembershipRole.Professional, null, Guid.NewGuid(), "h", _now, specialty);
+
+        Assert.Equal("Barbeira", Make("  Barbeira ").Specialty);
+        Assert.Null(Make("   ").Specialty);
+        Assert.Null(Make(null).Specialty);
+        Assert.Equal(new string('a', BusinessInvitation.MaxSpecialtyLength), Make(new string('a', BusinessInvitation.MaxSpecialtyLength)).Specialty);
+    }
+
+    [Fact]
+    public void A_specialty_above_80_characters_is_refused()
+    {
+        Assert.Equal("invitation.specialty_invalid", Assert.Throws<DomainException>(() =>
+            BusinessInvitation.Create(
+                Guid.NewGuid(), "a@b.com", "A", BusinessMembershipRole.Professional, null, Guid.NewGuid(), "h", _now, new string('a', BusinessInvitation.MaxSpecialtyLength + 1))).Message);
+    }
+
+    [Fact]
+    public void An_attendant_invitation_drops_any_specialty_without_an_error()
+    {
+        BusinessInvitation attendant = BusinessInvitation.Create(
+            Guid.NewGuid(), "a@b.com", "A", BusinessMembershipRole.Attendant, null, Guid.NewGuid(), "h", _now, "Barbeira");
+        BusinessInvitation tooLong = BusinessInvitation.Create(
+            Guid.NewGuid(), "a@b.com", "A", BusinessMembershipRole.Attendant, null, Guid.NewGuid(), "h", _now, new string('a', 200));
+
+        Assert.Null(attendant.Specialty);
+        Assert.Null(tooLong.Specialty);
+    }
+
+    [Fact]
+    public async Task Accepting_creates_the_profile_with_the_specialty_of_the_invitation()
+    {
+        var world = new World();
+        await world.Invite("nova@exemplo.com", "Professional", specialty: "Manicure");
+
+        await world.AcceptNew().ExecuteAsync(new AcceptInvitationNewAccountRequest(world.Mailer.Sent[0].RawToken, "Nova", "senha-correta-123", true));
+
+        Assert.Equal("Manicure", Assert.Single(world.Linker.Created).Specialty);
+    }
+
+    [Fact]
+    public async Task Accepting_an_invitation_without_specialty_uses_the_label_Profissional()
+    {
+        var world = new World();
+        await world.Invite("nova@exemplo.com", "Professional");
+
+        await world.AcceptNew().ExecuteAsync(new AcceptInvitationNewAccountRequest(world.Mailer.Sent[0].RawToken, "Nova", "senha-correta-123", true));
+
+        Assert.Equal("Profissional", Assert.Single(world.Linker.Created).Specialty);
+    }
+
+    [Fact]
+    public async Task The_pending_list_shows_the_specialty_and_an_attendant_has_none()
+    {
+        var world = new World();
+        InvitationResponse professional = await world.Invite("a@exemplo.com", "Professional", specialty: "Barbeiro");
+        InvitationResponse attendant = await world.Invite("b@exemplo.com", "Attendant", specialty: "Barbeiro");
+
+        Assert.Equal("Barbeiro", professional.Specialty);
+        Assert.Null(attendant.Specialty);
+    }
+
     [Fact]
     public void Accepting_marks_the_invitation_used_and_a_second_accept_is_refused()
     {
@@ -401,8 +468,8 @@ public sealed class BusinessInvitationTests
         public InviteMemberCommand InviteCommand() =>
             new(Businesses, Memberships, Invitations, Accounts, Linker, Directory, Mailer, Tokens, Actor, Unit, Clock);
 
-        public Task<InvitationResponse> Invite(string email, string role, Guid? professionalId = null) =>
-            InviteCommand().ExecuteAsync(new InviteMemberRequest("Convidado", email, role, professionalId));
+        public Task<InvitationResponse> Invite(string email, string role, Guid? professionalId = null, string? specialty = null) =>
+            InviteCommand().ExecuteAsync(new InviteMemberRequest("Convidado", email, role, professionalId, specialty));
 
         public ResendInvitationCommand Resend() => new(Businesses, Memberships, Invitations, Directory, Mailer, Tokens, Actor, Unit, Clock);
 
@@ -510,7 +577,7 @@ public sealed class BusinessInvitationTests
     {
         private readonly Dictionary<Guid, bool> _profiles = [];
 
-        public List<(Guid BusinessId, Guid MembershipId)> Created { get; } = [];
+        public List<(Guid BusinessId, Guid MembershipId, string? Specialty)> Created { get; } = [];
         public List<(Guid ProfessionalId, Guid MembershipId)> Linked { get; } = [];
 
         public Guid AddProfile(bool linked)
@@ -537,7 +604,8 @@ public sealed class BusinessInvitationTests
             return Task.CompletedTask;
         }
 
-        public void Create(Guid businessId, string displayName, Guid membershipId) => Created.Add((businessId, membershipId));
+        public void Create(Guid businessId, string displayName, Guid membershipId, string? specialty) =>
+            Created.Add((businessId, membershipId, specialty));
     }
 
     private sealed class FakePeople : IPeopleDirectory

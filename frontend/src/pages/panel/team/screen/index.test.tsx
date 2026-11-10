@@ -114,6 +114,7 @@ const invite = {
   name: 'Ana Souza',
   email: 'ana@example.com',
   roleLabel: 'Atendente',
+  specialty: null,
   validUntil: '11/11/2026',
 }
 
@@ -201,6 +202,22 @@ describe('TeamScreen — convites (ADR-029)', () => {
     expect(html).toContain('Reenviar')
     expect(html).toContain('Revogar')
     expect(html).toContain('3 de 15 vagas ocupadas')
+  })
+
+  it('mostra a especialidade do convite de profissional, e só ela', () => {
+    const html = render({
+      invites: {
+        status: 'ready',
+        invites: [
+          { ...invite, id: 'i2', name: 'Rafa', roleLabel: 'Profissional', specialty: 'Barbeiro' },
+          invite,
+        ],
+        seats: null,
+      },
+    })
+
+    expect(html).toContain('Rafa · Profissional · Barbeiro')
+    expect(html).toContain('Ana Souza · Atendente<')
   })
 
   it('equipe completa: desliga o convite e explica', () => {

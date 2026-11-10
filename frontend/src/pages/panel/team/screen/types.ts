@@ -55,6 +55,8 @@ export type PendingInvite = {
   email: string
   /** `Profissional` ou `Atendente`. */
   roleLabel: string
+  /** Especialidade do convite de profissional; nula para o atendente e para convites antigos. */
+  specialty: string | null
   /** "dd/MM/aaaa": quando o link deixa de valer. */
   validUntil: string
 }
@@ -65,6 +67,8 @@ export type InviteDraft = {
   role: 'Professional' | 'Attendant'
   /** Perfil de profissional já cadastrado a ligar à conta; nulo: o perfil é criado quando a pessoa aceita. */
   professionalId: string | null
+  /** Especialidade do perfil que nasce no aceite. Só para `Professional`; nula para o atendente. */
+  specialty?: string | null
 }
 
 /** Convites pendentes e vagas da equipe (ADR-029). `seats` nulo: as vagas ainda não chegaram. */

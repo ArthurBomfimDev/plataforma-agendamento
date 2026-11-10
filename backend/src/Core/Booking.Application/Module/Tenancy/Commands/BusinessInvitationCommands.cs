@@ -52,7 +52,8 @@ internal static class InvitationRules
             invitation.ProfessionalId,
             invitation.StateAt(now).ToString(),
             invitation.ExpiresAt,
-            invitation.LastSentAt);
+            invitation.LastSentAt,
+            invitation.Specialty);
 }
 
 /// <summary>
@@ -116,7 +117,7 @@ public sealed class InviteMemberCommand(
 
         GeneratedToken token = tokens.Generate();
         BusinessInvitation invitation = BusinessInvitation.Create(
-            businessId, email, request.Name, role, request.ProfessionalId, ownerId, token.Hash, now);
+            businessId, email, request.Name, role, request.ProfessionalId, ownerId, token.Hash, now, request.Specialty);
         invitations.Add(invitation);
 
         await QueueEmailAsync(users, mailer, business.Name, ownerId, invitation, token.Raw, ct);
@@ -350,7 +351,8 @@ public sealed class InvitationAcceptance(
             }
             else if (await people.FindProfessionalIdByMembershipAsync(invitation.BusinessId, membership.Id, ct) is null)
             {
-                professionalLinker.Create(invitation.BusinessId, invitation.InviteeName, membership.Id);
+                professionalLinker.Create(
+                    invitation.BusinessId, invitation.InviteeName, membership.Id, invitation.Specialty ?? BusinessInvitation.DefaultSpecialty);
             }
         }
 

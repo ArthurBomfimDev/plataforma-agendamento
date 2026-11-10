@@ -2,9 +2,11 @@ namespace Booking.Arguments.Module.Tenancy;
 
 /// <summary>
 /// Convite de equipe. <c>Role</c>: <c>Professional</c> ou <c>Attendant</c>. <c>ProfessionalId</c>: perfil já cadastrado
-/// pelo dono a ser ligado à conta (só para <c>Professional</c>); sem ele, o perfil é criado no aceite.
+/// pelo dono a ser ligado à conta (só para <c>Professional</c>); sem ele, o perfil é criado no aceite. <c>Specialty</c>:
+/// até 80 caracteres, vira a especialidade do perfil criado no aceite; para <c>Attendant</c> é descartada.
 /// </summary>
-public sealed record InviteMemberRequest(string Name, string Email, string Role, Guid? ProfessionalId = null);
+public sealed record InviteMemberRequest(
+    string Name, string Email, string Role, Guid? ProfessionalId = null, string? Specialty = null);
 
 public sealed record InvitationResponse(
     Guid Id,
@@ -14,7 +16,8 @@ public sealed record InvitationResponse(
     Guid? ProfessionalId,
     string State,
     DateTimeOffset ExpiresAt,
-    DateTimeOffset LastSentAt);
+    DateTimeOffset LastSentAt,
+    string? Specialty = null);
 
 /// <summary>Vagas da equipe: ocupadas (contas ativas + convites pendentes) e o limite do estabelecimento.</summary>
 public sealed record SeatsResponse(int Used, int Limit);

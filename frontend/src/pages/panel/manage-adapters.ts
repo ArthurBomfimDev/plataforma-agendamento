@@ -148,6 +148,7 @@ export const toPendingInvite = (invitation: InvitationResponse): PendingInvite =
   name: invitation.name,
   email: invitation.email,
   roleLabel: INVITE_ROLE_LABELS[invitation.role],
+  specialty: invitation.specialty ?? null,
   validUntil: new Date(invitation.expiresAt).toLocaleDateString('pt-BR'),
 })
 

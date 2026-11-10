@@ -441,7 +441,7 @@ Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca 
 
 | Rota | Quem | O que faz |
 |---|---|---|
-| `POST /api/businesses/current/invitations` `{ name, email, role, professionalId? }` | Owner | 201 `InvitationResponse`. **409** `business.seat_limit_reached`, `invitation.already_pending`, `invitation.already_member`, `invitation.professional_not_linkable`. 400 `invitation.role_invalid`. 30 por hora por conta (429) |
+| `POST /api/businesses/current/invitations` `{ name, email, role, professionalId?, specialty? }` | Owner | 201 `InvitationResponse` (com `specialty`). **409** `business.seat_limit_reached`, `invitation.already_pending`, `invitation.already_member`, `invitation.professional_not_linkable`. 400 `invitation.role_invalid`, `invitation.specialty_invalid` (acima de 80 caracteres). `specialty` vira a especialidade do perfil criado no aceite (nula: "Profissional"); para `Attendant` é descartada sem erro. 30 por hora por conta (429) |
 | `GET /api/businesses/current/invitations?page=&pageSize=` | Owner | `PagedResult<InvitationResponse>` só dos **pendentes** |
 | `GET /api/businesses/current/seats` | Owner | `{ used, limit }`: contas ativas + convites pendentes contra o `SeatLimit` (15) |
 | `GET /api/businesses/current/members?page=&pageSize=` | Owner | `PagedResult<TeamMemberResponse>` `{ membershipId, name, role }`: quem tem conta ativa no estabelecimento. A seção Equipe (`#/panel/members`) |
@@ -458,6 +458,11 @@ Papéis convidáveis: `Professional` e `Attendant` (novo papel; o `Owner` nunca 
   (`switch-context`) para o novo estabelecimento.
 - **E-mail** pelo outbox, link `#/convite?token=`. O texto cita o estabelecimento e o papel, nunca categoria nem serviço.
 - **Migration `AddBusinessInvitation`** (não aplicada): tabela `tenancy.business_invitation` e `seat_limit` 1 → 15.
+- **Migration `AddInvitationSpecialty`** (10/11, **NÃO APLICADA**): `tenancy.business_invitation.specialty varchar(80) NULL`.
+  `InvitationResponse` ganha `specialty` (nulo em convites antigos e no de atendente). Aditivo: nada quebra.
+- **`IProfessionalLinker.Create`** recebe a especialidade: contrato interno entre `Tenancy` e `People`, sem rota nova.
+- Quem já tem conta **sem e-mail confirmado** não entra pelo convite: o login responde 403 `identity.email_not_confirmed`. O
+  trajeto de volta ao convite depois da confirmação é do frontend e está na ADR-033.
 
 ## 4.12 Papel Atendente (Fase 4, bloco 2, 04/11) — **backend escrito sem Docker, não verificado**
 

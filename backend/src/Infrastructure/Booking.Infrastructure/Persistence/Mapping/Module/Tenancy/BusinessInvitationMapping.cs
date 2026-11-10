@@ -14,6 +14,7 @@ public sealed class BusinessInvitationMapping : BaseMapping<BusinessInvitation>
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
         builder.Property(x => x.InviteeName).HasMaxLength(BusinessInvitation.MaxNameLength).IsRequired();
         builder.Property(x => x.Role).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Specialty).HasMaxLength(BusinessInvitation.MaxSpecialtyLength);
         builder.Property(x => x.InvitedByUserId).IsRequired();
         builder.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
         builder.Property(x => x.ExpiresAt).IsRequired();

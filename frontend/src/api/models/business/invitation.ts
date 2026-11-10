@@ -25,6 +25,8 @@ export type InviteMemberRequest = {
   email: string
   role: InvitationRole
   professionalId?: string | null
+  /** Até 80 caracteres: a especialidade do perfil que nasce no aceite. A API a descarta para `Attendant`. */
+  specialty?: string | null
 }
 
 export type InvitationResponse = {
@@ -36,6 +38,8 @@ export type InvitationResponse = {
   state: InvitationState
   expiresAt: string
   lastSentAt: string
+  /** Só em convite de profissional; nulo em convites antigos. */
+  specialty?: string | null
 }
 
 /** Vagas da equipe: contas ativas + convites pendentes contra o limite do estabelecimento. */

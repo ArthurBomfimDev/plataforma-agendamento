@@ -74,6 +74,7 @@ export const InvitesCard = (props: InvitesCardProps) => {
               <div className="flex min-w-0 flex-1 basis-56 flex-col gap-(--space-2)">
                 <p className="type-body text-(--text-strong)">
                   {invite.name} · {invite.roleLabel}
+                  {invite.specialty ? ` · ${invite.specialty}` : ''}
                 </p>
                 <p className="type-caption break-all text-(--text-muted)">
                   {invite.email} · vale até {invite.validUntil}

@@ -45,6 +45,7 @@ const MESSAGES: Record<string, string> = {
   'invitation.already_pending': 'Já existe um convite pendente para este e-mail.',
   'invitation.already_member': 'Esta pessoa já faz parte da equipe.',
   'invitation.role_invalid': 'Escolha se o convite é para profissional ou atendente.',
+  'invitation.specialty_invalid': 'A especialidade pode ter até 80 caracteres.',
   'professional.cannot_create_without_invitation':
     'Convide a pessoa por e-mail: o perfil nasce quando ela aceita.',
   'invitation.professional_not_linkable':

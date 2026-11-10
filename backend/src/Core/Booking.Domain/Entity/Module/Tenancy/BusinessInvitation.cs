@@ -17,6 +17,10 @@ public sealed class BusinessInvitation : BaseEntity, IAuditable, ITenantScoped
 {
     public const int LifetimeDays = 7;
     public const int MaxNameLength = 120;
+    public const int MaxSpecialtyLength = 80;
+
+    /// <summary>Especialidade do perfil quando o convite não trouxe nenhuma (convites antigos, anteriores à coluna).</summary>
+    public const string DefaultSpecialty = "Profissional";
 
     /// <summary>Versão do texto em <c>docs/legal/termo-profissional.md</c>. Rascunho, ainda sem revisão jurídica.</summary>
     public const string ProfessionalTermsVersion = "profissional-2026-11-rascunho";
@@ -27,6 +31,13 @@ public sealed class BusinessInvitation : BaseEntity, IAuditable, ITenantScoped
     public BusinessMembershipRole Role { get; private set; }
     public Guid? ProfessionalId { get; private set; }
     public Guid InvitedByUserId { get; private set; }
+
+    /// <summary>
+    /// Especialidade que o perfil de profissional leva ao nascer, no aceite. Só existe para <c>Professional</c>; o
+    /// atendente não tem perfil, então qualquer valor enviado para ele é descartado. Nulo: <see cref="DefaultSpecialty"/>.
+    /// </summary>
+    public string? Specialty { get; private set; }
+
     public string TokenHash { get; private set; } = null!;
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset LastSentAt { get; private set; }
@@ -50,7 +61,8 @@ public sealed class BusinessInvitation : BaseEntity, IAuditable, ITenantScoped
         Guid? professionalId,
         Guid invitedByUserId,
         string tokenHash,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        string? specialty = null)
     {
         if (role == BusinessMembershipRole.Owner)
         {
@@ -74,11 +86,15 @@ public sealed class BusinessInvitation : BaseEntity, IAuditable, ITenantScoped
             throw new DomainException("invitation.token_hash_required");
         }
 
+        // Atendente não tem perfil: a especialidade enviada para ele é ignorada, sem erro.
+        string? cleanSpecialty = role == BusinessMembershipRole.Professional ? NormalizeSpecialty(specialty) : null;
+
         return new BusinessInvitation
         {
             BusinessId = businessId,
             Email = ValueObject.Email.Of(email).Address,
             InviteeName = name,
+            Specialty = cleanSpecialty,
             Role = role,
             ProfessionalId = professionalId,
             InvitedByUserId = invitedByUserId,
@@ -86,6 +102,23 @@ public sealed class BusinessInvitation : BaseEntity, IAuditable, ITenantScoped
             ExpiresAt = now.AddDays(LifetimeDays),
             LastSentAt = now,
         };
+    }
+
+    private static string? NormalizeSpecialty(string? specialty)
+    {
+        string? trimmed = specialty?.Trim();
+
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            return null;
+        }
+
+        if (trimmed.Length > MaxSpecialtyLength)
+        {
+            throw new DomainException("invitation.specialty_invalid");
+        }
+
+        return trimmed;
     }
 
     public InvitationState StateAt(DateTimeOffset now)
