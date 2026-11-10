@@ -102,7 +102,8 @@ const MESSAGES: Record<string, string> = {
   'appointment.cannot_reject_from_current_status':
     'Este pedido já foi respondido. A lista foi atualizada.',
   'appointment.cannot_cancel_from_current_status': 'Este agendamento não pode mais ser cancelado.',
-  'appointment.cannot_cancel_inside_window': 'O prazo para cancelar este agendamento já passou.',
+  'appointment.cannot_cancel_inside_window':
+    'O prazo para cancelar este agendamento já passou. Fale com o estabelecimento.',
   'appointment.cannot_complete_from_current_status':
     'Só dá para concluir um agendamento confirmado, depois do horário dele.',
   'appointment.cannot_mark_no_show_from_current_status':

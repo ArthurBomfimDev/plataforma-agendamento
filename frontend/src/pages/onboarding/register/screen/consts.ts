@@ -1,4 +1,4 @@
-import type { BusinessCategoryName, ProfessionalCouncilName } from '@api/models'
+import type { BusinessCategoryName, PostalCodeResponse, ProfessionalCouncilName } from '@api/models'
 import type { AddressValues, BusinessValues, ResponsibleValues, WizardStep } from './types'
 
 /** A versão do texto dos termos exibido abaixo. Muda quando o texto mudar; vai para o servidor no aceite. */
@@ -94,6 +94,27 @@ export const validateAddress = (values: AddressValues): FieldErrors<AddressValue
   if (!/^[A-Za-z]{2}$/.test(values.state.trim())) errors.state = 'Informe a UF com 2 letras.'
   return errors
 }
+
+export const POSTAL_CODE_INVALID_FOR_LOOKUP = 'Informe o CEP com 8 dígitos para buscar.'
+
+/**
+ * O que dizer depois de "Buscar CEP" e para onde levar o cursor. O CEP geral de cidade pequena vem sem rua e sem bairro:
+ * a pessoa preenche. Com a rua, falta só o número, que o CEP nunca traz.
+ */
+export const postalCodeFeedback = (
+  found: PostalCodeResponse | null,
+): { message: string; focus: 'street' | 'number' } =>
+  found === null
+    ? { message: 'CEP não encontrado. Preencha o endereço à mão.', focus: 'street' }
+    : found.street
+      ? {
+          message: 'Preenchemos a rua, o bairro e a cidade. Confira e informe o número.',
+          focus: 'number',
+        }
+      : {
+          message: 'Este CEP é da cidade toda, sem rua. Preencha a rua, o número e o bairro.',
+          focus: 'street',
+        }
 
 export const validateResponsible = (values: ResponsibleValues): FieldErrors<ResponsibleValues> => {
   const errors: FieldErrors<ResponsibleValues> = {}

@@ -26,14 +26,25 @@ export const PRECISION_LABELS: Record<LocationPrecision, string> = {
   City: 'Na cidade',
 }
 
-/** Primeiro o endereço completo; o bairro e o número atrapalham a busca em cidade pequena, então há uma segunda tentativa. */
+/**
+ * As consultas, da mais específica para a menos: rua, número e cidade, sem o bairro (o provedor conhece o bairro com outro
+ * nome em cidade pequena, e o bairro na consulta fazia o número não ser achado); depois com o bairro; por fim só a rua. A
+ * medição de 10/11 contra cinco endereços de Garça está em `docs/produto/limitacoes-e-trabalho-futuro.md`.
+ */
 export const addressQueries = (address: AddressValues) => {
   const street = address.street.trim()
   const place = `${address.city.trim()}, ${address.state.trim().toUpperCase()}`
-  const full = [street, address.streetNumber.trim(), address.district.trim(), place]
-    .filter(Boolean)
-    .join(', ')
-  return [...new Set([full, `${street}, ${place}`])]
+  const join = (...parts: string[]) => parts.filter(Boolean).join(', ')
+  const number = address.streetNumber.trim()
+  const district = address.district.trim()
+
+  return [
+    ...new Set([
+      join(street, number, place),
+      join(street, number, district, place),
+      join(street, place),
+    ]),
+  ]
 }
 
 /** Só o que tem coordenada, o mais preciso primeiro. No empate, fica a ordem do provedor. */
@@ -42,16 +53,24 @@ export const bestPlaces = (places: GeoPlaceResponse[]) =>
     .filter(({ latitude, longitude }) => Number.isFinite(latitude) && Number.isFinite(longitude))
     .toSorted((a, b) => PRECISION_RANK[a.precision] - PRECISION_RANK[b.precision])
 
-/** Busca o endereço e para na primeira tentativa que achar algo. Vazio: não achou. Falha de rede sobe para quem chamou. */
+/**
+ * Busca o endereço. Para na primeira consulta que acha um ponto exato ou na rua; se só acha o bairro ou a cidade, tenta as
+ * próximas consultas e fica com o resultado mais preciso de todos, para uma consulta mais frouxa nunca esconder uma melhor.
+ * Vazio: não achou. Falha de rede sobe para quem chamou.
+ */
 export const locateAddress = async (
   address: AddressValues,
   search: (text: string) => Promise<GeoPlaceResponse[]>,
 ) => {
+  let best: GeoPlaceResponse[] = []
   for (const query of addressQueries(address)) {
     const places = bestPlaces(await search(query))
-    if (places.length > 0) return places
+    const top = places[0]
+    if (!top) continue
+    if (PRECISION_RANK[top.precision] <= PRECISION_RANK.Street) return places
+    if (!best[0] || PRECISION_RANK[top.precision] < PRECISION_RANK[best[0].precision]) best = places
   }
-  return []
+  return best
 }
 
 /** Abre o ponto num mapa fora do app. A CSP do site não deixa embutir mapa de terceiro. */

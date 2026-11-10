@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { BookingReviewScreen } from '.'
 import type { BookingReviewScreenProps } from './types'
+import { cancellationPolicyText } from './consts'
 import { MOCK_BUSINESSES } from '@pages/customer/business-detail/screen/fixtures'
 import { MemoryRouter } from 'react-router'
 import { renderToString } from 'react-dom/server'
@@ -88,6 +89,38 @@ describe('BookingReviewScreen', () => {
 
   it('mostra a janela de cancelamento do estabelecimento', () => {
     expect(screen({ cancellationWindowHours: 6 })).toContain('Cancelamento gratuito até 6 h antes')
+  })
+
+  it('depois do prazo, manda falar com o estabelecimento: não promete uma aprovação que não existe', () => {
+    const html = screen({ cancellationWindowHours: 6 })
+
+    expect(html).toContain(
+      'Cancelamento gratuito até 6 h antes. Depois disso, fale com o estabelecimento.',
+    )
+    expect(html).not.toContain('só com aprovação')
+    expect(html).not.toContain('aprovação do estabelecimento')
+  })
+
+  it('usa o prazo de cada estabelecimento, sem 24 fixo', () => {
+    expect(screen({ cancellationWindowHours: 48 })).toContain('gratuito até 48 h antes')
+    expect(screen({ cancellationWindowHours: 48 })).not.toContain('até 24 h')
+    expect(cancellationPolicyText(1)).toBe(
+      'Cancelamento gratuito até 1 h antes. Depois disso, fale com o estabelecimento.',
+    )
+  })
+
+  it('prazo zero: o cancelamento vale até o horário marcado', () => {
+    expect(cancellationPolicyText(0)).toBe(
+      'Cancelamento gratuito até o horário marcado. Depois disso, fale com o estabelecimento.',
+    )
+    expect(screen({ cancellationWindowHours: 0 })).not.toContain('até 0 h')
+  })
+
+  it('diz "estabelecimento", não "empresa", ao falar de quem aprova o pedido', () => {
+    const html = screen()
+
+    expect(html).toContain('O pedido fica pendente até o estabelecimento aprovar.')
+    expect(html).not.toContain('empresa')
   })
 
   it('trava o envio enquanto o pedido está indo, para não mandar duas vezes', () => {

@@ -15,4 +15,16 @@ describe('errorMessage', () => {
   it('o código da API continua decidindo a mensagem', () => {
     expect(errorMessage(new ApiError(400, 'consent.version_outdated'))).toContain('mudou')
   })
+
+  it('cancelar fora do prazo diz o que fazer em seguida', () => {
+    expect(errorMessage(new ApiError(409, 'appointment.cannot_cancel_inside_window'))).toBe(
+      'O prazo para cancelar este agendamento já passou. Fale com o estabelecimento.',
+    )
+  })
+
+  it('o convite com especialidade grande demais tem mensagem própria', () => {
+    expect(errorMessage(new ApiError(400, 'invitation.specialty_invalid'))).toBe(
+      'A especialidade pode ter até 80 caracteres.',
+    )
+  })
 })

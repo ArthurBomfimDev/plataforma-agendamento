@@ -4,8 +4,11 @@ import {
   STEP_LABELS,
   TERMS_TEXT,
   type FieldErrors,
+  POSTAL_CODE_INVALID_FOR_LOOKUP,
+  POSTAL_CODE_PATTERN,
   hasErrors,
   nextStep,
+  postalCodeFeedback,
   previousStep,
   stepsFor,
   validateAddress,
@@ -284,6 +287,7 @@ const AddressStep = (props: {
   const [values, setValues] = useState(initial)
   const [errors, setErrors] = useState<FieldErrors<AddressValues>>({})
   const [lookupMessage, setLookupMessage] = useState<string>()
+  const [lookingUp, setLookingUp] = useState(false)
   const [check, setCheck] = useState<LocationCheck>({ status: 'idle' })
 
   const locate = async () => {
@@ -302,18 +306,36 @@ const AddressStep = (props: {
 
   const lookup = async () => {
     setLookupMessage(undefined)
-    const found = await onLookupPostalCode(values.postalCode)
-    if (!found) {
-      setLookupMessage('CEP não encontrado. Preencha o endereço à mão.')
+    if (!POSTAL_CODE_PATTERN.test(values.postalCode.trim())) {
+      setErrors((current) => ({ ...current, postalCode: POSTAL_CODE_INVALID_FOR_LOOKUP }))
       return
     }
-    setValues((current) => ({
-      ...current,
-      street: found.street ?? current.street,
-      district: found.district ?? current.district,
-      city: found.city,
-      state: found.state,
-    }))
+    setLookingUp(true)
+    const found = await onLookupPostalCode(values.postalCode)
+    setLookingUp(false)
+    const feedback = postalCodeFeedback(found)
+    setLookupMessage(feedback.message)
+    if (found) {
+      setValues((current) => ({
+        ...current,
+        street: found.street ?? current.street,
+        district: found.district ?? current.district,
+        city: found.city,
+        state: found.state,
+      }))
+      // Os campos preenchidos podiam estar com erro da tentativa anterior.
+      setErrors((current) => ({
+        ...current,
+        postalCode: undefined,
+        street: found.street ? undefined : current.street,
+        district: found.district ? undefined : current.district,
+        city: undefined,
+        state: undefined,
+      }))
+    }
+    document
+      .getElementById(feedback.focus === 'number' ? 'business-number' : 'business-street')
+      ?.focus()
   }
 
   if (check.status !== 'idle') {
@@ -353,11 +375,18 @@ const AddressStep = (props: {
           className="min-w-0 flex-1"
           {...field('postalCode')}
         />
-        <Button type="button" variant="secondary" onClick={() => void lookup()} disabled={busy}>
-          Buscar CEP
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => void lookup()}
+          disabled={busy || lookingUp}
+        >
+          {lookingUp ? 'Buscando…' : 'Buscar CEP'}
         </Button>
       </div>
-      {lookupMessage && <p className="type-caption text-(--text-muted)">{lookupMessage}</p>}
+      <p role="status" className="type-caption text-(--text-muted) empty:hidden">
+        {lookupMessage}
+      </p>
       <TextField
         id="business-street"
         label="Rua"

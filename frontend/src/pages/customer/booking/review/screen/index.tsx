@@ -6,7 +6,7 @@ import type { BookingReviewScreenProps } from './types'
 import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import { Button } from '@components/button'
 import { SmartImage } from '@components/smart-image'
-import { NOTE_MAX_LENGTH } from './consts'
+import { NOTE_MAX_LENGTH, cancellationPolicyText } from './consts'
 import { PageContainer } from '@components/page-container'
 import { SensitiveConsent } from '@components/sensitive-consent'
 import { TextAreaField } from '@components/text-area-field'
@@ -173,15 +173,14 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
               Política de cancelamento
             </h2>
             <p className="type-caption text-(--text-body) lg:text-(length:--size-body)! lg:leading-(--line-height-body)!">
-              Cancelamento gratuito até {cancellationWindowHours} h antes. Depois disso, só com
-              aprovação do estabelecimento.
+              {cancellationPolicyText(cancellationWindowHours)}
             </p>
           </section>
 
           {/* Desktop: as ações ficam no fim da coluna, sem rodapé fixo. */}
           <div className="hidden items-center gap-(--space-12) lg:flex">
             <p className="type-caption min-w-0 flex-1 text-(--text-muted)">
-              O pedido fica pendente até a empresa aprovar.
+              O pedido fica pendente até o estabelecimento aprovar.
             </p>
             <Button variant="ghost" size="lg" onClick={onBack}>
               Voltar
@@ -203,7 +202,8 @@ export const BookingReviewScreen = (props: BookingReviewScreenProps) => {
             {submitLabel}
           </Button>
           <p className="type-caption text-center text-(--text-muted)">
-            O pedido fica pendente até a empresa aprovar. Você é avisado por e-mail e no app.
+            O pedido fica pendente até o estabelecimento aprovar. Você é avisado por e-mail e no
+            app.
           </p>
         </ActionFooter>
       )}

@@ -81,9 +81,18 @@ describe('AddressLocation', () => {
 })
 
 describe('busca do endereço', () => {
-  it('monta a busca completa e a de reserva, sem repetir', () => {
+  // Ordem atualizada em 10/11: sem o bairro primeiro (antes era com o bairro). Medição em `limitacoes-e-trabalho-futuro.md`.
+  it('monta as buscas: sem o bairro, com o bairro e só a rua, sem repetir', () => {
     expect(addressQueries(address)).toEqual([
+      'Rua das Flores, 10, Garça, SP',
       'Rua das Flores, 10, Centro, Garça, SP',
+      'Rua das Flores, Garça, SP',
+    ])
+  })
+
+  it('sem bairro informado, a busca com bairro não se repete', () => {
+    expect(addressQueries({ ...address, district: '' })).toEqual([
+      'Rua das Flores, 10, Garça, SP',
       'Rua das Flores, Garça, SP',
     ])
   })
@@ -98,14 +107,49 @@ describe('busca do endereço', () => {
     expect(ordered.map(({ label }) => label)).toEqual(['exato', 'cidade'])
   })
 
-  it('tenta a segunda busca quando a primeira não acha nada', async () => {
-    const search = vi.fn(async (text: string) => (text.includes('Centro') ? [] : [place()]))
+  it('tenta a próxima busca quando a anterior não acha nada', async () => {
+    // Só a busca com o bairro acha: a primeira (sem o bairro) volta vazia.
+    const search = vi.fn(async (text: string) => (text.includes('Centro') ? [place()] : []))
 
     expect(await locateAddress(address, search)).toHaveLength(1)
     expect(search).toHaveBeenCalledTimes(2)
   })
 
-  it('sem resultado nas duas: lista vazia, sem erro', async () => {
+  it('para na primeira busca que acha o ponto exato ou a rua', async () => {
+    const exact = vi.fn(async () => [place({ precision: 'Rooftop' })])
+    const street = vi.fn(async () => [place({ precision: 'Street' })])
+
+    expect(await locateAddress(address, exact)).toHaveLength(1)
+    expect(exact).toHaveBeenCalledTimes(1)
+    await locateAddress(address, street)
+    expect(street).toHaveBeenCalledTimes(1)
+  })
+
+  it('se a primeira só acha o bairro, continua e fica com o resultado mais preciso', async () => {
+    const search = vi.fn(async (text: string) =>
+      text.includes('Centro')
+        ? [place({ label: 'com bairro', precision: 'Rooftop' })]
+        : [place({ label: 'só o bairro', precision: 'Locality' })],
+    )
+
+    const found = await locateAddress(address, search)
+
+    expect(found.map(({ label }) => label)).toEqual(['com bairro'])
+    expect(search).toHaveBeenCalledTimes(2)
+  })
+
+  it('uma busca mais frouxa nunca esconde uma melhor: sem nada mais preciso, fica o bairro', async () => {
+    const search = vi.fn(async (text: string) =>
+      text === 'Rua das Flores, 10, Garça, SP'
+        ? [place({ label: 'bairro', precision: 'Locality' })]
+        : [place({ label: 'cidade', precision: 'City' })],
+    )
+
+    expect((await locateAddress(address, search))[0]?.label).toBe('bairro')
+    expect(search).toHaveBeenCalledTimes(3)
+  })
+
+  it('sem resultado em nenhuma: lista vazia, sem erro', async () => {
     expect(await locateAddress(address, async () => [])).toEqual([])
   })
 

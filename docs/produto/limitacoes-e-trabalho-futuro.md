@@ -66,6 +66,64 @@ com `.ics`. A completa só se a banca ou os testes pedirem.
 - A página do profissional mostra os horários de hoje e amanhã do **primeiro serviço** dele; a escolha de verdade acontece
   no fluxo de agendamento.
 
+## Endereço do cadastro: achar o ponto (medição de 10/11)
+
+O dono informa o endereço, o sistema procura o ponto no provedor de geocodificação, o dono vê e confirma. O link "Ver no
+mapa" (outra aba) e a confirmação do dono continuam; não há mapa com pino.
+
+**Variante adotada em 10/11:** as consultas passaram de "com o bairro, depois só a rua" para **"sem o bairro, com o bairro,
+só a rua"**, e a busca só para cedo quando acha o ponto exato ou a rua. Se achar só o bairro ou a cidade, tenta as próximas e
+fica com o resultado mais preciso de todos, então uma consulta mais frouxa nunca esconde uma melhor.
+
+Medido com o código real de cada versão, contra o provedor de verdade, pela API da pilha isolada, nos **mesmos cinco
+endereços de Garça** de 05/11 (CEP e número de fontes públicas: o regulamento da Fatec e o diretório escol.as):
+
+| Endereço | 05/11, antes | 10/11, antes | 10/11, **depois** |
+|---|---|---|---|
+| Fatec: Av. Presidente Vargas, 2331 | só o bairro | **no número** | **no número** |
+| Etec: 277 (a rua do CEP, Rua Belém) | só o bairro | só o bairro | **no número** (Rua Belém, 277) |
+| EMEI Victor Hugo: Rua Vitória, 730 | bairro **errado** (Labienópolis) | o mesmo | o mesmo |
+| Creche Andreia: Rua Ludovico Álvaro Ferrari, 170 | não achou | não achou | não achou |
+| CMEI Patronato: Av. Gabriela, 1394 | não achou | não achou | não achou |
+| **No número** | **0 de 5** | **1 de 5** | **2 de 5** |
+
+- **Só adotei porque não piorou nenhum caso:** quatro ficaram iguais e um melhorou.
+- **A linha de base mudou sozinha.** O algoritmo antigo foi de 0 de 5 (05/11) para 1 de 5 (10/11), sem nenhuma mudança de
+  código: a resposta do provedor varia de um dia para o outro. Por isso a comparação válida é a do mesmo dia (10/11, antes ×
+  depois), não a de 05/11.
+- **Custo:** até 3 consultas ao provedor por endereço, em vez de 2, quando só acha o bairro. O limite da API é de 30 por minuto.
+- **Três dos cinco continuam sem o ponto exato.** O provedor conhece pouco de Garça. A saída é a confirmação do dono, vendo o
+  ponto no mapa; o "Ver no mapa" mostra o que o provedor achou, e o dono corrige o endereço se estiver longe.
+- Na Etec, a fonte pública diz "Doutor Martinho Funchal de Barro", mas o CEP resolve para a Rua Belém: o endereço de origem é
+  duvidoso, e a medição usou a rua do CEP.
+- **Testes existentes alterados, e por quê:** `addressQueries` ("monta a busca completa e a de reserva") e `locateAddress`
+  ("tenta a segunda busca quando a primeira não acha nada") fixavam a ordem antiga das consultas. A ordem mudou de propósito,
+  pela medição acima; os dois foram reescritos para a ordem nova, e entraram quatro testes para parar no preciso, continuar
+  quando só acha o bairro, nunca perder um resultado melhor e não repetir consulta sem bairro.
+- "Buscar CEP" agora valida o CEP antes de consultar, mostra "Buscando…", diz o que preencheu e leva o cursor ao campo que
+  falta (o número, que o CEP nunca traz). Rua e número continuam obrigatórios, com mensagem por campo.
+
+## Cadastro sem conta prévia (ADR-034, 10/11)
+
+- Quem cria a conta pelo assistente de estabelecimento fica **sem perfil de consumidor** (data de nascimento). Se tentar agendar,
+  a API responde `customer.profile_required` e **não há tela para completar o perfil**: é a mesma limitação de quem entra por
+  outro aparelho. Trabalho futuro: uma tela "Complete seu cadastro de consumidor", em Minha conta.
+- O aceite dos termos de uso no passo "Sua conta" é uma caixa obrigatória na tela, **não gravada pela API** (como no cadastro
+  comum, que só mostra o texto). O aceite gravado é o dos termos do estabelecimento, no fim do assistente.
+- O destino depois da confirmação do e-mail fica guardado no aparelho (48 horas, amarrado ao e-mail). Confirmar em outro
+  navegador perde o destino: a pessoa entra e cai na Home.
+- O link "Para estabelecimentos" está no cabeçalho do **desktop**. No celular a barra já tem logotipo, tema, "Entrar" e "Criar
+  conta"; quem não tem sessão chega pelo cartão "Tem um negócio?" da Home.
+
+## Cancelamento
+
+- O texto de "Revise seu pedido" diz "Cancelamento gratuito até N h antes. Depois disso, fale com o estabelecimento.", com o
+  prazo do próprio estabelecimento. **Não existe pedido de cancelamento fora do prazo nem aprovação no sistema**; o
+  cancelamento fora do prazo é recusado (`appointment.cannot_cancel_inside_window`) e a mensagem manda falar com o
+  estabelecimento.
+- A resposta pública do estabelecimento **não traz telefone nem e-mail**; por isso a tela mostra só o texto. Expor um contato
+  é decisão de produto e de LGPD (o dono precisaria cadastrá-lo e consentir com a exibição).
+
 ## Limites de taxa
 
 ### Defeito encontrado e corrigido: limites "por conta" caíam no IP (04/11)
