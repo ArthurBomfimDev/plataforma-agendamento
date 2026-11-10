@@ -1493,6 +1493,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("role");
 
+                    b.Property<string>("Specialty")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("specialty");
+
                     b.Property<DateTimeOffset?>("TermsAcceptedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("terms_accepted_at");
