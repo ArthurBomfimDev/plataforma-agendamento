@@ -647,6 +647,26 @@ Sem rota nova na API; o frontend passa a usar o que as §4.11 a §4.13 já docum
 - `POST /api/consents` `{ purpose, version }`, `GET /api/consents` e `DELETE /api/consents/{purpose}` já existiam; agora têm tela.
 - "Revise seu pedido": `compliance.consent_required` não vira toast, e sim o bloco de consentimento; ao aceitar, grava e reenvia com a mesma chave de idempotência.
 
+## 4.20 Cadastro sem conta prévia, endereço e texto de cancelamento (10/11) — **sem rota nova**
+
+A API não ganhou rota nesta seção; o que muda é o frontend e o que ele combina com o que já existe.
+
+- **Cadastro de estabelecimento sem sessão** (ADR-034, Proposto): o passo "Sua conta" do assistente usa o mesmo
+  `POST /api/auth/register` `{ email, password, fullName }`, sem data de nascimento. A conta nasce sem sessão e sem e-mail
+  confirmado, e o login só vale depois de confirmar (`identity.email_not_confirmed`, 403). Quem a criou fica **sem perfil de
+  consumidor**: `POST /api/appointments` responde `customer.profile_required` até haver tela para completá-lo.
+- **Rotas do frontend:** `#/para-estabelecimentos` (pública) e `#/cadastrar-estabelecimento` (sem sessão, abre em "Sua conta").
+  O login lê `?next=` além de `?redirect=`: `next` só aceita os caminhos da lista fechada de `safeNext`
+  (`/cadastrar-estabelecimento`, `/convite`, `/para-estabelecimentos`, `/appointments`, `/account`) e só os parâmetros `retomar`
+  e `token`. Nada disso trafega pela API.
+- **Endereço do cadastro:** o frontend consulta `GET /api/geo/search?q=` até 3 vezes (sem o bairro, com o bairro, só a rua) e
+  usa `GET /api/geo/postal-code/{cep}` no "Buscar CEP". Sem mudança de contrato.
+- **Texto de cancelamento:** "Revise seu pedido" usa `cancellationWindowHours` de `GET /api/businesses/{id}` (já existia). A
+  resposta pública **não traz telefone nem e-mail** do estabelecimento; por isso a tela só orienta "fale com o estabelecimento".
+  `appointment.cannot_cancel_inside_window` (409) tem a mensagem "O prazo para cancelar este agendamento já passou. Fale com o
+  estabelecimento."
+- **Convite com especialidade:** ver §4.11 (`specialty` em `InviteMemberRequest` e `InvitationResponse`).
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".

@@ -349,6 +349,7 @@ Chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com 
 | U | Lembretes prometidos na tela "Pedido enviado". **Decidido (27/10): implementar.** E-mail de andamento do pedido feito na 5B; **lembretes (`ReminderOffsetsHours`, padrão 24 h e 1 h) e in-app na 5C**. A tela ainda usa `MOCK_REMINDER_HOURS = [24, 3]` | Coerência da demonstração | Arthur + Rafael |
 | R | **Colaboradores com login** (item 2.5 da Onda 2, não implementado): falta decidir a semântica de SeatLimit — o dono ocupa vaga? (com o padrão 1, nenhum colaborador caberia) — e quem altera o limite (Admin, plano, ninguém no recorte). Sem isso, RestrictToProfessionalAsync (agenda só do próprio profissional) segue sem uso real | Papel Professional com login | Arthur |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada. É o comportamento do código | — | — |
+| **W** | **Rodada de 10/11 (`feat/integracao-final`).** Duas migrations **NÃO APLICADAS** (`AddServiceShowPhotoInShowcase`, `AddInvitationSpecialty`); ADR-033 aceita e ADR-034 proposta, as duas com **revisão humana em autenticação**; decidir se o convite confirma o e-mail (hoje confirma, pelo token, ADR-029); texto jurídico do consentimento de Saúde (rascunho); o GitHub está com a cobrança bloqueada, então **não há CI nem PR** e a prova é local. Detalhe: `docs/verificacao-final-2026-11-10.md` | Merge e demonstração | Arthur |
 
 ⚠️ O estado de F, G e I não foi registrado desde setembro. Atualizar aqui quando houver resposta.
 
@@ -392,6 +393,9 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
 | 022 | Provedores de geocodificação e CEP, limites e privacidade da coordenada | 📝 Proposto (28/10) — complementa a 016 |
 | 023 | Imagens: armazenamento de arquivos atrás de porta, processamento com SkiaSharp | 📝 Proposto (28/10) — ImageSharp rejeitado (chave de licença no Release) |
 | 024 | Busca por termo sem acento e com dicionário de sinônimos no código | 📝 Proposto (29/10) — sem `unaccent` nem migration; limites registrados |
+| 025 a 032 | Onboarding, convites (029), Atendente (030), perfil público (031), avaliações (032) | O status de cada uma está no arquivo em `docs/decisions/`; esta tabela não foi atualizada desde 29/10 |
+| 033 | Entrada na equipe só por convite; especialidade no convite | ✅ **Aceito (10/11, aprovada por Arthur).** O trajeto de quem tem conta sem e-mail confirmado e a opção de confirmar o e-mail pelo convite aguardam o Arthur |
+| 034 | Cadastro de estabelecimento sem conta prévia | 📝 Proposto (10/11) — **toca autenticação: revisão humana**. Um modelo de usuário, e-mail confirmado mantido, `next` com lista fechada |
 
 ---
 
@@ -429,4 +433,8 @@ Prazo de código: **2ª semana de novembro** (~2,5 semanas a partir de 26/10).
    Próximo: preencher o Gmail no `.env` (pendência V); Onda 7B (Bem-estar); depois, 7E (onboarding do
    estabelecimento) e login de profissional (5D).
 5. Seed com 30 estabelecimentos, saúde e histórico: ✅ `bun scripts/seed-demo.ts --historico` (só banco local).
+6. **Estado em 10/11:** a branch `feat/integracao-final` junta o trabalho do #58 (rodada 2), o login novo do Rafael
+   (`refactor/login`) e a rodada de finalização: cadastro de estabelecimento sem conta prévia (ADR-034), especialidade no convite
+   (ADR-033), endereço e texto de cancelamento. Prova **local** (o GitHub está com a cobrança bloqueada): ver
+   `docs/verificacao-final-2026-11-10.md`. O que depende do Arthur está na pendência W.
 6. Responder F e E com a orientadora.
