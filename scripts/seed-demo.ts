@@ -92,6 +92,49 @@ async function call<T = Json>(method: string, path: string, body?: unknown, toke
   }
 }
 
+// --- Imagens de demonstração (scripts/seed-images/) ---------------------------------------------------
+//
+// Fotos de banco gratuito, baixadas UMA vez e versionadas (a apresentação não depende de site de terceiro). Ficam em
+// `scripts/seed-images/` com o nome `vitrine-<tipo>-<1..3>.webp` e `servico-<tipo>-<serviço>.webp`; a lista do que
+// baixar, as buscas sugeridas e os créditos estão na pasta (`LISTA-DE-ARQUIVOS.md`, `CREDITS.md`). Arquivo que não
+// existe é pulado: o seed funciona sem nenhuma imagem, e o estabelecimento fica com a ilustração padrão.
+
+const IMAGES_DIR = new URL('./seed-images/', import.meta.url)
+
+/** Envia um arquivo como `multipart/form-data` (campo `file`). `false` se o arquivo não está na pasta. */
+async function uploadSeedImage(path: string, fileName: string, token: string): Promise<boolean> {
+  const file = Bun.file(new URL(fileName, IMAGES_DIR))
+  if (!(await file.exists())) return false
+
+  const form = new FormData()
+  form.append('file', file, fileName)
+  const response = await fetch(`${API}${path}`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body: form })
+  if (!response.ok) throw new ApiCallError(response.status, undefined, `PUT ${path} → ${response.status} ${await response.text()}`)
+  return true
+}
+
+/** O tipo do estabelecimento ("barbearia", "salao"…), pela especialidade do primeiro profissional. */
+function kindOf(demo: DemoBusiness): KindKey | undefined {
+  return (Object.keys(KINDS) as KindKey[]).find((key) => KINDS[key].specialty === demo.professionals[0]?.specialty)
+}
+
+/** As 3 fotos da vitrine (a primeira é a capa) e a foto de cada serviço. A ordem da vitrine gira por estabelecimento. */
+async function seedImages(demo: DemoBusiness, services: { name: string; id: string }[], token: string) {
+  const kind = kindOf(demo)
+  if (!kind) return
+
+  const turn = [...demo.name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 3
+  let sent = 0
+  for (let slot = 0; slot < 3; slot++) {
+    const number = ((slot + turn) % 3) + 1
+    if (await uploadSeedImage(`/api/businesses/current/photos/${slot}`, `vitrine-${kind}-${number}.webp`, token)) sent++
+  }
+  for (const service of services) {
+    if (await uploadSeedImage(`/api/businesses/current/services/${service.id}/image`, `servico-${kind}-${slug(service.name).replaceAll('.', '-')}.webp`, token)) sent++
+  }
+  if (sent > 0) console.log(`  ${sent} imagem(ns) de demonstração`)
+}
+
 /** CNPJ com dígitos verificadores válidos, gerado a partir de uma raiz fixa — fictício. */
 function cnpjFrom(root: string): string {
   const digits = root.padStart(12, '0').slice(0, 12).split('').map(Number)
@@ -489,6 +532,7 @@ async function seedBusiness(demo: DemoBusiness) {
     }
   }
 
+  const createdServices: { name: string; id: string }[] = []
   for (const service of demo.services) {
     const created = await call<{ id: string }>(
       'POST',
@@ -506,6 +550,7 @@ async function seedBusiness(demo: DemoBusiness) {
       },
       token,
     )
+    createdServices.push({ name: service.name, id: created.id })
     for (const professionalId of professionalIds) {
       await call(
         'PUT',
@@ -515,6 +560,8 @@ async function seedBusiness(demo: DemoBusiness) {
       )
     }
   }
+
+  await seedImages(demo, createdServices, token)
 
   // A checklist de envio exige os termos aceitos e, em Saúde, o responsável (Fase 3). Dados fictícios da demonstração.
   await call('POST', '/api/businesses/current/terms', { version: '2026-11' }, token)
