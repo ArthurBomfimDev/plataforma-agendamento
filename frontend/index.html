@@ -11,6 +11,13 @@
       href="./src/global/images/vagoo-favicon-32.png"
     />
     <link rel="apple-touch-icon" href="./src/global/images/vagoo-favicon-180.png" />
+    <!-- PWA (ADR-035): o manifest é injetado no build com caminho relativo. A cor da barra acompanha o tema. -->
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Vagoo" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Vagoo</title>
     <!--
       Aplica o tema antes do primeiro desenho, para a tela não piscar clara no modo escuro.

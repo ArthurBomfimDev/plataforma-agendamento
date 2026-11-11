@@ -25,6 +25,30 @@ fotos/vitrine/folgas, datas) e `bun build scripts/seed-demo.ts` (sintaxe e impor
 - [ ] As 3 avaliações do estabelecimento de Saúde aparecem **sem** o nome do serviço.
 - [ ] `docs/operacao/seed-demo.md` confere com o que a tela mostra.
 
+## Demonstração pública — Parte 2: PWA (ADR-035, Proposto)
+
+Provado, em 10/11: `bun run lint` (só os 2 avisos que já existiam), `typecheck`, `format:check`, `bun run test` (89 arquivos,
+713 testes, 49 deles novos do PWA) e `bun run build` (PWA v2.0.0, `generateSW`, 164 entradas de precache, 1,7 MiB). No
+`dist`: manifest com `start_url` e `scope` relativos, `sw.js` com `denylist: [/^\/api\//, /^\/media\//]` e uma única rota
+registrada (a navegação), nenhum `runtimeCaching`, registro por `./sw.js` com escopo `./`. `bun test scripts` cobre o
+gerador de ícones.
+
+**Lighthouse: NÃO rodado, e não há número.** A categoria "PWA" foi retirada do Lighthouse a partir da v12; não existe
+pontuação PWA para registrar. O que vale é conferir a instalabilidade no Chrome (DevTools → Application → Manifest).
+
+**O service worker NÃO foi ativado em navegador.** No navegador embutido do aplicativo, o registro falhou com "unknown
+error when fetching the script" (o arquivo é servido, 200, `text/javascript`: é restrição do embutido, não do build). O
+código do app chegou a tentar registrar `./sw.js`, então a ligação existe. Falta, no Chrome do Arthur:
+
+- [ ] `bun run build && bun run preview`, abrir `http://localhost:4173`: Application → Service Workers mostra `sw.js` ativo.
+- [ ] Application → Cache Storage: **nenhuma URL de `/api` nem de `/media`** (condição de erro da ADR-035).
+- [ ] Application → Manifest: nome Vagoo, 3 ícones, "installability" sem erro, ícone maskable bem enquadrado.
+- [ ] Rede em "Offline": o app abre e mostra "Você está sem conexão".
+- [ ] Gerar um build novo, recarregar: aparece "Nova versão disponível"; "Depois" esconde; "Atualizar agora" recarrega.
+- [ ] Android/Chrome: aparece "Instale o Vagoo", instalar, abre em tela cheia com a cor `#070b14`. **Instalação real no celular não foi feita.**
+- [ ] iPhone/Safari: aparece a instrução "Compartilhar → Adicionar à Tela de Início". Não há imagem de splash do iOS (decisão do ADR).
+- [ ] Conferência visual (390 px, claro e escuro) dos avisos no topo: não cobrem botão importante e respeitam o entalhe.
+
 ## Rodada de finalização de 10/11 (`feat/integracao-final`)
 
 Provado **localmente** (o GitHub está com a cobrança bloqueada: sem CI, sem PR): 28 de arquitetura, 419 unitários, 171 de

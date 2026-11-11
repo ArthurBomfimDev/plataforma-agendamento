@@ -3,6 +3,8 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
+import { pwaManifest } from './pwa.manifest.ts'
 
 const src = (folder = '') => path.resolve(import.meta.dirname, 'src', folder)
 
@@ -25,6 +27,29 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
+    // PWA (ADR-035). `prompt`: a versão nova só entra quando a pessoa toca em "Atualizar". O registro é nosso
+    // (`src/lib/pwa`), atrás dos hooks `usePwaUpdate` e `usePwaInstall`. Precache SÓ do shell estático do build; nenhum
+    // `runtimeCaching`, e `/api` e `/media` ficam fora até da navegação: resposta autenticada, com dado pessoal ou de
+    // saúde nunca vai para o Cache Storage (LGPD Art. 11). Fontes: só o subconjunto latino, o que o app usa.
+    VitePWA({
+      registerType: 'prompt',
+      injectRegister: false,
+      manifest: pwaManifest,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,woff2,svg,ico,webp,png}'],
+        globIgnores: [
+          'icons/**',
+          '**/*cyrillic*',
+          '**/*greek*',
+          '**/*vietnamese*',
+          '**/*latin-ext*',
+        ],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/media\//],
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [],
+      },
+    }),
     // Material Symbols em SVG, compilados no build (ver `src/assets/icons`). 24px por atributo, como o lucide
     // fazia: a classe `size-*` de quem usa continua mandando.
     Icons({
