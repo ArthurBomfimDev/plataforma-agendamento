@@ -1,5 +1,7 @@
 import { CELL, SERVICES_TABLE_FEATURES } from './consts'
 
+import { Fragment } from 'react'
+import { GuidedStepBar } from '../guided-step-bar'
 import type { ServiceRowsProps } from '../../types'
 import { cn } from 'cn'
 import { useServicesColumns } from './hooks/use-services-columns'
@@ -11,7 +13,7 @@ import { useTable } from '@tanstack/react-table'
  * esquerda: a lista diz o que o consumidor não consegue agendar.
  */
 export const ServicesTable = (props: ServiceRowsProps) => {
-  const { services, onEdit } = props
+  const { services, onEdit, guide } = props
 
   const columns = useServicesColumns(onEdit)
   const table = useTable({
@@ -52,28 +54,43 @@ export const ServicesTable = (props: ServiceRowsProps) => {
           {table.getRowModel().rows.map((row) => {
             const { isActive, professionalNames } = row.original
             const unassigned = isActive && professionalNames.length === 0
+            // No passo guiado, o serviço destacado troca a barra de aviso pela borda de foco (Figma 21b).
+            const guided = guide?.serviceId === row.original.id
             return (
-              <tr key={row.id}>
-                {row.getAllCells().map((cell, index) =>
-                  index === 0 ? (
-                    <th
-                      key={cell.id}
-                      scope="row"
-                      className={cn(
-                        CELL,
-                        'text-left font-normal',
-                        unassigned && 'shadow-[inset_3px_0_0_var(--status-pending-fg)]',
-                      )}
-                    >
-                      <table.FlexRender cell={cell} />
-                    </th>
-                  ) : (
-                    <td key={cell.id} className={CELL}>
-                      <table.FlexRender cell={cell} />
+              <Fragment key={row.id}>
+                <tr
+                  className={cn(guided && 'outline-2 -outline-offset-2 outline-(--border-focus)')}
+                >
+                  {row.getAllCells().map((cell, index) =>
+                    index === 0 ? (
+                      <th
+                        key={cell.id}
+                        scope="row"
+                        className={cn(
+                          CELL,
+                          'text-left font-normal',
+                          unassigned &&
+                            !guided &&
+                            'shadow-[inset_3px_0_0_var(--status-pending-fg)]',
+                        )}
+                      >
+                        <table.FlexRender cell={cell} />
+                      </th>
+                    ) : (
+                      <td key={cell.id} className={CELL}>
+                        <table.FlexRender cell={cell} />
+                      </td>
+                    ),
+                  )}
+                </tr>
+                {guided && (
+                  <tr>
+                    <td colSpan={row.getAllCells().length} className="p-0">
+                      <GuidedStepBar guide={guide} onAssign={() => onEdit?.(guide.serviceId)} />
                     </td>
-                  ),
+                  </tr>
                 )}
-              </tr>
+              </Fragment>
             )
           })}
         </tbody>

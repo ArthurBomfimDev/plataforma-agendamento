@@ -1,4 +1,4 @@
-import { bannerState, labelOf, missingItems } from './consts'
+import { bannerState, labelOf, missingItems, nextPendingKey, stepOf } from './consts'
 import { describe, expect, it } from 'vitest'
 
 import { BusinessStatusBanner } from '.'
@@ -176,5 +176,63 @@ describe('BusinessStatusBanner', () => {
     expect(shown).toContain('Verificado · o estabelecimento aparece na busca')
     expect(shown).toContain('Dispensar')
     expect(render({ business: active, showApproved: false })).toBe('')
+  })
+})
+
+describe('passo guiado', () => {
+  const checklist = [
+    item('terms', true),
+    item('professional', false),
+    item('service_with_professional', false),
+    item('work_schedule', false),
+  ]
+  const guide = { key: 'service_with_professional', onExit: noop }
+
+  it('stepOf numera o item pendente entre os obrigatórios e some quando ele é concluído', () => {
+    expect(stepOf(checklist, 'service_with_professional')).toEqual({ number: 3, total: 4 })
+    expect(stepOf(checklist, 'terms')).toBeUndefined() // já feito: o passo acabou
+    expect(stepOf(checklist, 'chave_nova')).toBeUndefined()
+  })
+
+  it('nextPendingKey anda pelos pendentes, volta ao começo e não inventa um próximo se só resta um', () => {
+    expect(nextPendingKey(checklist, 'professional')).toBe('service_with_professional')
+    expect(nextPendingKey(checklist, 'work_schedule')).toBe('professional')
+    expect(nextPendingKey([item('professional', false)], 'professional')).toBeUndefined()
+  })
+
+  it('mostra "Passo N de T", o progresso e só navega: sem "Continuar verificação" nem chevron', () => {
+    const html = render({ checklist, guide })
+
+    expect(html).toContain('Passo 3 de 4 · serviço com profissional habilitado')
+    expect(html).toContain('Designe quem executa o serviço destacado abaixo.')
+    expect(html).toContain('1 de 4 concluídos')
+    expect(html).toContain('Voltar à lista')
+    expect(html).toContain('Próximo pendente')
+    expect(html).not.toContain('Continuar verificação')
+    expect(html).not.toContain('aria-expanded')
+  })
+
+  it('com um único pendente, "Próximo pendente" não aparece (sem botão morto)', () => {
+    const html = render({
+      checklist: [item('terms', true), item('service_with_professional', false)],
+      guide,
+    })
+
+    expect(html).toContain('Voltar à lista')
+    expect(html).not.toContain('Próximo pendente')
+  })
+
+  it('item concluído, checklist carregando ou fora do rascunho: a faixa volta ao normal', () => {
+    const done = render({ checklist: [item('service_with_professional', true)], guide })
+    const loading = render({ checklist: undefined, guide })
+    const review = render({
+      business: { ...draft, status: 'PendingReview', verificationLevel: 'UnderReview' },
+      guide,
+    })
+
+    expect(done).not.toContain('Passo')
+    expect(loading).toContain('Conferindo o que falta')
+    expect(review).toContain('Em análise')
+    expect(review).not.toContain('Voltar à lista')
   })
 })

@@ -7,12 +7,24 @@ import {
   VerifiedUserIcon,
   WarningIcon,
 } from '@assets/icons'
-import { TONE_CLASSES, bannerState, hintOf, labelOf, missingItems, requiredItems } from './consts'
+import {
+  STEP_GUIDES,
+  STEP_TITLES,
+  TONE_CLASSES,
+  bannerState,
+  hintOf,
+  labelOf,
+  missingItems,
+  nextPendingKey,
+  requiredItems,
+  stepOf,
+} from './consts'
 import { useId, useState } from 'react'
 
 import type { BusinessStatusBannerProps } from './types'
 import { Button } from '@components/button'
 import type { ChecklistItemResponse } from '@api/models'
+import { VerificationProgress } from './components/verification-progress'
 import { cn } from 'cn'
 
 type Look = {
@@ -28,6 +40,10 @@ type Look = {
  * Rascunho, Em análise, Verificado (dispensável, uma vez), Ajustes necessários (recusado) e Suspenso.
  * Cada estado tem ícone e frase próprios e nunca depende só da cor. Sem botão morto: o motivo de o envio
  * estar bloqueado fica escrito ao lado dele.
+ *
+ * Passo guiado (Figma 21b): quando o dono está numa página do painel resolvendo um item, a faixa diz em
+ * que passo ele está e só navega entre os pendentes ("Voltar à lista", "Próximo pendente"); a ação de
+ * resolver fica na página.
  */
 export const BusinessStatusBanner = (props: BusinessStatusBannerProps) => {
   const { business, checklist, error } = props
@@ -49,13 +65,30 @@ export const BusinessStatusBanner = (props: BusinessStatusBannerProps) => {
       : 'Enviar para análise'
     : 'Publicar meu estabelecimento'
 
-  const look = lookOf(state, { missing: missing.length, complete, reason: business.reason, props })
+  const guideKey = state === 'draft' ? props.guide?.key : undefined
+  const step = checklist && guideKey ? stepOf(checklist, guideKey) : undefined
+  const nextKey = checklist && guideKey && step ? nextPendingKey(checklist, guideKey) : undefined
+
+  const look: Look =
+    step && guideKey
+      ? {
+          tone: 'pending',
+          Icon: WarningIcon,
+          title: `Passo ${step.number} de ${step.total} · ${STEP_TITLES[guideKey] ?? labelOf(guideKey)}`,
+          subtitle: STEP_GUIDES[guideKey] ?? 'Resolva o item e o passo marca sozinho.',
+        }
+      : lookOf(state, { missing: missing.length, complete, reason: business.reason, props })
   const tone = TONE_CLASSES[look.tone]
-  const expandable = state === 'draft' || state === 'review' || state === 'rejected'
-  const showProgress = expandable && checklist !== undefined
+  const guided = step !== undefined
+  const expandable = !guided && (state === 'draft' || state === 'review' || state === 'rejected')
+  const showProgress = (expandable || guided) && checklist !== undefined
   const firstPending = missing[0]?.key
   // O botão da faixa some com o painel aberto: a ação passa a morar no rodapé, e dois botões iguais confundem.
   const stripAction = expandable && !open
+  const backToList = () => {
+    setOpen(true)
+    props.guide?.onExit()
+  }
 
   return (
     <section
@@ -75,31 +108,19 @@ export const BusinessStatusBanner = (props: BusinessStatusBannerProps) => {
             <p className="type-caption text-(--text-body)">{look.subtitle}</p>
           </div>
 
-          {showProgress && (
-            <div className="flex flex-col gap-1.5">
-              <p className="type-caption whitespace-nowrap text-(--text-body)">
-                {done} de {total} concluídos
-              </p>
-              <div
-                role="group"
-                aria-label={`${done} de ${total} concluídos`}
-                className="flex gap-1"
-              >
-                {items.map((item, index) => (
-                  <span
-                    key={item.key}
-                    aria-hidden="true"
-                    data-segment={index < done ? 'done' : 'pending'}
-                    className={cn(
-                      'h-1.5 w-[26px] rounded-full',
-                      index < done
-                        ? tone.segment
-                        : cn('border bg-(--bg-surface)', tone.segmentOutline),
-                    )}
-                  />
-                ))}
-              </div>
-            </div>
+          {showProgress && <VerificationProgress done={done} total={total} tone={look.tone} />}
+
+          {guided && (
+            <>
+              <Button variant="ghost" onClick={backToList}>
+                Voltar à lista
+              </Button>
+              {nextKey && (
+                <Button variant="secondary" onClick={() => props.onFix(nextKey)}>
+                  Próximo pendente
+                </Button>
+              )}
+            </>
           )}
 
           {state === 'active' && (
@@ -159,6 +180,11 @@ export const BusinessStatusBanner = (props: BusinessStatusBannerProps) => {
           {open && (
             <Panel
               {...props}
+              // Resolver um item leva a outra página: a lista fecha e volta pelo "Voltar à lista".
+              onFix={(key) => {
+                setOpen(false)
+                props.onFix(key)
+              }}
               state={state}
               items={items}
               missing={missing}

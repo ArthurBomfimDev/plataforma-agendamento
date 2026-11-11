@@ -1,6 +1,7 @@
 import { STATE_BADGE, STATE_LABEL, serviceSummary } from '../../consts'
 
 import { Button } from '@components/button'
+import { GuidedStepBar } from '../guided-step-bar'
 import { PANEL_CARD } from '@components/panel-page'
 import { ProfessionalsCell } from '../professionals-cell'
 import type { ServiceRowsProps } from '../../types'
@@ -8,16 +9,21 @@ import { cn } from 'cn'
 
 /** Celular e tablet: a mesma lista da tabela, um cartão por serviço, em grade. */
 export const ServiceCards = (props: ServiceRowsProps) => {
-  const { services, onEdit } = props
+  const { services, onEdit, guide } = props
 
   return (
     <ul className="grid grid-cols-1 gap-(--space-12) md:grid-cols-2">
       {services.map((service) => {
         const unassigned = service.isActive && service.professionalNames.length === 0
+        const guided = guide?.serviceId === service.id
         return (
           <li
             key={service.id}
-            className={cn(PANEL_CARD, unassigned && 'border-l-3 border-l-(--status-pending-fg)')}
+            className={cn(
+              PANEL_CARD,
+              unassigned && !guided && 'border-l-3 border-l-(--status-pending-fg)',
+              guided && 'border-2 border-(--border-focus)',
+            )}
           >
             <div className="flex items-start gap-(--space-12)">
               <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
@@ -56,6 +62,7 @@ export const ServiceCards = (props: ServiceRowsProps) => {
                 Editar
               </Button>
             </div>
+            {guided && <GuidedStepBar guide={guide} onAssign={() => onEdit?.(service.id)} />}
           </li>
         )
       })}

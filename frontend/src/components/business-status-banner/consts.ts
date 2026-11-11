@@ -39,6 +39,24 @@ export const CHECKLIST_HINTS: Record<string, string> = {
   work_schedule: 'Sem jornada, a agenda nasce vazia mesmo com tudo certo.',
 }
 
+/** Parâmetro da URL que liga o modo guiado: o valor é a chave do item da checklist que o dono está resolvendo. */
+export const GUIDE_PARAM = 'passo'
+
+/** O item em linguagem curta, para o título do passo guiado ("Passo 4 de 6 · …"). */
+export const STEP_TITLES: Record<string, string> = {
+  professional: 'profissional cadastrado',
+  service_with_professional: 'serviço com profissional habilitado',
+  work_schedule: 'jornada semanal definida',
+}
+
+/** O que fazer na página em que o passo guiado leva o dono. */
+export const STEP_GUIDES: Record<string, string> = {
+  professional: 'Cadastre quem atende no estabelecimento. O passo marca sozinho.',
+  service_with_professional:
+    'Designe quem executa o serviço destacado abaixo. O passo marca sozinho.',
+  work_schedule: 'Defina os dias e horários de um profissional. O passo marca sozinho.',
+}
+
 /** Só o que o servidor exige hoje para enviar ou publicar. */
 export const requiredItems = (checklist: ChecklistItemResponse[]) =>
   checklist.filter((item) => item.requiredForSubmit)
@@ -48,6 +66,23 @@ export const missingItems = (checklist: ChecklistItemResponse[]) =>
 
 export const labelOf = (key: string) => CHECKLIST_LABELS[key] ?? key
 export const hintOf = (key: string) => CHECKLIST_HINTS[key]
+
+/**
+ * O número do passo: a posição do item pendente entre os obrigatórios. `undefined` se o item não existe
+ * ou já foi feito — o passo guiado acaba sozinho quando o item é concluído.
+ */
+export const stepOf = (checklist: ChecklistItemResponse[], key: string) => {
+  const items = requiredItems(checklist)
+  const index = items.findIndex((item) => item.key === key && !item.done)
+  return index < 0 ? undefined : { number: index + 1, total: items.length }
+}
+
+/** O próximo item pendente depois de `key`, voltando ao começo da lista. `undefined` se não há outro. */
+export const nextPendingKey = (checklist: ChecklistItemResponse[], key: string) => {
+  const pending = missingItems(checklist)
+  const index = pending.findIndex((item) => item.key === key)
+  return pending.length > 1 ? pending[(index + 1) % pending.length]?.key : undefined
+}
 
 /** Aparência de cada estado da faixa: nunca só a cor — cada um tem ícone e frase próprios (ver o componente). */
 export const TONE_CLASSES = {
