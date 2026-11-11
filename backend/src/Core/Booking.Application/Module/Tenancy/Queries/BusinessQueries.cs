@@ -35,6 +35,50 @@ public sealed class GetCurrentChecklistQuery(CurrentBusinessLoader loader, Activ
     }
 }
 
+/// <summary>
+/// Contrato da faixa de verificação: o checklist de envio com o estado do ciclo de vida, o que o botão faz e se já
+/// pode ser clicado. Não publica nada; publicar e enviar continuam em <c>submit</c> e <c>publish</c>, que conferem a
+/// mesma checklist no servidor. A ordem dos itens é a da tela.
+/// </summary>
+public sealed class GetCurrentVerificationQuery(CurrentBusinessLoader loader, ActivationChecklist checklist)
+{
+    public async Task<VerificationResponse> ExecuteAsync(CancellationToken ct = default)
+    {
+        Business business = await loader.LoadForOwnerAsync(ct);
+        List<VerificationItemResponse> items =
+        [
+            .. (await checklist.EvaluateAsync(business, ct))
+                .Where(i => i.RequiredForSubmit)
+                .Select(i => new VerificationItemResponse(i.Key, i.Done, DetailOf(business, i))),
+        ];
+        int done = items.Count(i => i.Done);
+        bool rejected = business.Status == BusinessStatus.Draft && business.VerificationLevel == VerificationLevel.Rejected;
+        bool suspended = business.Status == BusinessStatus.Suspended;
+
+        return new VerificationResponse(
+            business.Status.ToString(),
+            rejected,
+            business.IsBookable,
+            SubmittedAt: null, // o domínio não grava a data do envio; fica nulo até existir o campo
+            DecidedAt: suspended ? business.SuspendedAt : rejected ? business.VerifiedAt : null,
+            DecisionReason: suspended ? business.SuspensionReason : rejected ? business.VerificationNote : null,
+            CanSubmit: business.Status == BusinessStatus.Draft && done == items.Count,
+            SubmitAction: business.Category.RequiresSensitiveHandling() ? "SubmitForReview" : "Publish",
+            CompletedCount: done,
+            TotalCount: items.Count,
+            Items: items);
+    }
+
+    // O documento nunca sai inteiro: só o tipo e os dois últimos caracteres. Dado pessoal fora de resposta e de log.
+    private static string? DetailOf(Business business, ChecklistItemResponse item) => item.Key switch
+    {
+        "document" => $"{(business.DocumentType == DocumentKind.Cpf ? "CPF" : "CNPJ")} final {business.Document.Number[^2..]}",
+        "professional" when !item.Done => "Nenhum profissional ativo",
+        "service_with_professional" when !item.Done => "Nenhum serviço com profissional habilitado",
+        _ => null,
+    };
+}
+
 /// <summary>Vitrine: só estabelecimento ativo aparece para o público.</summary>
 public sealed class GetPublicBusinessQuery(IBusinessRepository businesses, IImageUrls images)
 {

@@ -167,6 +167,75 @@ public sealed class OnboardingTests(IntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task P9_verification_is_owner_only_and_counts_match_the_items()
+    {
+        TestUser customer = await _world.NewCustomerAsync();
+        using (HttpResponseMessage refused = await _world.SendAsync(HttpMethod.Get, "/api/businesses/current/verification", null, customer.Token))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        }
+
+        // Sem nenhum cadastro além dos termos pendentes: nada de profissional, serviço ou jornada.
+        TestUser owner = await _world.NewUserAsync("Dono da faixa");
+        string cnpj = Cnpj.Random();
+        BusinessResponse business = await _world.SendOkAsync<BusinessResponse>(
+            HttpMethod.Post, "/api/businesses", new RegisterBusinessRequest($"Faixa {Guid.NewGuid():N}"[..30], cnpj, "Beleza"), owner.Token);
+        ContextTokenResponse context = await _world.SendOkAsync<ContextTokenResponse>(
+            HttpMethod.Post, "/api/users/me/context", new SwitchContextRequest(business.Id), owner.Token);
+
+        VerificationResponse faixa = await _world.SendOkAsync<VerificationResponse>(
+            HttpMethod.Get, "/api/businesses/current/verification", null, context.AccessToken);
+
+        Assert.Equal("Draft", faixa.Status);
+        Assert.False(faixa.CanSubmit);
+        Assert.False(faixa.AppearsInSearch);
+        Assert.Equal("Publish", faixa.SubmitAction);
+        Assert.Equal(faixa.Items.Count, faixa.TotalCount);
+        Assert.Equal(faixa.Items.Count(i => i.Done), faixa.CompletedCount);
+        Assert.True(faixa.CompletedCount < faixa.TotalCount);
+        Assert.DoesNotContain(faixa.Items, i => i.Key is "address" or "photo");
+        Assert.Equal("document", faixa.Items.Single(i => i.Key == "document").Key);
+        string? detail = faixa.Items.Single(i => i.Key == "document").Detail;
+        Assert.NotNull(detail);
+        Assert.DoesNotContain(cnpj, detail); // o documento inteiro nunca volta na resposta
+        Assert.StartsWith("CNPJ final ", detail);
+
+        // O servidor também trava: a trava não é só de interface.
+        using HttpResponseMessage blocked = await _world.SendAsync(HttpMethod.Post, "/api/businesses/current/publish", null, context.AccessToken);
+        Assert.Equal("business.activation_checklist_incomplete", await TestWorld.ErrorCodeAsync(blocked));
+    }
+
+    [Fact]
+    public async Task P10_a_complete_draft_can_submit_and_a_rejected_one_carries_the_reason()
+    {
+        TestBusiness clinic = await _world.NewBusinessAsync(1, [new ServiceSpec(60)], category: "Saude", submit: false);
+
+        VerificationResponse ready = await _world.SendOkAsync<VerificationResponse>(
+            HttpMethod.Get, "/api/businesses/current/verification", null, clinic.OwnerToken);
+        Assert.True(ready.CanSubmit);
+        Assert.Equal("SubmitForReview", ready.SubmitAction);
+        Assert.Equal(ready.TotalCount, ready.CompletedCount);
+        Assert.Contains(ready.Items, i => i.Key == "responsible");
+
+        await _world.SendOkAsync(HttpMethod.Post, "/api/businesses/current/submit", null, clinic.OwnerToken);
+        VerificationResponse review = await _world.SendOkAsync<VerificationResponse>(
+            HttpMethod.Get, "/api/businesses/current/verification", null, clinic.OwnerToken);
+        Assert.Equal("PendingReview", review.Status);
+        Assert.False(review.CanSubmit);
+
+        TestUser admin = await _world.NewAdminAsync();
+        await _world.SendOkAsync(HttpMethod.Post, $"/api/admin/businesses/{clinic.Id}/reject", new AdminDecisionRequest("Registro ilegível"), admin.Token);
+
+        VerificationResponse rejected = await _world.SendOkAsync<VerificationResponse>(
+            HttpMethod.Get, "/api/businesses/current/verification", null, clinic.OwnerToken);
+        Assert.Equal("Draft", rejected.Status);
+        Assert.True(rejected.Rejected);
+        Assert.Equal("Registro ilegível", rejected.DecisionReason);
+        Assert.NotNull(rejected.DecidedAt);
+        Assert.True(rejected.CanSubmit); // os outros itens continuam concluídos
+    }
+
+    [Fact]
     public async Task P7_an_account_cannot_own_more_than_three_businesses()
     {
         TestUser owner = await _world.NewUserAsync("Dono de muitos");

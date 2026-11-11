@@ -55,6 +55,12 @@ public sealed class BusinessesController : ControllerBase
     public async Task<IActionResult> GetChecklist([FromServices] GetCurrentChecklistQuery query, CancellationToken ct) =>
         Ok(await query.ExecuteAsync(ct));
 
+    /// <summary>A faixa de verificação do painel: checklist de envio, estado, motivo da decisão e se o botão já vale. Só o Owner.</summary>
+    [HttpGet("current/verification")]
+    [ProducesResponseType<VerificationResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetVerification([FromServices] GetCurrentVerificationQuery query, CancellationToken ct) =>
+        Ok(await query.ExecuteAsync(ct));
+
     [HttpPut("current/scheduling-policy")]
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePolicy(
