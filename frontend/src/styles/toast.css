@@ -31,6 +31,16 @@
   }
 }
 
+/* Com a barra fixa de ação no rodapé (`ActionFooter`: "Enviar pedido", "Continuar"), o aviso vai para o topo: embaixo ele
+   cobria o botão da ação principal (iPhone, "Revise seu pedido", 11/11), e a altura da barra varia com o conteúdo. A
+   barra some a partir de 1024px, então a regra vale só abaixo disso. */
+@media (max-width: 1023px) {
+  body:has([data-action-footer]) .Toastify__toast-container--bottom-center {
+    top: calc(var(--space-16) + env(safe-area-inset-top));
+    bottom: auto;
+  }
+}
+
 .Toastify__toast {
   border: 1px solid var(--border-subtle);
   font-size: var(--size-label);

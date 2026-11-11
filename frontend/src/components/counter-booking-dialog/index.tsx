@@ -71,13 +71,12 @@ export const CounterBookingDialog = (props: CounterBookingDialogProps) => {
         side={side}
         showCloseButton={false}
         className={cn(
-          'gap-(--space-20) overflow-y-auto border-(--border-subtle) bg-(--bg-surface) p-(--space-24) text-(--text-body)',
-          side === 'bottom'
-            ? 'max-h-[90dvh] rounded-t-lg pb-[calc(var(--space-24)+env(safe-area-inset-bottom))]'
-            : 'w-full sm:max-w-md',
+          // Cabeçalho e rodapé fixos, corpo que rola: o botão Marcar nunca sai da tela nem fica sob a barra do sistema.
+          'gap-0 border-(--border-subtle) bg-(--bg-surface) p-0 text-(--text-body)',
+          side === 'bottom' ? 'max-h-[90dvh] rounded-t-lg' : 'w-full sm:max-w-md',
         )}
       >
-        <div className="flex items-start gap-(--space-12)">
+        <div className="flex shrink-0 items-start gap-(--space-12) px-(--space-24) pt-(--space-24) pb-(--space-12)">
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-4)">
             <SheetTitle className="type-heading text-(--text-strong)">
               Marcação de balcão
@@ -96,7 +95,7 @@ export const CounterBookingDialog = (props: CounterBookingDialogProps) => {
 
         <form
           noValidate
-          className="flex flex-col gap-(--space-16)"
+          className="flex min-h-0 flex-1 flex-col"
           onSubmit={(event) => {
             event.preventDefault()
             setTouched(true)
@@ -110,84 +109,88 @@ export const CounterBookingDialog = (props: CounterBookingDialogProps) => {
             })
           }}
         >
-          <div className="flex flex-col gap-(--space-4)">
-            <label htmlFor={`${id}-professional`} className="type-label text-(--text-body)">
-              Profissional
-            </label>
-            <select
-              id={`${id}-professional`}
-              className={SELECT}
-              value={chosenId}
-              onChange={(event) => setProfessionalId(event.target.value)}
-            >
-              {professionals.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-(--space-4)">
-            <label htmlFor={`${id}-service`} className="type-label text-(--text-body)">
-              Serviço
-            </label>
-            {servicesLoading ? (
-              <LoadingState label="Carregando os serviços…" />
-            ) : available.length > 0 ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-(--space-16) overflow-y-auto overscroll-contain px-(--space-24) py-(--space-8)">
+            <div className="flex flex-col gap-(--space-4)">
+              <label htmlFor={`${id}-professional`} className="type-label text-(--text-body)">
+                Profissional
+              </label>
               <select
-                id={`${id}-service`}
+                id={`${id}-professional`}
                 className={SELECT}
-                value={service?.id ?? ''}
-                onChange={(event) => setServiceId(event.target.value)}
+                value={chosenId}
+                onChange={(event) => setProfessionalId(event.target.value)}
               >
-                {available.map((option) => (
+                {professionals.map((option) => (
                   <option key={option.id} value={option.id}>
-                    {option.name} · {option.durationMinutes} min
+                    {option.name}
                   </option>
                 ))}
               </select>
-            ) : (
-              <p className="type-caption text-(--text-muted)">
-                Este profissional não tem serviço habilitado.
+            </div>
+
+            <div className="flex flex-col gap-(--space-4)">
+              <label htmlFor={`${id}-service`} className="type-label text-(--text-body)">
+                Serviço
+              </label>
+              {servicesLoading ? (
+                <LoadingState label="Carregando os serviços…" />
+              ) : available.length > 0 ? (
+                <select
+                  id={`${id}-service`}
+                  className={SELECT}
+                  value={service?.id ?? ''}
+                  onChange={(event) => setServiceId(event.target.value)}
+                >
+                  {available.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name} · {option.durationMinutes} min
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="type-caption text-(--text-muted)">
+                  Este profissional não tem serviço habilitado.
+                </p>
+              )}
+            </div>
+
+            <TimeField
+              id={`${id}-time`}
+              label="Horário"
+              value={time}
+              error={timeError}
+              onValueChange={setTime}
+            />
+            <TextField
+              id={`${id}-name`}
+              label="Nome de quem vai ser atendido"
+              autoComplete="off"
+              value={name}
+              error={nameError}
+              onChange={(event) => setName(event.target.value)}
+            />
+            <TextField
+              id={`${id}-phone`}
+              label="Telefone (opcional)"
+              type="tel"
+              inputMode="tel"
+              autoComplete="off"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
+
+            {error && (
+              <p role="alert" className="type-label text-(--status-rejected-fg)">
+                {error}
               </p>
             )}
           </div>
 
-          <TimeField
-            id={`${id}-time`}
-            label="Horário"
-            value={time}
-            error={timeError}
-            onValueChange={setTime}
-          />
-          <TextField
-            id={`${id}-name`}
-            label="Nome de quem vai ser atendido"
-            autoComplete="off"
-            value={name}
-            error={nameError}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <TextField
-            id={`${id}-phone`}
-            label="Telefone (opcional)"
-            type="tel"
-            inputMode="tel"
-            autoComplete="off"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-          />
-
-          {error && (
-            <p role="alert" className="type-label text-(--status-rejected-fg)">
-              {error}
-            </p>
-          )}
-
-          <Button type="submit" size="lg" className="w-full" disabled={submitting || !service}>
-            {submitting ? 'Marcando…' : 'Marcar'}
-          </Button>
+          <div className="shrink-0 border-t border-(--border-subtle) bg-(--bg-surface) px-(--space-24) pt-(--space-12) pb-[calc(var(--space-24)+env(safe-area-inset-bottom))]">
+            <Button type="submit" size="lg" className="w-full" disabled={submitting || !service}>
+              {submitting ? 'Marcando…' : 'Marcar'}
+            </Button>
+          </div>
         </form>
       </SheetContent>
     </Sheet>
