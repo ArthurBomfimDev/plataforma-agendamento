@@ -73,10 +73,6 @@ export const CARD =
 /** Rótulo menor dos campos compactos da tela 12: `caption` em `text/muted`. */
 export const COMPACT_LABEL = 'type-caption text-(--text-muted)'
 
-/** Caixa de hora do editor do dia: 80 × 44, raio pequeno. */
-export const TIME_INPUT =
-  'type-body tabular h-(--size-touch-min) w-20 rounded-sm border border-(--border-interactive) bg-(--bg-surface) text-center text-(--text-strong) focus-visible:border-(--border-focus) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus) [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-datetime-edit]:flex [&::-webkit-datetime-edit]:justify-center'
-
 /** Link de texto com 44px de alvo de toque ("editar", "+ faixa"). */
 export const TEXT_ACTION =
   'type-label flex min-h-(--size-touch-min) shrink-0 items-center px-(--space-4) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)'

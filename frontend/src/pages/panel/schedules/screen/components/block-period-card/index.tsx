@@ -20,6 +20,7 @@ import { MenuSelectField } from '@components/menu-select-field'
 import type { RadioOption } from '@components/radio-option-group/types'
 import { RadioOptionGroup } from '@components/radio-option-group'
 import { TextField } from '@components/text-field'
+import { TimeField } from '@components/time-field'
 import { cn } from 'cn'
 
 const focusField = (id: string) => document.getElementById(id)?.focus()
@@ -208,23 +209,22 @@ export const BlockPeriodCard = (props: BlockPeriodCardProps) => {
 
         {withHours && (
           <div className="grid grid-cols-2 items-start gap-(--space-8)">
-            <TextField
+            <TimeField
               id={BLOCK_FIELD_IDS.startTime}
               label="Início"
               labelClassName={COMPACT_LABEL}
-              type="time"
               value={values.startTime}
               error={errors.startTime}
-              onChange={(event) => setField('startTime', event.target.value)}
+              onValueChange={(value) => setField('startTime', value)}
             />
-            <TextField
+            <TimeField
               id={BLOCK_FIELD_IDS.endTime}
               label="Fim"
               labelClassName={COMPACT_LABEL}
-              type="time"
               value={values.endTime}
+              endOfDay
               error={errors.endTime}
-              onChange={(event) => setField('endTime', event.target.value)}
+              onValueChange={(value) => setField('endTime', value)}
             />
           </div>
         )}

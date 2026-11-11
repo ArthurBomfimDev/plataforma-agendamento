@@ -1,8 +1,9 @@
-import { TEXT_ACTION, TIME_INPUT, validateRanges } from '../../consts'
-import { useId, useRef, useState } from 'react'
+import { TEXT_ACTION, validateRanges } from '../../consts'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import { Button } from '@components/button'
 import { Checkbox } from '@components/checkbox'
+import { TimeField } from '@components/time-field'
 import type { DayEditorProps } from './types'
 import type { TimeRange } from '../../types'
 import { CloseIcon } from '@assets/icons'
@@ -26,6 +27,13 @@ export const DayEditor = (props: DayEditorProps) => {
 
   const error = submitted ? validateRanges(ranges) : null
   const errorId = useId()
+  const baseId = useId()
+
+  // O editor abre abaixo da linha do dia, às vezes por baixo da barra inferior do painel (Android, 11/11: "Cancelar" e
+  // "Salvar segunda" ficavam atrás dela). `scroll-mb` na raiz reserva a altura da barra e a área segura.
+  useEffect(() => {
+    editorRef.current?.scrollIntoView?.({ block: 'nearest' })
+  }, [])
 
   const setTime = (index: number, edge: keyof TimeRange, value: string) =>
     setRanges((current) =>
@@ -41,7 +49,7 @@ export const DayEditor = (props: DayEditorProps) => {
     setRanges((current) => [...current, { start, end }])
     // Foco no início da faixa nova, que só existe depois do próximo desenho.
     requestAnimationFrame(() =>
-      [...(editorRef.current?.querySelectorAll<HTMLInputElement>('[data-range] input') ?? [])]
+      [...(editorRef.current?.querySelectorAll<HTMLSelectElement>('[data-range] select') ?? [])]
         .at(-2)
         ?.focus(),
     )
@@ -61,7 +69,7 @@ export const DayEditor = (props: DayEditorProps) => {
       ref={editorRef}
       role="group"
       aria-label={`Faixas de ${dayLabel.toLowerCase()}`}
-      className="flex flex-col gap-(--space-12) rounded-sm border border-(--border-focus) bg-(--bg-page) p-3.5"
+      className="flex scroll-mb-[calc(var(--space-16)+var(--space-8)+var(--size-touch-min)+var(--space-16)+env(safe-area-inset-bottom)+var(--space-32))] flex-col gap-(--space-12) rounded-sm border border-(--border-focus) bg-(--bg-page) p-3.5 lg:scroll-mb-0"
       onKeyDown={(event) => event.key === 'Escape' && onCancel()}
     >
       <div className="flex flex-wrap items-center gap-(--space-8)">
@@ -73,28 +81,23 @@ export const DayEditor = (props: DayEditorProps) => {
                 ·
               </span>
             )}
-            <input
-              type="time"
-              step={300}
-              required
-              aria-label={`Início da faixa ${index + 1}`}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+            <TimeField
+              id={`${baseId}-start-${index}`}
+              label={ranges.length > 1 ? `Início da faixa ${index + 1}` : 'Início'}
               value={range.start}
-              onChange={(event) => setTime(index, 'start', event.target.value)}
-              className={TIME_INPUT}
+              onValueChange={(value) => setTime(index, 'start', value)}
+              className="w-28"
             />
-            <span className="type-label text-(--text-muted)">até</span>
-            <input
-              type="time"
-              step={300}
-              required
-              aria-label={`Fim da faixa ${index + 1}`}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+            <span aria-hidden="true" className="type-label mt-6 text-(--text-muted)">
+              até
+            </span>
+            <TimeField
+              id={`${baseId}-end-${index}`}
+              label={ranges.length > 1 ? `Fim da faixa ${index + 1}` : 'Fim'}
               value={range.end}
-              onChange={(event) => setTime(index, 'end', event.target.value)}
-              className={TIME_INPUT}
+              endOfDay
+              onValueChange={(value) => setTime(index, 'end', value)}
+              className="w-28"
             />
             {ranges.length > 1 && (
               <button

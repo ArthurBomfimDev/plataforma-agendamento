@@ -1,4 +1,4 @@
-import { COMPACT_LABEL, TIME_INPUT, holidayRuleLabel, validateRanges } from '../../consts'
+import { COMPACT_LABEL, holidayRuleLabel, validateRanges } from '../../consts'
 import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover'
 import { useId, useState } from 'react'
 
@@ -6,6 +6,7 @@ import { Button } from '@components/button'
 import type { HolidayRule } from '../../types'
 import type { HolidayRuleMenuProps } from './types'
 import { RadioOptionGroup } from '@components/radio-option-group'
+import { TimeField } from '@components/time-field'
 import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 
@@ -84,29 +85,26 @@ export const HolidayRuleMenu = (props: HolidayRuleMenuProps) => {
           onValueChange={setKind}
         />
         {kind === 'special' && (
-          <div className="flex items-center gap-(--space-8) pl-(--space-32)">
-            <input
-              type="time"
-              step={300}
-              aria-label="Abre às"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+          <div className="flex items-end gap-(--space-8) pl-(--space-32)">
+            <TimeField
+              id={`${titleId}-start`}
+              label="Abre às"
+              labelClassName={COMPACT_LABEL}
               value={range.start}
-              onChange={(event) =>
-                setRange((current) => ({ ...current, start: event.target.value }))
-              }
-              className={TIME_INPUT}
+              onValueChange={(start) => setRange((current) => ({ ...current, start }))}
+              className="w-24"
             />
-            <span className={COMPACT_LABEL}>até</span>
-            <input
-              type="time"
-              step={300}
-              aria-label="Fecha às"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+            <span aria-hidden="true" className={cn(COMPACT_LABEL, 'pb-(--space-12)')}>
+              até
+            </span>
+            <TimeField
+              id={`${titleId}-end`}
+              label="Fecha às"
+              labelClassName={COMPACT_LABEL}
               value={range.end}
-              onChange={(event) => setRange((current) => ({ ...current, end: event.target.value }))}
-              className={TIME_INPUT}
+              endOfDay
+              onValueChange={(end) => setRange((current) => ({ ...current, end }))}
+              className="w-24"
             />
           </div>
         )}

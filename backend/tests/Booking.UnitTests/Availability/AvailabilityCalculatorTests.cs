@@ -1,6 +1,7 @@
 using Booking.Domain.DomainService.Module.Availability;
 using Booking.Domain.Entity.Module.Availability;
 using Booking.Domain.Enum.Module.Availability;
+using Booking.Domain.Exceptions;
 using Booking.Domain.ValueObject;
 
 namespace Booking.UnitTests.Availability;
@@ -109,6 +110,81 @@ public sealed class AvailabilityCalculatorTests
         IReadOnlyList<DateTimeOffset> slots = Calculate(extraSchedules: [someoneElse]);
 
         Assert.DoesNotContain(Local(7, 0), slots);
+    }
+
+    [Fact]
+    public void More_than_one_gap_in_the_day_leaves_no_slot_inside_any_of_them()
+    {
+        // Três faixas: 09–12, 13–18 (do helper) e 19–21; as pausas são 12–13 e 18–19.
+        WorkSchedule evening = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(19, 0), new(21, 0), new(2026, 1, 1), null);
+
+        IReadOnlyList<DateTimeOffset> slots = Calculate(extraSchedules: [evening]);
+
+        Assert.Contains(Local(19, 0), slots);
+        Assert.Contains(Local(20, 30), slots);
+        Assert.DoesNotContain(Local(18, 0), slots);
+        Assert.DoesNotContain(Local(18, 30), slots);
+        Assert.DoesNotContain(Local(12, 0), slots);
+        Assert.DoesNotContain(Local(21, 0), slots);
+    }
+
+    [Fact]
+    public void A_day_without_a_shift_is_closed()
+    {
+        // 20/10/2026 é terça; o helper só cria faixas para o dia pedido, então pedimos uma data sem faixa de propósito.
+        DateOnly sunday = new(2026, 10, 25);
+        List<WorkSchedule> mondayOnly =
+        [
+            WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(9, 0), new(18, 0), new(2026, 1, 1), null),
+        ];
+
+        IReadOnlyList<DateTimeOffset> slots = AvailabilityCalculator.Calculate(new AvailabilityRequest(
+            _professional, sunday, _zone, mondayOnly, [], [], 30, 0, 0, 30, _dayBefore, MinLeadTimeHours: 2, 60));
+
+        Assert.Empty(slots);
+    }
+
+    [Fact]
+    public void A_shift_that_ends_at_the_last_minute_of_the_day_offers_the_last_slot_that_fits()
+    {
+        WorkSchedule night = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(18, 0), new(23, 59), new(2026, 1, 1), null);
+
+        IReadOnlyList<DateTimeOffset> slots = AvailabilityCalculator.Calculate(new AvailabilityRequest(
+            _professional, _monday, _zone, [night], [], [], 45, 0, 0, 15, _dayBefore, MinLeadTimeHours: 2, 60));
+
+        Assert.Equal(Local(23, 0), slots[^1]);
+        Assert.DoesNotContain(Local(23, 15), slots);
+    }
+
+    /// <summary>
+    /// Defeito conhecido (A4, 11/11): a jornada não fecha à meia-noite. <c>TimeOnly</c> não tem 24:00, e 00:00 como fim é
+    /// recusado (<c>end_time &gt; start_time</c> no domínio e no banco). Quem fecha à meia-noite grava 23:59 e perde 1 minuto.
+    /// Corrigir exige migration (aceitar fim 00:00 como fim do dia) e revisão humana.
+    /// </summary>
+    [Fact]
+    public void Closing_at_midnight_cannot_be_saved_as_00_00()
+    {
+        DomainException e = Assert.Throws<DomainException>(() =>
+            WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(18, 0), new(0, 0), new(2026, 1, 1), null));
+
+        Assert.Equal("work_schedule.end_before_start", e.Code);
+    }
+
+    [Fact]
+    public void The_shift_is_read_in_the_business_time_zone_not_in_utc()
+    {
+        // 09:00 em Manaus (UTC−4) são 13:00 UTC; em São Paulo (UTC−3), 12:00 UTC. Mesma jornada, instantes diferentes.
+        TimeZoneInfo manaus = TimeZoneInfo.FindSystemTimeZoneById("America/Manaus");
+        List<WorkSchedule> schedules =
+        [
+            WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(9, 0), new(12, 0), new(2026, 1, 1), null),
+        ];
+
+        DateTimeOffset First(TimeZoneInfo zone) => AvailabilityCalculator.Calculate(new AvailabilityRequest(
+            _professional, _monday, zone, schedules, [], [], 30, 0, 0, 30, _dayBefore, MinLeadTimeHours: 2, 60))[0];
+
+        Assert.Equal(new DateTimeOffset(2026, 10, 19, 12, 0, 0, TimeSpan.Zero), First(_zone));
+        Assert.Equal(new DateTimeOffset(2026, 10, 19, 13, 0, 0, TimeSpan.Zero), First(manaus));
     }
 
     private static IReadOnlyList<DateTimeOffset> Calculate(

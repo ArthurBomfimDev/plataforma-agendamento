@@ -5,6 +5,7 @@ import { Button } from '@components/button'
 import { LoadingState } from '@components/screen-state'
 import type { CounterBookingDialogProps } from './types'
 import { TextField } from '@components/text-field'
+import { TimeField } from '@components/time-field'
 import { CloseIcon } from '@assets/icons'
 import { cn } from 'cn'
 
@@ -153,14 +154,12 @@ export const CounterBookingDialog = (props: CounterBookingDialogProps) => {
             )}
           </div>
 
-          <TextField
+          <TimeField
             id={`${id}-time`}
             label="Horário"
-            type="time"
-            step={900}
             value={time}
             error={timeError}
-            onChange={(event) => setTime(event.target.value)}
+            onValueChange={setTime}
           />
           <TextField
             id={`${id}-name`}
