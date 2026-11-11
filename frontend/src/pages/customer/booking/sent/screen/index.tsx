@@ -5,7 +5,6 @@ import { addMinutes, differenceInMinutes, format, parse } from 'date-fns'
 import type { BookingSentScreenProps } from './types'
 import { Button } from '@components/button'
 import { ConfirmDialog } from '@components/confirm-dialog'
-import { MOCK_REMINDER_HOURS } from './consts'
 import { PageContainer } from '@components/page-container'
 import { StatusChip } from '@components/status-chip'
 import { cn } from 'cn'
@@ -80,11 +79,9 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
   const steps = [
     { label: 'Pedido enviado', detail: elapsedLabel(sentAt, now), done: true },
     { label: 'Empresa confirma', detail: `até ${confirmationHours} h`, done: false },
-    {
-      label: 'Lembrete',
-      detail: `${MOCK_REMINDER_HOURS.map((hours) => `${hours} h`).join(' e ')} antes`,
-      done: false,
-    },
+    // O lembrete que existe é o do evento de calendário (.ics) que vai com o e-mail de confirmação: alarme de 1 h antes.
+    // Lembrete por e-mail ou notificação ainda não existe (C1, 11/11): a tela não promete o que o sistema não envia.
+    { label: 'Calendário', detail: 'lembrete de 1 h antes', done: false },
     { label: 'Atendimento', detail: `${weekday}, ${time}`, done: false },
   ]
 
