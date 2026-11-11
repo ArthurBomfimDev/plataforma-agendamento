@@ -1,7 +1,6 @@
-import { Avatar } from '@components/avatar'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import type { ProfessionalSelectorProps } from './types'
 import { cn } from 'cn'
-import { initials } from '@pages/panel/agenda/screen/consts'
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 
@@ -46,7 +45,7 @@ export const ProfessionalSelector = memo((props: ProfessionalSelectorProps) => {
                     className="absolute -inset-px -z-10 rounded-md bg-(--action-primary)"
                   />
                 )}
-                <Avatar alt="" initials={initials(professional.name)} size="sm" />
+                <ProfessionalAvatar name={professional.name} photo={professional.photo} size="sm" />
                 <span className="flex flex-col whitespace-nowrap">
                   <span
                     className={cn(

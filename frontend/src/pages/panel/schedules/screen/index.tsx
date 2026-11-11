@@ -114,9 +114,10 @@ const WorkScheduleEditor = (props: WorkScheduleScreenProps & { team: SchedulePro
   // Abrir e fechar o editor do dia ou mudar um feriado não recria a lista do seletor memorizado.
   const selectorOptions = useMemo(
     () =>
-      team.map(({ id, name, schedule: saved }) => ({
+      team.map(({ id, name, photo, schedule: saved }) => ({
         id,
         name,
+        photo,
         hasSchedule: hasSchedule(drafts[id] ?? saved),
       })),
     [team, drafts],

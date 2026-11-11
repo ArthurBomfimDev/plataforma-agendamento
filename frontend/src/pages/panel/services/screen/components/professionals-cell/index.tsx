@@ -1,14 +1,14 @@
-import { MAX_AVATARS, initialsOf, professionalCount } from '../../consts'
+import { MAX_AVATARS, professionalCount } from '../../consts'
 
-import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import type { ProfessionalsCellProps } from './types'
 
-/** "Quem executa": avatares sobrepostos e a contagem; sem ninguém, o atalho para designar. */
+/** "Quem executa": avatares sobrepostos (foto ou iniciais) e a contagem; sem ninguém, o atalho para designar. */
 export const ProfessionalsCell = (props: ProfessionalsCellProps) => {
-  const { names, onAssign } = props
+  const { professionals, onAssign } = props
 
-  if (names.length === 0) {
+  if (professionals.length === 0) {
     return (
       <div className="flex flex-col items-start gap-(--space-2)">
         <span className="type-body text-(--status-pending-fg)">ninguém</span>
@@ -19,22 +19,24 @@ export const ProfessionalsCell = (props: ProfessionalsCellProps) => {
     )
   }
 
-  const sorted = names.toSorted((a, b) => a.localeCompare(b, 'pt-BR'))
+  const sorted = professionals.toSorted((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
   return (
     <div className="flex flex-col gap-(--space-2)">
-      <ul aria-label={sorted.join(', ')} className="flex -space-x-2">
-        {sorted.slice(0, MAX_AVATARS).map((name) => (
+      <ul aria-label={sorted.map(({ name }) => name).join(', ')} className="flex -space-x-2">
+        {sorted.slice(0, MAX_AVATARS).map(({ name, photo }) => (
           <li key={name}>
-            <Avatar
-              alt=""
+            <ProfessionalAvatar
+              name={name}
+              photo={photo}
               size="sm"
-              initials={initialsOf(name)}
               className="border-2 border-(--bg-surface)"
             />
           </li>
         ))}
       </ul>
-      <span className="type-caption text-(--text-muted)">{professionalCount(names.length)}</span>
+      <span className="type-caption text-(--text-muted)">
+        {professionalCount(professionals.length)}
+      </span>
     </div>
   )
 }

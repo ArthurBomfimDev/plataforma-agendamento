@@ -50,7 +50,7 @@ export const ServiceCards = (props: ServiceRowsProps) => {
               </span>
             </div>
             <ProfessionalsCell
-              names={service.professionalNames}
+              professionals={service.professionals}
               onAssign={() => onEdit?.(service.id)}
             />
             <div className="flex flex-wrap gap-(--space-8)">

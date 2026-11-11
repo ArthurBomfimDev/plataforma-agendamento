@@ -1,3 +1,4 @@
+import type { ImageSet } from '@api/models'
 import type {
   ExceptionChoice,
   ExceptionDraft,
@@ -7,7 +8,7 @@ import type {
   Outcome,
 } from '@pages/panel/schedules/screen/types'
 
-export type BlockProfessional = { id: string; name: string }
+export type BlockProfessional = { id: string; name: string; photo?: ImageSet | null }
 
 export type BlocksScreenProps = {
   businessName: string

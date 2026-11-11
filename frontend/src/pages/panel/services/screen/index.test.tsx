@@ -18,6 +18,7 @@ const services: ServiceListItem[] = [
     priceCents: 6_000,
     isActive: false,
     professionalNames: [],
+    professionals: [],
   },
   {
     id: 's1',
@@ -28,6 +29,7 @@ const services: ServiceListItem[] = [
     priceCents: 4_500,
     isActive: true,
     professionalNames: ['Rafael Lima', 'Marina Souza'],
+    professionals: [{ name: 'Rafael Lima' }, { name: 'Marina Souza' }],
   },
 ]
 
@@ -131,6 +133,7 @@ describe('ServicesScreen · passo guiado da verificação', () => {
     durationMinutes: 45,
     blockedMinutes: 55,
     priceCents: 9_000,
+    professionals: [],
     isActive: true,
     professionalNames: [],
   }

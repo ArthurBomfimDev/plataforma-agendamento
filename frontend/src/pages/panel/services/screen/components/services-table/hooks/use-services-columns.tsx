@@ -86,7 +86,7 @@ export const useServicesColumns = (onEdit?: (serviceId: string) => void) =>
         size: 19,
         cell: ({ row }) => (
           <ProfessionalsCell
-            names={row.original.professionalNames}
+            professionals={row.original.professionals}
             onAssign={() => onEdit?.(row.original.id)}
           />
         ),

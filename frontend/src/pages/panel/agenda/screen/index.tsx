@@ -9,7 +9,6 @@ import {
   findAppointment,
   firstName,
   fullDayLabel,
-  initials,
   occupancyOf,
   shiftDay,
   summaryCards,
@@ -22,7 +21,7 @@ import { useRef, useState } from 'react'
 
 import { AgendaHeader } from '../components/agenda-header'
 import { AppointmentDetails } from './components/appointment-details'
-import { Avatar } from '@components/avatar'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import { ConfirmDialog } from '@components/confirm-dialog'
 import { DESKTOP_QUERY } from '@hooks/use-media-query/consts'
 import { DayGrid } from './components/day-grid'
@@ -241,7 +240,11 @@ export const BusinessAgendaScreen = (props: BusinessAgendaScreenProps) => {
                           className="absolute -inset-px -z-10 rounded-(--radius-full) border-2 border-(--border-focus) bg-(--action-soft)"
                         />
                       )}
-                      <Avatar alt="" initials={initials(professional.name)} size="sm" />
+                      <ProfessionalAvatar
+                        name={professional.name}
+                        photo={professional.photo}
+                        size="sm"
+                      />
                       {firstName(professional.name)}
                       {professional.pendingRequests > 0 && (
                         <PendingBadge

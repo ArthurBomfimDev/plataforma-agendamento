@@ -1,13 +1,11 @@
 import { OVERLINE, publicBasisLabel, roleLabel, servicesLabel, workLabel } from '../../consts'
 
-import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
 import { ChevronLeftIcon, LockIcon } from '@assets/icons'
 import type { MemberDetailProps } from './types'
 import { MemberPhoto } from '../member-photo'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import { SettingRow } from '../setting-row'
-import { initials } from '@pages/panel/agenda/screen/consts'
-import { mediaUrl } from '@api/services/media'
 
 const CARD = 'rounded-(--radius-md) border border-(--border-subtle) bg-(--bg-surface)'
 
@@ -33,12 +31,7 @@ export const MemberDetail = (props: MemberDetailProps) => {
         aria-label={member.displayName}
         className={`${CARD} flex flex-wrap items-center gap-3.5 px-4.5 py-3.5`}
       >
-        <Avatar
-          alt=""
-          src={member.photo ? mediaUrl(member.photo.small) : undefined}
-          initials={initials(member.displayName)}
-          size="lg"
-        />
+        <ProfessionalAvatar name={member.displayName} photo={member.photo} size="lg" />
         <div className="flex min-w-0 flex-1 basis-48 flex-col gap-(--space-2)">
           <h2 className="type-body-lg text-(--text-strong)">{member.displayName}</h2>
           <p className="type-caption text-(--text-muted)">

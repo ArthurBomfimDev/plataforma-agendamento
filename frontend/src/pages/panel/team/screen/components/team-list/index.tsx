@@ -1,11 +1,9 @@
-import { Avatar } from '@components/avatar'
 import { MotionConfig, motion } from 'framer-motion'
 import { Button } from '@components/button'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import type { TeamListProps } from './types'
 import { cn } from 'cn'
-import { initials } from '@pages/panel/agenda/screen/consts'
 import { listCaption } from '../../consts'
-import { mediaUrl } from '@api/services/media'
 
 /**
  * A equipe (Figma 17, coluna da esquerda): um item por profissional, com o selecionado em destaque. Quem
@@ -45,12 +43,7 @@ export const TeamList = (props: TeamListProps) => {
                       className="absolute inset-0 -z-10 rounded-(--radius-sm) bg-(--bg-surface-selected)"
                     />
                   )}
-                  <Avatar
-                    alt=""
-                    src={member.photo ? mediaUrl(member.photo.small) : undefined}
-                    initials={initials(member.displayName)}
-                    size="md"
-                  />
+                  <ProfessionalAvatar name={member.displayName} photo={member.photo} />
                   <span className="flex min-w-0 flex-1 flex-col gap-px">
                     <span
                       className={cn(

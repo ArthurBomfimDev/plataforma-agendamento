@@ -1,4 +1,4 @@
-import type { ScheduleExceptionKind } from '@api/models'
+import type { ImageSet, ScheduleExceptionKind } from '@api/models'
 
 export type Weekday =
   'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
@@ -33,6 +33,7 @@ export type ScheduledChange = { id: string; label: string; validity: string }
 export type ScheduleProfessional = {
   id: string
   name: string
+  photo?: ImageSet | null
   /** A semana que vale hoje. */
   schedule: WeekSchedule
   changes: ScheduledChange[]

@@ -10,11 +10,11 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { PX_PER_MINUTE, SNAP_MINUTES, canPlace, initials, toMinutes, toTime } from '../../consts'
+import { PX_PER_MINUTE, SNAP_MINUTES, canPlace, toMinutes, toTime } from '../../consts'
 import type { AgendaProfessional } from '../../types'
 import { useRef, useState } from 'react'
 
-import { Avatar } from '@components/avatar'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import { CSS } from '@dnd-kit/utilities'
 import type { AppointmentBlockProps, DayGridProps, Preview } from './types'
 import { AddIcon } from '@assets/icons'
@@ -325,7 +325,7 @@ export const DayGrid = (props: DayGridProps) => {
             key={professional.id}
             className="flex h-6 min-w-0 flex-1 items-center justify-center gap-(--space-8)"
           >
-            <Avatar alt="" initials={initials(professional.name)} size="sm" />
+            <ProfessionalAvatar name={professional.name} photo={professional.photo} size="sm" />
             <p className="type-label truncate text-(--text-strong)">{professional.name}</p>
           </div>
         ))}

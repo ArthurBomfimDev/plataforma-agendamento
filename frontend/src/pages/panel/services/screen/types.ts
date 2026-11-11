@@ -1,3 +1,5 @@
+import type { ImageSet } from '@api/models'
+
 /** Um serviço na lista do painel, já com os nomes de quem o executa. */
 export type ServiceListItem = {
   id: string
@@ -9,6 +11,8 @@ export type ServiceListItem = {
   priceCents: number
   isActive: boolean
   professionalNames: string[]
+  /** Os mesmos profissionais, com a foto do DTO, para os avatares da coluna "Quem executa". */
+  professionals: { name: string; photo?: ImageSet | null }[]
 }
 
 export type ServicesData =

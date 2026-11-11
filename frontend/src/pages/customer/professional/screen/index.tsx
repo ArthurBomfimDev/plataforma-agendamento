@@ -1,17 +1,15 @@
 import { ErrorScreen, LoadingScreen } from '@components/screen-state'
 import { priceFormat } from '@components/service-card/consts'
-import { initials } from '@pages/panel/agenda/screen/consts'
 
-import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
 import { PageContainer } from '@components/page-container'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import { RatingLabel } from '@components/rating-label'
 import { RequestProfileRemoval } from '@components/request-profile-removal'
 import { ReviewsSection } from '@components/reviews-section'
 import { ServiceIcon } from '@components/image-defaults/service-icon'
 import { SmartImage } from '@components/smart-image'
 import type { ProfessionalPageScreenProps } from './types'
-import { mediaUrl } from '@api/services/media'
 
 /**
  * Página pública do profissional (ADR-031): foto ou iniciais, nome, especialidade, apresentação, os serviços dele com o
@@ -32,12 +30,7 @@ export const ProfessionalPageScreen = (props: ProfessionalPageScreenProps) => {
     <PageContainer>
       <main className="flex flex-col gap-(--space-24) pb-(--space-40)">
         <header className="flex items-center gap-(--space-16)">
-          <Avatar
-            alt=""
-            src={professional.photo ? mediaUrl(professional.photo.medium) : undefined}
-            initials={initials(professional.name)}
-            size="lg"
-          />
+          <ProfessionalAvatar name={professional.name} photo={professional.photo} size="xl" />
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
             <h1 className="type-title text-(--text-strong)">{professional.name}</h1>
             {professional.specialty && (

@@ -115,6 +115,7 @@ export const toAgendaDay = (input: AgendaInput): AgendaDay => {
       {
         id: professional.id,
         name: professional.displayName,
+        photo: professional.photo,
         workStart: empty ? '09:00' : toTime(workStart),
         workEnd: empty ? '09:00' : toTime(workEnd),
         pendingRequests,

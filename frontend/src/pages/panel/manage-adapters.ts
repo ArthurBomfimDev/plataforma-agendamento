@@ -88,6 +88,10 @@ export const toServiceListItem = (
     ({ professionalId }) =>
       professionals.find(({ id }) => id === professionalId)?.displayName ?? [],
   ),
+  professionals: service.professionals.flatMap(({ professionalId }) => {
+    const found = professionals.find(({ id }) => id === professionalId)
+    return found ? [{ name: found.displayName, photo: found.photo }] : []
+  }),
 })
 
 /** O pedido de gravação a partir do formulário. O que a tela não edita (insumos) fica como estava. */

@@ -1,4 +1,11 @@
-export type ProfessionalSelectorOption = { id: string; name: string; hasSchedule: boolean }
+import type { ImageSet } from '@api/models'
+
+export type ProfessionalSelectorOption = {
+  id: string
+  name: string
+  photo?: ImageSet | null
+  hasSchedule: boolean
+}
 
 export type ProfessionalSelectorProps = {
   professionals: ProfessionalSelectorOption[]

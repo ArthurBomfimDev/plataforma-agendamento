@@ -119,11 +119,18 @@ describe('serviços', () => {
         membershipId: null,
         authorizationDeclared: false,
         registration: null,
-        photo: null,
+        photo: { small: '/media/m-s.webp', medium: '/media/m-m.webp', large: '/media/m-l.webp' },
       },
     ])
 
     expect(item.professionalNames).toEqual(['Marina'])
+    // A foto do DTO chega até o avatar da coluna "Quem executa" (A3: antes só iam os nomes).
+    expect(item.professionals).toEqual([
+      {
+        name: 'Marina',
+        photo: { small: '/media/m-s.webp', medium: '/media/m-m.webp', large: '/media/m-l.webp' },
+      },
+    ])
     expect(item.blockedMinutes).toBe(45)
   })
 

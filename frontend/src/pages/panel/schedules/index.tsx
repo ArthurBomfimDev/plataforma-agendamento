@@ -101,11 +101,12 @@ export const PanelSchedulesRoute = () => {
       ? { status: 'loading' }
       : {
           status: 'ready',
-          items: professionals.map(({ id, displayName }) => {
+          items: professionals.map(({ id, displayName, photo }) => {
             const rows = rowsOf(id)
             return {
               id,
               name: displayName,
+              photo,
               schedule: toWeekSchedule(rows, today),
               changes: scheduledChanges(rows, today),
             }

@@ -4,38 +4,11 @@ import type { BusinessProfessional, ChooseProfessionalScreenProps } from './type
 
 import { Breadcrumb } from '@components/breadcrumb'
 import { Button } from '@components/button'
-import type { ImageSet } from '@api/models'
-import { InitialsAvatar } from '@components/image-defaults/initials'
 import { PageContainer } from '@components/page-container'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import { ProfessionalOption } from '@components/professional-option'
-import { SmartImage } from '@components/smart-image'
-import { cn } from 'cn'
 import { priceFormat } from '@components/service-card/consts'
 import { ratingFormat } from '@components/card-establishment/consts'
-
-/**
- * Foto do profissional (Onda 6D) ou, sem ela, as iniciais sobre `action/soft`. Decorativa: o nome está escrito
- * ao lado. A API só manda a foto com o perfil público completo consentido.
- */
-const ProfessionalPhoto = ({
-  name,
-  photo,
-  className,
-}: {
-  name: string
-  photo?: ImageSet | null
-  className?: string
-}) => (
-  <SmartImage
-    image={photo}
-    alt=""
-    sizes="80px"
-    width={1}
-    height={1}
-    fallback={<InitialsAvatar name={name} />}
-    className={cn('shrink-0 rounded-(--radius-full)', className)}
-  />
-)
 
 const yearsLabel = (years: number) => `${years} ${years === 1 ? 'ano' : 'anos'}`
 
@@ -108,13 +81,7 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
               return (
                 <li key={id} className="flex flex-col gap-(--space-2)">
                   <ProfessionalOption
-                    leading={
-                      <ProfessionalPhoto
-                        name={name}
-                        photo={photo}
-                        className="size-(--size-avatar-md)"
-                      />
-                    }
+                    leading={<ProfessionalAvatar name={name} photo={photo} />}
                     title={name}
                     details={[
                       ...(profile ? [profile] : []),
@@ -162,11 +129,7 @@ export const ChooseProfessionalScreen = (props: ChooseProfessionalScreenProps) =
                   key={id}
                   className="flex flex-col items-center gap-(--space-16) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-20) text-center"
                 >
-                  <ProfessionalPhoto
-                    name={name}
-                    photo={photo}
-                    className="size-(--size-avatar-lg)"
-                  />
+                  <ProfessionalAvatar name={name} photo={photo} size="lg" />
                   <div className="flex flex-col items-center gap-(--space-2)">
                     <h2 className="type-body text-(--text-strong)">{name}</h2>
                     {profile && <p className="type-caption text-(--text-muted)">{profile}</p>}

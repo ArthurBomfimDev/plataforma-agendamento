@@ -8,6 +8,7 @@ const SIZE_CLASSES: Record<NonNullable<AvatarProps['size']>, string> = {
   sm: 'size-(--size-avatar-sm)',
   md: 'size-(--size-avatar-md)',
   lg: 'size-(--size-avatar-lg)',
+  xl: 'size-20',
 }
 
 /**

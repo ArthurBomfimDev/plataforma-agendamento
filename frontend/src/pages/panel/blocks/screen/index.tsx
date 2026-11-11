@@ -75,9 +75,10 @@ export const BlocksScreen = (props: BlocksScreenProps) => {
     <PanelPage title="Folgas e bloqueios" subtitle={subtitle}>
       {professionals.items.length > 1 && (
         <ProfessionalSelector
-          professionals={professionals.items.map(({ id, name }) => ({
+          professionals={professionals.items.map(({ id, name, photo }) => ({
             id,
             name,
+            photo,
             hasSchedule: true,
           }))}
           selectedId={selected.id}

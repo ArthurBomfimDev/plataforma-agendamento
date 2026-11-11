@@ -1,8 +1,6 @@
-import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
 import type { BusinessProfessional } from '@pages/customer/booking/choose-professional/screen/types'
-import { initials } from '@pages/panel/agenda/screen/consts'
-import { mediaUrl } from '@api/services/media'
+import { ProfessionalAvatar } from '@components/professional-avatar'
 import { ratingFormat } from '@components/card-establishment/consts'
 
 export type ProfessionalsListProps = {
@@ -39,12 +37,7 @@ export const ProfessionalsList = ({ professionals, onOpen }: ProfessionalsListPr
           key={professional.id}
           className="flex items-center gap-(--space-12) rounded-lg border border-(--border-subtle) bg-(--bg-surface) p-(--space-12)"
         >
-          <Avatar
-            alt=""
-            src={professional.photo ? mediaUrl(professional.photo.small) : undefined}
-            initials={initials(professional.name)}
-            size="lg"
-          />
+          <ProfessionalAvatar name={professional.name} photo={professional.photo} size="lg" />
           <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
             <p className="type-body truncate text-(--text-strong)">{professional.name}</p>
             {professional.specialty && (

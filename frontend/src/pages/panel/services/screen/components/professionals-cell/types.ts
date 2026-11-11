@@ -1,5 +1,7 @@
+import type { ServiceListItem } from '../../types'
+
 export type ProfessionalsCellProps = {
-  names: string[]
+  professionals: ServiceListItem['professionals']
   /** Abre o cadastro do serviço, onde os profissionais são escolhidos. */
   onAssign?: () => void
 }

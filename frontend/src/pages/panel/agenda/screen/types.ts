@@ -1,3 +1,4 @@
+import type { ImageSet } from '@api/models'
 import type { PanelBottomItem } from '@components/bottom-navigation/types'
 import type { AgendaControls } from '../components/agenda-header/types'
 import type { PanelSection } from '@components/panel-sidebar/types'
@@ -36,6 +37,8 @@ export type AgendaEntry = AgendaAppointment | AgendaBlock
 export type AgendaProfessional = {
   id: string
   name: string
+  /** O `photo` do DTO do profissional; ausente, as iniciais. */
+  photo?: ImageSet | null
   /** Jornada do dia, `HH:mm`. Fora dela, "Fora do expediente". */
   workStart: string
   workEnd: string

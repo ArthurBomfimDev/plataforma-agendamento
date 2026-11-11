@@ -8,6 +8,6 @@ export type AvatarProps = {
    */
   initials?: string
   /** `sm` = 32px (painel), `md` = 40px, `lg` = 56px (cabeçalho do detalhe). Padrão: `md`. */
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }

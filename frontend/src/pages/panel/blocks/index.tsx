@@ -62,11 +62,18 @@ export const PanelBlocksRoute = () => {
     ? mine.isError
       ? { status: 'error', message: errorMessage(mine.error), onRetry: () => void mine.refetch() }
       : mine.data
-        ? { status: 'ready', items: [{ id: mine.data.id, name: mine.data.displayName }] }
+        ? {
+            status: 'ready',
+            items: [{ id: mine.data.id, name: mine.data.displayName, photo: mine.data.photo }],
+          }
         : { status: 'loading' }
     : {
         status: 'ready',
-        items: professionals.map(({ id, displayName }) => ({ id, name: displayName })),
+        items: professionals.map(({ id, displayName, photo }) => ({
+          id,
+          name: displayName,
+          photo,
+        })),
       }
 
   const exceptions: Loadable<ExceptionItem> = exceptionsQuery.isError

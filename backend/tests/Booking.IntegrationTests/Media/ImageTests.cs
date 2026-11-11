@@ -218,6 +218,40 @@ public sealed class ImageTests(IntegrationFixture fixture)
         Assert.NotNull((await PublicProfessionalAsync(business, withoutAccount)).Photo);
     }
 
+    /// <summary>
+    /// Contrato (A3, 11/11): todo endpoint que devolve um profissional traz o MESMO campo <c>photo</c>, com os três
+    /// tamanhos. A foto some quando um desses caminhos deixa de levá-la — e a tela só descobre olhando.
+    /// </summary>
+    [Fact]
+    public async Task P13_every_endpoint_that_returns_a_professional_carries_the_same_photo()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        Guid professionalId = business.ProfessionalIds[0];
+        TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
+
+        ProfessionalResponse uploaded = await UploadOkAsync<ProfessionalResponse>(
+            $"/api/businesses/current/professionals/{professionalId}/photo", TestImages.Jpeg(300, 300), "eu.jpg", "image/jpeg", staff.Token);
+        ImageSetResponse expected = Assert.IsType<ImageSetResponse>(uploaded.Photo);
+
+        PagedResult<ProfessionalResponse> panel = await _world.SendOkAsync<PagedResult<ProfessionalResponse>>(
+            HttpMethod.Get, "/api/businesses/current/professionals", null, business.OwnerToken);
+        ProfessionalResponse mineInPanel = Assert.Single(panel.Items, p => p.Id == professionalId);
+
+        PublicProfessionalResponse listed = await PublicProfessionalAsync(business, professionalId);
+
+        ProfessionalPageResponse page = await _world.SendOkAsync<ProfessionalPageResponse>(
+            HttpMethod.Get, $"/api/professionals/{professionalId}", null, null!);
+
+        Assert.Equal(expected, mineInPanel.Photo);
+        Assert.Equal(expected, listed.Photo);
+        Assert.Equal(expected, page.Photo);
+
+        foreach (string url in new[] { expected.Small, expected.Medium, expected.Large })
+        {
+            Assert.StartsWith("/media/", url, StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public async Task P12_service_photo_only_the_owner_validated_like_the_logo_and_shown_in_the_showcase()
     {
