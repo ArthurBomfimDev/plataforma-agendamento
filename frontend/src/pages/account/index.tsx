@@ -5,7 +5,7 @@ import { useMyConsents, useRevokeConsent } from '@api/services/consent/hooks'
 
 import type { ConsentsData, MyAccountData } from './screen/types'
 import { MyAccountScreen } from './screen'
-import { ROUTES, registerBusinessPath } from '@router/paths'
+import { ROUTES, completeProfilePath, registerBusinessPath } from '@router/paths'
 import { RequireSession } from '@router/guards/require-session'
 import { errorMessage } from '@api/base'
 import { useNavigate } from 'react-router'
@@ -65,6 +65,11 @@ const MyAccount = () => {
       }
       onSignOut={leave}
       onOpenPanel={onOpenPanel}
+      onCompleteProfile={
+        me.data && !me.data.hasCustomerProfile
+          ? () => navigate(completeProfilePath(ROUTES.account))
+          : undefined
+      }
       onRegisterBusiness={() => navigate(registerBusinessPath())}
       onSwitchContext={several ? () => navigate(ROUTES.chooseContext) : undefined}
     />

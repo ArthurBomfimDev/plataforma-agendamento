@@ -116,28 +116,25 @@ primeiro login). **Ficam sem perfil de consumidor:**
 
 **O que acontece:** `GET /api/users/me` devolve `hasCustomerProfile: false`; `GET /api/customers/me` responde 404
 `customer.not_found`; e `POST /api/appointments` responde `customer.profile_required`, que a tela traduz como "Complete seu
-cadastro de consumidor para agendar." **Não existe tela para completar o cadastro.** A API já oferece a saída: `POST
-/api/customers/me` com `{ birthDate, socialName? }` cria o perfil de uma conta logada.
+cadastro de consumidor para agendar." A API já oferece a saída: `POST /api/customers/me` com `{ birthDate, socialName? }`
+cria o perfil de uma conta logada.
 
 **O que continua funcionando:** administrar o estabelecimento, receber pedidos, trabalhar como profissional ou atendente. A
 limitação só aparece quando essa mesma conta tenta **agendar como consumidor**.
 
-**Saídas, aguardando decisão do Arthur (a decisão 1 da rodada de 10/11 ainda não foi confirmada):**
-
-1. Tela "Completar cadastro de consumidor", exibida quando a API responde `customer.profile_required` ou quando
-   `hasCustomerProfile` é falso e a pessoa vai agendar, com o formulário de perfil existente (data de nascimento e nome
-   social) chamando `POST /api/customers/me`. Não muda a API.
-2. Pedir a data de nascimento também no assistente de estabelecimento e no convite. Evita a conta sem perfil, ao custo de um
-   campo que o dono e o profissional não precisam.
-
-Enquanto nenhuma das duas existir, quem precisa agendar com uma conta assim deve **criar a conta de consumidor por outro
-e-mail**, ou pedir o perfil por SQL no ambiente de teste.
+**Resolvido em 10/11 (decisão do Arthur: "Completar cadastro"):** a tela `#/completar-cadastro` pede a data de nascimento e o
+nome social (opcional) e chama `POST /api/customers/me`, sem mudar a API. Abre sozinha quando "Enviar pedido" recebe
+`customer.profile_required` (e volta à revisão do pedido depois de salvar), e aparece em **Minha conta** como "Completar cadastro
+de consumidor" enquanto `hasCustomerProfile` for falso. Quem já tem perfil vê "Seu cadastro de consumidor já está completo".
+A alternativa de pedir a data no assistente de estabelecimento e no convite foi descartada. O que **continua** valendo: a conta
+no **painel** só alcança o agendamento depois de trocar para o contexto de consumidor; o menu não oferece "Consumidor" a quem
+não tem o perfil, então o caminho é **Minha conta → Completar cadastro de consumidor**.
 
 ## Cadastro sem conta prévia (ADR-034, 10/11)
 
 - Quem cria a conta pelo assistente de estabelecimento fica **sem perfil de consumidor** (data de nascimento). Se tentar agendar,
-  a API responde `customer.profile_required` e **não há tela para completar o perfil**: é a mesma limitação de quem entra por
-  outro aparelho. Trabalho futuro: uma tela "Complete seu cadastro de consumidor", em Minha conta.
+  a API responde `customer.profile_required` e a tela "Completar cadastro" (`#/completar-cadastro`) pede a data de nascimento
+  (ver "Conta sem perfil de consumidor", acima).
 - O aceite dos termos de uso no passo "Sua conta" é uma caixa obrigatória na tela, **não gravada pela API** (como no cadastro
   comum, que só mostra o texto). O aceite gravado é o dos termos do estabelecimento, no fim do assistente.
 - O destino depois da confirmação do e-mail fica guardado no aparelho (48 horas, amarrado ao e-mail). Confirmar em outro

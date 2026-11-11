@@ -58,6 +58,8 @@ export const ROUTES = {
   chooseContext: '/context',
   /** Minha conta (Onda 7CF): nome, e-mail, trocar a senha, sair. */
   account: '/account',
+  /** Completar o cadastro de consumidor: data de nascimento de quem criou a conta sem o perfil. */
+  completeProfile: '/completar-cadastro',
   /** Cadastrar meu estabelecimento (ondas finais, Fase 3). `?retomar=1` volta ao rascunho que já existe. */
   registerBusiness: '/cadastrar-estabelecimento',
   /** Página pública "Para estabelecimentos" (ADR-034): o que é, para quem e o começo do cadastro. */
@@ -271,6 +273,10 @@ export const signInPath = (redirect?: string, next?: string | null) =>
     [SEARCH_PARAMS.redirect]: redirect ?? null,
     [SEARCH_PARAMS.next]: safeNext(next),
   })
+
+/** A tela de completar o cadastro; `redirect` é para onde volta depois (o pedido que a exigiu, por exemplo). */
+export const completeProfilePath = (redirect?: string | null) =>
+  withSearch(ROUTES.completeProfile, { [SEARCH_PARAMS.redirect]: redirect ?? null })
 
 export const signUpPath = (redirect?: string | null) =>
   withSearch(ROUTES.signUp, { [SEARCH_PARAMS.redirect]: redirect ?? null })

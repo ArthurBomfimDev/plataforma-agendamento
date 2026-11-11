@@ -4,10 +4,10 @@ import { customerEndpoints } from './endpoints'
 
 export const customerService = {
   /** Cria o perfil de consumidor da conta (a data de nascimento vem do cadastro). */
-  register: (birthDate: string) =>
+  register: (birthDate: string, socialName: string | null = null) =>
     authRequest<CustomerResponse>({
       method: 'POST',
       url: customerEndpoints.me,
-      data: { birthDate, socialName: null },
+      data: { birthDate, socialName },
     }),
 }

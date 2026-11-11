@@ -1,7 +1,7 @@
 import { ApiError, errorMessage } from '@api/base'
 import { SENSITIVE_SCHEDULING, grantAndResend, isConsentRequired } from '@api/services/consent'
 import { useConsentVersions, useGrantConsent } from '@api/services/consent/hooks'
-import { availabilityPath, bookingSentPath, signInPath } from '@router/paths'
+import { availabilityPath, bookingSentPath, completeProfilePath, signInPath } from '@router/paths'
 import { dateKeyIn, dayFromKey, timeIn } from '@utils/time-zone'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 
@@ -73,6 +73,11 @@ const BookingReview = () => {
         onError: (error) => {
           if (error instanceof ApiError && error.status === 401) {
             navigate(signInPath(`${location.pathname}${location.search}`))
+            return
+          }
+          // Conta sem perfil de consumidor (nasceu pelo estabelecimento ou pelo convite): completa e volta aqui.
+          if (error instanceof ApiError && error.code === 'customer.profile_required') {
+            navigate(completeProfilePath(`${location.pathname}${location.search}`))
             return
           }
           // Saúde sem consentimento não é erro de toast: a tela pede o consentimento ali mesmo.

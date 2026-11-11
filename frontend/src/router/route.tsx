@@ -57,6 +57,10 @@ const ForBusinessesRoute = lazyPage(
   'ForBusinessesRoute',
 )
 const InvitationRoute = lazyPage(() => import('@pages/auth/invitation'), 'InvitationRoute')
+const CompleteProfileRoute = lazyPage(
+  () => import('@pages/customer/complete-profile'),
+  'CompleteProfileRoute',
+)
 const MyAccountRoute = lazyPage(() => import('@pages/account'), 'MyAccountRoute')
 const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
 const PanelBlocksRoute = lazyPage(PANEL_PAGE_LOADERS.blocks, 'PanelBlocksRoute')
@@ -118,6 +122,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.invitation} element={<InvitationRoute />} />
         <Route path={ROUTES.chooseContext} element={<ChooseContextRoute />} />
         <Route path={ROUTES.account} element={<MyAccountRoute />} />
+        <Route path={ROUTES.completeProfile} element={<CompleteProfileRoute />} />
         <Route path={ROUTES.registerBusiness} element={<RegisterBusinessRoute />} />
         <Route path={ROUTES.adminBusinesses} element={<AdminBusinessesRoute />} />
         <Route

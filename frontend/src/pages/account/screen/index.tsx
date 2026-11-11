@@ -55,6 +55,16 @@ export const MyAccountScreen = (props: MyAccountScreenProps) => {
               Meu painel
             </Button>
           )}
+          {props.onCompleteProfile && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={props.onCompleteProfile}
+            >
+              Completar cadastro de consumidor
+            </Button>
+          )}
           {props.onRegisterBusiness && (
             <Button
               variant="secondary"

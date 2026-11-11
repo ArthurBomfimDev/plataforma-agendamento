@@ -54,7 +54,7 @@ Repositório público: `github.com/ArthurBomfimDev/plataforma-agendamento` · `m
 
 - **18 migrations:** `InitialIdentity`, `AddTenancy`, `AddCoreModules`, `AddPlatformAdmin`, `AddOutbox`, `ConfirmExistingAccounts` (só dado), `AddImages`, `AddOnboardingFields`, `AddBusinessReport`, `AddBusinessInvitation`, `ReplaceProfessionalConsentWithDeclaration`, `AddServiceImage`, `AddProfessionalRemovalRequest`, `AddReputation`, `AddBusinessDocumentType`, `AddReviewReport`, `AddServiceShowPhotoInShowcase`, `AddInvitationSpecialty`. **As duas últimas estão NÃO APLICADAS** fora do ambiente de teste; SQL e backup em `docs/verificacao-pendente.md`. PostGIS e `btree_gist` habilitados.
 - **Constraint de exclusão real** em `scheduling.appointment` (§8). Filtro global de tenant no EF Core. **RLS não implementado.**
-- **Testes (10/11, locais):** `Booking.ArchitectureTests` **28**, `Booking.UnitTests` **419**, `Booking.IntegrationTests` **171** (API real contra PostgreSQL + PostGIS em banco criado por execução, incluindo concorrência, isolamento de tenant, idempotência, Admin, convites, avaliações, imagens, e-mail). `dotnet format` limpo, 0 avisos de build.
+- **Testes (10/11, locais):** `Booking.ArchitectureTests` **28**, `Booking.UnitTests` **419**, `Booking.IntegrationTests` **172** (API real contra PostgreSQL + PostGIS em banco criado por execução, incluindo concorrência, isolamento de tenant, idempotência, Admin, convites, avaliações, imagens, e-mail). `dotnet format` limpo, 0 avisos de build.
 - **Rotas:** índice completo, conferido no código, em `docs/produto/contrato-api-frontend.md` §4.21.
 
 ### 2.1 Onde o código ficou melhor que o planejado — registrar, não reverter
@@ -72,7 +72,7 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 
 ### Frontend — React 19 + TS + Vite, Bun, Tailwind v4, TanStack Query, Zustand
 
-521 arquivos-fonte, **84 arquivos de teste e 664 casos** (Vitest, sem jsdom na maioria: renderização em HTML de servidor; o login do Rafael traz `jsdom` para testes de interação). Typecheck, lint (2 avisos antigos), Prettier e build limpos.
+521 arquivos-fonte, **85 arquivos de teste e 673 casos** (Vitest, sem jsdom na maioria: renderização em HTML de servidor; o login do Rafael traz `jsdom` para testes de interação). Typecheck, lint (2 avisos antigos), Prettier e build limpos.
 
 - **Camada única de acesso à API em `src/api`** (`base`, `services`, `models`): token em vez de cookie, renovação deduplicada, conversão de fuso pelo IANA do estabelecimento; sem `VITE_API_BASE_URL` o app usa `/api` e `/media` na própria origem. ⚠️ O `CLAUDE.md` §3 ainda cita `src/lib/api` (a regra é a mesma; só o caminho mudou).
 - **Consumidor:** Home, busca (raio, cidade, termo sem acento com sinônimos, nota, preço), estabelecimento (com nota e página de cada profissional), escolher profissional, calendário, "Revise seu pedido" (consentimento de Saúde, texto de cancelamento com o prazo do estabelecimento), pedido enviado, "Meus agendamentos" (com imagem do estabelecimento), avaliar, Minha conta (consentimentos, tema), **"Para estabelecimentos"**.
@@ -81,9 +81,9 @@ A branch `docs/modelo-dominio-revisado` (4 commits de 02/10: modelo de domínio 
 - **Convite** (`#/convite`): criar conta com o e-mail do convite (já confirmado pelo token), entrar, ou aceitar logado; quem tem conta **sem e-mail confirmado** volta ao convite depois de confirmar (destino guardado no aparelho, 48 h).
 - **Admin** (`#/admin/estabelecimentos`): estabelecimentos, denúncias, remoções de perfil, avaliações denunciadas.
 - **Tema claro e escuro** com alternador em toda tela (barra lateral, barra superior do painel no celular, Admin, cadastro).
-- **Rotas:** 42 elementos de rota em `src/router/route.tsx`.
+- **Rotas:** 43 elementos de rota em `src/router/route.tsx`.
 - **Ainda com mock:** lembretes na tela "Pedido enviado" (`MOCK_REMINDER_HOURS`, hoje 24 h e 3 h; a decisão vigente é 24 h e 1 h, §10) e o prazo de avaliação em "Meus agendamentos" (`MOCK_REVIEW_WINDOW_DAYS`).
-- **Não existem:** remarcação (sem backend), histórico do consumidor no pedido, relatórios, tela para completar o perfil de consumidor, mapa com pino arrastável.
+- **Não existem:** remarcação (sem backend), histórico do consumidor no pedido, relatórios, mapa com pino arrastável.
 
 ### Infra local
 
@@ -275,7 +275,7 @@ ALTER TABLE scheduling.appointment
 
 **Fora do MVP:** chat · posts e feed · pagamento, Pix, split, carteira, caução · planos com cobrança · estoque (vira `SuppliesNote`) · convênio com lógica · promoções · recomendação por IA · WhatsApp · indicação · categorias além de Beleza e Saúde · profissional em várias empresas · recursos compartilhados · atendimento domiciliar e online · vídeo hospedado · upload de documento · Tauri · virtual scroll.
 
-**Fora do recorte desta entrega, declarados como trabalho futuro:** remarcação, pedido de cancelamento fora do prazo, lembretes e notificação in-app, resposta do dono às avaliações, relatórios, mapa com pino arrastável, tela para completar o perfil de consumidor, PWA instalável completo, RLS.
+**Fora do recorte desta entrega, declarados como trabalho futuro:** remarcação, pedido de cancelamento fora do prazo, lembretes e notificação in-app, resposta do dono às avaliações, relatórios, mapa com pino arrastável, PWA instalável completo, RLS.
 
 ---
 
@@ -310,7 +310,7 @@ ALTER TABLE scheduling.appointment
 | "Avaliação sem edição; o dono responde" (§5 de 22/09) | O código permite **editar por 7 dias** e **o dono não responde**; o dono denuncia e o Admin modera (ADR-032) |
 | "A tela do dono para confirmar o pino ainda não existe" | **Existe** desde 05/11, no assistente de cadastro, sem mapa embutido (CSP) |
 | Cancelar fora do prazo "só com aprovação do estabelecimento" | **Não existe aprovação:** o texto manda falar com o estabelecimento (10/11) |
-| Perfil de consumidor obrigatório no cadastro | Quem cria a conta pelo assistente de estabelecimento ou pelo convite **não tem** perfil de consumidor. Limitação registrada; a saída aguarda a decisão do Arthur (pendência Y) |
+| Perfil de consumidor obrigatório no cadastro | Quem cria a conta pelo assistente de estabelecimento ou pelo convite **não tem** perfil de consumidor. Resolvido em 10/11: tela "Completar cadastro" (pendência Y) |
 | `src/lib/api` | `src/api` (7H) |
 
 ---
@@ -336,8 +336,8 @@ ALTER TABLE scheduling.appointment
 | R | ✅ Colaboradores com login: resolvida (§10.1) | — | — |
 | Q | ✅ **Decidido (27/10, Arthur):** o log de acesso sensível registra leitura por terceiro; o consumidor criar o próprio pedido não é leitura e não gera entrada | — | — |
 | **W** | **Duas migrations NÃO APLICADAS:** `AddServiceShowPhotoInShowcase` (commit `8c98c9c`) e `AddInvitationSpecialty` (commit `f0e988a`). SQL e procedimento de backup em `docs/verificacao-pendente.md`. **Migration exige revisão humana** | Banco do Arthur | Arthur |
-| **X** | **Autenticação: revisão humana** da ADR-033 (aceita) e da ADR-034 (proposta): `next` com lista fechada e destino pós-login guardado no aparelho. **Decidir:** o convite confirma o e-mail ao criar a conta? Hoje sim, pelo token (ADR-029); não foi alterado | Merge | Arthur |
-| **Y** | **Conta sem perfil de consumidor** (assistente de estabelecimento e convite): tela "Completar cadastro" ou a data de nascimento no assistente. `limitacoes-e-trabalho-futuro.md` | Quem administra e também agenda | Arthur |
+| **X** | **Autenticação: revisão humana** da ADR-033 (aceita) e da ADR-034 (proposta): `next` com lista fechada e destino pós-login guardado no aparelho. **Decidido (10/11):** o convite continua confirmando o e-mail ao criar a conta, pelo token (ADR-029) | Merge | Arthur |
+| Y | ✅ **Conta sem perfil de consumidor:** resolvida em 10/11 pela tela "Completar cadastro" (`#/completar-cadastro`), decisão do Arthur. Falta conferir no navegador (`verificacao-pendente.md`, passos 16 e 17) | — | — |
 | **Z** | **Texto jurídico do consentimento de Saúde** e do termo do profissional: rascunhos em `docs/legal/`, sem revisão jurídica. Mudou o texto, sobe a versão e quem consentiu consente de novo | Produção com Saúde | Arthur |
 | **AA** | **GitHub com a cobrança bloqueada:** sem CI e sem PR. O PR #58 (draft) existe; `feat/integracao-final` foi enviada, sem PR. Nada foi mergeado | Merge em `main` | Arthur |
 | **AB** | Busca do ponto do endereço: o provedor acerta o número em 2 de 5 endereços de Garça. A confirmação do dono é a rede de proteção | Qualidade do cadastro | Arthur |
@@ -429,7 +429,7 @@ Resumo: **10 aceitas, 24 propostas.** Aceitar uma ADR é decisão do Arthur; "Pr
 ## 16. Próximo passo
 
 1. **Arthur:** ler `docs/verificacao-pendente.md`, fazer o backup e aplicar as duas migrations (pendência W); conferir os itens do roteiro em celular real.
-2. **Arthur:** decidir X (o convite confirma o e-mail?), Y (conta sem perfil de consumidor) e Z (texto jurídico); aceitar ou mudar a ADR-034; **revisão humana** de autenticação, multi-tenancy e migrations.
+2. **Arthur:** decidir Z (texto jurídico); aceitar ou mudar a ADR-034; **revisão humana** de autenticação, multi-tenancy e migrations.
 3. **Arthur e Rafael:** com o GitHub desbloqueado, abrir o PR da `feat/integracao-final` (ela contém os merges do Rafael, documentados em `docs/integracao-rafa-10-11.md`) e deixar o CI rodar; o PR #58 fica contido nela.
 4. Aceitar as ADRs 019 e 020 e decidir as pendências T e U (remarcação e lembretes).
 5. Preencher o Gmail no `.env` (pendência V) e repetir o teste de recuperação de senha.

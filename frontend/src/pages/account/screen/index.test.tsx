@@ -96,6 +96,13 @@ describe('MyAccountScreen', () => {
     )
   })
 
+  it('oferece "Completar cadastro de consumidor" só quando a ação é passada', () => {
+    expect(render()).not.toContain('Completar cadastro de consumidor')
+    expect(render({ onCompleteProfile: () => undefined })).toContain(
+      'Completar cadastro de consumidor',
+    )
+  })
+
   it('"Sair" só pede confirmação quando tocado: o diálogo começa fechado', () => {
     const html = render()
 

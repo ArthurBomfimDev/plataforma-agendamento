@@ -1,5 +1,6 @@
 using System.Net;
 using Booking.Arguments.Module.Identity;
+using Booking.Arguments.Module.People;
 using Booking.IntegrationTests.Infrastructure;
 
 namespace Booking.IntegrationTests.Scheduling;
@@ -46,6 +47,29 @@ public sealed class ContextBookingTests(IntegrationFixture fixture)
         await TestWorld.EnsureStatusAsync(self, HttpStatusCode.Conflict);
         Assert.Equal("appointment.cannot_book_own_business", await TestWorld.ErrorCodeAsync(self));
         await TestWorld.EnsureStatusAsync(elsewhere, HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task Q4_account_without_customer_profile_completes_it_and_then_books()
+    {
+        TestBusiness own = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
+        TestBusiness other = await _world.NewBusinessAsync(1, [new ServiceSpec(60)]);
+        ContextTokenResponse consumer = await _world.SendOkAsync<ContextTokenResponse>(
+            HttpMethod.Post, "/api/users/me/context", new SwitchContextRequest(null), own.OwnerToken);
+        var ownerAsCustomer = new TestUser(own.OwnerUserId, null, consumer.AccessToken);
+
+        using HttpResponseMessage blocked = await _world.Client.SendAsync(
+            _world.RequestAppointment(ownerAsCustomer, other, other.Services[0], other.ProfessionalIds[0], TestCalendar.At(10)));
+        Assert.Equal("customer.profile_required", await TestWorld.ErrorCodeAsync(blocked));
+        Assert.False((await _world.SendOkAsync<CurrentUserResponse>(HttpMethod.Get, "/api/users/me", null, consumer.AccessToken)).HasCustomerProfile);
+
+        await _world.SendOkAsync<CustomerResponse>(
+            HttpMethod.Post, "/api/customers/me", new RegisterCustomerRequest(new DateOnly(1990, 5, 10), null), consumer.AccessToken);
+
+        Assert.True((await _world.SendOkAsync<CurrentUserResponse>(HttpMethod.Get, "/api/users/me", null, consumer.AccessToken)).HasCustomerProfile);
+        using HttpResponseMessage booked = await _world.Client.SendAsync(
+            _world.RequestAppointment(ownerAsCustomer, other, other.Services[0], other.ProfessionalIds[0], TestCalendar.At(10)));
+        await TestWorld.EnsureStatusAsync(booked, HttpStatusCode.Created);
     }
 
     [Fact]

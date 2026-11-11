@@ -114,13 +114,15 @@ Para voltar atrás depois de um erro grave: parar a API, `docker compose cp` o d
 | 13 | Agenda do Dono no desktop com a grade de 144 px por hora | A tela ficou com o dobro da altura: a leitura continua boa? |
 | 14 | No banco onde o Rafa foi testado: `select role from tenancy.business_membership` do e-mail dele | `Professional` confirma a causa da agenda vazia (o papel vinha pré-marcado); `Attendant` indica outra causa, ainda não achada |
 | 15 | Conferir se os contêineres `booking0-*` (portas 8080, 8081, 5433) em execução são seus | Não são da pilha de verificação (`bookingfinal`), que já foi desmontada |
+| 16 | Entrar com a conta do dono (criada pelo assistente, sem perfil de consumidor), trocar para consumidor, escolher um horário e **Enviar pedido** | Abre "Completar cadastro" (`#/completar-cadastro`); sem data, "Informe sua data de nascimento"; menor de 18 anos, o erro da API aparece no formulário |
+| 17 | Preencher a data (18 anos ou mais) e **Salvar e continuar** | Volta à revisão do mesmo pedido; **Enviar pedido** agora cria o agendamento. Minha conta deixa de mostrar "Completar cadastro de consumidor"; abrir `#/completar-cadastro` mostra "já está completo" |
 
 ### Decisões que esperam o Arthur
 
 | # | Decisão | Onde está |
 |---|---|---|
-| 1 | Conta sem perfil de consumidor: tela "Completar cadastro" ou data de nascimento no assistente | `limitacoes-e-trabalho-futuro.md`, "Conta sem perfil de consumidor" |
-| 2 | O convite confirma o e-mail ao criar a conta? Hoje sim, pelo token (ADR-029); não foi alterado | ADR-033, "Para o Arthur decidir" |
+| 1 | ✅ **Decidido (10/11): tela "Completar cadastro".** Feita; roteiro nos passos 16 e 17 acima | `limitacoes-e-trabalho-futuro.md`, "Conta sem perfil de consumidor" |
+| 2 | ✅ **Decidido (10/11): o convite continua confirmando o e-mail ao criar a conta**, pelo token (ADR-029) | ADR-033, "Para o Arthur decidir" |
 | 3 | Aceitar a ADR-034 (cadastro sem conta prévia) | ADR-034 |
 | 4 | Texto jurídico do consentimento de Saúde (rascunho; mudou o texto, sobe a versão) | `docs/legal/consentimento-agendamento-saude.md` |
 | 5 | Revisão humana: autenticação (ADR-033 e ADR-034), multi-tenancy e as duas migrations | CLAUDE.md §4.2 |
