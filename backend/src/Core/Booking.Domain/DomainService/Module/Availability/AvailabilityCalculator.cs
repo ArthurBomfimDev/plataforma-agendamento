@@ -73,6 +73,64 @@ public static class AvailabilityCalculator
         return slots;
     }
 
+    /// <summary>
+    /// Por que <paramref name="startsAt"/> não está entre os horários que <see cref="Calculate"/> oferece. Só os horários
+    /// ocupados por outro agendamento são "tomados"; os demais têm causa própria e a interface diz qual. A ordem é a da
+    /// utilidade para quem tenta: antes o que nunca será possível (grade, jornada, férias), depois o que muda com o tempo
+    /// (horizonte, antecedência) e, por último, a ocupação.
+    /// </summary>
+    public static SlotRejection Diagnose(AvailabilityRequest r, DateTimeOffset startsAt)
+    {
+        DateTimeOffset start = startsAt.ToUniversalTime();
+
+        if (Calculate(r).Contains(start))
+        {
+            return SlotRejection.None;
+        }
+
+        DateTimeOffset local = TimeZoneInfo.ConvertTime(start, r.TimeZone);
+        bool onGrid = DateOnly.FromDateTime(local.DateTime) == r.Date
+            && local.TimeOfDay.Ticks % TimeSpan.TicksPerMinute == 0
+            && (int)local.TimeOfDay.TotalMinutes % r.SlotStepMinutes == 0;
+
+        if (!onGrid)
+        {
+            return SlotRejection.NotOnGrid;
+        }
+
+        TimeRange blocked = TimeRange.Of(start.AddMinutes(-r.BufferBeforeMinutes), start.AddMinutes(r.DurationMinutes + r.BufferAfterMinutes));
+        List<TimeRange> open = OpenRanges(r);
+
+        if (!open.Any(range => range.Contains(blocked)))
+        {
+            bool coveredByExtraShift = r.Exceptions.Any(e => e.Kind == ScheduleExceptionKind.ExtraShift && e.AppliesTo(r.ProfessionalId) && e.Period.Overlaps(blocked));
+
+            return BrazilianHolidays.IsHoliday(r.Date) && !coveredByExtraShift ? SlotRejection.HolidayClosed : SlotRejection.OutsideWorkHours;
+        }
+
+        foreach (ScheduleException exception in r.Exceptions.Where(e => e.Kind != ScheduleExceptionKind.ExtraShift && e.AppliesTo(r.ProfessionalId)))
+        {
+            open = Subtract(open, exception.Period);
+        }
+
+        if (!open.Any(range => range.Contains(blocked)))
+        {
+            return SlotRejection.ProfessionalUnavailable;
+        }
+
+        if (start > r.Now.AddDays(r.BookingHorizonDays))
+        {
+            return SlotRejection.BeyondHorizon;
+        }
+
+        if (start < (r.IgnoreLeadTime ? r.Now : r.Now.AddHours(r.MinLeadTimeHours)))
+        {
+            return SlotRejection.LeadTime;
+        }
+
+        return SlotRejection.Busy;
+    }
+
     private static List<TimeRange> OpenRanges(AvailabilityRequest r)
     {
         List<TimeRange> open = [];

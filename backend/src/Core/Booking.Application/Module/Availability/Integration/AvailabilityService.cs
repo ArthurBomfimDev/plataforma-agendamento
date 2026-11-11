@@ -17,7 +17,23 @@ public sealed class AvailabilityService(
     IAgendaOccupancy agenda,
     TimeProvider clock) : IAvailabilityService
 {
-    public async Task<IReadOnlyList<DateTimeOffset>> GetSlotStartsAsync(SlotQuery q, CancellationToken ct = default)
+    public async Task<IReadOnlyList<DateTimeOffset>> GetSlotStartsAsync(SlotQuery q, CancellationToken ct = default) =>
+        AvailabilityCalculator.Calculate(await BuildRequestAsync(q, ct));
+
+    public async Task<SlotCheck> CheckAsync(SlotQuery q, DateTimeOffset startsAt, CancellationToken ct = default)
+    {
+        AvailabilityRequest request = await BuildRequestAsync(q, ct);
+        IReadOnlyList<DateTimeOffset> slots = AvailabilityCalculator.Calculate(request);
+
+        // A mesma fotografia do relógio e do banco serve às duas respostas: lista e motivo não podem discordar.
+        Domain.DomainService.Module.Availability.SlotRejection reason = slots.Contains(startsAt.ToUniversalTime())
+            ? Domain.DomainService.Module.Availability.SlotRejection.None
+            : AvailabilityCalculator.Diagnose(request, startsAt);
+
+        return new SlotCheck(slots, Enum.Parse<Contracts.Availability.SlotRejection>(reason.ToString()));
+    }
+
+    private async Task<AvailabilityRequest> BuildRequestAsync(SlotQuery q, CancellationToken ct)
     {
         BusinessSchedulingInfo business = await businesses.GetSchedulingInfoAsync(q.BusinessId, ct)
             ?? throw new DomainException("business.not_found");
@@ -32,7 +48,7 @@ public sealed class AvailabilityService(
         IReadOnlyList<ScheduleException> overlapping = await exceptions.ListOverlappingAsync(q.BusinessId, q.ProfessionalId, from, to, ct);
         IReadOnlyList<BlockedRange> blocked = await agenda.GetBlockedRangesAsync(q.BusinessId, q.ProfessionalId, from, to, ct);
 
-        return AvailabilityCalculator.Calculate(new AvailabilityRequest(
+        return new AvailabilityRequest(
             q.ProfessionalId,
             q.Date,
             zone,
@@ -46,7 +62,7 @@ public sealed class AvailabilityService(
             clock.GetUtcNow(),
             business.MinLeadTimeHours,
             business.BookingHorizonDays,
-            q.IgnoreLeadTime));
+            q.IgnoreLeadTime);
     }
 
     public Task<bool> HasWorkScheduleAsync(Guid businessId, CancellationToken ct = default) =>

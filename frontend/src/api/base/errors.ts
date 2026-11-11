@@ -109,6 +109,17 @@ const MESSAGES: Record<string, string> = {
   'appointment.cannot_mark_no_show_from_current_status':
     'Só dá para marcar falta num agendamento confirmado, depois do horário dele.',
   'appointment.walk_in_name_required': 'Informe o nome de quem vai ser atendido.',
+  // Horário recusado por regra, não por disputa: só `slot_no_longer_available` quer dizer "alguém tomou".
+  'appointment.slot_no_longer_available': 'Esse horário acabou de ser ocupado. Escolha outro.',
+  'appointment.lead_time_not_met':
+    'Esse horário já está dentro da antecedência mínima do estabelecimento. Escolha um mais adiante.',
+  'appointment.outside_work_hours':
+    'O profissional não atende nesse horário (fora da jornada ou no intervalo). Escolha outro.',
+  'appointment.closed_holiday': 'O estabelecimento fecha nesse feriado. Escolha outro dia.',
+  'appointment.professional_unavailable':
+    'O profissional está indisponível nesse horário (folga, férias ou bloqueio). Escolha outro.',
+  'appointment.beyond_booking_horizon': 'Essa data ainda não está aberta para agendamento.',
+  'appointment.slot_not_on_grid': 'Escolha um horário de acordo com os passos do serviço.',
   // Gestão do estabelecimento (Onda 7D). Os limites são os do domínio (`Service`, `Business`).
   'service.name_required': 'Informe o nome do serviço.',
   'service.duration_invalid': 'A duração vai de 1 a 480 minutos.',
@@ -187,6 +198,20 @@ export const errorMessage = (error: unknown): string => {
   }
   return 'Algo deu errado. Tente de novo.'
 }
+
+const SLOT_REJECTIONS = new Set([
+  'appointment.slot_no_longer_available',
+  'appointment.lead_time_not_met',
+  'appointment.outside_work_hours',
+  'appointment.closed_holiday',
+  'appointment.professional_unavailable',
+  'appointment.beyond_booking_horizon',
+  'appointment.slot_not_on_grid',
+])
+
+/** O servidor recusou o horário pedido (qualquer motivo): a lista de horários na tela já não vale. */
+export const isSlotRejection = (code: string | undefined) =>
+  code !== undefined && SLOT_REJECTIONS.has(code)
 
 /** Recurso inexistente ou não público: a tela mostra "não encontrado", não "erro". */
 export const isNotFound = (error: unknown) =>

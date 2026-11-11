@@ -73,11 +73,12 @@ public sealed class ScheduleExceptionTests(IntegrationFixture fixture)
         Assert.Equal("Confirmed", await StatusOfAsync(s.Confirmed.Id));
         Assert.Equal("Pending", await StatusOfAsync(s.Pending.Id));
 
-        // O bloqueio vale para pedidos novos: 11:00 cai dentro dele.
+        // O bloqueio vale para pedidos novos: 11:00 cai dentro dele. Não é horário "tomado": é profissional indisponível.
         TestUser late = await _world.NewCustomerAsync();
         using HttpResponseMessage refused = await _world.Client.SendAsync(
             _world.RequestAppointment(late, s.Business, s.Business.Services[0], s.Business.ProfessionalIds[0], TestCalendar.At(11)));
-        Assert.Equal(HttpStatusCode.Conflict, refused.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, refused.StatusCode);
+        Assert.Equal("appointment.professional_unavailable", await TestWorld.ErrorCodeAsync(refused));
     }
 
     [Fact]

@@ -1,4 +1,6 @@
-import { ApiError, errorMessage } from '@api/base'
+import { ApiError, errorMessage, isSlotRejection } from '@api/base'
+import { queryKeys } from '@api/services/query-keys'
+import { useQueryClient } from '@tanstack/react-query'
 import { SENSITIVE_SCHEDULING, grantAndResend, isConsentRequired } from '@api/services/consent'
 import { useConsentVersions, useGrantConsent } from '@api/services/consent/hooks'
 import { availabilityPath, bookingSentPath, completeProfilePath, signInPath } from '@router/paths'
@@ -31,6 +33,7 @@ const BookingReview = () => {
   const booking = readBookingSearch(searchParams)
   const context = useBookingContext(businessId, serviceId)
   const request = useRequestAppointment()
+  const queryClient = useQueryClient()
   // Uma chave por revisão: tocar duas vezes em "Enviar" devolve o mesmo pedido, não dois.
   const [idempotencyKey] = useState(newIdempotencyKey)
   // A observação do pedido que o servidor recusou por falta de consentimento. Nulo: nenhum pedido esperando.
@@ -87,6 +90,14 @@ const BookingReview = () => {
           }
           setWaitingConsent(null)
           notify.error(error)
+          // Horário recusado (tomado, antecedência, jornada…): a lista na tela está velha. Volta ao calendário,
+          // que busca de novo, em vez de deixar a pessoa reenviar o mesmo horário.
+          if (error instanceof ApiError && isSlotRejection(error.code)) {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.availability })
+            navigate(availabilityPath(businessId, serviceId, booking.professionalId), {
+              replace: true,
+            })
+          }
         },
       },
     )

@@ -52,6 +52,10 @@ public sealed class DomainExceptionHandler(IProblemDetailsService problemDetails
             or "review.already_reviewed" or "review.not_completed" or "review.window_expired" or "review.already_edited"
             or "review.edit_window_expired" or "review.already_reported" or "review.no_open_report"
             or "review.already_hidden" or "review.not_hidden" => StatusCodes.Status409Conflict,
+        // O horário existe na grade mas não pode ser agendado: não é disputa (409), é o pedido que não cabe nas regras.
+        "appointment.slot_not_on_grid" or "appointment.closed_holiday" or "appointment.outside_work_hours"
+            or "appointment.professional_unavailable" or "appointment.beyond_booking_horizon"
+            or "appointment.lead_time_not_met" => StatusCodes.Status422UnprocessableEntity,
         "invitation.expired" or "invitation.revoked" => StatusCodes.Status410Gone,
         "appointment.contention_try_again" or "review.contention_try_again" or "geo.provider_unavailable" => StatusCodes.Status503ServiceUnavailable,
         "image.too_large" => StatusCodes.Status413PayloadTooLarge,

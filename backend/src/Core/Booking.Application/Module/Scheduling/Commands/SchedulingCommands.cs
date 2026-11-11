@@ -22,20 +22,26 @@ public sealed class SlotGuard(IAvailabilityService availability, IBusinessDirect
 {
     private const int _maxAlternatives = 5;
 
+    /// <summary>
+    /// Só <c>appointment.slot_no_longer_available</c> quer dizer "alguém já tem esse horário". Fora da jornada, feriado,
+    /// férias, grade, horizonte e antecedência mínima têm código próprio, para a tela não mandar a pessoa escolher outro
+    /// horário "que acabou de ser ocupado" quando o motivo é outro. Todos trazem <c>alternatives</c>.
+    /// </summary>
     public async Task EnsureAvailableAsync(BookableService service, DateTimeOffset startsAt, bool ignoreLeadTime, CancellationToken ct)
     {
-        IReadOnlyList<DateTimeOffset> slots = await SlotsOfDayAsync(service, startsAt, ignoreLeadTime, ct);
+        SlotCheck check = await CheckAsync(service, startsAt, ignoreLeadTime, ct);
 
-        if (!slots.Contains(startsAt.ToUniversalTime()))
+        if (check.Rejection != SlotRejection.None)
         {
-            throw Conflict(slots, startsAt);
+            throw Rejected(check.Slots, startsAt, check.Rejection);
         }
     }
 
+    /// <summary>A gravação perdeu a corrida para outro agendamento (constraint do banco): o motivo é sempre a ocupação.</summary>
     public async Task<DomainException> ConflictAsync(BookableService service, DateTimeOffset startsAt, bool ignoreLeadTime, CancellationToken ct) =>
-        Conflict(await SlotsOfDayAsync(service, startsAt, ignoreLeadTime, ct), startsAt);
+        Rejected((await CheckAsync(service, startsAt, ignoreLeadTime, ct)).Slots, startsAt, SlotRejection.Busy);
 
-    private async Task<IReadOnlyList<DateTimeOffset>> SlotsOfDayAsync(BookableService service, DateTimeOffset startsAt, bool ignoreLeadTime, CancellationToken ct)
+    private async Task<SlotCheck> CheckAsync(BookableService service, DateTimeOffset startsAt, bool ignoreLeadTime, CancellationToken ct)
     {
         BusinessSchedulingInfo business = await businesses.GetSchedulingInfoAsync(service.BusinessId, ct)
             ?? throw new DomainException("business.not_found");
@@ -43,20 +49,33 @@ public sealed class SlotGuard(IAvailabilityService availability, IBusinessDirect
         TimeZoneInfo zone = TimeZoneInfo.FindSystemTimeZoneById(business.TimeZone);
         DateOnly localDate = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(startsAt, zone).DateTime);
 
-        return await availability.GetSlotStartsAsync(
+        return await availability.CheckAsync(
             new SlotQuery(
                 service.BusinessId, service.ProfessionalId, localDate, service.DurationMinutes,
                 service.BufferBeforeMinutes, service.BufferAfterMinutes, service.SlotStepMinutes, ignoreLeadTime),
+            startsAt,
             ct);
     }
 
-    private static DomainException Conflict(IReadOnlyList<DateTimeOffset> slots, DateTimeOffset requested) =>
+    private static DomainException Rejected(IReadOnlyList<DateTimeOffset> slots, DateTimeOffset requested, SlotRejection reason) =>
         new(
-            "appointment.slot_no_longer_available",
+            CodeOf(reason),
             new Dictionary<string, object?>
             {
                 ["alternatives"] = slots.OrderBy(s => (s - requested).Duration()).Take(_maxAlternatives).Order().ToList(),
             });
+
+    // `None` aqui é a lista que mudou entre o cálculo e o diagnóstico: o horário só pode ter sido tomado nesse meio-tempo.
+    private static string CodeOf(SlotRejection reason) => reason switch
+    {
+        SlotRejection.NotOnGrid => "appointment.slot_not_on_grid",
+        SlotRejection.HolidayClosed => "appointment.closed_holiday",
+        SlotRejection.OutsideWorkHours => "appointment.outside_work_hours",
+        SlotRejection.ProfessionalUnavailable => "appointment.professional_unavailable",
+        SlotRejection.BeyondHorizon => "appointment.beyond_booking_horizon",
+        SlotRejection.LeadTime => "appointment.lead_time_not_met",
+        _ => "appointment.slot_no_longer_available",
+    };
 }
 
 public sealed class RequestAppointmentCommand(
