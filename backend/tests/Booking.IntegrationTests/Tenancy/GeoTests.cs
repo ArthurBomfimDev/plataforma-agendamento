@@ -96,6 +96,36 @@ public sealed class GeoTests(IntegrationFixture fixture)
         Assert.Single(Factory.Geo.Calls, c => Searched(c, term));
     }
 
+    /// <summary>
+    /// Duartina/SP (CEP 17471-318), 11/11: o CEP resolve com rua e bairro, mas o mapa só conhece o município. A API
+    /// entrega as duas verdades como são (rua → lista vazia; município → precisão City) e a escada de consultas do
+    /// cadastro decide o que fazer com elas. Respostas simuladas com o formato das medições reais do dia.
+    /// </summary>
+    [Fact]
+    public async Task L8_small_town_postal_code_resolves_while_only_the_city_is_on_the_map()
+    {
+        string suffix = Guid.NewGuid().ToString("N")[..6];
+        Factory.Geo.Respond("api/cep/v1/17471318", HttpStatusCode.OK,
+            """{"cep":"17471318","state":"SP","city":"Duartina","neighborhood":"Vila Salomão Sabbag","street":"Avenida Doutor Gil Borges","service":"open-cep"}""");
+        Factory.Geo.Respond($"search?q=Avenida+Doutor+Gil+Borges+{suffix}", HttpStatusCode.OK, "[]");
+        Factory.Geo.Respond($"search?q=Avenida%20Doutor%20Gil%20Borges%20{suffix}", HttpStatusCode.OK, "[]");
+        Factory.Geo.Respond($"Duartina%20{suffix}", HttpStatusCode.OK,
+            """[{"lat":"-22.4145620","lon":"-49.4083550","addresstype":"city","display_name":"Duartina, São Paulo, Brasil","address":{"city":"Duartina","state":"São Paulo","ISO3166-2-lvl4":"BR-SP"}}]""");
+
+        PostalCodeResponse address = await GetOkAsync<PostalCodeResponse>("/api/geo/postal-code/17471-318");
+        Assert.Equal(new PostalCodeResponse("17471318", "Avenida Doutor Gil Borges", "Vila Salomão Sabbag", "Duartina", "SP"), address);
+
+        PagedResult<GeoPlaceResponse> street = await GetOkAsync<PagedResult<GeoPlaceResponse>>(
+            $"/api/geo/search?q={Uri.EscapeDataString($"Avenida Doutor Gil Borges {suffix}")}");
+        Assert.Empty(street.Items);
+
+        PagedResult<GeoPlaceResponse> city = await GetOkAsync<PagedResult<GeoPlaceResponse>>(
+            $"/api/geo/search?q={Uri.EscapeDataString($"Duartina {suffix}")}");
+        GeoPlaceResponse place = Assert.Single(city.Items);
+        Assert.Equal("City", place.Precision);
+        Assert.Equal(("Duartina", "SP"), (place.City, place.State));
+    }
+
     /// <summary>A chamada de busca levou este texto, qualquer que seja a caixa e o escape usados na URL.</summary>
     private static bool Searched(GeoCall call, string term) =>
         call.Uri.AbsolutePath.EndsWith("/search", StringComparison.Ordinal)

@@ -82,18 +82,22 @@ describe('AddressLocation', () => {
 
 describe('busca do endereço', () => {
   // Ordem atualizada em 10/11: sem o bairro primeiro (antes era com o bairro). Medição em `limitacoes-e-trabalho-futuro.md`.
-  it('monta as buscas: sem o bairro, com o bairro e só a rua, sem repetir', () => {
+  // Em 11/11 a escada passou a descer até o bairro e o centro do município (Duartina, A2).
+  it('monta as buscas: sem o bairro, com o bairro, só a rua, só o bairro e a cidade, sem repetir', () => {
     expect(addressQueries(address)).toEqual([
       'Rua das Flores, 10, Garça, SP',
       'Rua das Flores, 10, Centro, Garça, SP',
       'Rua das Flores, Garça, SP',
+      'Centro, Garça, SP',
+      'Garça, SP',
     ])
   })
 
-  it('sem bairro informado, a busca com bairro não se repete', () => {
+  it('sem bairro informado, as buscas com bairro não se repetem', () => {
     expect(addressQueries({ ...address, district: '' })).toEqual([
       'Rua das Flores, 10, Garça, SP',
       'Rua das Flores, Garça, SP',
+      'Garça, SP',
     ])
   })
 
@@ -146,7 +150,7 @@ describe('busca do endereço', () => {
     )
 
     expect((await locateAddress(address, search))[0]?.label).toBe('bairro')
-    expect(search).toHaveBeenCalledTimes(3)
+    expect(search).toHaveBeenCalledTimes(5)
   })
 
   it('sem resultado em nenhuma: lista vazia, sem erro', async () => {

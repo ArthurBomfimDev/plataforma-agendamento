@@ -28,8 +28,11 @@ export const PRECISION_LABELS: Record<LocationPrecision, string> = {
 
 /**
  * As consultas, da mais específica para a menos: rua, número e cidade, sem o bairro (o provedor conhece o bairro com outro
- * nome em cidade pequena, e o bairro na consulta fazia o número não ser achado); depois com o bairro; por fim só a rua. A
- * medição de 10/11 contra cinco endereços de Garça está em `docs/produto/limitacoes-e-trabalho-futuro.md`.
+ * nome em cidade pequena, e o bairro na consulta fazia o número não ser achado); depois com o bairro; só a rua; só o bairro;
+ * por fim o centro do município. A medição de 10/11 contra cinco endereços de Garça está em
+ * `docs/produto/limitacoes-e-trabalho-futuro.md`. Em 11/11, Duartina/SP (CEP 17471-318) mostrou o outro lado: o ViaCEP acha a
+ * rua, mas o OpenStreetMap só conhece o município, e a escada antiga terminava em "não encontrado" sem saída. O município
+ * sempre existe; o dono vê o aviso de ponto aproximado e decide.
  */
 export const addressQueries = (address: AddressValues) => {
   const street = address.street.trim()
@@ -43,9 +46,18 @@ export const addressQueries = (address: AddressValues) => {
       join(street, number, place),
       join(street, number, district, place),
       join(street, place),
+      join(district, place),
+      place,
     ]),
   ]
 }
+
+/** Ponto de bairro ou de município: serve para a busca por distância, mas o dono precisa saber que não é o endereço. */
+export const isApproximate = ({ precision }: GeoPlaceResponse) =>
+  PRECISION_RANK[precision] >= PRECISION_RANK.Locality
+
+export const APPROXIMATE_WARNING =
+  'Só achamos o bairro ou a cidade, não a rua. O ponto é aproximado: ele define a distância que aparece na busca. Confirme assim ou corrija o endereço.'
 
 /** Só o que tem coordenada, o mais preciso primeiro. No empate, fica a ordem do provedor. */
 export const bestPlaces = (places: GeoPlaceResponse[]) =>

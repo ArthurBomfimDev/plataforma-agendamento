@@ -1,4 +1,11 @@
-import { LOCATION_NOT_FOUND, type LocationCheck, PRECISION_LABELS, mapLink } from './consts'
+import {
+  APPROXIMATE_WARNING,
+  LOCATION_NOT_FOUND,
+  type LocationCheck,
+  PRECISION_LABELS,
+  isApproximate,
+  mapLink,
+} from './consts'
 
 import { Button } from '@components/button'
 import type { GeoPlaceResponse } from '@api/models'
@@ -71,6 +78,11 @@ export const AddressLocation = (props: AddressLocationProps) => {
       <p className="type-body text-(--text-muted)">
         Confira se é aqui. Este ponto define a distância que aparece na busca.
       </p>
+      {isApproximate(place) && (
+        <p role="status" className="type-label text-(--text-body)">
+          {APPROXIMATE_WARNING}
+        </p>
+      )}
       <RadioOptionGroup
         aria-label="Localização encontrada"
         value={selected}
