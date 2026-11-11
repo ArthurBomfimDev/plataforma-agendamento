@@ -10,6 +10,121 @@ Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondent
 
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
+## Rodada de finalização de 10/11 (`feat/integracao-final`)
+
+Provado **localmente** (o GitHub está com a cobrança bloqueada: sem CI, sem PR): 28 de arquitetura, 419 unitários, 171 de
+integração, 664 do frontend, 34 verificações de ponta a ponta no navegador e 0 falhas em 432 medições de 390 e 1280 px, claro e
+escuro, com gavetas e diálogos abertos. Resultados e hash em `docs/verificacao-final-2026-11-10.md`. Falta o que só se confere
+com olho humano, em aparelho real ou no banco do Arthur.
+
+### Migrations NÃO APLICADAS (duas)
+
+Ambas foram geradas pelo EF e rodaram **em banco vazio** na suíte de integração e na pilha isolada (18 migrations do zero).
+Nenhuma foi aplicada no banco do Arthur. **Migration é área de revisão humana obrigatória** (CLAUDE.md §4.2): leia o SQL antes.
+
+| Ordem | Migration | Commit | Efeito |
+|---|---|---|---|
+| 1 | `20261105151650_AddServiceShowPhotoInShowcase` | `8c98c9c` | `catalog.service.show_photo_in_showcase boolean NOT NULL DEFAULT TRUE`: serviços existentes continuam mostrando a foto |
+| 2 | `20261110114547_AddInvitationSpecialty` | `f0e988a` | `tenancy.business_invitation.specialty varchar(80) NULL`: convites existentes ficam com nulo |
+
+A ordem importa: a segunda vem depois da primeira, e as duas dependem de `20261105030430_AddReviewReport` já aplicada.
+
+```sql
+-- 1) AddServiceShowPhotoInShowcase
+START TRANSACTION;
+ALTER TABLE catalog.service ADD show_photo_in_showcase boolean NOT NULL DEFAULT TRUE;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261105151650_AddServiceShowPhotoInShowcase', '10.0.4');
+
+COMMIT;
+
+-- 2) AddInvitationSpecialty
+START TRANSACTION;
+ALTER TABLE tenancy.business_invitation ADD specialty character varying(80);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261110114547_AddInvitationSpecialty', '10.0.4');
+
+COMMIT;
+```
+
+Para desfazer (só se for preciso, e depois de conferir o backup): `ALTER TABLE catalog.service DROP COLUMN show_photo_in_showcase;`
+e `ALTER TABLE tenancy.business_invitation DROP COLUMN specialty;`, apagando a linha correspondente de `__EFMigrationsHistory`. Para
+a segunda, perde-se a especialidade dos convites já feitos; para a primeira, perde-se a escolha de quem desligou a foto.
+
+#### Procedimento: backup antes de aplicar
+
+Todos os comandos na raiz do repositório, na pilha de Compose do banco que vai receber a migration. **O dump tem dado pessoal:
+guarde-o fora do repositório** (ele não entra em commit nem em PR).
+
+```powershell
+# 1. Confirmar em qual banco está e quais migrations já foram aplicadas (as duas devem faltar).
+'select migration_id from "__EFMigrationsHistory" order by migration_id desc limit 3;' | docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -f -'
+
+# 2. Backup completo, em formato custom, dentro do contêiner (não use ">" do PowerShell: ele corrompe arquivo binário).
+docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc -f /tmp/antes-das-migrations.dump "$POSTGRES_DB"'
+
+# 3. Copiar para fora do repositório e conferir tamanho e leitura.
+docker compose cp db:/tmp/antes-das-migrations.dump ..\antes-das-migrations-AAAA-MM-DD.dump
+Get-Item ..\antes-das-migrations-AAAA-MM-DD.dump | Select-Object Name, Length
+docker compose exec db sh -c 'pg_restore -l /tmp/antes-das-migrations.dump | head -5'
+```
+
+O que importa é o `pg_restore -l` listar o conteúdo sem erro. **Só aplique depois que o arquivo existir, tiver tamanho maior que
+zero e o `-l` listar.**
+
+```powershell
+# 4a. Aplicar pelo próprio Compose: o serviço `migrations` aplica o que faltar ao subir.
+docker compose up -d --build
+
+# 4b. Ou aplicar o SQL acima à mão, uma migration por vez, parando no primeiro erro.
+Get-Content .\migration-1.sql -Raw | docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f -'
+
+# 5. Conferir: as duas linhas novas no histórico e as duas colunas.
+@'
+select table_name || '.' || column_name || ' nulo=' || is_nullable from information_schema.columns
+where (table_schema = 'catalog' and table_name = 'service' and column_name = 'show_photo_in_showcase')
+   or (table_schema = 'tenancy' and table_name = 'business_invitation' and column_name = 'specialty');
+select migration_id from "__EFMigrationsHistory" order by migration_id desc limit 2;
+'@ | docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -f -'
+```
+
+Esperado: `service.show_photo_in_showcase nulo=NO`, `business_invitation.specialty nulo=YES` e as duas migrations novas no topo do histórico.
+
+Para voltar atrás depois de um erro grave: parar a API, `docker compose cp` o dump de volta para o contêiner e rodar
+`pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists /tmp/antes-das-migrations.dump`.
+
+### Roteiro de conferência da rodada
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | Aplicar as migrations (acima) e subir a API | A API sobe; `GET /api/businesses/current/services` traz `showPhotoInShowcase: true` nos serviços antigos; convites antigos listam `specialty` nulo |
+| 2 | **Celular real**, sem sessão: Home → "Tenho um negócio" → "Cadastrar meu estabelecimento" → "Sua conta" | Teclado não esconde o botão; campos de 16 px (sem zoom no iOS); alvos de 44 px |
+| 3 | Criar a conta com **e-mail real** (Gmail) e abrir o link de confirmação **no mesmo navegador** | Entrar leva ao assistente, no passo "Negócio" |
+| 4 | Repetir abrindo o link de confirmação **em outro navegador ou aparelho** | Entra e cai na Home (o destino fica guardado só no aparelho): conferir que a mensagem da tela de e-mail não promete o contrário |
+| 5 | Assistente até o fim: documento, endereço (CEP, "Buscar CEP"), "Ver no mapa", confirmar a localização, revisão e termos | Em Beleza publica na hora; em Saúde vai para análise. **Conferir o ponto no mapa** com um endereço da sua cidade: o provedor acerta o número em poucos casos (`limitacoes-e-trabalho-futuro.md`) |
+| 6 | Convidar um profissional com especialidade e um atendente (e-mails reais), aceitar cada um pelo celular | Profissional: perfil com a especialidade, na página pública. Atendente: sem perfil, agenda em lista cronológica |
+| 7 | Convidar quem **já tem conta sem confirmar o e-mail** | Login recusado; depois de confirmar e entrar, volta ao convite. O convite continua de 7 dias |
+| 8 | Recorte de foto em **Editar serviço**, na ficha da equipe e em **Meu perfil**; arrastar e dar zoom **com o dedo** | Mesma tela do logotipo; sem travar a rolagem da página. **Só o logotipo foi provado no navegador** |
+| 9 | Editar serviço: desligar "Mostrar foto na vitrine" e abrir a vitrine e a página do profissional | Ícone da categoria no lugar da foto; o dono continua vendo a foto no painel |
+| 10 | "Revise seu pedido" em estabelecimentos com prazo de cancelamento 0, 1 e 48 h | "Cancelamento gratuito até N h antes. Depois disso, fale com o estabelecimento." (prazo 0: "até o horário marcado") |
+| 11 | Cancelar um agendamento confirmado **dentro** do prazo do estabelecimento | A mensagem manda falar com o estabelecimento |
+| 12 | Tema escuro nas telas novas, principalmente "Sua conta", "Para estabelecimentos", gavetas de convite e recorte | Contraste legível. **A auditoria mede rolagem, alvos e texto cortado, não contraste** |
+| 13 | Agenda do Dono no desktop com a grade de 144 px por hora | A tela ficou com o dobro da altura: a leitura continua boa? |
+| 14 | No banco onde o Rafa foi testado: `select role from tenancy.business_membership` do e-mail dele | `Professional` confirma a causa da agenda vazia (o papel vinha pré-marcado); `Attendant` indica outra causa, ainda não achada |
+| 15 | Conferir se os contêineres `booking0-*` (portas 8080, 8081, 5433) em execução são seus | Não são da pilha de verificação (`bookingfinal`), que já foi desmontada |
+
+### Decisões que esperam o Arthur
+
+| # | Decisão | Onde está |
+|---|---|---|
+| 1 | Conta sem perfil de consumidor: tela "Completar cadastro" ou data de nascimento no assistente | `limitacoes-e-trabalho-futuro.md`, "Conta sem perfil de consumidor" |
+| 2 | O convite confirma o e-mail ao criar a conta? Hoje sim, pelo token (ADR-029); não foi alterado | ADR-033, "Para o Arthur decidir" |
+| 3 | Aceitar a ADR-034 (cadastro sem conta prévia) | ADR-034 |
+| 4 | Texto jurídico do consentimento de Saúde (rascunho; mudou o texto, sobe a versão) | `docs/legal/consentimento-agendamento-saude.md` |
+| 5 | Revisão humana: autenticação (ADR-033 e ADR-034), multi-tenancy e as duas migrations | CLAUDE.md §4.2 |
+
 ## Rodada 2 do teste de 05/11 (PR #58)
 
 Provado por script no navegador (Chrome do Windows, via Playwright), numa pilha isolada com banco novo: agenda em lista do

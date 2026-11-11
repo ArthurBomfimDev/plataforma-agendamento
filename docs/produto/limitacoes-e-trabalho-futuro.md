@@ -103,6 +103,36 @@ endereços de Garça** de 05/11 (CEP e número de fontes públicas: o regulament
 - "Buscar CEP" agora valida o CEP antes de consultar, mostra "Buscando…", diz o que preencheu e leva o cursor ao campo que
   falta (o número, que o CEP nunca traz). Rua e número continuam obrigatórios, com mensagem por campo.
 
+## Conta sem perfil de consumidor
+
+Uma conta é uma só (`User`); o perfil de consumidor (`Customer`, com a data de nascimento) é um complemento. Hoje ele só nasce
+quando a pessoa cria a conta pela tela de **Criar conta** e entra pelo mesmo aparelho (a data fica guardada no aparelho até o
+primeiro login). **Ficam sem perfil de consumidor:**
+
+- quem cria a conta pelo **assistente de cadastro de estabelecimento** (ADR-034), que não pede a data de nascimento;
+- quem cria a conta pelo **convite** (`accept-new-account`), que não a pede;
+- quem confirma o e-mail e entra **em outro aparelho ou navegador** (a data guardada ficou no primeiro);
+- as contas criadas por seed, teste ou SQL.
+
+**O que acontece:** `GET /api/users/me` devolve `hasCustomerProfile: false`; `GET /api/customers/me` responde 404
+`customer.not_found`; e `POST /api/appointments` responde `customer.profile_required`, que a tela traduz como "Complete seu
+cadastro de consumidor para agendar." **Não existe tela para completar o cadastro.** A API já oferece a saída: `POST
+/api/customers/me` com `{ birthDate, socialName? }` cria o perfil de uma conta logada.
+
+**O que continua funcionando:** administrar o estabelecimento, receber pedidos, trabalhar como profissional ou atendente. A
+limitação só aparece quando essa mesma conta tenta **agendar como consumidor**.
+
+**Saídas, aguardando decisão do Arthur (a decisão 1 da rodada de 10/11 ainda não foi confirmada):**
+
+1. Tela "Completar cadastro de consumidor", exibida quando a API responde `customer.profile_required` ou quando
+   `hasCustomerProfile` é falso e a pessoa vai agendar, com o formulário de perfil existente (data de nascimento e nome
+   social) chamando `POST /api/customers/me`. Não muda a API.
+2. Pedir a data de nascimento também no assistente de estabelecimento e no convite. Evita a conta sem perfil, ao custo de um
+   campo que o dono e o profissional não precisam.
+
+Enquanto nenhuma das duas existir, quem precisa agendar com uma conta assim deve **criar a conta de consumidor por outro
+e-mail**, ou pedir o perfil por SQL no ambiente de teste.
+
 ## Cadastro sem conta prévia (ADR-034, 10/11)
 
 - Quem cria a conta pelo assistente de estabelecimento fica **sem perfil de consumidor** (data de nascimento). Se tentar agendar,

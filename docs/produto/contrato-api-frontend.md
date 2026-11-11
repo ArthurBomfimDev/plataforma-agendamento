@@ -667,6 +667,52 @@ A API não ganhou rota nesta seção; o que muda é o frontend e o que ele combi
   estabelecimento."
 - **Convite com especialidade:** ver §4.11 (`specialty` em `InviteMemberRequest` e `InvitationResponse`).
 
+## 4.21 Índice das rotas, conferido no código em 10/11
+
+Lista de **todas** as rotas dos 26 controllers de `backend/src/Presentation/Booking.Api/Module`, lida dos atributos
+`[Route]`, `[Http…]`, `[Authorize]` e `[AllowAnonymous]`. "Anônima" = sem login; "Logada" = qualquer token; "Dono", "Atendente"
+e "Profissional" = papel no token de contexto (a matriz exata está em §4.12); "Admin" = política `PlatformAdmin`. O detalhe de
+corpo, resposta e erro de cada grupo está na seção indicada. Quem escreve aqui precisa conferir o código; o código vence.
+
+| Grupo | Rotas (verbo caminho) | Quem | Detalhe |
+|---|---|---|---|
+| **Conta** | `POST /api/auth/register`, `login`, `refresh`, `logout`, `confirm-email`, `resend-confirmation`, `forgot-password`, `reset-password` | Anônima (limite "auth": 10 por minuto por IP) | §4.2 |
+| | `GET /api/users/me`, `PUT /api/users/me`, `POST /api/users/me/password`, `POST /api/users/me/context` | Logada | §4.6 |
+| | `GET`, `POST /api/customers/me` (perfil de consumidor: data de nascimento) | Logada | §4.6 |
+| **Consentimentos** | `GET /api/consents/versions` | Anônima | §4.19 |
+| | `GET`, `POST /api/consents`, `DELETE /api/consents/{purpose}` | Logada | §4.19 |
+| **Estabelecimento (público)** | `GET /api/businesses/search`, `GET /api/businesses/{id}` | Anônima | §4.4 |
+| | `GET /api/businesses/{id}/services`, `…/professionals`, `…/availability`, `…/availability/calendar` | Anônima | §1, §4.4 |
+| | `POST /api/businesses/{id}/reports` (denúncia do estabelecimento; 5 por hora por IP) | Anônima | §4.10 |
+| | `GET /api/geo/postal-code/{cep}`, `GET /api/geo/search`, `GET /api/geo/reverse` (30 por minuto por IP) | Anônima | §4.3 |
+| | `GET /api/professionals/{id}`, `POST /api/professionals/{id}/removal-requests` (5 por hora por IP) | Anônima | §4.16 |
+| | `GET /api/businesses/{id}/reviews`, `…/rating`, `GET /api/professionals/{id}/reviews`, `…/rating` | Anônima | §4.17 |
+| **Agendamento do consumidor** | `POST /api/appointments`, `GET /api/appointments/mine`, `POST /api/appointments/{id}/cancel` | Logada, token de consumidor | §1, §4.6 |
+| | `GET`, `POST`, `PUT /api/appointments/{id}/review`, `GET /api/reviews/mine` | Logada, token de consumidor (10 por hora) | §4.17 |
+| **Cadastro do estabelecimento** | `POST /api/businesses` (5 por hora por conta), `GET /api/businesses/current`, `GET …/current/checklist` | Logada / Dono | §4.10 |
+| | `PUT …/current/scheduling-policy`, `…/address`, `…/location`, `…/logo`, `…/cover`, `…/responsible`; `DELETE …/logo`, `…/cover` | Dono | §4.7, §4.10 |
+| | `POST …/current/terms`, `…/submit`, `…/publish`, `…/leave` | Dono (`leave`: o próprio vínculo) | §4.10, §4.16 |
+| **Agenda e pedidos (painel)** | `GET /api/businesses/current/appointments`, `…/pending`; `POST …/counter`; `POST …/{id}/confirm`, `reject`, `cancel`, `complete`, `no-show` | Dono e Atendente (Profissional: só os próprios) | §4, §4.12 |
+| **Catálogo** | `GET`, `POST /api/businesses/current/services`, `PUT …/{id}`, `PUT`/`DELETE …/{id}/image`, `PUT`/`DELETE …/{id}/professionals/{pid}` | Leitura: Dono, Atendente, Profissional. Escrita: Dono (upload: 20 por hora) | §4.7, §4.15 |
+| **Equipe** | `GET`, `POST /api/businesses/current/professionals` (`POST` só com `isMe: true`), `PUT …/{id}`, `PUT`/`DELETE …/{id}/photo`, `GET`/`PUT …/professionals/me` | Leitura: os três papéis. Escrita: Dono. `me`: o Profissional | §4.7, §4.13 |
+| **Jornada e bloqueios** | `GET`, `POST /api/businesses/current/work-schedules`, `PUT`/`DELETE …/{id}`; `GET`, `POST …/schedule-exceptions`, `GET …/affected-appointments`, `DELETE …/{id}` | Jornada: Dono (leitura: os três papéis). Bloqueios: Dono e Atendente; o Profissional só os próprios | §4.7, §4.12 |
+| **Convites e Equipe** | `GET`, `POST /api/businesses/current/invitations`, `POST …/{id}/resend`, `DELETE …/{id}`, `GET …/seats`, `GET …/members` | Dono (envio: 30 por hora por conta) | §4.11, §4.14 |
+| | `POST /api/invitations/preview`, `POST /api/invitations/accept-new-account` | Anônima (20 por hora por IP) | §4.11 |
+| | `POST /api/invitations/accept` | Logada, com o e-mail do convite | §4.11 |
+| **Avaliações do estabelecimento** | `GET /api/businesses/current/reviews`, `POST …/{reviewId}/report` | Dono | §4.17 |
+| **Admin** | `GET /api/admin/businesses`, `GET …/{id}`, `POST …/{id}/approve`, `reject`, `suspend`, `reinstate` | Admin | §4.10 |
+| | `GET /api/admin/businesses/reports`, `POST …/reports/{reportId}/resolve` | Admin | §4.10 |
+| | `GET /api/admin/professional-removals`, `POST …/{requestId}/resolve` | Admin | §4.16 |
+| | `GET /api/admin/reviews`, `POST …/{reviewId}/hide`, `unhide`, `dismiss-report` | Admin | §4.17 |
+
+- **Rotas que não existem** (para ninguém procurar): remarcação, pedido de cancelamento fora do prazo, edição de nome e categoria
+  do estabelecimento depois de ativo, exclusão definitiva de conta, telefone ou e-mail público do estabelecimento.
+- **Rotas que mudaram de comportamento em 05/11 e 10/11:** `POST …/current/professionals` só aceita `isMe: true` (§4.11);
+  `InviteMemberRequest` e `InvitationResponse` têm `specialty` (§4.11); `ServiceResponse` e `SaveServiceRequest` têm
+  `showPhotoInShowcase` (§4.15); `GET /api/consents/versions` traz o texto (§4.19). Nenhuma delas removeu campo.
+- **Migrations vinculadas, ainda NÃO APLICADAS fora do ambiente de teste:** `AddServiceShowPhotoInShowcase` e
+  `AddInvitationSpecialty`. SQL e procedimento de backup em `docs/verificacao-pendente.md`.
+
 ## 5. Resumo para fechar o lado do frontend
 
 1. Ler `alternatives` do 409 no `client.ts` para a tela de "horário ocupado".
