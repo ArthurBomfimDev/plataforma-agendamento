@@ -1,0 +1,65 @@
+# Ambiente final da demonstração, na máquina do autor, publicado pelo Tailscale Funnel.
+# ADR-036 e docs/operacao/publicacao-demo.md. Camada por cima do compose.yaml:
+#
+#   docker compose -f compose.yaml -f compose.demo.yaml --env-file .env up -d --build
+#
+# Para os outros comandos do compose (down, logs, exec) e para o seed, que chama `docker compose exec`, use as
+# mesmas camadas pela variável:  $env:COMPOSE_FILE = "compose.yaml;compose.demo.yaml"
+#
+# O que esta camada garante:
+#   - UM ÚNICO origin público: a porta do `web` (WEB_PORT, 8090 na demonstração). O nginx do web entrega o site e,
+#     atrás dele, /api/ e /media/. É só essa porta que o `tailscale funnel` expõe.
+#   - Nenhuma porta no host, a não ser: web e Mailpit, SEMPRE em 127.0.0.1. Banco e API não são publicados: o seed
+#     fala com a API pelo web (API_URL=http://127.0.0.1:8090) e com o banco por `docker compose exec`.
+#   - O Mailpit mostra o e-mail de todo mundo, com link de confirmação: fica só em 127.0.0.1 e NUNCA entra no Funnel.
+#   - restart: unless-stopped em tudo; volumes nomeados (db-data, media-data) herdados do compose.yaml.
+#   - Production na API: HSTS, sem OpenAPI, e ela se recusa a subir com a chave JWT de exemplo.
+#   - Proxy confiável só na sub-rede deste ambiente (e não nas três faixas privadas inteiras do compose.yaml).
+#
+# Variáveis (no .env, que não é versionado):
+#   PUBLIC_ORIGIN   obrigatória. https://vagoo.<tailnet>.ts.net, o endereço que o Funnel mostra. Nunca no código.
+#   WEB_PORT        a porta que o Funnel expõe. Use 8090.
+#   DEMO_BANNER     texto do aviso no topo; vazio apaga o aviso.
+#   DEMO_SUBNET     sub-rede fixa do compose (padrão 172.28.0.0/24); troque se colidir com outra rede do Docker.
+
+services:
+  db:
+    restart: unless-stopped
+    ports: !reset []
+
+  api:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # O site chama a API pela mesma origem (proxy do nginx), então o CORS quase não é usado; fica o endereço público
+      # e nada além. Lido da variável, nunca escrito aqui.
+      Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?defina PUBLIC_ORIGIN no .env (https://vagoo.SEU-TAILNET.ts.net)}
+      # Base dos links dos e-mails de confirmação e de nova senha.
+      App__PublicBaseUrl: ${PUBLIC_ORIGIN}
+      # Só a sub-rede deste ambiente é proxy confiável. Os dois slots seguintes do compose.yaml ficam vazios (a API
+      # ignora entrada em branco); sem isto, 10/8 e 192.168/16 inteiras valeriam como proxy.
+      ForwardedHeaders__KnownNetworks__0: ${DEMO_SUBNET:-172.28.0.0/24}
+      ForwardedHeaders__KnownNetworks__1: ""
+      ForwardedHeaders__KnownNetworks__2: ""
+
+  mailpit:
+    restart: unless-stopped
+    # A porta SMTP (1025) não é publicada: a API chega nele pela rede do compose.
+    ports: !override
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+
+  web:
+    restart: unless-stopped
+    build:
+      args:
+        # Aviso visível de demonstração. Entra no build do frontend (VITE_DEMO_BANNER).
+        VITE_DEMO_BANNER: ${DEMO_BANNER-Ambiente de demonstração — dados fictícios}
+    ports: !override
+      - "127.0.0.1:${WEB_PORT:-8090}:80"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${DEMO_SUBNET:-172.28.0.0/24}

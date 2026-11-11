@@ -49,6 +49,25 @@ código do app chegou a tentar registrar `./sw.js`, então a ligação existe. F
 - [ ] iPhone/Safari: aparece a instrução "Compartilhar → Adicionar à Tela de Início". Não há imagem de splash do iOS (decisão do ADR).
 - [ ] Conferência visual (390 px, claro e escuro) dos avisos no topo: não cobrem botão importante e respeitam o entalhe.
 
+## Demonstração pública — Parte 3: publicação (ADR-036, Proposto)
+
+Provado em 11/11: `docker compose -f compose.yaml -f compose.demo.yaml config` (sem subir nada) mostra publicadas só `web`
+(`127.0.0.1:8090`) e `mailpit` (`127.0.0.1:8025`), API em `Production`, `KnownNetworks` só com a sub-rede do demo e
+`PUBLIC_ORIGIN` lido da variável; frontend: lint, typecheck, format, 718 testes e build verdes (o aviso de demonstração tem
+teste de vazio e de sucesso); o teste de integração `I7` **compila** e `dotnet format` não acusa nada.
+
+**NÃO executado:**
+
+- [ ] **`I7` (e o resto da suíte de integração).** Escrito e compilado, mas não rodado: a suíte sobe um PostGIS e aplica as
+      migrations, e esta rodada tinha ordem de não aplicar migration em banco algum. Rode `dotnet test` em
+      `backend/tests/Booking.IntegrationTests --filter "I4|I5|I7"` quando puder.
+- [ ] `docker compose -f compose.yaml -f compose.demo.yaml up -d --build` de fato (só a validação de configuração foi feita).
+- [ ] Seed contra a pilha do demo, com `API_URL=http://127.0.0.1:8090`: o `ensureApiIsUp` cai em `/api/health` quando a API não tem porta no host.
+- [ ] Funnel ligado: o que ele envia de `X-Forwarded-For` e `X-Forwarded-Proto`, e qual origem o nginx enxerga (esperado: gateway da sub-rede). Sem `X-Forwarded-For`, o limite de 10 logins por minuto vira um só para todos.
+- [ ] A sub-rede `172.28.0.0/24` não colide com outra rede do Docker da máquina do Arthur.
+- [ ] O aviso "Ambiente de demonstração" no topo em 390 px, claro e escuro, e com o PWA instalado (safe-area).
+- [ ] Limite de banda do Funnel com várias pessoas; Docker e Tailscale iniciando com o Windows; suspensão desligada.
+
 ## Rodada de finalização de 10/11 (`feat/integracao-final`)
 
 Provado **localmente** (o GitHub está com a cobrança bloqueada: sem CI, sem PR): 28 de arquitetura, 419 unitários, 171 de

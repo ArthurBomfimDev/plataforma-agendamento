@@ -1546,11 +1546,26 @@ async function seedHealthConsent() {
   }
 }
 
+/**
+ * A API responde? Direto, a saúde mora em `/health`; pelo web (ambiente final, `API_URL=http://127.0.0.1:8090`, sem
+ * porta da API no host), em `/api/health`. O nginx devolve o `index.html` (HTML) para o que não conhece, então uma
+ * resposta HTML não prova nada.
+ */
+async function ensureApiIsUp() {
+  for (const path of ['/health', '/api/health']) {
+    try {
+      const response = await fetch(`${API}${path}`)
+      if (response.ok && !(response.headers.get('content-type') ?? '').includes('html')) return
+    } catch {
+      // Tenta o outro caminho.
+    }
+  }
+  throw new Error(`A API não respondeu em ${API}. Rode "docker compose up" antes.`)
+}
+
 async function main() {
   console.log(`Populando ${API} com dados de demonstração${WITH_HISTORY ? ' (com histórico)' : ''}\n`)
-  await call('GET', '/health').catch(() => {
-    throw new Error(`A API não respondeu em ${API}. Rode "docker compose up" antes.`)
-  })
+  await ensureApiIsUp()
   refuseDefaultPasswordOutsideDevelopment()
 
   for (const business of BUSINESSES) {
