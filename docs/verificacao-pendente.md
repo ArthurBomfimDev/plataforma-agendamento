@@ -10,6 +10,64 @@ Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondent
 
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
+## Demonstração pública (`feat/demo-publica`) — Parte 1: seed completo
+
+Escrito **sem rodar o seed contra uma API**: a pilha `booking` que estava de pé é do Arthur e não foi tocada.
+
+Provado: `bun test scripts/seed-demo` (16 testes: PNG válido e determinístico, escolha arquivo × gerada, plano de
+fotos/vitrine/folgas, datas) e `bun build scripts/seed-demo.ts` (sintaxe e imports). **Não provado:**
+
+- [ ] `bun scripts/seed-demo.ts --passado` numa pilha isolada com `SEED_PASSWORD` e `SEED_ADMIN_PASSWORD` definidas.
+- [ ] Segunda execução em seguida: nada duplicado (fotos, folgas, consentimento, consulta de Saúde).
+- [ ] A API aceita a folga (`DayOff` e `Vacation` com `existingAppointments: "Keep"`) e o `PUT` de serviço com `showPhotoInShowcase`.
+- [ ] As fotos geradas aparecem na vitrine, no perfil do profissional e no painel; o que o Arthur pôs em `scripts/seed-assets/` também.
+- [ ] A consulta de Saúde pedida pelo consumidor aparece na agenda do estabelecimento, e o consentimento, em "Meus dados".
+- [ ] As 3 avaliações do estabelecimento de Saúde aparecem **sem** o nome do serviço.
+- [ ] `docs/operacao/seed-demo.md` confere com o que a tela mostra.
+
+## Demonstração pública — Parte 2: PWA (ADR-035, Proposto)
+
+Provado, em 10/11: `bun run lint` (só os 2 avisos que já existiam), `typecheck`, `format:check`, `bun run test` (89 arquivos,
+713 testes, 49 deles novos do PWA) e `bun run build` (PWA v2.0.0, `generateSW`, 164 entradas de precache, 1,7 MiB). No
+`dist`: manifest com `start_url` e `scope` relativos, `sw.js` com `denylist: [/^\/api\//, /^\/media\//]` e uma única rota
+registrada (a navegação), nenhum `runtimeCaching`, registro por `./sw.js` com escopo `./`. `bun test scripts` cobre o
+gerador de ícones.
+
+**Lighthouse: NÃO rodado, e não há número.** A categoria "PWA" foi retirada do Lighthouse a partir da v12; não existe
+pontuação PWA para registrar. O que vale é conferir a instalabilidade no Chrome (DevTools → Application → Manifest).
+
+**O service worker NÃO foi ativado em navegador.** No navegador embutido do aplicativo, o registro falhou com "unknown
+error when fetching the script" (o arquivo é servido, 200, `text/javascript`: é restrição do embutido, não do build). O
+código do app chegou a tentar registrar `./sw.js`, então a ligação existe. Falta, no Chrome do Arthur:
+
+- [ ] `bun run build && bun run preview`, abrir `http://localhost:4173`: Application → Service Workers mostra `sw.js` ativo.
+- [ ] Application → Cache Storage: **nenhuma URL de `/api` nem de `/media`** (condição de erro da ADR-035).
+- [ ] Application → Manifest: nome Vagoo, 3 ícones, "installability" sem erro, ícone maskable bem enquadrado.
+- [ ] Rede em "Offline": o app abre e mostra "Você está sem conexão".
+- [ ] Gerar um build novo, recarregar: aparece "Nova versão disponível"; "Depois" esconde; "Atualizar agora" recarrega.
+- [ ] Android/Chrome: aparece "Instale o Vagoo", instalar, abre em tela cheia com a cor `#070b14`. **Instalação real no celular não foi feita.**
+- [ ] iPhone/Safari: aparece a instrução "Compartilhar → Adicionar à Tela de Início". Não há imagem de splash do iOS (decisão do ADR).
+- [ ] Conferência visual (390 px, claro e escuro) dos avisos no topo: não cobrem botão importante e respeitam o entalhe.
+
+## Demonstração pública — Parte 3: publicação (ADR-036, Proposto)
+
+Provado em 11/11: `docker compose -f compose.yaml -f compose.demo.yaml config` (sem subir nada) mostra publicadas só `web`
+(`127.0.0.1:8090`) e `mailpit` (`127.0.0.1:8025`), API em `Production`, `KnownNetworks` só com a sub-rede do demo e
+`PUBLIC_ORIGIN` lido da variável; frontend: lint, typecheck, format, 718 testes e build verdes (o aviso de demonstração tem
+teste de vazio e de sucesso); o teste de integração `I7` **compila** e `dotnet format` não acusa nada.
+
+**NÃO executado:**
+
+- [ ] **`I7` (e o resto da suíte de integração).** Escrito e compilado, mas não rodado: a suíte sobe um PostGIS e aplica as
+      migrations, e esta rodada tinha ordem de não aplicar migration em banco algum. Rode `dotnet test` em
+      `backend/tests/Booking.IntegrationTests --filter "I4|I5|I7"` quando puder.
+- [ ] `docker compose -f compose.yaml -f compose.demo.yaml up -d --build` de fato (só a validação de configuração foi feita).
+- [ ] Seed contra a pilha do demo, com `API_URL=http://127.0.0.1:8090`: o `ensureApiIsUp` cai em `/api/health` quando a API não tem porta no host.
+- [ ] Funnel ligado: o que ele envia de `X-Forwarded-For` e `X-Forwarded-Proto`, e qual origem o nginx enxerga (esperado: gateway da sub-rede). Sem `X-Forwarded-For`, o limite de 10 logins por minuto vira um só para todos.
+- [ ] A sub-rede `172.28.0.0/24` não colide com outra rede do Docker da máquina do Arthur.
+- [ ] O aviso "Ambiente de demonstração" no topo em 390 px, claro e escuro, e com o PWA instalado (safe-area).
+- [ ] Limite de banda do Funnel com várias pessoas; Docker e Tailscale iniciando com o Windows; suspensão desligada.
+
 ## Rodada de finalização de 10/11 (`feat/integracao-final`)
 
 Provado **localmente** (o GitHub está com a cobrança bloqueada: sem CI, sem PR): 28 de arquitetura, 419 unitários, 171 de

@@ -1,5 +1,8 @@
 # Demonstração pública pelo Cloudflare Tunnel
 
+> Para a **demonstração final do TCC**, o caminho decidido (ADR-036, Proposto) é o Tailscale Funnel, em
+> `docs/operacao/publicacao-demo.md`. Esta página continua valendo como alternativa (túnel rápido ou nomeado).
+
 Como abrir a pilha local para quem está fora da sua rede (banca, participantes de teste de usabilidade, colegas)
 por um endereço `https://….trycloudflare.com`, sem abrir porta no roteador e sem hospedagem paga. É o caminho de
 "última instância" da ADR-008, implementado na Onda 7H.

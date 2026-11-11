@@ -197,6 +197,54 @@ public sealed class SecurityTests(IntegrationFixture fixture, ITestOutputHelper 
     }
 
     /// <summary>
+    /// Demonstração final (ADR-036): navegador → Tailscale Funnel → host → nginx (web) → API, com o proxy confiável
+    /// limitado à sub-rede do <c>compose.demo.yaml</c> e os outros dois slots em branco. O limitador de autenticação
+    /// (que vem depois de <c>UseForwardedHeaders</c>) conta o IP de quem chamou, os saltos da sub-rede são pulados, e
+    /// um salto de FORA dela nunca é pulado: quem chega por outra faixa privada não vira "proxy" e não escolhe o balde.
+    /// </summary>
+    [Fact]
+    public async Task I7_with_the_demo_subnet_only_its_own_hops_are_trusted()
+    {
+        await using var factory = new BookingApiFactory(
+            fixture.ConnectionString,
+            settings: new Dictionary<string, string>
+            {
+                ["ForwardedHeaders:KnownNetworks:0"] = "172.28.0.0/24",
+                ["ForwardedHeaders:KnownNetworks:1"] = "",
+                ["ForwardedHeaders:KnownNetworks:2"] = "",
+            });
+        using HttpClient client = factory.CreateClient();
+
+        // O par TCP do teste é o loopback, que faz o papel do nginx. À direita da cadeia, o gateway do compose (o host,
+        // de onde o Funnel chega); antes dele, o que o cliente declarou.
+        async Task<HttpStatusCode> RefreshAsync(string forwardedFor)
+        {
+            using HttpRequestMessage request = TestWorld.Build(HttpMethod.Post, "/api/auth/refresh", new RefreshSessionRequest("token-invalido"), null);
+            request.Headers.Add("X-Forwarded-For", forwardedFor);
+            using HttpResponseMessage response = await client.SendAsync(request);
+            return response.StatusCode;
+        }
+
+        // 1. Pelo Funnel: o gateway da sub-rede é pulado, e o balde é o do IP real (o forjado, à esquerda, é ignorado).
+        for (int attempt = 1; attempt <= 10; attempt++)
+        {
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, await RefreshAsync($"198.51.100.{attempt}, 203.0.113.7, 172.28.0.1"));
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, await RefreshAsync("198.51.100.99, 203.0.113.7, 172.28.0.1"));
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, await RefreshAsync("198.51.100.99, 203.0.113.8, 172.28.0.1"));
+
+        // 2. Um salto de fora da sub-rede (10.0.0.9 está numa faixa privada, mas não é a do compose) não é pulado: ele
+        //    é o "cliente", e todos os IPs declarados antes dele caem no mesmo balde.
+        for (int attempt = 1; attempt <= 10; attempt++)
+        {
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, await RefreshAsync($"203.0.113.{100 + attempt}, 10.0.0.9, 172.28.0.1"));
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, await RefreshAsync("203.0.113.200, 10.0.0.9, 172.28.0.1"));
+    }
+
+    /// <summary>
     /// A chave do <c>.env.example</c> tem 32+ bytes e passaria na regra de tamanho. Fora de Development, a API não sobe
     /// com ela; em Development (o compose local), sobe.
     /// </summary>

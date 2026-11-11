@@ -17,6 +17,10 @@ COPY . .
 # pública atrás de um endereço só, sem localhost no navegador. Absoluta só para API em outro endereço (rebuild).
 ARG VITE_API_BASE_URL=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+# Aviso de ambiente de demonstração (compose.demo.yaml). Vazio: sem aviso. Também é lido no build.
+ARG VITE_DEMO_BANNER=
+ENV VITE_DEMO_BANNER=${VITE_DEMO_BANNER}
 RUN bun run build
 
 FROM nginx:1.29-alpine AS runtime
