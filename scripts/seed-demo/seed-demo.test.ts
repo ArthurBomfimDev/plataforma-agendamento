@@ -8,7 +8,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { inflateSync } from 'node:zlib'
-import { assetKey, imageFor } from './assets'
+import { assetKey, fileFor, imageFor } from './assets'
 import {
   TIME_OFF_REASON,
   hasCover,
@@ -95,6 +95,22 @@ describe('origem da imagem', () => {
       expect(found.source).toBe('arquivo')
       expect(found.contentType).toBe('image/jpeg')
       expect(found.fileName).toBe('corte-masculino.jpg')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('fileFor só devolve o arquivo do Arthur: sem ele, null, sem imagem gerada (vitrine, fotos 2 e 3)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'seed-assets-'))
+    try {
+      expect(fileFor('vitrine', 'barbearia-2', dir)).toBeNull()
+
+      mkdirSync(join(dir, 'vitrine'))
+      writeFileSync(join(dir, 'vitrine', 'barbearia-2.webp'), Uint8Array.from([0x52, 0x49, 0x46, 0x46]))
+      const found = fileFor('vitrine', 'barbearia-2', dir)
+      expect(found?.source).toBe('arquivo')
+      expect(found?.contentType).toBe('image/webp')
+      expect(found?.fileName).toBe('barbearia-2.webp')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

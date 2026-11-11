@@ -19,10 +19,13 @@ Coloque o arquivo em uma subpasta pelo **tipo**, com o nome do item sem acento, 
 | `cover/` | nome do estabelecimento | `cover/barbearia-do-rogerio.webp` |
 | `service/` | nome do serviço | `service/corte-masculino.jpg` |
 | `professional/` | nome de exibição do profissional | `professional/marcos-lima.png` |
+| itrine/ | tipo do estabelecimento e número (1 a 3) | itrine/barbearia-2.webp |
 
 Vale o primeiro arquivo achado na ordem `png`, `jpg`, `jpeg`, `webp`. O que não tiver arquivo continua gerado.
 
 > Use só imagens **suas** ou com licença clara que permita o uso. As imagens desta pasta não são versionadas por
 > padrão (ver `.gitignore`): o repositório não deve carregar foto de pessoa nem de marca.
+
+A lista dos arquivos de banco de imagem a baixar (`vitrine/` e `service/`), com busca sugerida, créditos e conferência (`bun scripts/seed-assets/verificar.ts`), está em `LISTA-DE-ARQUIVOS.md`, `CREDITS.md` e `verificar.ts` desta pasta.
 
 As imagens são fictícias como o resto da demonstração e **não são evidência** para o TCC.

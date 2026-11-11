@@ -1,6 +1,6 @@
 /**
  * Confere as imagens de demonstração desta pasta contra `LISTA-DE-ARQUIVOS.md`: o que falta, o que passa de 200 KB, o que
- * não é WebP e o que está sem crédito em `CREDITS.md`. Uso: `bun scripts/seed-images/verificar.ts`. Sai com código 1 se
+ * não é WebP e o que está sem crédito em `CREDITS.md`. Uso: `bun scripts/seed-assets/verificar.ts`. Sai com código 1 se
  * houver algum problema, para servir de trava antes do apêndice do TCC.
  */
 
@@ -8,7 +8,7 @@ const MAX_BYTES = 200 * 1024
 const folder = new URL('./', import.meta.url)
 
 const list = await Bun.file(new URL('LISTA-DE-ARQUIVOS.md', folder)).text()
-const expected = [...list.matchAll(/^\| `([a-z0-9-]+\.webp)`/gm)].map((match) => match[1]!)
+const expected = [...list.matchAll(/^\| `([a-z0-9/-]+\.webp)`/gm)].map((match) => match[1]!)
 
 const credits = await Bun.file(new URL('CREDITS.md', folder)).text()
 const credited = new Set(

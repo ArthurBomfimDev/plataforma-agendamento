@@ -28,14 +28,22 @@ export function assetKey(text: string): string {
     .replace(/^-|-$/g, '')
 }
 
-/** `hueKey` separa a cor de itens com o mesmo nome em estabelecimentos diferentes; o arquivo do Arthur vale pelo `label`. */
-export function imageFor(kind: TileKind, label: string, hueKey = label, dir = ASSETS_DIR): SeedImage {
+/**
+ * Só o arquivo do Arthur, ou `null`. Para as pastas sem imagem gerada de reserva (a `vitrine/`, fotos 2 e 3 da galeria): sem
+ * o arquivo, o estabelecimento fica com menos fotos, e a página usa o que tiver.
+ */
+export function fileFor(folder: string, label: string, dir = ASSETS_DIR): SeedImage | null {
   const key = assetKey(label)
   for (const [extension, contentType] of EXTENSIONS) {
-    const path = join(dir, kind, `${key}.${extension}`)
+    const path = join(dir, folder, `${key}.${extension}`)
     if (existsSync(path)) {
       return { bytes: readFileSync(path), contentType, fileName: `${key}.${extension}`, source: 'arquivo' }
     }
   }
-  return { bytes: renderTilePng(kind, label, 512, hueKey), contentType: 'image/png', fileName: `${key}.png`, source: 'gerada' }
+  return null
+}
+
+/** `hueKey` separa a cor de itens com o mesmo nome em estabelecimentos diferentes; o arquivo do Arthur vale pelo `label`. */
+export function imageFor(kind: TileKind, label: string, hueKey = label, dir = ASSETS_DIR): SeedImage {
+  return fileFor(kind, label, dir) ?? { bytes: renderTilePng(kind, label, 512, hueKey), contentType: 'image/png', fileName: `${assetKey(label)}.png`, source: 'gerada' }
 }
