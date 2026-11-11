@@ -8,6 +8,7 @@ import {
 import { Checkbox } from '@components/checkbox'
 import { RadioOptionGroup } from '@components/radio-option-group'
 import { TextField } from '@components/text-field'
+import { maskDocument, unmaskDocument } from '@utils/masks'
 
 export type DocumentStepProps = {
   type: BusinessDocumentType
@@ -17,6 +18,8 @@ export type DocumentStepProps = {
   onTypeChange: (type: BusinessDocumentType) => void
   onChange: (value: string) => void
   onMeiChange: (isMei: boolean) => void
+  /** Ao sair do campo: é quando o dígito verificador é conferido, não a cada tecla. */
+  onBlur?: () => void
 }
 
 /**
@@ -24,7 +27,7 @@ export type DocumentStepProps = {
  * CNPJ. O documento nunca é público, só o dono e o Admin veem, e nunca vai para log.
  */
 export const DocumentStep = (props: DocumentStepProps) => {
-  const { type, value, isMei, error, onTypeChange, onChange, onMeiChange } = props
+  const { type, value, isMei, error, onTypeChange, onChange, onMeiChange, onBlur } = props
 
   return (
     <div className="flex flex-col gap-(--space-12)">
@@ -43,14 +46,17 @@ export const DocumentStep = (props: DocumentStepProps) => {
       <TextField
         id="business-document"
         label={documentLabel(type)}
-        inputMode="text"
+        // CPF só tem dígito: teclado numérico. O CNPJ pode ter letras (alfanumérico, IN RFB 2.229/2024): teclado de texto.
+        inputMode={type === 'Cpf' ? 'numeric' : 'text'}
         autoComplete="off"
         autoCapitalize="characters"
         spellCheck={false}
+        placeholder={type === 'Cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
         helper="Só você e a administração veem. Não aparece na página pública."
         error={error}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+        value={maskDocument(value)}
+        onChange={(event) => onChange(unmaskDocument(event.target.value))}
+        onBlur={onBlur}
       />
 
       {type === 'Cnpj' && (

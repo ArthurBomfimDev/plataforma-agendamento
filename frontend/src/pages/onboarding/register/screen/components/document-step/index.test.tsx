@@ -31,6 +31,17 @@ describe('DocumentStep', () => {
     expect(html).not.toContain('Sou MEI')
   })
 
+  it('mostra o documento com máscara e usa o teclado certo para cada tipo', () => {
+    const cpf = render({ type: 'Cpf', value: '12345678909' })
+    const cnpj = render({ type: 'Cnpj', value: '12345678901234' })
+
+    expect(cpf).toContain('value="123.456.789-09"')
+    expect(cpf).toContain('inputMode="numeric"')
+    expect(cnpj).toContain('value="12.345.678/9012-34"')
+    // CNPJ alfanumérico (IN RFB 2.229/2024): letras nas 12 primeiras posições pedem teclado de texto.
+    expect(cnpj).toContain('inputMode="text"')
+  })
+
   it('o texto de ajuda fala do CNPJ nos dois tipos, e o erro aparece no campo', () => {
     const html = render({ type: 'Cpf', error: 'Informe o CPF.' })
 

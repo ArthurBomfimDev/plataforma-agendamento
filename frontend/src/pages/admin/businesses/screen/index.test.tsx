@@ -310,7 +310,8 @@ describe('AdminBusinessesScreen — detalhe e decisões', () => {
     const html = select(detailOf())
 
     expect(html).toContain('Detalhe de Clínica Vida')
-    expect(html).toContain('11222333000181')
+    // O Admin vê o documento com a máscara de CNPJ, para conferir a situação cadastral à mão.
+    expect(html).toContain('11.222.333/0001-81')
     expect(html).toContain('Rua A, 10, Centro, Garça, SP')
     expect(html).toContain('Aceitos em')
     expect(html).toContain('versão 2026-11')

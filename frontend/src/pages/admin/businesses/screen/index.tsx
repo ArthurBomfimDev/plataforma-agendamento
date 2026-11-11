@@ -10,6 +10,7 @@ import {
   statusLabel,
 } from './consts'
 import { ErrorState, LoadingState } from '@components/screen-state'
+import { maskDocument } from '@utils/masks'
 import type { AdminBusinessesScreenProps, AdminTab, Load } from './types'
 import type { ModerationReviewResponse, ProfessionalRemovalResponse } from '@api/models'
 
@@ -221,7 +222,7 @@ const BusinessDetail = (props: {
 
       <dl className={CARD}>
         {/* O documento só aparece aqui, para o Admin conferir a situação cadastral à mão. */}
-        <Row label="Documento">{business.document}</Row>
+        <Row label="Documento">{maskDocument(business.document)}</Row>
         <Row label="Endereço">{address || 'Não informado'}</Row>
         <Row label="Termos">
           {detail.termsAcceptedAt

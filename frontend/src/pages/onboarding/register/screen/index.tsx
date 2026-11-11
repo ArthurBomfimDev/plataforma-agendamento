@@ -36,6 +36,7 @@ import { DocumentStep } from './components/document-step'
 import { RadioOptionGroup } from '@components/radio-option-group'
 import { SelectField } from '@components/select-field'
 import { TextField } from '@components/text-field'
+import { maskPostalCode } from '@utils/masks'
 import { ThemeToggle } from '@components/theme-toggle'
 
 const EMPTY_ADDRESS: AddressValues = {
@@ -262,6 +263,12 @@ const DocumentForm = (props: {
           change({ documentType, isMei: documentType === 'Cnpj' && values.isMei })
         }
         onChange={(document) => change({ document })}
+        // O dígito verificador é conferido ao sair do campo; campo vazio só reclama no envio.
+        onBlur={() =>
+          setFieldError(
+            values.document ? documentTypeError(values.document, values.documentType) : undefined,
+          )
+        }
         onMeiChange={(isMei) => change({ isMei })}
       />
       <Problem message={error} />
@@ -372,8 +379,23 @@ const AddressStep = (props: {
           label="CEP"
           inputMode="numeric"
           autoComplete="postal-code"
+          placeholder="00000-000"
           className="min-w-0 flex-1"
           {...field('postalCode')}
+          value={maskPostalCode(values.postalCode)}
+          onChange={(event) => {
+            setValues((current) => ({ ...current, postalCode: maskPostalCode(event.target.value) }))
+            setErrors((current) => ({ ...current, postalCode: undefined }))
+          }}
+          onBlur={() =>
+            setErrors((current) => ({
+              ...current,
+              postalCode:
+                values.postalCode && !POSTAL_CODE_PATTERN.test(values.postalCode.trim())
+                  ? 'Informe o CEP com 8 dígitos.'
+                  : undefined,
+            }))
+          }
         />
         <Button
           type="button"

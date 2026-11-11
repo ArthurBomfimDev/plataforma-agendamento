@@ -1,12 +1,7 @@
 import type { PostalCodeResponse } from '@api/models'
 
-/** `17400000` ou `17400-0` → `17400-000`/`17400-0`, enquanto a pessoa digita. Só dígitos, no máximo 8. */
-export const formatPostalCode = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8)
-  return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits
-}
-
-export const postalCodeDigits = (value: string) => value.replace(/\D/g, '')
+// A máscara do CEP mora em `@utils/masks`; aqui só mantém os nomes que este componente já usava.
+export { maskPostalCode as formatPostalCode, postalCodeDigits } from '@utils/masks'
 
 /** O rótulo da referência vinda do CEP: o bairro e a cidade, ou a cidade e a UF. */
 export const postalCodeLabel = (address: PostalCodeResponse) =>
