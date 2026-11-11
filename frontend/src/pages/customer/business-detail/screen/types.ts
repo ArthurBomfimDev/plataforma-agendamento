@@ -27,6 +27,8 @@ export type BusinessDetail = {
   category: string
   /** Sem capa, a tela mostra a ilustração da categoria (Onda 6D). */
   cover?: ImageSet | null
+  /** A vitrine: até 3 fotos, a primeira é a capa. Ausente: vale a capa. */
+  photos?: ImageSet[]
   /** Sem logotipo, nada aparece ao lado do nome. */
   logo?: ImageSet | null
   /** Em quantas horas o estabelecimento confirma ou recusa um pedido. */

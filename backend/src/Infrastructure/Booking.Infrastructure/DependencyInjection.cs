@@ -118,6 +118,7 @@ public static class DependencyInjection
         services.AddScoped<IImageUrls>(sp => sp.GetRequiredService<ImageStore>());
 
         services.AddScoped<BusinessImageCommand>();
+        services.AddScoped<BusinessGalleryCommand>();
         services.AddScoped<ProfessionalPhotoCommand>();
     }
 

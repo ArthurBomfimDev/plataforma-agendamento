@@ -73,6 +73,7 @@ export const toBusinessDetail = (
   verified: business.verified,
   category: business.category,
   cover: business.cover,
+  photos: business.photos,
   logo: business.logo,
   street: streetLine(business),
   neighborhood: business.address.district ?? business.address.city ?? '',

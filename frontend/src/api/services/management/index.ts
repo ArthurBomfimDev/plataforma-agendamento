@@ -141,6 +141,21 @@ export const managementService = {
       method: 'DELETE',
       url: managementEndpoints.businessImage(slot),
     }),
+  /** Vitrine: envia a foto do lugar `slot` (0 a 2; a primeira é a capa). Depois do fim, ocupa o primeiro lugar livre. */
+  uploadBusinessPhoto: (slot: number, file: File, onProgress?: UploadProgress) =>
+    upload<BusinessDetailResponse>(managementEndpoints.businessPhoto(slot), file, onProgress),
+  removeBusinessPhoto: (slot: number) =>
+    authRequest<BusinessDetailResponse>({
+      method: 'DELETE',
+      url: managementEndpoints.businessPhoto(slot),
+    }),
+  /** Nova ordem: uma permutação dos lugares atuais (`[2, 0, 1]` põe a terceira em primeiro, como capa). */
+  reorderBusinessPhotos: (order: number[]) =>
+    authRequest<BusinessDetailResponse>({
+      method: 'PUT',
+      url: managementEndpoints.businessPhotosOrder,
+      data: { order },
+    }),
   uploadProfessionalPhoto: (professionalId: string, file: File, onProgress?: UploadProgress) =>
     upload<ProfessionalResponse>(
       managementEndpoints.professionalPhoto(professionalId),

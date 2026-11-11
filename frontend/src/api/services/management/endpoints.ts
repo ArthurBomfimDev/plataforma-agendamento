@@ -24,4 +24,6 @@ export const managementEndpoints = {
   affectedAppointments: `${exceptions}/affected-appointments`,
   policy: `${PANEL_PATH}/scheduling-policy`,
   businessImage: (slot: 'logo' | 'cover') => `${PANEL_PATH}/${slot}`,
+  businessPhoto: (slot: number) => `${PANEL_PATH}/photos/${slot}`,
+  businessPhotosOrder: `${PANEL_PATH}/photos/order`,
 }

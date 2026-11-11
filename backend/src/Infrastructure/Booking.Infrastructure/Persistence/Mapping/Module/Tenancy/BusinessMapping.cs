@@ -61,6 +61,9 @@ public sealed class BusinessMapping : BaseMapping<Business>
         // Só a referência ao armazenamento de arquivos (ADR-023); os bytes nunca entram no banco.
         builder.Property(x => x.LogoImageKey).HasMaxLength(ImageKey.MaxLength);
         builder.Property(x => x.CoverImageKey).HasMaxLength(ImageKey.MaxLength);
+        builder.Property(x => x.SecondPhotoImageKey).HasMaxLength(ImageKey.MaxLength);
+        builder.Property(x => x.ThirdPhotoImageKey).HasMaxLength(ImageKey.MaxLength);
+        builder.Ignore(x => x.GalleryImageKeys);
 
         builder.Ignore(x => x.IsBookable);
 

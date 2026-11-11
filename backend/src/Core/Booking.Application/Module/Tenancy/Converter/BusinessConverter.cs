@@ -53,7 +53,12 @@ public static class BusinessConverter
             business.TermsAcceptedAt is not null,
             business.HasResponsible,
             business.DocumentType.ToString(),
-            business.IsMei);
+            business.IsMei,
+            Gallery(business, images));
+
+    /// <summary>As fotos da vitrine, na ordem; a primeira é a capa. Chave sem arquivo conhecido não vira item.</summary>
+    private static IReadOnlyList<Booking.Arguments.Common.ImageSetResponse> Gallery(Business business, IImageUrls images) =>
+        [.. business.GalleryImageKeys.Select(images.For).OfType<Booking.Arguments.Common.ImageSetResponse>()];
 
     /// <summary>
     /// O motivo que o dono precisa ler: o da suspensão (Suspenso) ou o da reprovação (rascunho com nível Rejected).
@@ -101,5 +106,6 @@ public static class BusinessConverter
             business.AutoConfirm,
             business.TimeZone,
             images.For(business.LogoImageKey),
-            images.For(business.CoverImageKey));
+            images.For(business.CoverImageKey),
+            Gallery(business, images));
 }

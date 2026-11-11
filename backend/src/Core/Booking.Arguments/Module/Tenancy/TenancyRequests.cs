@@ -25,6 +25,9 @@ public sealed record UpdateAddressRequest(
 /// <summary>Ponto confirmado pelo proprietário no mapa. <c>Precision</c>: Rooftop, Street, Locality ou City.</summary>
 public sealed record ConfirmLocationRequest(double Latitude, double Longitude, string Precision, string Source);
 
+/// <summary>Nova ordem das fotos da vitrine: uma permutação dos lugares atuais (<c>[2, 0, 1]</c> põe a terceira em primeiro, como capa).</summary>
+public sealed record ReorderPhotosRequest(IReadOnlyList<int> Order);
+
 /// <summary>
 /// Busca. <c>Category</c>: <c>Beleza</c> ou <c>Saude</c>. <c>MaxPriceCents</c>: só quem tem o serviço em destaque até
 /// esse preço. <c>SortBy</c>: <c>distance</c> (padrão) ou <c>price</c> (menor preço "a partir de" primeiro).

@@ -3,6 +3,7 @@ import { ErrorState, LoadingState } from '@components/screen-state'
 import { BusinessImagesCard } from './components/business-images-card'
 import { PHOTOS_SUBTITLE } from './consts'
 import { PanelPage } from '@components/panel-page'
+import { ShowcaseCard } from './components/showcase-card'
 import type { PhotosScreenProps } from './types'
 import { TeamPhotosCard } from './components/team-photos-card'
 
@@ -20,6 +21,9 @@ export const PhotosScreen = (props: PhotosScreenProps) => {
     businessName,
     onUploadBusiness,
     onRemoveBusiness,
+    onUploadShowcase,
+    onRemoveShowcase,
+    onReorderShowcase,
     onUploadProfessional,
     onRemoveProfessional,
   } = props
@@ -34,9 +38,14 @@ export const PhotosScreen = (props: PhotosScreenProps) => {
         <>
           <BusinessImagesCard
             logo={data.logo}
-            cover={data.cover}
             onUpload={onUploadBusiness}
             onRemove={onRemoveBusiness}
+          />
+          <ShowcaseCard
+            photos={data.photos}
+            onUpload={onUploadShowcase}
+            onRemove={onRemoveShowcase}
+            onReorder={onReorderShowcase}
           />
           <TeamPhotosCard
             professionals={data.professionals}

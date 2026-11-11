@@ -373,11 +373,98 @@ public sealed class Business : AggregateRoot, IAuditable
         return previous;
     }
 
-    /// <summary>Troca (ou remove, com nulo) a capa. Devolve a referência anterior.</summary>
-    public string? ReplaceCover(string? key)
+    /// <summary>
+    /// Troca (ou remove, com nulo) a capa, que é a primeira foto da vitrine. Devolve a referência anterior. Remover a capa
+    /// promove a foto seguinte.
+    /// </summary>
+    public string? ReplaceCover(string? key) =>
+        key is null
+            ? (CoverImageKey is null ? null : RemoveGalleryPhoto(0))
+            : SetGalleryPhoto(0, key);
+
+    // --- Vitrine: até 3 fotos, a primeira é a capa -----------------------------------------------------------------
+
+    public const int MaxGalleryPhotos = 3;
+
+    /// <summary>Foto 2 e foto 3 da vitrine. A primeira é <see cref="CoverImageKey"/>; as três formam a galeria, sempre sem buraco.</summary>
+    public string? SecondPhotoImageKey { get; private set; }
+
+    public string? ThirdPhotoImageKey { get; private set; }
+
+    /// <summary>As fotos da vitrine, na ordem; a primeira é a capa.</summary>
+    public IReadOnlyList<string> GalleryImageKeys => [.. new[] { CoverImageKey, SecondPhotoImageKey, ThirdPhotoImageKey }.OfType<string>()];
+
+    /// <summary>
+    /// Põe a foto no <paramref name="slot"/> (0 a 2). Num lugar já ocupado, troca e devolve a chave anterior; depois do fim
+    /// da galeria, entra no primeiro lugar livre, para nunca haver foto depois de um buraco.
+    /// </summary>
+    public string? SetGalleryPhoto(int slot, string key)
     {
-        string? previous = CoverImageKey;
-        CoverImageKey = key is null ? null : ImageKey.Ensure(key);
+        EnsureGallerySlot(slot);
+
+        string valid = ImageKey.Ensure(key);
+        List<string> keys = [.. GalleryImageKeys];
+        string? previous = null;
+
+        if (slot < keys.Count)
+        {
+            previous = keys[slot];
+            keys[slot] = valid;
+        }
+        else
+        {
+            keys.Add(valid);
+        }
+
+        WriteGallery(keys);
         return previous;
+    }
+
+    /// <summary>O lugar existe na vitrine (0 a 2)? Quem grava arquivo confere antes, para não deixar imagem órfã.</summary>
+    public static void EnsureGallerySlot(int slot)
+    {
+        if (slot is < 0 or >= MaxGalleryPhotos)
+        {
+            throw new DomainException("business.photo_slot_invalid");
+        }
+    }
+
+    /// <summary>Tira a foto do <paramref name="slot"/> e fecha o buraco: a seguinte sobe, e a primeira é sempre a capa.</summary>
+    public string? RemoveGalleryPhoto(int slot)
+    {
+        List<string> keys = [.. GalleryImageKeys];
+
+        if (slot < 0 || slot >= keys.Count)
+        {
+            throw new DomainException("business_photo.not_found");
+        }
+
+        string removed = keys[slot];
+        keys.RemoveAt(slot);
+        WriteGallery(keys);
+        return removed;
+    }
+
+    /// <summary>
+    /// Reordena a galeria. <paramref name="order"/> é uma permutação dos lugares atuais: <c>[2, 0, 1]</c> põe a atual terceira
+    /// em primeiro (e capa). Qualquer outra lista é recusada, sem mexer em nada.
+    /// </summary>
+    public void ReorderGallery(IReadOnlyList<int> order)
+    {
+        List<string> keys = [.. GalleryImageKeys];
+
+        if (order.Count != keys.Count || !order.Order().SequenceEqual(Enumerable.Range(0, keys.Count)))
+        {
+            throw new DomainException("business.photo_order_invalid");
+        }
+
+        WriteGallery([.. order.Select(index => keys[index])]);
+    }
+
+    private void WriteGallery(IReadOnlyList<string> keys)
+    {
+        CoverImageKey = keys.Count > 0 ? keys[0] : null;
+        SecondPhotoImageKey = keys.Count > 1 ? keys[1] : null;
+        ThirdPhotoImageKey = keys.Count > 2 ? keys[2] : null;
     }
 }

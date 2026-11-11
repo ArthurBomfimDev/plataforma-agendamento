@@ -50,6 +50,8 @@ export type OwnerBusinessResponse = {
   policy: SchedulingPolicyResponse
   logo: ImageSet | null
   cover: ImageSet | null
+  /** A vitrine: até 3 fotos, a primeira é a capa. */
+  photos?: ImageSet[]
   /** Motivo da suspensão ou da reprovação; nulo nos outros estados. */
   statusReason: string | null
   termsAccepted: boolean

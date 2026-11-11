@@ -13,7 +13,8 @@ export type PhotosData =
   | {
       status: 'ready'
       logo: ImageSet | null
-      cover: ImageSet | null
+      /** A vitrine, na ordem; a primeira é a capa. */
+      photos: ImageSet[]
       professionals: PhotoProfessional[]
     }
 
@@ -26,8 +27,12 @@ export type UploadImage = (
 export type PhotosScreenProps = {
   data: PhotosData
   businessName: string
-  onUploadBusiness: (slot: 'logo' | 'cover') => UploadImage
-  onRemoveBusiness: (slot: 'logo' | 'cover') => () => Promise<void>
+  onUploadBusiness: (slot: 'logo') => UploadImage
+  onRemoveBusiness: (slot: 'logo') => () => Promise<void>
+  /** Vitrine: o lugar (0 a 2) é o índice da foto; um lugar depois do fim ocupa o primeiro livre. */
+  onUploadShowcase: (slot: number) => UploadImage
+  onRemoveShowcase: (slot: number) => () => Promise<void>
+  onReorderShowcase: (order: number[]) => Promise<void>
   onUploadProfessional: (professionalId: string) => UploadImage
   onRemoveProfessional: (professionalId: string) => () => Promise<void>
 }

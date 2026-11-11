@@ -46,7 +46,8 @@ public sealed record BusinessDetailResponse(
     bool TermsAccepted = false,
     bool ResponsibleInformed = false,
     string? DocumentType = null,
-    bool IsMei = false);
+    bool IsMei = false,
+    IReadOnlyList<ImageSetResponse>? Photos = null);
 
 /// <summary>
 /// Visão pública da vitrine. Sem documento. Da política, só o que o consumidor precisa ver antes de pedir:
@@ -65,7 +66,8 @@ public sealed record PublicBusinessResponse(
     bool AutoConfirm,
     string TimeZone,
     ImageSetResponse? Logo = null,
-    ImageSetResponse? Cover = null);
+    ImageSetResponse? Cover = null,
+    IReadOnlyList<ImageSetResponse>? Photos = null);
 
 /// <summary>
 /// Um resultado da busca. O serviço em destaque é o que casa com o termo (ou o mais barato), com o preço "a partir

@@ -36,7 +36,7 @@ export const PanelPhotosRoute = () => {
       ? {
           status: 'ready',
           logo: detail.data.logo,
-          cover: detail.data.cover,
+          photos: detail.data.photos ?? [],
           professionals: professionals.map((professional) => ({
             id: professional.id,
             name: professional.displayName,
@@ -54,6 +54,20 @@ export const PanelPhotosRoute = () => {
         const updated = await managementService.uploadBusinessImage(slot, file, onProgress)
         refresh()
         return updated[slot]
+      }}
+      onUploadShowcase={(slot) => async (file, onProgress) => {
+        const updated = await managementService.uploadBusinessPhoto(slot, file, onProgress)
+        refresh()
+        // O lugar pode ter mudado (depois do fim, entra no primeiro livre): a foto nova é a de índice slot ou a última.
+        return updated.photos?.[slot] ?? updated.photos?.at(-1) ?? null
+      }}
+      onRemoveShowcase={(slot) => async () => {
+        await managementService.removeBusinessPhoto(slot)
+        refresh()
+      }}
+      onReorderShowcase={async (order) => {
+        await managementService.reorderBusinessPhotos(order)
+        refresh()
       }}
       onRemoveBusiness={(slot) => async () => {
         await managementService.removeBusinessImage(slot)

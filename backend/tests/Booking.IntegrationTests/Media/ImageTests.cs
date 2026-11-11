@@ -334,6 +334,119 @@ public sealed class ImageTests(IntegrationFixture fixture)
 
     // --- Ajudantes ---
 
+    // --- Vitrine: até 3 fotos, a primeira é a capa (B2) ---
+
+    private Task<BusinessDetailResponse> UploadPhotoAsync(TestBusiness business, int slot, int size = 400) =>
+        UploadOkAsync<BusinessDetailResponse>(
+            $"/api/businesses/current/photos/{slot}", TestImages.Jpeg(size, size), $"f{slot}.jpg", "image/jpeg", business.OwnerToken);
+
+    private async Task<PublicBusinessResponse> PublicBusinessAsync(TestBusiness business) =>
+        await _world.Client.GetFromJsonAsync<PublicBusinessResponse>($"/api/businesses/{business.Id}", TestWorld.Json)
+        ?? throw new InvalidOperationException();
+
+    [Fact]
+    public async Task P14_the_showcase_takes_three_photos_in_order_the_first_is_the_cover_and_the_public_page_shows_all()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+
+        await UploadPhotoAsync(business, 0);
+        await UploadPhotoAsync(business, 1);
+        BusinessDetailResponse full = await UploadPhotoAsync(business, 2);
+
+        Assert.Equal(3, full.Photos!.Count);
+        Assert.Equal(full.Photos[0], full.Cover);
+
+        PublicBusinessResponse shown = await PublicBusinessAsync(business);
+        Assert.Equal(full.Photos, shown.Photos);
+        Assert.Equal(full.Cover, shown.Cover);
+
+        // Cada foto virou três arquivos WebP, sem metadado (mesmo processamento do logotipo).
+        Assert.All(full.Photos, photo => Assert.Equal(3, Files.PathsOf(KeyOf(photo)).Count));
+    }
+
+    [Fact]
+    public async Task P15_a_fourth_slot_is_refused_without_leaving_files_behind()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        await UploadPhotoAsync(business, 0);
+        int filesBefore = Files.Files.Count;
+
+        using HttpResponseMessage refused = await UploadAsync(
+            "/api/businesses/current/photos/3", TestImages.Jpeg(300, 300), "f.jpg", "image/jpeg", business.OwnerToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Equal("business.photo_slot_invalid", await TestWorld.ErrorCodeAsync(refused));
+        Assert.Equal(filesBefore, Files.Files.Count);
+    }
+
+    [Fact]
+    public async Task P16_replacing_swaps_the_photo_and_deletes_the_old_files()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        BusinessDetailResponse one = await UploadPhotoAsync(business, 0);
+        string oldKey = KeyOf(one.Photos![0]);
+
+        BusinessDetailResponse replaced = await UploadPhotoAsync(business, 0, size: 500);
+
+        Assert.Single(replaced.Photos!);
+        Assert.NotEqual(oldKey, KeyOf(replaced.Photos![0]));
+        Assert.DoesNotContain(Files.PathsOf(oldKey), Files.Files.ContainsKey);
+    }
+
+    [Fact]
+    public async Task P17_removing_the_cover_promotes_the_next_photo_and_reordering_changes_the_cover()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        BusinessDetailResponse three = await UploadPhotoAsync(business, 0);
+        three = await UploadPhotoAsync(business, 1);
+        three = await UploadPhotoAsync(business, 2);
+        ImageSetResponse a = three.Photos![0], b = three.Photos[1], c = three.Photos[2];
+
+        BusinessDetailResponse reordered = await _world.SendOkAsync<BusinessDetailResponse>(
+            HttpMethod.Put, "/api/businesses/current/photos/order", new ReorderPhotosRequest([2, 0, 1]), business.OwnerToken);
+        Assert.Equal([c, a, b], reordered.Photos);
+        Assert.Equal(c, reordered.Cover);
+
+        using HttpResponseMessage bad = await _world.SendAsync(
+            HttpMethod.Put, "/api/businesses/current/photos/order", new ReorderPhotosRequest([0, 0, 1]), business.OwnerToken);
+        Assert.Equal("business.photo_order_invalid", await TestWorld.ErrorCodeAsync(bad));
+
+        BusinessDetailResponse removed = await _world.SendOkAsync<BusinessDetailResponse>(
+            HttpMethod.Delete, "/api/businesses/current/photos/0", null, business.OwnerToken);
+        Assert.Equal([a, b], removed.Photos);
+        Assert.Equal(a, removed.Cover);
+        Assert.DoesNotContain(Files.PathsOf(KeyOf(c)), Files.Files.ContainsKey);
+
+        using HttpResponseMessage empty = await _world.SendAsync(
+            HttpMethod.Delete, "/api/businesses/current/photos/2", null, business.OwnerToken);
+        Assert.Equal(HttpStatusCode.NotFound, empty.StatusCode);
+    }
+
+    [Fact]
+    public async Task P18_only_the_owner_sends_validates_the_content_and_the_cover_endpoints_still_work()
+    {
+        TestBusiness business = await _world.NewBusinessAsync(1, [new ServiceSpec(30)]);
+        TestUser staff = await _world.NewStaffAsync(business, professionalIndex: 0);
+        TestUser attendant = await _world.NewAttendantAsync(business);
+
+        foreach (TestUser who in new[] { staff, attendant })
+        {
+            using HttpResponseMessage forbidden = await UploadAsync(
+                "/api/businesses/current/photos/0", TestImages.Jpeg(100, 100), "f.jpg", "image/jpeg", who.Token);
+            Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        }
+
+        // O tipo vem do conteúdo, não do nome: um executável com nome .jpg não passa.
+        using HttpResponseMessage fake = await UploadAsync(
+            "/api/businesses/current/photos/0", [0x4D, 0x5A, 0x90, 0x00], "f.jpg", "image/jpeg", business.OwnerToken);
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, fake.StatusCode);
+
+        // A rota antiga da capa é o lugar 0 da vitrine.
+        BusinessDetailResponse viaCover = await UploadOkAsync<BusinessDetailResponse>(
+            "/api/businesses/current/cover", TestImages.Jpeg(300, 300), "c.jpg", "image/jpeg", business.OwnerToken);
+        Assert.Equal(viaCover.Cover, Assert.Single(viaCover.Photos!));
+    }
+
     private async Task<PublicProfessionalResponse> PublicProfessionalAsync(TestBusiness business, Guid professionalId)
     {
         PagedResult<PublicProfessionalResponse> list = (await _world.Client.GetFromJsonAsync<PagedResult<PublicProfessionalResponse>>(

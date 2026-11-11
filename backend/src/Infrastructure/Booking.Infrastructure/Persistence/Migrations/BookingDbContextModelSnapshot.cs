@@ -1343,6 +1343,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("seat_limit");
 
+                    b.Property<string>("SecondPhotoImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("second_photo_image_key");
+
                     b.Property<string>("State")
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)")
@@ -1385,6 +1390,11 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("terms_version");
+
+                    b.Property<string>("ThirdPhotoImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("third_photo_image_key");
 
                     b.Property<string>("TimeZone")
                         .IsRequired()

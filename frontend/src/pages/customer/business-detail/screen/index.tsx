@@ -4,11 +4,11 @@ import { distanceFormat } from '@components/card-establishment/consts'
 import { RatingLabel } from '@components/rating-label'
 import { ReviewsSection } from '@components/reviews-section'
 
-import { BusinessIllustration } from '@components/image-defaults/business-illustration'
 import type { BusinessDetailScreenProps } from './types'
 import { Button } from '@components/button'
 import { ReportBusiness } from '@components/report-business'
 import { ServiceIcon } from '@components/image-defaults/service-icon'
+import { ShowcaseGallery } from '@components/showcase-gallery'
 import { SmartImage } from '@components/smart-image'
 import { PageContainer } from '@components/page-container'
 import { ServiceCard } from '@components/service-card'
@@ -55,30 +55,17 @@ export const BusinessDetailScreen = (props: BusinessDetailScreenProps) => {
       </p>
     )
 
-  // A capa é informativa (mostra o lugar); sem ela, a ilustração da categoria é decorativa.
-  const photo = (className: string) => (
-    <SmartImage
-      image={business.cover}
-      alt={`Foto de ${name}`}
-      sizes="(min-width: 1024px) 66vw, 100vw"
-      width={16}
-      height={9}
-      fallback={<BusinessIllustration category={business.category} />}
-      className={className}
-    />
-  )
-
   return (
     <div className="min-h-dvh bg-(--bg-page) pb-[env(safe-area-inset-bottom)] lg:pb-(--space-40)">
       <PageContainer className="lg:flex lg:flex-col lg:gap-(--space-24) lg:pt-(--space-32)">
-        {/* Celular: uma foto de capa. Desktop: galeria com a principal e duas menores. */}
-        <div className="md:px-(--space-16) md:pt-(--space-16) lg:flex lg:h-65 lg:gap-(--space-8) lg:p-0">
-          {photo('h-45 w-full md:rounded-lg lg:h-full lg:min-w-0 lg:flex-1')}
-          {/* TODO: a galeria ainda não tem fotos no dado; as menores são o placeholder do 03D. */}
-          <div aria-hidden="true" className="hidden w-75 shrink-0 flex-col gap-(--space-8) lg:flex">
-            <div className="flex-1 rounded-lg bg-(--bg-disabled)" />
-            <div className="flex-1 rounded-lg bg-(--bg-disabled)" />
-          </div>
+        {/* Vitrine: até 3 fotos. Celular: faixa que rola; desktop: a principal e as outras ao lado. */}
+        <div className="md:px-(--space-16) md:pt-(--space-16) lg:p-0">
+          <ShowcaseGallery
+            name={name}
+            category={business.category}
+            photos={business.photos}
+            cover={business.cover}
+          />
         </div>
 
         <div className="lg:flex lg:items-start lg:gap-(--space-24)">

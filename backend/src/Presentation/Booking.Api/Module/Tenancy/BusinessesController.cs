@@ -115,6 +115,35 @@ public sealed class BusinessesController : ControllerBase
     public async Task<IActionResult> RemoveCover([FromServices] BusinessImageCommand command, CancellationToken ct) =>
         Ok(await command.RemoveAsync(BusinessImageSlot.Cover, ct));
 
+    /// <summary>
+    /// Vitrine: até 3 fotos, a primeira é a capa. <c>PUT current/photos/{slot}</c> (0 a 2) é <c>multipart/form-data</c>, campo
+    /// <c>file</c>; num lugar ocupado troca, depois do fim ocupa o primeiro livre. JPEG, PNG ou WebP, até 5 MB.
+    /// </summary>
+    [HttpPut("current/photos/{slot:int}")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(ImageUpload.MaxRequestBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.MaxRequestBytes)]
+    [EnableRateLimiting(ImageUpload.RateLimitPolicy)]
+    [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetPhoto(int slot, IFormFile? file, [FromServices] BusinessGalleryCommand command, CancellationToken ct)
+    {
+        await using Stream upload = ImageUpload.Open(file);
+        return Ok(await command.SetAsync(slot, upload, ct));
+    }
+
+    /// <summary>Tira a foto do lugar; as seguintes sobem e a primeira continua sendo a capa.</summary>
+    [HttpDelete("current/photos/{slot:int}")]
+    [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemovePhoto(int slot, [FromServices] BusinessGalleryCommand command, CancellationToken ct) =>
+        Ok(await command.RemoveAsync(slot, ct));
+
+    /// <summary>Nova ordem: uma permutação dos lugares atuais. 400 <c>business.photo_order_invalid</c> para qualquer outra lista.</summary>
+    [HttpPut("current/photos/order")]
+    [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ReorderPhotos(
+        ReorderPhotosRequest request, [FromServices] BusinessGalleryCommand command, CancellationToken ct) =>
+        Ok(await command.ReorderAsync(request, ct));
+
     [HttpPost("current/submit")]
     [ProducesResponseType<BusinessDetailResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Submit([FromServices] SubmitBusinessCommand command, CancellationToken ct) =>

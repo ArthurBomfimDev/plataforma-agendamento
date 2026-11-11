@@ -25,6 +25,8 @@ export type PublicBusinessResponse = {
   /** Nulas sem imagem: a tela mostra o padrão visual da categoria. */
   logo: ImageSet | null
   cover: ImageSet | null
+  /** A vitrine: até 3 fotos, a primeira é a capa. */
+  photos?: ImageSet[]
 }
 
 export type BusinessSearchItemResponse = {
@@ -67,6 +69,8 @@ export type BusinessDetailResponse = {
   policy: SchedulingPolicyResponse
   logo: ImageSet | null
   cover: ImageSet | null
+  /** A vitrine: até 3 fotos, a primeira é a capa. */
+  photos?: ImageSet[]
 }
 
 export type UpdateSchedulingPolicyRequest = Omit<SchedulingPolicyResponse, 'timeZone'> & {

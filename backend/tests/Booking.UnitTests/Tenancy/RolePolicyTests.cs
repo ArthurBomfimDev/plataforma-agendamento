@@ -30,7 +30,7 @@ public sealed class RolePolicyTests
         "InviteMemberCommand", "ResendInvitationCommand", "RevokeInvitationCommand", "ListInvitationsQuery", "ListTeamMembersQuery", "GetSeatsQuery",
         "UpdateSchedulingPolicyCommand", "UpdateAddressCommand", "ConfirmLocationCommand", "SetResponsibleCommand",
         "AcceptTermsCommand", "PublishBusinessCommand", "SubmitBusinessCommand",
-        "GetCurrentBusinessQuery", "GetCurrentChecklistQuery", "GetCurrentVerificationQuery", "BusinessImageCommand",
+        "GetCurrentBusinessQuery", "GetCurrentChecklistQuery", "GetCurrentVerificationQuery", "BusinessImageCommand", "BusinessGalleryCommand",
         "ReportReviewCommand", "ListOwnerReviewsQuery",
     ];
 
