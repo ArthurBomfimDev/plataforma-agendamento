@@ -45,12 +45,12 @@ describe('PanelMoreScreen', () => {
     expect(html.match(/<button/g)).toHaveLength(4)
   })
 
-  it('para o atendente, as folgas, a conta e o tema (sem perfil)', () => {
+  it('para o atendente, as folgas, o perfil da conta, a conta e o tema', () => {
     const html = render(hiddenSectionsFor('Attendant'))
 
     expect(html).toContain('Folgas e bloqueios')
-    expect(html).not.toContain('Meu perfil')
-    expect(html.match(/<button/g)).toHaveLength(3)
+    expect(html).toContain('Meu perfil')
+    expect(html.match(/<button/g)).toHaveLength(4)
   })
 
   it('só quem pode sair do estabelecimento vê a seção; o dono não', () => {

@@ -33,6 +33,7 @@ export { default as ErrorIcon } from '~icons/material-symbols/error-outline-roun
 export { default as EventAvailableIcon } from '~icons/material-symbols/event-available-outline-rounded'
 export { default as EventUpcomingIcon } from '~icons/material-symbols/event-upcoming-outline-rounded'
 export { default as FlagIcon } from '~icons/material-symbols/flag-outline-rounded'
+export { default as BadgeIcon } from '~icons/material-symbols/badge-outline-rounded'
 export { default as GroupIcon } from '~icons/material-symbols/group-outline-rounded'
 export { default as HourglassIcon } from '~icons/material-symbols/hourglass-outline-rounded'
 export { default as ImageIcon } from '~icons/material-symbols/image-outline-rounded'

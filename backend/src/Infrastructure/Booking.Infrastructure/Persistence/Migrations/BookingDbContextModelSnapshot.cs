@@ -220,6 +220,10 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("price_cents");
 
+                    b.Property<bool>("ShowPhotoInShowcase")
+                        .HasColumnType("boolean")
+                        .HasColumnName("show_photo_in_showcase");
+
                     b.Property<int>("SlotStepMinutes")
                         .HasColumnType("integer")
                         .HasColumnName("slot_step_minutes");

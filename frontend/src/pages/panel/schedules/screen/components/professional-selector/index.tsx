@@ -10,7 +10,8 @@ import { motion } from 'framer-motion'
  * tem jornada ganha borda âmbar mais grossa à esquerda e "sem jornada" por escrito — o aviso não
  * depende só da cor.
  *
- * No celular a fileira rola na horizontal, como o seletor da agenda (CLAUDE.md §3.1).
+ * A fileira quebra em linhas: rolando na horizontal, o terceiro nome ficava cortado em 390 px sem nada avisar que havia
+ * mais gente.
  *
  * Memorizado: editar a semana ou o bloqueio não redesenha os botões.
  */
@@ -21,10 +22,7 @@ export const ProfessionalSelector = memo((props: ProfessionalSelectorProps) => {
 
   return (
     <div className="flex flex-col gap-(--space-8) lg:flex-row lg:items-center">
-      <ul
-        aria-label="Profissional"
-        className="-mx-(--space-16) flex gap-(--space-8) overflow-x-auto px-(--space-16) scrollbar-none lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0"
-      >
+      <ul aria-label="Profissional" className="flex flex-wrap gap-(--space-8)">
         {professionals.map((professional) => {
           const active = professional.id === selectedId
           return (

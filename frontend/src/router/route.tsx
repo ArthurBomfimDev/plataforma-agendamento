@@ -58,6 +58,7 @@ const PanelAgendaRoute = lazyPage(PANEL_PAGE_LOADERS.agenda, 'PanelAgendaRoute')
 const PanelBlocksRoute = lazyPage(PANEL_PAGE_LOADERS.blocks, 'PanelBlocksRoute')
 const PanelProfileRoute = lazyPage(PANEL_PAGE_LOADERS.profile, 'PanelProfileRoute')
 const PanelLayout = lazyPage(() => import('@layouts/panel-layout'), 'PanelLayout')
+const PanelMembersRoute = lazyPage(PANEL_PAGE_LOADERS.members, 'PanelMembersRoute')
 const PanelMoreRoute = lazyPage(PANEL_PAGE_LOADERS.more, 'PanelMoreRoute')
 const PanelPhotosRoute = lazyPage(PANEL_PAGE_LOADERS.photos, 'PanelPhotosRoute')
 const PanelRequestsRoute = lazyPage(PANEL_PAGE_LOADERS.requests, 'PanelRequestsRoute')
@@ -128,7 +129,8 @@ export const AppRoutes = () => {
           <Route element={<RequireRoles allow={['Attendant', 'Professional']} />}>
             <Route path={ROUTES.panelBlocks} element={<PanelBlocksRoute />} />
           </Route>
-          <Route element={<RequireRoles allow={['Professional']} />}>
+          {/* O profissional edita o perfil público; o atendente, só os dados da conta. */}
+          <Route element={<RequireRoles allow={['Attendant', 'Professional']} />}>
             <Route path={ROUTES.panelProfile} element={<PanelProfileRoute />} />
           </Route>
           {/* Gestão do estabelecimento (Onda 7D): só o dono. */}
@@ -137,6 +139,7 @@ export const AppRoutes = () => {
             <Route path={ROUTES.panelNewService} element={<PanelServiceFormRoute />} />
             <Route path={ROUTES.panelEditService} element={<PanelServiceFormRoute />} />
             <Route path={ROUTES.panelProfessionals} element={<PanelTeamRoute />} />
+            <Route path={ROUTES.panelMembers} element={<PanelMembersRoute />} />
             <Route path={ROUTES.panelSchedules} element={<PanelSchedulesRoute />} />
             <Route path={ROUTES.panelPhotos} element={<PanelPhotosRoute />} />
             <Route path={ROUTES.panelSettings} element={<PanelSettingsRoute />} />

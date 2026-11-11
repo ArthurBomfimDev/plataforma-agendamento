@@ -7,6 +7,7 @@ export type PanelSection =
   | 'requests'
   | 'services'
   | 'professionals'
+  | 'members'
   | 'schedules'
   | 'photos'
   | 'settings'

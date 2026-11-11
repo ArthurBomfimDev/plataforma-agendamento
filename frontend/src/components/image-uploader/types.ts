@@ -6,7 +6,7 @@ export type UploadStatus = 'idle' | 'uploading' | 'done'
 
 /**
  * Formatos da moldura (Figma 19): `square` é o logotipo, `cover` a capa (cortada no centro) e `card` a foto de um
- * profissional, com o nome embaixo da moldura.
+ * profissional ou de um serviço, redonda, com o nome embaixo. `square` e `card` passam pelo recorte 1:1.
  */
 export type UploadShape = 'square' | 'cover' | 'card'
 

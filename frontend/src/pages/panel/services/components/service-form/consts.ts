@@ -20,6 +20,7 @@ export const FIELD_IDS = {
   price: 'service-price',
   professionalIds: 'service-professionals',
   isActive: 'service-active',
+  showPhotoInShowcase: 'service-show-photo',
 } as const satisfies Record<ServiceFormField, string>
 
 /** Cartão de seção do Figma: superfície, borda sutil e raio grande. */
@@ -168,6 +169,7 @@ export const EMPTY_SERVICE_VALUES: ServiceFormValues = {
   price: '',
   professionalIds: [],
   isActive: true,
+  showPhotoInShowcase: true,
 }
 
 /** Um serviço da API no formato dos campos, para editar. */
@@ -180,6 +182,7 @@ export const toFormValues = (service: {
   slotStepMinutes: number
   priceCents: number
   isActive: boolean
+  showPhotoInShowcase: boolean
   professionals: ReadonlyArray<{ professionalId: string }>
 }): ServiceFormValues => ({
   name: service.name,
@@ -191,6 +194,7 @@ export const toFormValues = (service: {
   price: formatCents(service.priceCents),
   professionalIds: service.professionals.map(({ professionalId }) => professionalId),
   isActive: service.isActive,
+  showPhotoInShowcase: service.showPhotoInShowcase,
 })
 
 /** Converte o formulário já validado no contrato que vai para o backend. */
@@ -208,6 +212,7 @@ export const toServiceDraft = (values: ServiceFormValues): ServiceDraft => {
     priceCents: parseCents(values.price) ?? 0,
     professionalIds: values.professionalIds,
     isActive: values.isActive,
+    showPhotoInShowcase: values.showPhotoInShowcase,
   }
 }
 

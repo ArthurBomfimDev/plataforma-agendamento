@@ -35,6 +35,7 @@ import { PageTransition } from '@components/page-transition'
 import { PendingBadge } from '@components/pending-badge'
 import type { PanelSection } from '@components/panel-sidebar/types'
 import { PanelSidebar } from '@components/panel-sidebar'
+import { PanelTopBar } from '@components/panel-top-bar'
 import type { PendingRequestsData } from '@pages/panel/requests/screen/types'
 import { dateKeyIn, instantIn } from '@utils/time-zone'
 import { errorMessage } from '@api/base'
@@ -261,6 +262,11 @@ const PanelShell = ({
       />
 
       <div className="min-w-0 flex-1">
+        <PanelTopBar
+          businessName={business.name}
+          logo={business.logo}
+          category={business.category}
+        />
         <BusinessStatusPanel context={context} />
         <Suspense
           fallback={

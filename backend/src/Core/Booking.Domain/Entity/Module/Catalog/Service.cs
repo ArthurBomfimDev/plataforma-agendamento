@@ -32,6 +32,12 @@ public sealed class Service : BaseEntity, IAuditable, ITenantScoped
     /// <summary>Foto do serviço (ADR-023): só a referência ao armazenamento, nunca os bytes. Opcional.</summary>
     public string? ImageKey { get; private set; }
 
+    /// <summary>Desligado, a foto fica só no painel: nenhuma resposta pública leva a imagem.</summary>
+    public bool ShowPhotoInShowcase { get; private set; } = true;
+
+    /// <summary>A referência da foto para as respostas públicas. Nula se não há foto ou se o dono a tirou da vitrine.</summary>
+    public string? ShowcaseImageKey => ShowPhotoInShowcase ? ImageKey : null;
+
     private Service()
     {
     }
@@ -99,6 +105,8 @@ public sealed class Service : BaseEntity, IAuditable, ITenantScoped
         ImageKey = key is null ? null : ValueObject.ImageKey.Ensure(key);
         return previous;
     }
+
+    public void SetShowPhotoInShowcase(bool show) => ShowPhotoInShowcase = show;
 
     public void Activate() => IsActive = true;
 

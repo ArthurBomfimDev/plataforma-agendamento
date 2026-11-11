@@ -5,8 +5,8 @@ import type { Modifier } from '@dnd-kit/core'
 /** Abaixo disso o bloco só tem altura para uma linha: o consumidor fica de fora. */
 export const TWO_LINES_MIN_MINUTES = 45
 
-/** Altura mínima de um bloco, para a linha de texto caber (20 min no Figma). */
-export const MIN_BLOCK_HEIGHT = 28
+/** Altura mínima de um bloco: o alvo de toque de 44 px (CLAUDE.md §3.1). Com a escala da grade, é o bloco de 20 min. */
+export const MIN_BLOCK_HEIGHT = 44
 
 /** Duração da prévia de encaixe ao passar o mouse sobre um horário vazio. */
 export const FIT_IN_PREVIEW_MINUTES = 30

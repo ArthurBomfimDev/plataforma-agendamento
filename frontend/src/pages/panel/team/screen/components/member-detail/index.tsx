@@ -4,6 +4,7 @@ import { Avatar } from '@components/avatar'
 import { Button } from '@components/button'
 import { ChevronLeftIcon, LockIcon } from '@assets/icons'
 import type { MemberDetailProps } from './types'
+import { MemberPhoto } from '../member-photo'
 import { SettingRow } from '../setting-row'
 import { initials } from '@pages/panel/agenda/screen/consts'
 import { mediaUrl } from '@api/services/media'
@@ -18,8 +19,8 @@ const CARD = 'rounded-(--radius-md) border border-(--border-subtle) bg-(--bg-sur
  * ou o próprio profissional.
  */
 export const MemberDetail = (props: MemberDetailProps) => {
-  const { member, services, busy, onBack, onEdit, onOpenSchedules, onDeactivate, onActivate } =
-    props
+  const { member, services, busy, photo, onBack, onEdit, onOpenSchedules } = props
+  const { onDeactivate, onActivate } = props
 
   return (
     <div className="flex min-w-0 flex-col gap-(--space-12)">
@@ -56,6 +57,11 @@ export const MemberDetail = (props: MemberDetailProps) => {
           value="Nome, especialidade, apresentação e foto na página do estabelecimento"
           trailing={member.isActive ? 'Visível' : 'Oculto'}
         />
+        {photo && (
+          <div className="max-w-60">
+            <MemberPhoto place="detail" member={member} {...photo} />
+          </div>
+        )}
         <div className="flex flex-col gap-1.5 rounded-(--radius-sm) bg-(--marker-sensitive-bg) px-3.5 py-3">
           <p className="type-caption flex flex-wrap items-center gap-(--space-8) text-(--marker-sensitive-fg)">
             <span className="inline-flex items-center gap-(--space-4) px-(--space-8) py-(--space-2)">

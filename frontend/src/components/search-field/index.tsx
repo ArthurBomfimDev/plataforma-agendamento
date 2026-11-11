@@ -10,7 +10,7 @@ export const SearchField = (props: SearchFieldProps) => {
     // O contorno de foco segue só o campo, não a ação ao lado.
     <div
       className={cn(
-        'flex min-h-(--size-touch-min) items-center gap-(--space-8) rounded-md border border-(--border-interactive) bg-(--bg-surface-raised) px-(--space-16) py-(--space-12) has-[input:focus-visible]:border-(--border-focus) has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-(--border-focus)',
+        'flex min-h-(--size-touch-min) items-center gap-(--space-8) rounded-md border border-(--border-interactive) bg-(--bg-surface-raised) px-(--space-16) has-[input:focus-visible]:border-(--border-focus) has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-(--border-focus)',
         className,
       )}
     >
@@ -22,7 +22,7 @@ export const SearchField = (props: SearchFieldProps) => {
           type="search"
           aria-label={label}
           className={cn(
-            'min-w-0 flex-1 bg-transparent text-(length:--size-input) leading-(--line-height-input) text-(--text-strong) outline-none placeholder:text-(--text-muted)',
+            'min-h-(--size-touch-min) min-w-0 flex-1 bg-transparent text-(length:--size-input) leading-(--line-height-input) text-(--text-strong) outline-none placeholder:text-(--text-muted)',
             inputClassName,
           )}
         />

@@ -31,4 +31,4 @@ export const AuthShell = ({ title, children }: { title: string; children: ReactN
 
 /** Link de texto com alvo de toque de 44px: 20px de linha + 12px acima e abaixo. */
 export const AUTH_LINK_CLASSES =
-  'type-label -my-(--space-12) py-(--space-12) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)'
+  'type-label -my-(--space-12) min-w-(--size-touch-min) py-(--space-12) text-(--text-link) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)'

@@ -86,7 +86,7 @@ export const MonthCalendar = ({ days, month, today, byDay, onOpenDay }: MonthCal
                       <span
                         key={item.id}
                         className={cn(
-                          'type-caption tabular truncate rounded-sm px-(--space-4) py-(--space-2)',
+                          'type-caption tabular rounded-sm px-(--space-4) py-(--space-2) break-words',
                           ITEM_CLASSES[item.status],
                         )}
                       >

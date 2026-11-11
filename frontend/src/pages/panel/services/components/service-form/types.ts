@@ -16,6 +16,8 @@ export type ServiceFormValues = {
   professionalIds: string[]
   /** Situação do serviço: pausado sai da vitrine, mas o histórico fica. Só a edição mostra o campo. */
   isActive: boolean
+  /** Desligado, a foto fica só no painel: a vitrine mostra o ícone da categoria. */
+  showPhotoInShowcase: boolean
 }
 
 export type ServiceFormField = keyof ServiceFormValues
@@ -35,6 +37,7 @@ export type ServiceDraft = {
   priceCents: number
   professionalIds: string[]
   isActive: boolean
+  showPhotoInShowcase: boolean
 }
 
 export type ServiceProfessionalOption = { id: string; name: string }

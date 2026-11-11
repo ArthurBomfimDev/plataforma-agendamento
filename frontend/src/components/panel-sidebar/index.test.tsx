@@ -49,19 +49,20 @@ describe('PanelSidebar', () => {
     expect(html).toContain('Meu perfil')
   })
 
-  it('para o atendente, a agenda e as folgas de todos, sem gestão e sem perfil', () => {
+  it('para o atendente, a agenda, as folgas de todos e o perfil da conta, sem gestão', () => {
     const html = sidebar(hiddenSectionsFor('Attendant'))
 
     expect(html).toContain('Agenda')
     expect(html).toContain('Pedidos')
     expect(html).toContain('Folgas e bloqueios')
+    expect(html).toContain('Meu perfil')
     for (const label of [
       'Serviços',
       'Profissionais',
+      'Equipe',
       'Jornadas e bloqueios',
       'Fotos',
       'Configurações',
-      'Meu perfil',
     ]) {
       expect(html).not.toContain(label)
     }
@@ -71,6 +72,7 @@ describe('PanelSidebar', () => {
     const html = sidebar(hiddenSectionsFor('Owner'))
 
     expect(html).toContain('Jornadas e bloqueios')
+    expect(html).toContain('Equipe')
     expect(html).not.toContain('Folgas e bloqueios')
     expect(html).not.toContain('Meu perfil')
   })
@@ -109,7 +111,9 @@ describe('PanelSidebar', () => {
 
     expect(html).toContain('Avaliações')
     expect(html).not.toContain('Relatórios')
-    expect(html.match(/<button/g)).toHaveLength(8)
+    // Nove seções do dono e o alternador de tema.
+    expect(html.match(/<button/g)).toHaveLength(10)
+    expect(html).toContain('aria-label="Tema escuro"')
     expect(sidebar(hiddenSectionsFor('Attendant'))).not.toContain('Avaliações')
     expect(sidebar(hiddenSectionsFor('Professional'))).not.toContain('Avaliações')
   })

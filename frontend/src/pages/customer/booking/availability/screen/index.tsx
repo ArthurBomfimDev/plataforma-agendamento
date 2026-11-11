@@ -88,8 +88,8 @@ export const AvailabilityScreen = (props: AvailabilityScreenProps) => {
           <ChevronLeftIcon aria-hidden="true" className="size-5" />
         </button>
         <div className="flex min-w-0 flex-1 flex-col gap-(--space-2)">
-          <p className="type-body truncate text-(--text-strong)">{service.name}</p>
-          <p className="type-caption tabular truncate text-(--text-muted)">
+          <p className="type-body break-words text-(--text-strong)">{service.name}</p>
+          <p className="type-caption tabular break-words text-(--text-muted)">
             {service.durationMinutes} min · {price} · {professionalName}
           </p>
         </div>

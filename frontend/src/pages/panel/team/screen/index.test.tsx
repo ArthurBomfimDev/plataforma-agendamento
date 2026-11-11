@@ -60,7 +60,9 @@ describe('TeamScreen', () => {
     expect(html).toContain('Cabeleireira · 1 serviço')
     expect(html).toContain('sem jornada')
     expect(html).toContain('Inativo')
-    expect(html).toContain('Novo profissional')
+    expect(html).toContain('Convidar profissional')
+    expect(html).toContain('Eu também atendo')
+    expect(html).not.toContain('Novo profissional')
     // a ficha é a do primeiro (Marina): perfil público, controles e a saída da equipe
     expect(html).toContain('Editar nome')
     expect(html).toContain('Perfil público')
@@ -89,8 +91,11 @@ describe('TeamScreen', () => {
     expect(html).not.toContain('>Remover da equipe<')
   })
 
-  it('sem profissional, convida a cadastrar', () => {
-    expect(render({ data: ready([]) })).toContain('Cadastrar o primeiro profissional')
+  it('sem profissional, oferece o convite e o perfil do próprio dono', () => {
+    const html = render({ data: ready([]) })
+
+    expect(html).toContain('Convidar profissional')
+    expect(html).toContain('Eu também atendo')
   })
 
   it('mostra o carregando e o erro com "Tentar de novo"', () => {
@@ -111,6 +116,44 @@ const invite = {
   roleLabel: 'Atendente',
   validUntil: '11/11/2026',
 }
+
+describe('TeamScreen — foto do profissional', () => {
+  const photo = {
+    onUpload: () => async () => null,
+    onRemove: () => async () => undefined,
+  }
+
+  it('a ficha traz o envio de foto, com as funções da aba Fotos', () => {
+    const html = render({ data: ready([member({ hasAccount: true })]), photo })
+
+    expect(html).toContain('id="team-photo-detail-')
+    expect(html).toContain('Sem foto, aparecem as iniciais')
+  })
+
+  it('sem login e sem declaração, avisa o que falta antes de enviar', () => {
+    const html = render({
+      data: ready([member({ hasAccount: false, authorizationDeclared: false })]),
+      photo,
+    })
+
+    expect(html).toContain('marque antes a declaração de autorização em Editar')
+  })
+
+  it('com foto, mostra a imagem atual', () => {
+    const image = { small: 'p/k-s.webp', medium: 'p/k-m.webp', large: 'p/k-l.webp' }
+    const html = render({
+      data: ready([member({ hasAccount: true, photo: image })]),
+      photo,
+    })
+
+    expect(html).toContain('Aparece na página pública')
+    expect(html).toMatch(/<img[^>]*p\/k-/)
+  })
+
+  it('sem as funções, a ficha não mostra o campo', () => {
+    expect(render({ data: ready([member({})]) })).not.toContain('team-photo-detail')
+  })
+})
 
 describe('TeamScreen — convites (ADR-029)', () => {
   it('sem a prop de convites, a tela não mostra a seção', () => {

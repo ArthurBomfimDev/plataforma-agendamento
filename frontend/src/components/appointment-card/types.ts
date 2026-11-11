@@ -1,4 +1,5 @@
 import type { AppointmentStatus } from '@components/status-chip/types'
+import type { ImageSet } from '@api/models'
 import type { ReactNode } from 'react'
 
 export type AppointmentCardProps = {
@@ -16,6 +17,9 @@ export type AppointmentCardProps = {
   actions?: ReactNode
   /** Desktop: borda de 2px no tom "urgente", para o pedido que ainda espera resposta (08D). */
   highlight?: boolean
-  imageUrl?: string
+  /** Logotipo ou capa do estabelecimento. Sem imagem, a ilustração da categoria. */
+  image?: ImageSet | null
+  /** `Beleza` ou `Saude`, para a ilustração. */
+  category?: string
   className?: string
 }

@@ -19,6 +19,9 @@ public sealed record InvitationResponse(
 /// <summary>Vagas da equipe: ocupadas (contas ativas + convites pendentes) e o limite do estabelecimento.</summary>
 public sealed record SeatsResponse(int Used, int Limit);
 
+/// <summary>Um membro da equipe com conta: a seção Equipe do painel. Papel de acesso, não perfil público.</summary>
+public sealed record TeamMemberResponse(Guid MembershipId, string Name, string Role);
+
 /// <summary>Corpo das rotas públicas: o token vem no corpo, nunca na URL, para não cair em log de acesso.</summary>
 public sealed record InvitationTokenRequest(string Token);
 

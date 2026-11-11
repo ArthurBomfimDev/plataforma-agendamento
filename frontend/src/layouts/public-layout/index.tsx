@@ -37,7 +37,7 @@ export const AppLayout = () => {
         onHome={() => navigate(ROUTES.home)}
         onSignIn={() => navigate(signInPath(returnTo))}
         onSignUp={() => navigate(signUpPath(returnTo))}
-        accountMenu={accountMenu && <AccountMenu {...accountMenu} className="max-w-40" />}
+        accountMenu={accountMenu && <AccountMenu {...accountMenu} className="max-w-44" />}
       />
       <TopBar
         showSearch={!isHome && !isSearch}

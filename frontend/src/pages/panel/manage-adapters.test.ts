@@ -38,6 +38,7 @@ const service: ServiceResponse = {
     { professionalId: 'p1', priceCents: 4_500, durationMinutes: 30, hasOverride: false },
   ],
   photo: null,
+  showPhotoInShowcase: true,
 }
 
 const schedule = (fields: Partial<WorkScheduleResponse>): WorkScheduleResponse => ({
@@ -87,12 +88,14 @@ describe('serviços', () => {
       priceCents: 5_000,
       professionalIds: ['p1'],
       isActive: false,
+      showPhotoInShowcase: false,
     }
 
     expect(toSaveServiceRequest(draft, service)).toMatchObject({
       name: 'Corte novo',
       suppliesNote: 'Navalha descartável',
       isActive: false,
+      showPhotoInShowcase: false,
     })
     expect(toSaveServiceRequest(draft, null)).toMatchObject({ suppliesNote: null, isActive: false })
   })

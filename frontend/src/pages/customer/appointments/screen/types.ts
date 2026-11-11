@@ -1,10 +1,14 @@
-import type { MyReviewResponse, SaveReviewRequest } from '@api/models'
+import type { ImageSet, MyReviewResponse, SaveReviewRequest } from '@api/models'
 import type { AppointmentStatus } from '@components/status-chip/types'
 import type { NavigationItemId } from '@components/bottom-navigation/types'
 
 export type CustomerAppointment = {
   id: string
   businessName: string
+  /** Logotipo ou capa, da vitrine do estabelecimento. Nula: a ilustração da categoria. */
+  businessImage?: ImageSet | null
+  /** `Beleza` ou `Saude`. */
+  category?: string
   serviceName: string
   status: AppointmentStatus
   /** Dia, `yyyy-MM-dd`, e início, `HH:mm`, no fuso do estabelecimento. */

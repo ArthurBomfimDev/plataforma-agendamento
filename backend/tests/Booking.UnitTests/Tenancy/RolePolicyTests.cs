@@ -27,7 +27,7 @@ public sealed class RolePolicyTests
         "AddWorkScheduleCommand", "UpdateWorkScheduleCommand", "RemoveWorkScheduleCommand",
         "CreateServiceCommand", "UpdateServiceCommand", "ServiceImageCommand", "EnableProfessionalCommand", "DisableProfessionalCommand",
         "CreateProfessionalCommand", "UpdateProfessionalCommand",
-        "InviteMemberCommand", "ResendInvitationCommand", "RevokeInvitationCommand", "ListInvitationsQuery", "GetSeatsQuery",
+        "InviteMemberCommand", "ResendInvitationCommand", "RevokeInvitationCommand", "ListInvitationsQuery", "ListTeamMembersQuery", "GetSeatsQuery",
         "UpdateSchedulingPolicyCommand", "UpdateAddressCommand", "ConfirmLocationCommand", "SetResponsibleCommand",
         "AcceptTermsCommand", "PublishBusinessCommand", "SubmitBusinessCommand",
         "GetCurrentBusinessQuery", "GetCurrentChecklistQuery", "BusinessImageCommand",

@@ -12,7 +12,7 @@ import { mediaUrl } from '@api/services/media'
  * está ativo e sem jornada, ou desativado, ganha a borda e o texto de aviso: o dono vê quem não tem horário.
  */
 export const TeamList = (props: TeamListProps) => {
-  const { members, services, selectedId, onSelect, onNew } = props
+  const { members, services, selectedId, onSelect, onNew, onSelf } = props
 
   return (
     <MotionConfig reducedMotion="user">
@@ -84,11 +84,14 @@ export const TeamList = (props: TeamListProps) => {
           })}
         </ul>
         <Button variant="secondary" className="w-full" onClick={onNew}>
-          Novo profissional
+          Convidar profissional
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={onSelf}>
+          Eu também atendo
         </Button>
         <p className="type-caption text-(--text-muted)">
-          Só o proprietário cadastra, remove e edita jornada. O profissional entra pela própria
-          conta e vê apenas a agenda dele.
+          Só o proprietário convida, remove e edita jornada. O profissional entra pela própria conta
+          e vê apenas a agenda dele.
         </p>
       </div>
     </MotionConfig>

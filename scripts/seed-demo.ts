@@ -472,14 +472,11 @@ async function seedBusiness(demo: DemoBusiness) {
 
   const professionalIds: string[] = []
   for (const professional of demo.professionals) {
-    // O perfil é sempre público (ADR-031). Quem não é o dono precisa da declaração de autorização; na demonstração
-    // (dados fictícios) o dono declara por todos. O dono ("sou eu") tem conta e não precisa.
-    const created = await call<{ id: string }>(
-      'POST',
-      '/api/businesses/current/professionals',
-      { ...professional, authorizationDeclared: !professional.isMe },
-      token,
-    )
+    // A API só cria o perfil do próprio dono: os outros nascem no aceite do convite. Na demonstração (dados fictícios)
+    // eles entram por SQL, só no banco local do Docker, como registros sem conta, com a declaração do dono (ADR-031).
+    const created = professional.isMe
+      ? await call<{ id: string }>('POST', '/api/businesses/current/professionals', professional, token)
+      : { id: insertDemoProfessional(business.id, professional) }
     professionalIds.push(created.id)
 
     for (const { day, start, end } of PATTERNS[professional.pattern]!) {
@@ -569,6 +566,20 @@ function psql(sql: string, options: { quiet?: boolean } = {}): string {
 }
 
 const sqlText = (value: string | null | undefined) => (value == null ? 'NULL' : `'${value.replace(/'/g, "''")}'`)
+
+/** Profissional fictício sem conta, com a declaração do dono do estabelecimento. Devolve o id. */
+function insertDemoProfessional(businessId: string, professional: DemoProfessional): string {
+  return psql(`
+    INSERT INTO people.professional
+      (id, business_id, display_name, specialty, bio, is_active, created_at,
+       authorization_declared_at, authorization_declaration_version, authorization_declared_by_user_id)
+    SELECT gen_random_uuid(), ${sqlText(businessId)}::uuid, ${sqlText(professional.displayName)}, ${sqlText(professional.specialty)},
+      ${sqlText(professional.bio)}, true, now(), now(), 'seed-demo', m.user_id
+    FROM tenancy.business_membership m
+    WHERE m.business_id = ${sqlText(businessId)}::uuid AND m.role = 'Owner'
+    RETURNING id;
+  `)
+}
 
 /**
  * O papel de Admin da plataforma nunca é concedido por endpoint (ADR-020): só por SQL no banco. Esta é a única

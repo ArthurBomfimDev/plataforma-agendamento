@@ -1,4 +1,5 @@
 import { managementService } from '@api/services/management'
+import { useProfessionalPhoto } from '@api/services/management/hooks'
 import { queryKeys } from '@api/services/query-keys'
 import { usePanelBusinessDetail } from '@api/services/panel/hooks'
 
@@ -16,6 +17,7 @@ export const PanelPhotosRoute = () => {
   const { context, business, professionals } = usePanelContext()
   const queryClient = useQueryClient()
   const detail = usePanelBusinessDetail(context.businessId)
+  const photo = useProfessionalPhoto(context.businessId)
 
   // O painel (lateral, Fotos) e o lado público (vitrine, busca, revisão do pedido): sem isto, a vitrine mostrava a
   // imagem antiga até o cache vencer.
@@ -57,19 +59,8 @@ export const PanelPhotosRoute = () => {
         await managementService.removeBusinessImage(slot)
         refresh()
       }}
-      onUploadProfessional={(professionalId) => async (file, onProgress) => {
-        const updated = await managementService.uploadProfessionalPhoto(
-          professionalId,
-          file,
-          onProgress,
-        )
-        refresh()
-        return updated.photo
-      }}
-      onRemoveProfessional={(professionalId) => async () => {
-        await managementService.removeProfessionalPhoto(professionalId)
-        refresh()
-      }}
+      onUploadProfessional={photo.upload}
+      onRemoveProfessional={photo.remove}
     />
   )
 }

@@ -28,4 +28,5 @@ export const FIXTURE_SERVICE_VALUES: ServiceFormValues = {
   price: formatCents(4_500),
   professionalIds: ['marina-souza', 'rafael-lima'],
   isActive: true,
+  showPhotoInShowcase: true,
 }

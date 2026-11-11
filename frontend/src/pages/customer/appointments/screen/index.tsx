@@ -90,6 +90,8 @@ export const AppointmentsScreen = (props: AppointmentsScreenProps) => {
 
     const common = {
       businessName,
+      image: appointment.businessImage,
+      category: appointment.category,
       status,
       summary: summary(appointment),
       serviceLine: `${serviceName} · ${durationMinutes} min`,

@@ -14,6 +14,17 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Erro que a própria aplicação lança com a mensagem pronta para a pessoa. `errorMessage` a mostra como veio; qualquer
+ * outro `Error` (um bug, um `TypeError`) continua virando a mensagem genérica, para nunca exibir texto técnico.
+ */
+export class UserMessageError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'UserMessageError'
+  }
+}
+
 /** Mensagens para o consumidor, por código. O que não está aqui cai na mensagem genérica. */
 const MESSAGES: Record<string, string> = {
   'auth.invalid_credentials': 'E-mail ou senha incorretos.',
@@ -34,6 +45,8 @@ const MESSAGES: Record<string, string> = {
   'invitation.already_pending': 'Já existe um convite pendente para este e-mail.',
   'invitation.already_member': 'Esta pessoa já faz parte da equipe.',
   'invitation.role_invalid': 'Escolha se o convite é para profissional ou atendente.',
+  'professional.cannot_create_without_invitation':
+    'Convide a pessoa por e-mail: o perfil nasce quando ela aceita.',
   'invitation.professional_not_linkable':
     'Este profissional não pode ser ligado a uma conta: já tem conta ou foi desativado.',
   'business.seat_limit_reached':
@@ -46,6 +59,7 @@ const MESSAGES: Record<string, string> = {
   'customer.profile_required': 'Complete seu cadastro de consumidor para agendar.',
   'compliance.consent_required':
     'Este estabelecimento é da área da saúde: é preciso dar o consentimento antes de agendar.',
+  'consent.version_outdated': 'O texto do consentimento mudou. Leia de novo antes de continuar.',
   'business.not_found': 'Estabelecimento não encontrado.',
   'business.document_already_registered':
     'Já existe um estabelecimento cadastrado com este documento.',
@@ -159,6 +173,7 @@ const MESSAGES: Record<string, string> = {
 
 /** Mensagem pronta para toast ou formulário. */
 export const errorMessage = (error: unknown): string => {
+  if (error instanceof UserMessageError) return error.message
   if (error instanceof ApiError) {
     if (error.code && MESSAGES[error.code]) return MESSAGES[error.code]!
     if (error.status === 0) return 'Sem conexão com o servidor. Tente de novo.'

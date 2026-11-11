@@ -15,6 +15,7 @@ public sealed class ServiceMapping : BaseMapping<Service>
         builder.Property(x => x.Description).HasMaxLength(1000);
         builder.Property(x => x.SuppliesNote).HasMaxLength(500);
         builder.Property(x => x.ImageKey).HasMaxLength(Booking.Domain.ValueObject.ImageKey.MaxLength);
+        builder.Ignore(x => x.ShowcaseImageKey);
         builder.Property(x => x.DurationMinutes).IsRequired();
         builder.Property(x => x.BufferBeforeMinutes).IsRequired();
         builder.Property(x => x.BufferAfterMinutes).IsRequired();

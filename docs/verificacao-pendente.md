@@ -10,6 +10,44 @@ Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondent
 
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
+## Rodada 2 do teste de 05/11 (PR #58)
+
+Provado por script no navegador (Chrome do Windows, via Playwright), numa pilha isolada com banco novo: agenda em lista do
+Atendente, Meu perfil do Atendente, Equipe, convite sem papel marcado, recorte e envio do logotipo, tema persistente, imagem do
+agendamento em 390 px e a auditoria de 44 telas em 390 e 1280 px. **Migration `AddServiceShowPhotoInShowcase`: NÃO APLICADA no
+ambiente do Arthur.**
+
+Falta conferir com olho humano:
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | No banco onde o Rafa foi testado, ver o papel dele (`tenancy.business_membership.role`) | `Professional` confirma a causa do B1; `Attendant` quer dizer que há outra causa, e ela não foi achada |
+| 2 | Se for `Professional`: revogar o acesso e convidar de novo como Atendente, pelo painel | agenda de todos, sem perfil público. Não apagar dado direto no banco |
+| 3 | Celular real: arrastar a imagem no recorte e usar o zoom | move sem travar a página; a foto enviada é o quadrado visto |
+| 4 | Recorte de foto em Editar serviço, na ficha da equipe e em Meu perfil | mesma tela do logotipo. **Só o logotipo foi provado no navegador** |
+| 5 | Editar serviço: desligar "Mostrar foto na vitrine" e abrir a vitrine | ícone da categoria no lugar da foto (a API está provada por teste; a tela, não) |
+| 6 | Agenda do Dono no desktop com a grade de 144 px por hora | a tela ficou com o dobro da altura: conferir se a leitura continua boa |
+| 7 | Gavetas, diálogos e menus abertos em 390 px, claro e escuro | a auditoria mediu só o estado inicial de cada tela, no tema claro |
+| 8 | Convite real por e-mail, aceito pela tela `#/convite` | o aceite foi provado por API e teste de integração, não pela tela |
+
+## Correções do teste de 05/11
+
+Lógica provada por teste; **nada foi visto no navegador**. Sem migration.
+
+| # | Passo | Esperado |
+|---|---|---|
+| 1 | Cadastro → Endereço com um endereço real → **Salvar e confirmar a localização** | "Procurando o endereço…"; depois o lugar achado, "Ver no mapa" (abre o OpenStreetMap em outra aba) e **Confirmar esta localização** |
+| 2 | Confirmar | segue para o passo seguinte; `location_confirmed` fica verde na checklist |
+| 3 | Endereço inexistente | "Não foi possível localizar o endereço. Confira os dados." e **Corrigir o endereço**, com o que foi digitado mantido |
+| 4 | Derrubar a rede e salvar | mensagem de conexão e **Tentar de novo**; nunca "Algo deu errado" |
+| 5 | Consumidor sem consentimento → serviço de **Saúde** → **Enviar pedido** | sem toast: aparece o bloco com o texto, a caixa desmarcada, e "Enviar pedido" some |
+| 6 | Clicar sem marcar; depois marcar e clicar | "Marque a caixa para continuar."; depois o pedido vai e abre "Pedido enviado", com a observação digitada |
+| 7 | Minha conta → **Consentimentos** | em vigor, com data e versão; **Revogar** pede confirmação e vira "Revogado em…" |
+| 8 | Agendar em Saúde de novo | o bloco volta |
+| 9 | Painel → Profissionais: na ficha e em Editar, enviar e remover foto | a foto aparece na hora nas duas, na aba Fotos e na vitrine; sem login e sem declaração, o erro de declaração aparece no campo |
+| 10 | Meus agendamentos, largura de desktop | logotipo do estabelecimento; sem logotipo, a capa; sem nenhum, a ilustração da categoria, sem quadrado cinza |
+| 11 | 390 px, claro e escuro: passo de confirmação do endereço, bloco de consentimento, seção Consentimentos, foto na ficha | sem rolagem horizontal; alvos ≥ 44 px; contraste do bloco de consentimento |
+
 ## 0. Preparar a pilha isolada (uma vez por rodada)
 
 ```powershell

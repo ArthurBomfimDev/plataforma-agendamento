@@ -11,6 +11,14 @@ public static class ConsentTexts
 {
     public const string SensitiveSchedulingVersion = "2026-10-v1";
 
+    /// <summary>RASCUNHO sem revisão jurídica: <c>docs/legal/consentimento-agendamento-saude.md</c>. A tela exibe este texto.</summary>
+    public const string SensitiveSchedulingText =
+        "Autorizo o tratamento dos dados dos meus agendamentos em estabelecimentos de saúde (estabelecimento, profissional, "
+        + "serviço, data e horário) para realizar o agendamento e enviar os avisos sobre ele. Sei que esses dados podem revelar "
+        + "informação sobre a minha saúde, que é dado sensível (LGPD, Art. 11), e que o estabelecimento escolhido e a equipe "
+        + "dele os veem para me atender. Posso revogar este consentimento quando quiser, em Minha conta. Revogar não cancela "
+        + "os agendamentos já feitos, mas impede novos pedidos em estabelecimentos de saúde.";
+
     public static string CurrentVersion(ConsentPurpose purpose) => purpose switch
     {
         ConsentPurpose.SensitiveScheduling => SensitiveSchedulingVersion,

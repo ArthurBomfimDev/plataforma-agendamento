@@ -1,3 +1,5 @@
+import { NO_ROLE, ROLE_OPTIONS } from './consts'
+
 import { Button } from '@components/button'
 import type { InviteSheetProps } from './types'
 import { PanelSheet } from '@components/panel-sheet'
@@ -6,26 +8,18 @@ import { TextField } from '@components/text-field'
 import { isValidEmail } from '../../consts'
 import { useState } from 'react'
 
-const ROLE_OPTIONS = [
-  { value: 'Professional', label: 'Profissional — atende e tem agenda própria' },
-  {
-    value: 'Attendant',
-    label: 'Atendente — opera a agenda de todos, sem editar o estabelecimento',
-  },
-]
-
 const NEW_PROFILE = ''
 
 /**
- * Convidar alguém para a equipe por e-mail (ADR-029). O convite é um extra: o caminho principal continua sendo cadastrar
- * o profissional sem conta. O profissional pode ser ligado a um perfil que já existe ou ganhar um novo ao aceitar.
+ * Convidar alguém para a equipe por e-mail (ADR-029): é o único caminho para outra pessoa entrar. O perfil do profissional
+ * nasce no aceite; o atendente não tem perfil. Quem já tem registro antigo, sem conta, pode ser ligado a ele aqui.
  */
 export const InviteSheet = (props: InviteSheetProps) => {
   const { open, onOpenChange, linkable, onInvite } = props
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'Professional' | 'Attendant'>('Professional')
+  const [role, setRole] = useState<'Professional' | 'Attendant' | typeof NO_ROLE>(NO_ROLE)
   const [professionalId, setProfessionalId] = useState(NEW_PROFILE)
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -37,7 +31,7 @@ export const InviteSheet = (props: InviteSheetProps) => {
     if (open) {
       setName('')
       setEmail('')
-      setRole('Professional')
+      setRole(NO_ROLE)
       setProfessionalId(NEW_PROFILE)
       setTouched(false)
       setError(undefined)
@@ -46,13 +40,14 @@ export const InviteSheet = (props: InviteSheetProps) => {
 
   const nameError = touched && !name.trim() ? 'Informe o nome de quem você convida.' : undefined
   const emailError = touched && !isValidEmail(email) ? 'Informe um e-mail válido.' : undefined
+  const roleError = touched && role === NO_ROLE ? 'Escolha o papel da pessoa.' : undefined
 
   return (
     <PanelSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Convidar para a equipe"
-      description="A pessoa recebe um link por e-mail, válido por 7 dias, para criar a conta ou entrar."
+      title="Convidar profissional"
+      description="A pessoa recebe um link por e-mail, válido por 7 dias, para criar a conta ou entrar. O perfil só nasce quando ela aceita."
     >
       <form
         noValidate
@@ -60,7 +55,7 @@ export const InviteSheet = (props: InviteSheetProps) => {
         onSubmit={async (event) => {
           event.preventDefault()
           setTouched(true)
-          if (!name.trim() || !isValidEmail(email)) return
+          if (!name.trim() || !isValidEmail(email) || role === NO_ROLE) return
           setSaving(true)
           setError(undefined)
           const failure = await onInvite({
@@ -96,13 +91,14 @@ export const InviteSheet = (props: InviteSheetProps) => {
           label="Papel"
           options={ROLE_OPTIONS}
           value={role}
+          error={roleError}
           onChange={(event) => setRole(event.target.value as 'Professional' | 'Attendant')}
         />
-        {role === 'Professional' && (
+        {role === 'Professional' && linkable.length > 0 && (
           <SelectField
             id="invite-profile"
             label="Perfil de profissional"
-            helper="Ligue a conta a um profissional que você já cadastrou, ou crie o perfil quando a pessoa aceitar."
+            helper="Ligue a conta a um registro antigo, sem conta, ou deixe o perfil nascer quando a pessoa aceitar."
             options={[
               { value: NEW_PROFILE, label: 'Criar um perfil novo ao aceitar' },
               ...linkable.map(({ id, name: profileName }) => ({ value: id, label: profileName })),

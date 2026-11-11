@@ -1,5 +1,11 @@
-import type { BusinessCategoryName, PostalCodeResponse, ProfessionalCouncilName } from '@api/models'
+import type {
+  BusinessCategoryName,
+  GeoPlaceResponse,
+  PostalCodeResponse,
+  ProfessionalCouncilName,
+} from '@api/models'
 import type { BusinessDocumentType } from './components/document-step/consts'
+import type { LocationCheck } from './components/address-location/consts'
 
 export type WizardStep = 'business' | 'document' | 'address' | 'responsible' | 'review'
 
@@ -40,8 +46,12 @@ export type RegisterScreenProps = {
   savedAddress?: Partial<AddressValues>
   /** Cria o estabelecimento (nome, categoria e documento) e passa o contexto para ele. */
   onCreate: (business: BusinessValues, document: DocumentValues) => StepResult
-  /** Salva o endereço e confirma a localização. */
-  onSaveAddress: (address: AddressValues) => StepResult
+  /** Salva o endereço e busca onde ele fica. Não confirma nada: quem confirma é o dono, em `onConfirmLocation`. */
+  onLocateAddress: (
+    address: AddressValues,
+  ) => Promise<Exclude<LocationCheck, { status: 'idle' | 'loading' }>>
+  /** Grava o ponto que o dono conferiu. */
+  onConfirmLocation: (place: GeoPlaceResponse) => StepResult
   onSaveResponsible: (responsible: ResponsibleValues) => StepResult
   /** Aceita os termos e segue para o painel, com o estabelecimento em rascunho. */
   onFinish: () => StepResult
