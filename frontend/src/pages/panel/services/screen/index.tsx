@@ -24,10 +24,17 @@ import { VerifiedUserIcon } from '@assets/icons'
  * descrição vão para a vitrine pública.
  */
 export const ServicesScreen = (props: ServicesScreenProps) => {
-  const { data, businessName, categoryName, sensitive, onNew, onEdit } = props
+  const { data, businessName, categoryName, sensitive, guidedStep, onNew, onEdit } = props
 
   const services = data.status === 'ready' ? data.services.toSorted(byActiveThenName) : []
-  const unassigned = withoutProfessional(services).map(({ name }) => name)
+  const withoutOne = withoutProfessional(services)
+  const unassigned = withoutOne.map(({ name }) => name)
+  // O passo guiado aponta o primeiro serviço ativo sem profissional; sem nenhum, não há o que destacar.
+  const target = withoutOne[0]
+  const guide =
+    guidedStep && target
+      ? { serviceId: target.id, serviceName: target.name, step: guidedStep }
+      : undefined
   // Sem serviço, o botão do cabeçalho some: o convite está no estado vazio (Figma 18b).
   const empty = data.status === 'ready' && services.length === 0
 
@@ -58,7 +65,8 @@ export const ServicesScreen = (props: ServicesScreenProps) => {
         </p>
       )}
 
-      {unassigned.length > 0 && (
+      {/* No passo guiado a barra do próprio serviço já diz isso (Figma 21b): o aviso do topo repetiria. */}
+      {unassigned.length > 0 && !guide && (
         <p role="status" className={SERVICES_ALERT}>
           {alertMessage(unassigned)}
         </p>
@@ -73,10 +81,10 @@ export const ServicesScreen = (props: ServicesScreenProps) => {
       ) : (
         <>
           <div className="lg:hidden">
-            <ServiceCards services={services} onEdit={onEdit} />
+            <ServiceCards services={services} onEdit={onEdit} guide={guide} />
           </div>
           <div className="hidden lg:block">
-            <ServicesTable services={services} onEdit={onEdit} />
+            <ServicesTable services={services} onEdit={onEdit} guide={guide} />
           </div>
           <p className="type-caption text-(--text-muted)">
             Pausar tira o serviço da vitrine sem apagar o histórico: os agendamentos já feitos

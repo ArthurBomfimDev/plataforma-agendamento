@@ -92,6 +92,26 @@ public sealed record BusinessSearchItemResponse(
 /// <summary>Item da checklist de ativação. <c>RequiredForSubmit</c> diz se a submissão já exige o item hoje.</summary>
 public sealed record ChecklistItemResponse(string Key, bool Done, bool RequiredForSubmit);
 
+/// <summary>Um item da verificação. O servidor manda chave, estado e o detalhe que varia com os dados; título e explicação são do frontend.</summary>
+public sealed record VerificationItemResponse(string Key, bool Done, string? Detail);
+
+/// <summary>
+/// A faixa de verificação do painel do dono. <c>Status</c> é o do ciclo de vida (<c>Draft</c>, <c>PendingReview</c>,
+/// <c>Active</c>, <c>Suspended</c>); <c>Rejected</c> marca o rascunho devolvido pelo Admin. Só os itens exigidos no envio.
+/// </summary>
+public sealed record VerificationResponse(
+    string Status,
+    bool Rejected,
+    bool AppearsInSearch,
+    DateTimeOffset? SubmittedAt,
+    DateTimeOffset? DecidedAt,
+    string? DecisionReason,
+    bool CanSubmit,
+    string SubmitAction,
+    int CompletedCount,
+    int TotalCount,
+    IReadOnlyList<VerificationItemResponse> Items);
+
 /// <summary>Detalhe para o Admin: o estabelecimento, a checklist e o registro da última decisão de verificação.</summary>
 public sealed record AdminBusinessDetailResponse(
     BusinessDetailResponse Business,

@@ -1,107 +1,349 @@
-import { bannerState, labelOf, missingItems, requiredItems } from './consts'
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ErrorIcon,
+  HourglassIcon,
+  VerifiedUserIcon,
+  WarningIcon,
+} from '@assets/icons'
+import {
+  STEP_GUIDES,
+  STEP_TITLES,
+  TONE_CLASSES,
+  bannerState,
+  hintOf,
+  labelOf,
+  missingItems,
+  nextPendingKey,
+  requiredItems,
+  stepOf,
+} from './consts'
+import { useId, useState } from 'react'
 
 import type { BusinessStatusBannerProps } from './types'
 import { Button } from '@components/button'
+import type { ChecklistItemResponse } from '@api/models'
+import { VerificationProgress } from './components/verification-progress'
+import { cn } from 'cn'
+
+type Look = {
+  tone: keyof typeof TONE_CLASSES
+  Icon: typeof WarningIcon
+  title: string
+  subtitle: string
+}
 
 /**
- * Faixa de status do estabelecimento, no topo do painel do dono (ondas finais, Fase 3): Rascunho (o que falta),
- * Em análise (o que já pode e o que está bloqueado), Reprovado (motivo; corrigir e reenviar), Suspenso (motivo) e, uma
- * vez, Aprovado. Sem botão morto: com itens faltando só há os atalhos de cada item; o botão de publicar ou enviar
- * aparece quando a checklist está completa, e diz "Publicar meu estabelecimento" (Beleza) ou "Enviar para análise" (Saúde).
+ * Faixa de verificação do estabelecimento, no topo do painel do dono (Figma `Aviso de verificação`, 384:177).
+ * Uma faixa persistente que expande em acordeão, formando um cartão contínuo com a lista de pendências:
+ * Rascunho, Em análise, Verificado (dispensável, uma vez), Ajustes necessários (recusado) e Suspenso.
+ * Cada estado tem ícone e frase próprios e nunca depende só da cor. Sem botão morto: o motivo de o envio
+ * estar bloqueado fica escrito ao lado dele.
  *
- * TODO(figma): não há wireframe da faixa; segue os tokens de status do design system.
+ * Passo guiado (Figma 21b): quando o dono está numa página do painel resolvendo um item, a faixa diz em
+ * que passo ele está e só navega entre os pendentes ("Voltar à lista", "Próximo pendente"); a ação de
+ * resolver fica na página.
  */
 export const BusinessStatusBanner = (props: BusinessStatusBannerProps) => {
-  const { business, checklist, busy, error, showApproved } = props
+  const { business, checklist, error } = props
   const state = bannerState(business)
+  const [open, setOpen] = useState(false)
+  const panelId = useId()
 
-  if (state === 'active') {
-    return showApproved ? (
-      <Banner tone="confirmed" title="Aprovado">
-        <p className="type-body">
-          Seu estabelecimento foi aprovado e já aparece na busca. Bom trabalho!
-        </p>
-        <Button variant="secondary" onClick={props.onDismissApproved}>
-          Entendi
-        </Button>
-      </Banner>
-    ) : null
-  }
+  if (state === 'active' && !props.showApproved) return null
 
-  if (state === 'review') {
-    return (
-      <Banner tone="pending" title="Em análise">
-        <p className="type-body">
-          Um administrador está conferindo os dados. Você já pode configurar serviços, equipe,
-          jornadas, fotos e a política de agendamento.
-        </p>
-        <p className="type-body font-semibold">
-          Ainda bloqueado: aparecer na busca e receber pedidos.
-        </p>
-      </Banner>
-    )
-  }
-
-  if (state === 'suspended') {
-    return (
-      <Banner tone="rejected" title="Suspenso">
-        <p className="type-body">
-          Seu estabelecimento deixou de aparecer na plataforma e de receber pedidos.
-        </p>
-        {business.reason && <p className="type-body">Motivo: {business.reason}</p>}
-        <p className="type-caption">
-          Se você acha que foi um engano, fale com o suporte da plataforma.
-        </p>
-      </Banner>
-    )
-  }
-
-  // Rascunho ou reprovado: o que falta e, completa a checklist, o botão de seguir.
-  const rejected = state === 'rejected'
+  const items = checklist ? requiredItems(checklist) : []
   const missing = checklist ? missingItems(checklist) : []
-  const complete =
-    checklist !== undefined && missing.length === 0 && requiredItems(checklist).length > 0
+  const total = items.length
+  const done = total - missing.length
+  const complete = checklist !== undefined && total > 0 && missing.length === 0
   const health = business.category === 'Saude'
+  const submitLabel = health
+    ? state === 'rejected'
+      ? 'Reenviar para análise'
+      : 'Enviar para análise'
+    : 'Publicar meu estabelecimento'
+
+  const guideKey = state === 'draft' ? props.guide?.key : undefined
+  const step = checklist && guideKey ? stepOf(checklist, guideKey) : undefined
+  const nextKey = checklist && guideKey && step ? nextPendingKey(checklist, guideKey) : undefined
+
+  const look: Look =
+    step && guideKey
+      ? {
+          tone: 'pending',
+          Icon: WarningIcon,
+          title: `Passo ${step.number} de ${step.total} · ${STEP_TITLES[guideKey] ?? labelOf(guideKey)}`,
+          subtitle: STEP_GUIDES[guideKey] ?? 'Resolva o item e o passo marca sozinho.',
+        }
+      : lookOf(state, { missing: missing.length, complete, reason: business.reason, props })
+  const tone = TONE_CLASSES[look.tone]
+  const guided = step !== undefined
+  const expandable = !guided && (state === 'draft' || state === 'review' || state === 'rejected')
+  const showProgress = (expandable || guided) && checklist !== undefined
+  const firstPending = missing[0]?.key
+  // O botão da faixa some com o painel aberto: a ação passa a morar no rodapé, e dois botões iguais confundem.
+  const stripAction = expandable && !open
+  const backToList = () => {
+    setOpen(true)
+    props.guide?.onExit()
+  }
 
   return (
-    <Banner tone={rejected ? 'rejected' : 'pending'} title={rejected ? 'Reprovado' : 'Rascunho'}>
-      {rejected ? (
-        <>
-          <p className="type-body">O cadastro não foi aprovado.</p>
-          {business.reason && <p className="type-body">Motivo: {business.reason}</p>}
-          <p className="type-body">Corrija o que foi apontado e envie de novo.</p>
-        </>
-      ) : (
-        <p className="type-body">
-          Seu estabelecimento ainda não aparece na busca. Complete a lista abaixo.
+    <section
+      aria-label="Verificação do estabelecimento"
+      className="px-(--space-16) pt-(--space-16) lg:px-(--space-24) lg:pt-(--space-24)"
+    >
+      <div
+        role="status"
+        aria-live="polite"
+        className={cn('flex items-stretch rounded-md', tone.surface, open && 'rounded-b-none')}
+      >
+        <span aria-hidden="true" className={cn('w-[3px] shrink-0', tone.accent)} />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-(--space-12) gap-y-(--space-8) px-(--space-16) py-(--space-12)">
+          <look.Icon aria-hidden="true" className={cn('size-5 shrink-0', tone.text)} />
+          <div className="min-w-48 flex-1">
+            <p className={cn('type-label', tone.text)}>{look.title}</p>
+            <p className="type-caption text-(--text-body)">{look.subtitle}</p>
+          </div>
+
+          {showProgress && <VerificationProgress done={done} total={total} tone={look.tone} />}
+
+          {guided && (
+            <>
+              <Button variant="ghost" onClick={backToList}>
+                Voltar à lista
+              </Button>
+              {nextKey && (
+                <Button variant="secondary" onClick={() => props.onFix(nextKey)}>
+                  Próximo pendente
+                </Button>
+              )}
+            </>
+          )}
+
+          {state === 'active' && (
+            <Button variant="ghost" onClick={props.onDismissApproved}>
+              Dispensar
+            </Button>
+          )}
+
+          {stripAction && state === 'draft' && checklist !== undefined && (
+            <Button onClick={() => (firstPending ? props.onFix(firstPending) : setOpen(true))}>
+              {complete ? 'Revisar e enviar' : 'Continuar verificação'}
+            </Button>
+          )}
+          {stripAction && state === 'rejected' && (
+            <Button onClick={() => setOpen(true)}>Corrigir e reenviar</Button>
+          )}
+
+          {expandable && (
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={panelId}
+              aria-label={
+                open ? 'Recolher a lista de verificação' : 'Expandir a lista de verificação'
+              }
+              onClick={() => setOpen((value) => !value)}
+              className={cn(
+                'flex size-(--size-touch-min) shrink-0 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
+                tone.text,
+              )}
+            >
+              {open ? (
+                <ChevronUpIcon aria-hidden="true" className="size-5" />
+              ) : (
+                <ChevronDownIcon aria-hidden="true" className="size-5" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <p
+          role="alert"
+          className="type-label px-(--space-16) pt-(--space-8) text-(--status-rejected-fg)"
+        >
+          {error}
         </p>
       )}
 
+      {expandable && (
+        <div
+          id={panelId}
+          hidden={!open}
+          className="overflow-hidden rounded-b-md border border-t-0 border-(--border-subtle) bg-(--bg-surface)"
+        >
+          {open && (
+            <Panel
+              {...props}
+              // Resolver um item leva a outra página: a lista fecha e volta pelo "Voltar à lista".
+              onFix={(key) => {
+                setOpen(false)
+                props.onFix(key)
+              }}
+              state={state}
+              items={items}
+              missing={missing}
+              complete={complete}
+              total={total}
+              submitLabel={submitLabel}
+              health={health}
+            />
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+const lookOf = (
+  state: ReturnType<typeof bannerState>,
+  context: {
+    missing: number
+    complete: boolean
+    reason: string | null
+    props: BusinessStatusBannerProps
+  },
+): Look => {
+  switch (state) {
+    case 'review':
+      return {
+        tone: 'info',
+        Icon: HourglassIcon,
+        title: 'Em análise · ainda não aparece na busca',
+        subtitle:
+          'Resposta em até 2 dias úteis — nada a fazer agora. Você já pode configurar o resto.',
+      }
+    case 'active':
+      return {
+        tone: 'confirmed',
+        Icon: VerifiedUserIcon,
+        title: 'Verificado · o estabelecimento aparece na busca',
+        subtitle: 'Este aviso pode ser dispensado.',
+      }
+    case 'rejected':
+      return {
+        tone: 'rejected',
+        Icon: ErrorIcon,
+        title: 'Ajustes necessários · não aparece na busca',
+        subtitle: context.reason ?? 'Abra para ver o que corrigir antes de reenviar.',
+      }
+    case 'suspended':
+      return {
+        tone: 'rejected',
+        Icon: ErrorIcon,
+        title: 'Suspenso · não aparece na busca',
+        subtitle: context.reason
+          ? `${context.reason} Se foi engano, fale com o suporte da plataforma.`
+          : 'Se você acha que foi engano, fale com o suporte da plataforma.',
+      }
+    default: {
+      const { props, missing, complete } = context
+      const subtitle = props.checklistError
+        ? props.checklistError
+        : props.checklist === undefined
+          ? 'Conferindo o que falta…'
+          : complete
+            ? 'Tudo pronto. Falta só enviar para o estabelecimento aparecer na busca.'
+            : `${missing === 1 ? 'Falta 1 item obrigatório' : `Faltam ${missing} itens obrigatórios`}. Nenhum consumidor consegue encontrar ou agendar.`
+      return {
+        tone: 'pending',
+        Icon: WarningIcon,
+        title: 'Rascunho · o estabelecimento não aparece na busca',
+        subtitle,
+      }
+    }
+  }
+}
+
+type PanelProps = BusinessStatusBannerProps & {
+  state: ReturnType<typeof bannerState>
+  items: ChecklistItemResponse[]
+  missing: ChecklistItemResponse[]
+  complete: boolean
+  total: number
+  submitLabel: string
+  health: boolean
+}
+
+const Panel = (props: PanelProps) => {
+  const { state, items, missing, complete, total, submitLabel, busy, business } = props
+  const rejected = state === 'rejected'
+  const review = state === 'review'
+  // Recusado mostra o motivo e só o que ainda falta; os itens concluídos continuam concluídos.
+  const rows = rejected ? missing : items
+
+  return (
+    <>
+      {rejected && (
+        <div className="flex flex-col gap-(--space-8) border-b border-(--border-subtle) px-(--space-16) py-(--space-12)">
+          <p className="type-caption font-semibold tracking-wide text-(--status-rejected-fg) uppercase">
+            Motivo da recusa
+          </p>
+          <p className="type-body text-(--text-strong)">
+            {business.reason ?? 'O motivo não foi registrado — fale com o suporte.'}
+          </p>
+        </div>
+      )}
+
       {props.checklistError ? (
-        <div role="alert" className="flex flex-col gap-(--space-8)">
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-(--space-8) px-(--space-16) py-(--space-12)"
+        >
           <p className="type-label">{props.checklistError}</p>
           <Button variant="secondary" onClick={props.onRetryChecklist}>
             Tentar de novo
           </Button>
         </div>
-      ) : checklist === undefined ? (
-        <p role="status" className="type-caption">
-          Conferindo o que falta…
-        </p>
       ) : (
-        <ul aria-label="O que falta" className="flex flex-col gap-(--space-4)">
-          {requiredItems(checklist).map((item) => (
+        <ul aria-label="Itens da verificação">
+          {rows.map((item, index) => (
             <li
               key={item.key}
-              className="flex min-h-(--size-touch-min) items-center gap-(--space-8)"
+              className={cn(
+                'flex flex-wrap items-center gap-(--space-12) px-(--space-16) py-(--space-12)',
+                index > 0 && 'border-t border-(--border-subtle)',
+                rejected && 'border-l-[3px] border-l-(--status-rejected-fg)',
+              )}
             >
-              <span aria-hidden="true">{item.done ? '✓' : '○'}</span>
-              <span className="min-w-0 flex-1">
-                {labelOf(item.key)}
-                <span className="sr-only">{item.done ? ' (feito)' : ' (falta)'}</span>
-              </span>
-              {!item.done && (
-                <Button variant="ghost" onClick={() => props.onFix(item.key)}>
+              {item.done ? (
+                <span
+                  aria-hidden="true"
+                  className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--status-confirmed-bg) text-(--status-confirmed-fg)"
+                >
+                  <CheckIcon className="size-5" />
+                </span>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="size-6 shrink-0 rounded-full border-2 border-(--border-interactive)"
+                />
+              )}
+              <div className="min-w-48 flex-1">
+                <p
+                  className={cn(
+                    'type-body',
+                    item.done ? 'text-(--text-muted)' : 'text-(--text-strong)',
+                  )}
+                >
+                  {labelOf(item.key)}
+                  <span className="sr-only">{item.done ? ' (feito)' : ' (falta)'}</span>
+                </p>
+                {!item.done && hintOf(item.key) && (
+                  <p className="type-caption text-(--text-muted)">{hintOf(item.key)}</p>
+                )}
+              </div>
+              {item.done ? (
+                <span className="type-label whitespace-nowrap text-(--status-confirmed-fg)">
+                  Concluído
+                </span>
+              ) : (
+                <Button variant="secondary" onClick={() => props.onFix(item.key)}>
                   Resolver
                 </Button>
               )}
@@ -110,52 +352,28 @@ export const BusinessStatusBanner = (props: BusinessStatusBannerProps) => {
         </ul>
       )}
 
-      {error && (
-        <p role="alert" className="type-label text-(--status-rejected-fg)">
-          {error}
+      <div className="flex flex-wrap items-center gap-(--space-12) border-t border-(--border-subtle) bg-(--bg-surface-raised) px-(--space-16) py-(--space-12)">
+        <p className="type-caption min-w-48 flex-1 text-(--text-muted)">
+          {rejected
+            ? 'Os outros itens continuam concluídos — reenviar não refaz a lista. A nova análise leva até 2 dias úteis e o estabelecimento segue fora da busca nesse período.'
+            : review
+              ? 'Os dados estão com um administrador. Aparecer na busca e receber pedidos continua bloqueado até a decisão.'
+              : complete
+                ? props.health
+                  ? 'Tudo certo. A análise leva até 2 dias úteis.'
+                  : 'Tudo certo. Ao publicar, o estabelecimento passa a aparecer na busca.'
+                : `O envio libera quando os ${total} itens estiverem concluídos.${props.health ? ' A análise leva até 2 dias úteis.' : ''}`}
         </p>
-      )}
-
-      {complete && (
-        <Button
-          size="lg"
-          className="w-full"
-          disabled={busy}
-          onClick={health ? props.onSubmit : props.onPublish}
-        >
-          {busy
-            ? 'Enviando…'
-            : health
-              ? rejected
-                ? 'Reenviar para análise'
-                : 'Enviar para análise'
-              : 'Publicar meu estabelecimento'}
-        </Button>
-      )}
-    </Banner>
+        {!review && (
+          <Button
+            disabled={!complete || busy}
+            onClick={props.health ? props.onSubmit : props.onPublish}
+            className="disabled:bg-(--bg-disabled) disabled:text-(--text-disabled) disabled:opacity-100"
+          >
+            {busy ? 'Enviando…' : submitLabel}
+          </Button>
+        )}
+      </div>
+    </>
   )
 }
-
-const TONES = {
-  pending: 'border-(--status-pending-fg) bg-(--status-pending-bg)',
-  rejected: 'border-(--status-rejected-fg) bg-(--status-rejected-bg)',
-  confirmed: 'border-(--status-confirmed-fg) bg-(--status-confirmed-bg)',
-} as const
-
-const Banner = ({
-  tone,
-  title,
-  children,
-}: {
-  tone: keyof typeof TONES
-  title: string
-  children: React.ReactNode
-}) => (
-  <section
-    aria-label={`Status do estabelecimento: ${title}`}
-    className={`flex flex-col gap-(--space-8) border-b-2 px-(--space-16) py-(--space-12) text-(--text-body) lg:px-(--space-24) ${TONES[tone]}`}
-  >
-    <h2 className="type-label font-semibold text-(--text-strong)">{title}</h2>
-    {children}
-  </section>
-)

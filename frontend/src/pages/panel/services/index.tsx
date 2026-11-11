@@ -27,6 +27,7 @@ import type { ServicesData } from './screen/types'
 import { ServicesScreen } from './screen'
 import { managementService } from '@api/services/management'
 import { notify } from '@components/toaster/notify'
+import { useGuidedStep } from '@hooks/use-guided-step'
 import { usePanelContext } from '@layouts/panel-layout/context'
 import { queryKeys } from '@api/services/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
@@ -39,6 +40,7 @@ export const PanelServicesRoute = () => {
   const services = usePanelServices(context.businessId, true)
   const team = usePanelTeam(context.businessId)
   const detail = usePanelBusinessDetail(context.businessId)
+  const guidedStep = useGuidedStep(context.businessId, 'service_with_professional')
 
   const data: ServicesData = services.isError
     ? {
@@ -56,6 +58,7 @@ export const PanelServicesRoute = () => {
   return (
     <ServicesScreen
       data={data}
+      guidedStep={guidedStep}
       businessName={business.name}
       categoryName={categoryLabel(detail.data?.category ?? '')}
       sensitive={isSensitiveCategory(detail.data?.category ?? '')}

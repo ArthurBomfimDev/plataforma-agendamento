@@ -122,3 +122,54 @@ describe('serviços do painel', () => {
     expect(initialsOf('Ana')).toBe('A')
   })
 })
+
+describe('ServicesScreen · passo guiado da verificação', () => {
+  const unassignedService: ServiceListItem = {
+    id: 's3',
+    name: 'Hidratação',
+    description: null,
+    durationMinutes: 45,
+    blockedMinutes: 55,
+    priceCents: 9_000,
+    isActive: true,
+    professionalNames: [],
+  }
+  const guidedStep = { number: 4, total: 6 }
+  const withUnassigned = ready([...services, unassignedService])
+
+  it('destaca o serviço ativo sem profissional e mostra a ação do passo ao lado dele', () => {
+    const html = render({ data: withUnassigned, guidedStep, onEdit: () => undefined })
+
+    expect(html).toContain('Passo 4 de 6 · escolha quem executa Hidratação')
+    expect(html).toContain('Designar profissional')
+    expect(html).toContain('some da busca mesmo marcado como Ativo')
+    expect(html).toContain('outline-(--border-focus)') // a linha destacada da tabela
+    expect(html).toContain('border-(--border-focus)') // o cartão destacado do celular
+  })
+
+  it('no passo guiado o aviso do topo some: a barra do serviço já diz o mesmo', () => {
+    const guided = render({ data: withUnassigned, guidedStep })
+    const normal = render({ data: withUnassigned })
+
+    expect(guided).not.toContain('não aparece para quem busca')
+    expect(normal).toContain('não aparece para quem busca')
+    expect(normal).not.toContain('Passo 4 de 6')
+  })
+
+  it('sem serviço sem profissional, não há o que destacar mesmo no passo guiado', () => {
+    const html = render({ guidedStep })
+
+    expect(html).not.toContain('Passo 4 de 6')
+    expect(html).not.toContain('Designar profissional')
+  })
+
+  it('carregando e erro continuam como estavam, sem a barra do passo', () => {
+    expect(render({ data: { status: 'loading' }, guidedStep })).toContain('Carregando os serviços…')
+    expect(
+      render({
+        data: { status: 'error', message: 'Falhou.', onRetry: () => undefined },
+        guidedStep,
+      }),
+    ).not.toContain('Passo 4 de 6')
+  })
+})
