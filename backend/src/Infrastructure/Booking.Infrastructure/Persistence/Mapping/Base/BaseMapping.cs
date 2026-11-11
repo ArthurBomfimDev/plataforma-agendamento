@@ -9,7 +9,7 @@ public abstract class BaseMapping<T> : IEntityTypeConfiguration<T> where T : Bas
     public void Configure(EntityTypeBuilder<T> builder)
     {
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedOnAdd();
+        builder.Property(x => x.Id).ValueGeneratedNever();
 
         if (typeof(AggregateRoot).IsAssignableFrom(typeof(T)))
         {
@@ -19,7 +19,7 @@ public abstract class BaseMapping<T> : IEntityTypeConfiguration<T> where T : Bas
         if (typeof(IAuditable).IsAssignableFrom(typeof(T)))
         {
             builder.Property<DateTimeOffset>(AuditColumns.CreatedAt).IsRequired();
-            builder.Property<DateTimeOffset?>(AuditColumns.UpdateAt);
+            builder.Property<DateTimeOffset?>(AuditColumns.UpdatedAt);
         }
 
         if (typeof(ITenantScoped).IsAssignableFrom(typeof(T)))

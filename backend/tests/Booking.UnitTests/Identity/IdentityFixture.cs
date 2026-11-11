@@ -18,11 +18,12 @@ public sealed class IdentityFixture
     public MutableClock Clock { get; } = new(new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero));
     public InMemoryUsers Users { get; } = new();
     public InMemoryRefreshTokens RefreshTokens { get; } = new();
-    public InMemoryUserTokens UserTokens { get; } = new();
+    public InMemoryUserTokens UserTokens { get; }
     public RecordingMailer Mailer { get; } = new();
     public IPasswordHasher Hasher { get; } = new Argon2PasswordHasher();
     public ISecureTokenGenerator Tokens { get; } = new SecureTokenGenerator();
-    public IdentityPolicy Policy { get; } = new();
+    /// <summary>Trocável no meio do teste: os comandos são montados a cada chamada.</summary>
+    public IdentityPolicy Policy { get; set; } = new();
     public IAccessTokenIssuer AccessTokens { get; }
 
     private readonly NoopUnitOfWork _unitOfWork = new();
@@ -30,6 +31,7 @@ public sealed class IdentityFixture
     public IdentityFixture()
     {
         AccessTokens = new JwtAccessTokenIssuer(Options.Create(JwtSettings));
+        UserTokens = new InMemoryUserTokens(Clock);
     }
 
     public static JwtOptions JwtSettings { get; } = new()
@@ -40,7 +42,7 @@ public sealed class IdentityFixture
     public RegisterUserCommand Register() =>
         new(Users, UserTokens, Hasher, Tokens, Mailer, _unitOfWork, Clock, Policy);
 
-    public LoginCommand Login() => new(Users, Hasher, Sessions(), _unitOfWork, Clock);
+    public LoginCommand Login() => new(Users, Hasher, Sessions(), _unitOfWork, Clock, Policy);
 
     public RefreshSessionCommand Refresh() =>
         new(RefreshTokens, Users, Tokens, AccessTokens, _unitOfWork, Clock, Policy);
@@ -48,6 +50,9 @@ public sealed class IdentityFixture
     public LogoutCommand Logout() => new(RefreshTokens, Tokens, _unitOfWork, Clock);
 
     public ConfirmEmailCommand ConfirmEmail() => new(UserTokens, Users, Tokens, _unitOfWork, Clock);
+
+    public ResendConfirmationCommand ResendConfirmation() =>
+        new(Users, UserTokens, Tokens, Mailer, _unitOfWork, Clock, Policy);
 
     public ForgotPasswordCommand ForgotPassword() =>
         new(Users, UserTokens, Tokens, Mailer, _unitOfWork, Clock, Policy);
@@ -57,9 +62,15 @@ public sealed class IdentityFixture
 
     private SessionIssuer Sessions() => new(AccessTokens, Tokens, RefreshTokens, Policy);
 
-    public User SeedUser(string email = "ana@exemplo.com", UserStatus status = UserStatus.Active)
+    /// <summary>Conta com e-mail já confirmado, salvo <paramref name="confirmed"/> falso.</summary>
+    public User SeedUser(string email = "ana@exemplo.com", UserStatus status = UserStatus.Active, bool confirmed = true)
     {
         User user = User.Create(Email.Of(email), Hasher.Hash(Password), "Ana Souza");
+
+        if (confirmed)
+        {
+            user.ConfirmEmail(Clock.Now);
+        }
 
         if (status == UserStatus.Suspended)
         {
@@ -119,14 +130,26 @@ public sealed class InMemoryRefreshTokens : IRefreshTokenRepository
     }
 }
 
-public sealed class InMemoryUserTokens : IUserTokenRepository
+public sealed class InMemoryUserTokens(TimeProvider clock) : IUserTokenRepository
 {
+    private readonly Dictionary<Guid, DateTimeOffset> _issuedAt = [];
+
     public List<UserToken> Items { get; } = [];
 
     public Task<UserToken?> GetByHashAsync(UserTokenType type, string tokenHash, CancellationToken ct = default) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Type == type && x.TokenHash == tokenHash));
 
-    public void Add(UserToken token) => Items.Add(token);
+    public void Add(UserToken token)
+    {
+        Items.Add(token);
+        _issuedAt[token.Id] = clock.GetUtcNow();
+    }
+
+    public Task<DateTimeOffset?> LatestIssuedAtAsync(Guid userId, UserTokenType type, CancellationToken ct = default) =>
+        Task.FromResult(Items
+            .Where(x => x.UserId == userId && x.Type == type)
+            .Select(x => (DateTimeOffset?)_issuedAt[x.Id])
+            .Max());
 
     public Task InvalidatePendingAsync(Guid userId, UserTokenType type, DateTimeOffset now, CancellationToken ct = default)
     {
@@ -144,13 +167,13 @@ public sealed class RecordingMailer : IIdentityMailer
     public List<(string Email, string Token)> Confirmations { get; } = [];
     public List<(string Email, string Token)> Resets { get; } = [];
 
-    public Task SendEmailConfirmationAsync(string email, string rawToken, CancellationToken ct = default)
+    public Task QueueEmailConfirmationAsync(string email, string fullName, string rawToken, CancellationToken ct = default)
     {
         Confirmations.Add((email, rawToken));
         return Task.CompletedTask;
     }
 
-    public Task SendPasswordResetAsync(string email, string rawToken, CancellationToken ct = default)
+    public Task QueuePasswordResetAsync(string email, string fullName, string rawToken, CancellationToken ct = default)
     {
         Resets.Add((email, rawToken));
         return Task.CompletedTask;

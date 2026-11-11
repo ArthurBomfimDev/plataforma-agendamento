@@ -39,8 +39,9 @@ public sealed class RegisterUserCommand(
             confirmation.Hash,
             clock.GetUtcNow() + policy.EmailConfirmationLifetime));
 
+        // Na mesma transação da conta e do token (outbox, ADR-021): ou os três entram, ou nenhum.
+        await mailer.QueueEmailConfirmationAsync(email.Address, user.FullName, confirmation.Raw, ct);
         await unitOfWork.SaveChangesAsync(ct);
-        await mailer.SendEmailConfirmationAsync(email.Address, confirmation.Raw, ct);
 
         return new UserResponse(user.Id, email.Address, user.FullName, EmailConfirmed: false);
     }

@@ -47,6 +47,16 @@ public sealed class AuthController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Sempre 202, exista a conta ou não. No máximo um e-mail a cada 60 s por conta.</summary>
+    [HttpPost("resend-confirmation")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    public async Task<IActionResult> ResendConfirmation(
+        ResendConfirmationRequest request, [FromServices] ResendConfirmationCommand command, CancellationToken ct)
+    {
+        await command.ExecuteAsync(request, ct);
+        return Accepted();
+    }
+
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(
         ForgotPasswordRequest request, [FromServices] ForgotPasswordCommand command, CancellationToken ct)

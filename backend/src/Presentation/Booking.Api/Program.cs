@@ -15,11 +15,14 @@ builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<IActorContext, HttpActorContext>();
+builder.Services.AddHostedService<PendingExpirationWorker>();
+builder.Services.AddHostedService<OutboxWorker>();
+builder.Services.AddInfrastructure(builder.Configuration, isDevelopment: builder.Environment.IsDevelopment());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearer>();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder().AddBookingPolicies();
 
 // Freio de força bruta nas rotas de autenticação: 10 requisições por minuto por IP.
 builder.Services.AddRateLimiter(limiter =>
@@ -28,10 +31,64 @@ builder.Services.AddRateLimiter(limiter =>
     limiter.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+
+    // Localização (Onda 6B): cada chamada pode ir a um provedor com cota. 30 por minuto por IP; o cache absorve a repetição.
+    limiter.AddPolicy("geo", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
+
+    // Envio de imagem (Onda 6D): processar é caro. 20 por hora por usuário (sem login, por IP; a rota recusa de qualquer jeito).
+    limiter.AddPolicy(ImageUpload.RateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+
+    // Cadastro de estabelecimento (Fase 3): criar custa pouco e abre porta para abuso. 5 por hora por conta.
+    limiter.AddPolicy(RateLimits.BusinessCreate, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
+
+    // Denúncia na página pública (Fase 3): rota anônima, então por IP. 5 por hora. O IP real vem do proxy confiável.
+    limiter.AddPolicy(RateLimits.Report, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromHours(1) }));
+
+    // Convites (Fase 4): o dono envia no máximo 30 por hora (e-mail custa e abre porta para spam); as rotas públicas do
+    // link (prévia e aceite) são por IP, 20 por hora, porque o aceite cria conta com senha.
+    limiter.AddPolicy(RateLimits.InvitationSend, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromHours(1) }));
+    limiter.AddPolicy(RateLimits.InvitationLink, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+
+    // Avaliações (Fase 8): texto livre público. 10 por hora por conta, contra spam e script.
+    limiter.AddPolicy(RateLimits.Review, context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromHours(1) }));
+
+    // Trocar a senha (Onda 7CF): quem tem um token roubado não pode testar senhas atuais à vontade. 5 por 15 minutos
+    // por conta, que é o que importa aqui (o IP muda; a conta, não).
+    limiter.AddPolicy("password", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) }));
 });
+
+// O frontend roda em outra origem (e, depois, o Capacitor e o Tauri também). Só as origens
+// configuradas em Cors:AllowedOrigins são liberadas; sem configuração, nenhuma. Sem credenciais:
+// a autenticação é por token no header, não por cookie (regra 3 de empacotamento).
+string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
+builder.Services.AddHealthChecks();
+builder.Services.AddTrustedProxies(builder.Configuration);
 
 WebApplication app = builder.Build();
 
+// Primeiro de tudo: o IP e o esquema reais valem para o HSTS, o redirecionamento e o limitador.
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -39,11 +96,23 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseSecurityHeaders();
+
+// HSTS só fora de Development: em produção a API fica atrás de TLS; no ambiente local, HTTP puro.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
-app.UseRateLimiter();
+app.UseCors();
+app.UseMediaFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+// Depois da autenticação: antes dela context.User é anônimo, e toda política "por conta" cairia no IP.
+app.UseRateLimiter();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 

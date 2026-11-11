@@ -24,6 +24,34 @@
 
 ### 1.1 Constraint de exclusão — texto definitivo
 
+> ⚠️ **Errata (26/10/2026).** O SQL abaixo **não é o implementado e não roda**: coluna gerada exige
+> expressão `IMMUTABLE`, e `timestamptz - interval` é `STABLE` (o resultado depende do fuso da sessão).
+> O PostgreSQL recusa o `GENERATED ALWAYS AS`. A mesma correção vale para a linha 3 da tabela do §1
+> ("intervalo bloqueado é coluna gerada").
+>
+> O implementado, na migration `20261014032556_AddCoreModules`, grava o intervalo bloqueado em duas
+> colunas comuns, preenchidas pelo domínio ao criar o agendamento
+> (`BlockedStartsAt = início − buffer antes`, `BlockedEndsAt = início + duração + buffer depois`), garante a
+> coerência por check e monta o `tstzrange` dentro da constraint, onde `tstzrange(timestamptz, timestamptz,
+> text)` é `IMMUTABLE`:
+>
+> ```sql
+> -- colunas: blocked_starts_at timestamptz NOT NULL, blocked_ends_at timestamptz NOT NULL
+> CONSTRAINT ck_appointment_blocked_range CHECK (blocked_starts_at <= starts_at AND blocked_ends_at >= ends_at)
+> CONSTRAINT ck_appointment_period        CHECK (ends_at > starts_at)
+>
+> ALTER TABLE scheduling.appointment
+>     ADD CONSTRAINT appointment_no_overlap
+>     EXCLUDE USING gist (
+>         professional_id WITH =,
+>         tstzrange(blocked_starts_at, blocked_ends_at, '[)') WITH &&
+>     ) WHERE (status IN ('Pending', 'Confirmed', 'Completed', 'NoShow'));
+> ```
+>
+> A violação (`23P01`, `appointment_no_overlap`) é traduzida em `BookingDbContext` para
+> `appointment.slot_no_longer_available` → HTTP 409 com até 5 horários alternativos. Registro da decisão:
+> ADR-017. O texto original segue abaixo, preservado.
+
 ```sql
 blocked_range tstzrange GENERATED ALWAYS AS (
   tstzrange(starts_at - make_interval(mins => buffer_before_minutes),

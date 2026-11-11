@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Booking.Api.Common;
 
+/// <summary>Valida o JWT com as mesmas <see cref="JwtOptions"/> usadas para emiti-lo — uma configuração só.</summary>
 public sealed class ConfigureJwtBearer(IOptions<JwtOptions> options) : IConfigureNamedOptions<JwtBearerOptions>
 {
     public void Configure(string? name, JwtBearerOptions bearer)

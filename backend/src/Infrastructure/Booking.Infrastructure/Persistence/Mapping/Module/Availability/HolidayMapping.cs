@@ -16,6 +16,5 @@ public sealed class HolidayMapping : BaseMapping<Holiday>
         builder.Property(x => x.Kind).HasConversion<string>().HasMaxLength(20);
 
         builder.HasIndex(x => new { x.Date, x.Name }).IsUnique();
-        builder.HasIndex(x => x.Date).IsUnique();
     }
 }

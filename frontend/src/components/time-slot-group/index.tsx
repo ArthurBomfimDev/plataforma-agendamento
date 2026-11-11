@@ -1,6 +1,6 @@
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
+import { ToggleGroup, ToggleGroupItem } from '@components/ui/toggle-group'
 
-import { TIME_SLOT_CHIP_CLASSES } from '../time-slot-chip/consts'
+import { TIME_SLOT_CHIP_CLASSES } from '@components/time-slot-chip/consts'
 import type { TimeSlotGroupProps } from './types'
 import { cn } from 'cn'
 

@@ -36,10 +36,10 @@ public sealed class PersistenceMappingTests
 
         Assert.Contains("Booking.Infrastructure.Persistence.Entity.AppointmentRecord", entities);
 
-        Assert.Contains(mappings, v => v.StartsWith("Booking.Infrastructure.Module.Scheduling.Mapping.AppointmentRecordMapping ", StringComparison.Ordinal));
+        Assert.Contains(mappings, v => v.StartsWith("Booking.Infrastructure.Persistence.Mapping.Module.Scheduling.Planted.AppointmentRecordMapping ", StringComparison.Ordinal));
         Assert.Contains(mappings, v => v.StartsWith("Booking.Infrastructure.Persistence.Context.LegacyDbContext.AppointmentRecords ", StringComparison.Ordinal));
 
-        Assert.DoesNotContain(mappings, v => v.StartsWith("Booking.Infrastructure.Module.Scheduling.Mapping.AppointmentMapping ", StringComparison.Ordinal));
+        Assert.DoesNotContain(mappings, v => v.StartsWith("Booking.Infrastructure.Persistence.Mapping.Module.Scheduling.Planted.AppointmentMapping ", StringComparison.Ordinal));
         Assert.DoesNotContain(mappings, v => v.StartsWith("Booking.Infrastructure.Persistence.Context.LegacyDbContext.Appointments ", StringComparison.Ordinal));
     }
 }
