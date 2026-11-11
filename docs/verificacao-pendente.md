@@ -10,6 +10,21 @@ Rode na ordem dos PRs. Marque cada item; se algo falhar, abra o PR correspondent
 
 > Nenhuma credencial neste arquivo. As senhas vêm do `.env` local (não versionado).
 
+## Demonstração pública (`feat/demo-publica`) — Parte 1: seed completo
+
+Escrito **sem rodar o seed contra uma API**: a pilha `booking` que estava de pé é do Arthur e não foi tocada.
+
+Provado: `bun test scripts/seed-demo` (16 testes: PNG válido e determinístico, escolha arquivo × gerada, plano de
+fotos/vitrine/folgas, datas) e `bun build scripts/seed-demo.ts` (sintaxe e imports). **Não provado:**
+
+- [ ] `bun scripts/seed-demo.ts --passado` numa pilha isolada com `SEED_PASSWORD` e `SEED_ADMIN_PASSWORD` definidas.
+- [ ] Segunda execução em seguida: nada duplicado (fotos, folgas, consentimento, consulta de Saúde).
+- [ ] A API aceita a folga (`DayOff` e `Vacation` com `existingAppointments: "Keep"`) e o `PUT` de serviço com `showPhotoInShowcase`.
+- [ ] As fotos geradas aparecem na vitrine, no perfil do profissional e no painel; o que o Arthur pôs em `scripts/seed-assets/` também.
+- [ ] A consulta de Saúde pedida pelo consumidor aparece na agenda do estabelecimento, e o consentimento, em "Meus dados".
+- [ ] As 3 avaliações do estabelecimento de Saúde aparecem **sem** o nome do serviço.
+- [ ] `docs/operacao/seed-demo.md` confere com o que a tela mostra.
+
 ## Rodada de finalização de 10/11 (`feat/integracao-final`)
 
 Provado **localmente** (o GitHub está com a cobrança bloqueada: sem CI, sem PR): 28 de arquitetura, 419 unitários, 171 de

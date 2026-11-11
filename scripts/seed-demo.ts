@@ -11,11 +11,21 @@
  *                                         ganham uma agenda pequena de hoje (balcão) e de amanhã (pedidos),
  *                                         para o painel não abrir vazio.
  *
- *   bun scripts/seed-demo.ts --historico  ⚠️ SÓ PARA O BANCO LOCAL DO DOCKER. Consumidores fictícios,
+ *   bun scripts/seed-demo.ts --passado    (alias: --historico)
+ *                                         ⚠️ SÓ PARA O BANCO LOCAL DO DOCKER. Consumidores fictícios,
  *                                         60 dias de histórico (concluídos, cancelados, faltas) e agenda
  *                                         futura parcialmente ocupada, gravados por SQL direto: o passado
  *                                         não passa pela API (antecedência mínima, horizonte). Roda as duas
  *                                         etapas, nesta ordem.
+ *
+ * PASSADO POR SQL (decisão do Arthur, opção (c)): a API não deixa criar nem concluir um atendimento que já passou
+ * (`Appointment.Complete` exige `now >= EndsAt`), e a avaliação exige atendimento concluído. Em vez de um endpoint de
+ * bypass ou de um relógio falsificável na API, o passado entra por SQL no Postgres do Docker local, em passo explícito
+ * (`--passado`, mais as avaliações), com marcador em `customer_notes` e uma transação só. A API de produção não ganha
+ * nada. Tudo o que NÃO depende do relógio — fotos, folgas, consentimento, agenda futura — passa pela API pública.
+ *
+ * Fotos, folgas e consentimento (demonstração final): `scripts/seed-demo/` (imagens originais geradas por código ou
+ * arquivos de `scripts/seed-assets/`, enviados pelo upload da interface), tudo idempotente.
  *
  * Escrita direta no banco, além do histórico: conceder o papel de Admin (ADR-020 — nunca por endpoint) e
  * confirmar o e-mail das contas de demonstração (Onda 6A — `example.com` não recebe e-mail).
@@ -33,13 +43,24 @@
  * aleatória gerada nesta execução e mostrada uma vez no fim.
  */
 
+import { imageFor } from './seed-demo/assets'
+import {
+  TIME_OFF_REASON,
+  hasCover,
+  professionalHasPhoto,
+  serviceHasPhoto,
+  serviceShowsPhotoInShowcase,
+  timeOffPlan,
+} from './seed-demo/plan'
+import { addDays, zonedToUtc } from './seed-demo/time'
+
 const API = process.env.API_URL ?? 'http://localhost:8081'
 const DEFAULT_PASSWORD = 'demo-12345678'
 const DEMO_PASSWORD = process.env.SEED_PASSWORD || DEFAULT_PASSWORD
 const ADMIN_PASSWORD_FROM_ENV = process.env.SEED_ADMIN_PASSWORD || null
 const ADMIN_PASSWORD = ADMIN_PASSWORD_FROM_ENV ?? randomPassword()
 const TIME_ZONE = 'America/Sao_Paulo'
-const WITH_HISTORY = process.argv.includes('--historico')
+const WITH_HISTORY = process.argv.includes('--passado') || process.argv.includes('--historico')
 const ALLOW_DEFAULT_PASSWORD = process.argv.includes('--permitir-senha-padrao')
 
 /** 24 caracteres de base64url (18 bytes do gerador seguro): passa em qualquer regra de senha da API. */
@@ -764,27 +785,6 @@ function uuidV7(random: () => number, at: number): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
-/** Instante UTC de uma hora de parede no fuso IANA — sem offset fixo, que quebra no horário de verão. */
-function zonedToUtc(date: string, time: string, timeZone: string): Date {
-  const guess = new Date(`${date}T${time}Z`)
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone,
-      hourCycle: 'h23',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-      .formatToParts(guess)
-      .map((p) => [p.type, p.value]),
-  )
-  const asIfUtc = Date.UTC(+parts.year!, +parts.month! - 1, +parts.day!, +parts.hour!, +parts.minute!, +parts.second!)
-  return new Date(guess.getTime() - (asIfUtc - guess.getTime()))
-}
-
 /** Feriados nacionais (o mesmo critério de `BrazilianHolidays`): fechado, sem agendamento. */
 function isNationalHoliday(date: string): boolean {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number]
@@ -1144,7 +1144,8 @@ async function seedDuartinaTeam() {
  * agendamento que já esteja lá (`ON CONFLICT DO NOTHING`); o histórico, por sua vez, evita estes horários.
  */
 const REVIEW_MARKER = 'Avaliação de demonstração'
-const REVIEWED_BUSINESSES = 3
+/** Os 3 primeiros e o primeiro de Saúde (índice 3 em `DEMO_REVIEWS`): a avaliação sem o nome do serviço, por ser dado sensível. */
+const REVIEWED = [...BUSINESSES.slice(0, 3), BUSINESSES.find((business) => business.category === 'Saude')!]
 
 const DEMO_REVIEWS: { business: number; rating: number; professionalRating: number | null; comment: string | null }[] = [
   { business: 0, rating: 5, professionalRating: 5, comment: 'Atendimento excelente e pontual.' },
@@ -1157,6 +1158,9 @@ const DEMO_REVIEWS: { business: number; rating: number; professionalRating: numb
   { business: 1, rating: 3, professionalRating: null, comment: 'Demorou um pouco para começar.' },
   { business: 2, rating: 5, professionalRating: 5, comment: 'Recomendo.' },
   { business: 2, rating: 4, professionalRating: null, comment: null },
+  { business: 3, rating: 5, professionalRating: 5, comment: 'Fui muito bem acolhida.' },
+  { business: 3, rating: 5, professionalRating: 5, comment: null },
+  { business: 3, rating: 4, professionalRating: null, comment: 'Pontualidade e cuidado.' },
 ]
 
 /** "Ana Souza Lima" → "Ana S." (a mesma regra de `Review.DisplayNameOf`). */
@@ -1181,7 +1185,7 @@ function seedReviews() {
     return
   }
 
-  const names = BUSINESSES.slice(0, REVIEWED_BUSINESSES).map((business) => business.name)
+  const names = REVIEWED.map((business) => business.name)
   const source = JSON.parse(
     psql(`
       WITH picked AS (
@@ -1210,8 +1214,8 @@ function seedReviews() {
     return
   }
   const orderedBusinesses = names.flatMap((name) => source.businesses.filter((business) => business.name === name))
-  if (orderedBusinesses.length < REVIEWED_BUSINESSES) {
-    console.log('  os 3 primeiros estabelecimentos ainda não estão ativos — pulando')
+  if (orderedBusinesses.length < REVIEWED.length) {
+    console.log('  os estabelecimentos avaliados ainda não estão ativos — pulando')
     return
   }
 
@@ -1354,6 +1358,194 @@ function seedReviews() {
   console.log(`  ${counts[0]} atendimentos concluídos, ${counts[1]} avaliações (1 atendimento fica sem avaliação, do ${CUSTOMER.email})`)
 }
 
+// --- Fotos, folgas e consentimento (pela API, idempotentes) --------------------------------------------
+
+type SeedImageFile = ReturnType<typeof imageFor>
+
+/** O mesmo envio da interface: `PUT` multipart, campo `file`. Imagem quadrada, como a que sai do recorte. */
+async function uploadImage(path: string, image: SeedImageFile, token: string) {
+  const form = new FormData()
+  form.append('file', new File([image.bytes as BlobPart], image.fileName, { type: image.contentType }))
+  const response = await fetch(`${API}${path}`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body: form })
+  if (!response.ok) throw new ApiCallError(response.status, undefined, `PUT ${path} → ${response.status} ${await response.text()}`)
+}
+
+/** Entra como o dono e devolve o token com o estabelecimento ativo. `null` se ele não tem estabelecimento. */
+async function ownerSession(demo: DemoBusiness): Promise<{ token: string; businessId: string } | null> {
+  const userToken = await login(demo.owner.email)
+  const me = await call<{ businesses: { businessId: string; name: string }[] }>('GET', '/api/users/me', undefined, userToken)
+  const businessId = (me.businesses.find((b) => b.name === demo.name) ?? me.businesses[0])?.businessId
+  if (!businessId) return null
+  const { accessToken } = await call<{ accessToken: string }>('POST', '/api/users/me/context', { businessId }, userToken)
+  return { token: accessToken, businessId }
+}
+
+type ServiceItem = {
+  id: string
+  name: string
+  description: string | null
+  durationMinutes: number
+  bufferBeforeMinutes: number
+  bufferAfterMinutes: number
+  slotStepMinutes: number
+  priceCents: number
+  suppliesNote: string | null
+  isActive: boolean
+  photo: unknown | null
+  showPhotoInShowcase: boolean
+}
+
+/**
+ * Logotipo, capa, fotos de serviços e de profissionais, "mostrar foto na vitrine" e folgas. Só envia o que falta:
+ * rodar de novo não duplica nem gasta o limite de 20 envios por hora de cada dono.
+ */
+async function seedExtras(demo: DemoBusiness, index: number) {
+  const session = await ownerSession(demo)
+  if (!session) return
+  const { token } = session
+  let uploads = 0
+  let changes = 0
+
+  const business = await call<{ status: string; logo: unknown | null; cover: unknown | null }>('GET', '/api/businesses/current', undefined, token)
+  if (business.status !== 'Active') return
+  if (!business.logo) {
+    await uploadImage('/api/businesses/current/logo', imageFor('logo', demo.name), token)
+    uploads++
+  }
+  if (hasCover(index) && !business.cover) {
+    await uploadImage('/api/businesses/current/cover', imageFor('cover', demo.name), token)
+    uploads++
+  }
+
+  const services = await call<{ items: ServiceItem[] }>('GET', '/api/businesses/current/services?pageSize=50', undefined, token)
+  for (const service of services.items) {
+    const s = demo.services.findIndex((candidate) => candidate.name === service.name)
+    if (s < 0 || !serviceHasPhoto(index, s)) continue
+
+    if (!service.photo) {
+      await uploadImage(`/api/businesses/current/services/${service.id}/image`, imageFor('service', service.name, `${demo.name}|${service.name}`), token)
+      uploads++
+    }
+    const showcase = serviceShowsPhotoInShowcase(index, s)
+    if (service.showPhotoInShowcase !== showcase) {
+      await call(
+        'PUT',
+        `/api/businesses/current/services/${service.id}`,
+        {
+          name: service.name,
+          description: service.description,
+          durationMinutes: service.durationMinutes,
+          bufferBeforeMinutes: service.bufferBeforeMinutes,
+          bufferAfterMinutes: service.bufferAfterMinutes,
+          slotStepMinutes: service.slotStepMinutes,
+          priceCents: service.priceCents,
+          suppliesNote: service.suppliesNote,
+          isActive: service.isActive,
+          showPhotoInShowcase: showcase,
+        },
+        token,
+      )
+      changes++
+    }
+  }
+
+  const team = await call<{ items: { id: string; displayName: string; photo: unknown | null }[] }>(
+    'GET',
+    '/api/businesses/current/professionals?pageSize=50',
+    undefined,
+    token,
+  )
+  for (const professional of team.items) {
+    const p = demo.professionals.findIndex((candidate) => candidate.displayName === professional.displayName)
+    if (p < 0 || professional.photo || !professionalHasPhoto(index, p)) continue
+    await uploadImage(
+      `/api/businesses/current/professionals/${professional.id}/photo`,
+      imageFor('professional', professional.displayName, `${demo.name}|${professional.displayName}`),
+      token,
+    )
+    uploads++
+  }
+
+  const plan = timeOffPlan(index, demo.professionals.length)
+  if (plan.length > 0) {
+    const existing = await call<{ items: { professionalId: string | null; reason: string | null }[] }>(
+      'GET',
+      '/api/businesses/current/schedule-exceptions?pageSize=100',
+      undefined,
+      token,
+    )
+    for (const item of plan) {
+      const professional = team.items.find((candidate) => candidate.displayName === demo.professionals[item.professionalIndex]?.displayName)
+      if (!professional) continue
+      if (existing.items.some((e) => e.professionalId === professional.id && e.reason === TIME_OFF_REASON)) continue
+      await call(
+        'POST',
+        '/api/businesses/current/schedule-exceptions',
+        {
+          professionalId: professional.id,
+          kind: item.kind,
+          startsAt: zonedToUtc(addDays(today, item.startOffsetDays), '00:00:00', TIME_ZONE).toISOString(),
+          endsAt: zonedToUtc(addDays(today, item.endOffsetDays), '00:00:00', TIME_ZONE).toISOString(),
+          reason: TIME_OFF_REASON,
+          existingAppointments: 'Keep',
+        },
+        token,
+      )
+      changes++
+    }
+  }
+
+  if (uploads + changes > 0) console.log(`  ${demo.name}: ${uploads} imagens, ${changes} ajustes (vitrine e folgas)`)
+}
+
+/**
+ * Em Saúde o próprio agendamento é dado sensível (LGPD Art. 11): o consumidor de demonstração concede o consentimento
+ * específico, na versão vigente, e marca uma consulta no primeiro estabelecimento de Saúde. Sem o consentimento a API
+ * recusa o pedido (`compliance.consent_required`). A chave de idempotência fixa impede um segundo agendamento.
+ */
+async function seedHealthConsent() {
+  const demo = BUSINESSES.find((candidate) => candidate.category === 'Saude')
+  if (!demo) return
+  console.log(`• Consentimento de Saúde e consulta em ${demo.name}`)
+
+  const token = await login(CUSTOMER.email)
+  const versions = await call<{ sensitiveScheduling: string }>('GET', '/api/consents/versions')
+  const mine = await call<{ items: { purpose: string; version: string; revokedAt: string | null }[] }>('GET', '/api/consents?pageSize=100', undefined, token)
+  const granted = mine.items.some(
+    (consent) => consent.purpose === 'SensitiveScheduling' && consent.version === versions.sensitiveScheduling && !consent.revokedAt,
+  )
+  if (!granted) await call('POST', '/api/consents', { purpose: 'SensitiveScheduling', version: versions.sensitiveScheduling }, token)
+
+  const session = await ownerSession(demo)
+  if (!session) return
+  const { businessId } = session
+  const services = await call<{ items: { id: string; professionals: { professionalId: string }[] }[] }>('GET', `/api/businesses/${businessId}/services?pageSize=50`)
+  const offer = services.items.flatMap((service) => service.professionals.map(({ professionalId }) => ({ serviceId: service.id, professionalId })))[0]
+  if (!offer) return
+
+  for (let offset = 2; offset <= 9; offset++) {
+    const { slots } = await call<Slots>(
+      'GET',
+      `/api/businesses/${businessId}/availability?serviceId=${offer.serviceId}&professionalId=${offer.professionalId}&date=${daysFromToday(offset)}`,
+    )
+    const startsAt = slots[0]
+    if (!startsAt) continue
+    try {
+      await call(
+        'POST',
+        '/api/appointments',
+        { businessId, ...offer, startsAt, notes: null, attendeeName: null, idempotencyKey: `seed-saude-${businessId}` },
+        token,
+      )
+      console.log(`  consentimento concedido; consulta pedida para ${startsAt}`)
+    } catch (error) {
+      if (!(error instanceof ApiCallError)) throw error
+      console.log(`  consentimento concedido; a consulta não foi criada (${error.code ?? error.status})`)
+    }
+    return
+  }
+}
+
 async function main() {
   console.log(`Populando ${API} com dados de demonstração${WITH_HISTORY ? ' (com histórico)' : ''}\n`)
   await call('GET', '/health').catch(() => {
@@ -1368,6 +1560,13 @@ async function main() {
   await seedDuartinaTeam()
   await seedCustomer()
   const adminCreated = await approvePendingBusinesses()
+
+  // Só com os estabelecimentos aprovados: fotos, vitrine e folgas (o passado, que não passa pela API, vem depois).
+  console.log('• Fotos, vitrine e folgas')
+  for (const [index, business] of BUSINESSES.entries()) {
+    await seedExtras(business, index)
+  }
+  await seedHealthConsent()
 
   // O histórico já traz hoje e os próximos 14 dias; sem ele, uma agenda pequena para o painel não abrir vazio.
   if (WITH_HISTORY) seedHistory()
