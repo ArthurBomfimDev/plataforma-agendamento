@@ -68,6 +68,11 @@ public sealed class Appointment : AggregateRoot, IAuditable, ITenantScoped
     /// <summary>Chave gerada pelo cliente: toque duplo e retry devolvem o mesmo agendamento.</summary>
     public string? IdempotencyKey { get; private set; }
 
+    /// <summary>Quando cada lembrete ao consumidor foi enfileirado (C1). Nulo: ainda não saiu. Cada um sai uma vez só.</summary>
+    public DateTimeOffset? DayBeforeReminderSentAt { get; private set; }
+
+    public DateTimeOffset? HourBeforeReminderSentAt { get; private set; }
+
     public IReadOnlyCollection<AppointmentEvent> History => _history.AsReadOnly();
 
     private Appointment()
@@ -147,6 +152,46 @@ public sealed class Appointment : AggregateRoot, IAuditable, ITenantScoped
 
     public static bool OccupiesSlot(AppointmentStatus status) =>
         status is AppointmentStatus.Pending or AppointmentStatus.Confirmed or AppointmentStatus.Completed or AppointmentStatus.NoShow;
+
+    /// <summary>
+    /// Qual lembrete está na hora, ou nulo. Só confirmado e com conta (balcão sem conta não tem para quem mandar), e nunca
+    /// depois do horário. O de 1 h vale na última hora. O de 24 h vale de 24 h até 2 h antes: entre 1 h e 2 h ele já
+    /// ficaria colado no de 1 h, então esse trecho fica sem lembrete (o de 1 h chega logo depois). Cada um sai uma vez.
+    /// </summary>
+    public ReminderKind? ReminderDue(DateTimeOffset now)
+    {
+        if (Status != AppointmentStatus.Confirmed || CustomerId is null || now >= StartsAt)
+        {
+            return null;
+        }
+
+        TimeSpan left = StartsAt - now;
+
+        if (left <= HourBeforeWindow)
+        {
+            return HourBeforeReminderSentAt is null ? ReminderKind.HourBefore : null;
+        }
+
+        return left > DayBeforeLowerBound && left <= DayBeforeWindow && DayBeforeReminderSentAt is null
+            ? ReminderKind.DayBefore
+            : null;
+    }
+
+    public void MarkReminderSent(ReminderKind kind, DateTimeOffset now)
+    {
+        if (kind == ReminderKind.DayBefore)
+        {
+            DayBeforeReminderSentAt = now;
+        }
+        else
+        {
+            HourBeforeReminderSentAt = now;
+        }
+    }
+
+    public static readonly TimeSpan DayBeforeWindow = TimeSpan.FromHours(24);
+    public static readonly TimeSpan DayBeforeLowerBound = TimeSpan.FromHours(2);
+    public static readonly TimeSpan HourBeforeWindow = TimeSpan.FromHours(1);
 
     public void Confirm(SchedulingActor actor, DateTimeOffset now)
     {

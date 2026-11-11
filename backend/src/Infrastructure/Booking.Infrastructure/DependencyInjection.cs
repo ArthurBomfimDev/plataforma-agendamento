@@ -330,6 +330,7 @@ public static class DependencyInjection
         services.AddScoped<ManageAppointmentCommand>();
         services.AddScoped<CancelMyAppointmentCommand>();
         services.AddScoped<ExpirePendingAppointmentsCommand>();
+        services.AddScoped<SendAppointmentRemindersCommand>();
         services.AddScoped<GetAgendaQuery>();
         services.AddScoped<ListPendingAppointmentsQuery>();
         services.AddScoped<ListMyAppointmentsQuery>();
@@ -407,6 +408,9 @@ public static class DependencyInjection
                 o.BrandName = string.IsNullOrWhiteSpace(o.BrandName) ? AppOptions.DefaultBrandName : o.BrandName.Trim();
             })
             .Validate(
+                o => o.ReminderDailyEmailBudget is >= 0 and <= 100_000,
+                "App:ReminderDailyEmailBudget deve ficar entre 0 e 100000.")
+            .Validate(
                 o => Uri.TryCreate(o.PublicBaseUrl, UriKind.Absolute, out Uri? uri) && uri.Scheme is "http" or "https",
                 "App:PublicBaseUrl não configurado: os links dos e-mails precisam do endereço público do frontend.")
             .ValidateOnStart();
@@ -414,7 +418,7 @@ public static class DependencyInjection
         services.AddSingleton(sp =>
         {
             AppOptions app = sp.GetRequiredService<IOptions<AppOptions>>().Value;
-            return new NotificationSettings(app.BrandName, app.PublicBaseUrl!);
+            return new NotificationSettings(app.BrandName, app.PublicBaseUrl!, app.ReminderDailyEmailBudget);
         });
 
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
@@ -422,6 +426,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddScoped<IIdentityMailer, IdentityMailer>();
         services.AddScoped<IInvitationMailer, InvitationMailer>();
+        services.AddScoped<ReminderBudget>();
         services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
         services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
         services.AddScoped<IProfessionalRemovalNotifier, ProfessionalRemovalNotifier>();

@@ -24,18 +24,20 @@ Regra: tudo aqui foi verificado no código ou em teste desta branch. O que não 
 
 ## 2. Lembretes e notificações (C1)
 
-**Estado real (auditado, `docs/produto/auditoria-notificacoes-11-11.md`).**
+**Estado real (auditado e depois implementado; `docs/produto/auditoria-notificacoes-11-11.md`).**
 - Existe: e-mail transacional por Outbox transacional (gravado na mesma transação do fato, enviado por worker, com nova tentativa e recuo, garantia de pelo menos uma vez); e-mails de pedido recebido, confirmado, recusado, cancelado pelo estabelecimento, expirado, cancelado pelo consumidor e convite para avaliar; arquivo `.ics` na confirmação, com alarme de 1 h antes, e `.ics` de cancelamento.
-- **Não existe:** lembrete por e-mail em 24 h e 1 h antes; lista de notificações dentro do aplicativo (sino, contador, marcar como lida); tratamento do limite diário do provedor de e-mail.
+- **Existe desde 11/11:** lembrete por e-mail ao consumidor **24 h e 1 h antes** de um horário **confirmado**. O de 24 h sai entre 24 h e 2 h antes (quem confirma já em cima da hora recebe só o de 1 h). Não sai para pedido pendente, recusado, cancelado ou expirado, nem para balcão sem conta, e cada lembrete sai uma vez só. Há um teto de e-mails nas últimas 24 h (padrão 400) que **só** segura lembretes: confirmação, redefinição de senha e os demais avisos nunca são contidos por ele.
+- **Não existe:** lista de notificações dentro do aplicativo (sino, contador, marcar como lida); adiamento geral de e-mail quando o provedor atinge o limite.
 
-**Substituição obrigatória.** Onde o texto diz "24 h e 3 h" (ou qualquer lembrete automático), **não trocar por "24 h e 1 h"**: o lembrete por e-mail não existe. Proposta: "O sistema envia por e-mail a confirmação do agendamento com um arquivo de calendário que inclui alarme de 1 hora antes. Lembretes por e-mail em 24 h e 1 h antes, e uma central de notificações dentro do aplicativo, são trabalho futuro."
+**Texto proposto.** "O sistema envia ao consumidor, por e-mail, um lembrete 24 horas e outro 1 hora antes de um agendamento confirmado, além da confirmação com arquivo de calendário. Para respeitar o limite diário do provedor de e-mail, o envio de lembretes é suspenso quando o volume das últimas 24 horas atinge um teto configurável, sem nunca reter a confirmação, a redefinição de senha ou outros avisos transacionais. Uma central de notificações dentro do aplicativo é trabalho futuro."
 
-Corrigido no código: a tela "Pedido enviado" prometia "Lembrete: 24 h e 3 h antes" sem envio por trás; agora diz "Calendário: lembrete de 1 h antes".
+Os "24 h e 3 h" do texto antigo ficam como **"24 h e 1 h"**, que agora é o que o sistema faz. A tela "Pedido enviado" mostrava "24 h e 3 h" sem envio por trás; hoje mostra "24 h e 1 h antes, por e-mail" e é verdade.
 
-**Google Agenda.** O app já oferece "Adicionar à agenda" para Google (link de criação de evento pré-preenchido, sem OAuth), Outlook e `.ics`. O link do Google não define lembrete; **não verificado** se o Google respeita o alarme do `.ics` ao importar. Não afirmar que o Google Agenda "recebe o lembrete de 1 h".
+**Evidência (para o TCC, com ressalva).** 6 testes de integração e 26 de unidade cobrem os lembretes e o teto. Na pilha local com o worker real e o seed, os lembretes saíram até a outbox somar 400 e-mails em 24 h e pararam, com 72 retidos. **Não** é teste de entrega em Gmail real: o limite do Gmail (cerca de 500 por dia) é conhecimento externo, **não verificado**, e nenhum envio real foi feito.
+
+**Google Agenda.** O app já oferece "Adicionar à agenda" para Google (link de criação de evento pré-preenchido, sem OAuth), Outlook e `.ics`. O link do Google não define lembrete; **não verificado** se o Google respeita o alarme do `.ics` ao importar. Não afirmar que o Google Agenda "recebe o lembrete de 1 h"; o lembrete de 1 h garantido é o do e-mail.
 
 ---
-
 ## 3. Máscaras de CEP e CPF/CNPJ (B1)
 
 Máscara de CEP (`00000-000`) e de CPF (`000.000.000-00`) / CNPJ (`00.000.000/0000-00`), num módulo só, com validação do dígito verificador ao sair do campo. A API recebe só os caracteres puros. O CNPJ alfanumérico (IN RFB 2.229/2024, em vigor desde 31/07/2026) é aceito: letras nas 12 primeiras posições.

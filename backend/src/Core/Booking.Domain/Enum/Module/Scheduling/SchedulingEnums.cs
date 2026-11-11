@@ -27,3 +27,10 @@ public enum CancellationParty
     Business,
     System,
 }
+
+/// <summary>Os dois lembretes ao consumidor: 24 h antes e 1 h antes do atendimento.</summary>
+public enum ReminderKind
+{
+    DayBefore,
+    HourBefore,
+}

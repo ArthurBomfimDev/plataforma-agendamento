@@ -1057,6 +1057,10 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("customer_notes");
 
+                    b.Property<DateTimeOffset?>("DayBeforeReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("day_before_reminder_sent_at");
+
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("integer")
                         .HasColumnName("duration_minutes");
@@ -1068,6 +1072,10 @@ namespace Booking.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
+
+                    b.Property<DateTimeOffset?>("HourBeforeReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("hour_before_reminder_sent_at");
 
                     b.Property<string>("IdempotencyKey")
                         .HasMaxLength(64)

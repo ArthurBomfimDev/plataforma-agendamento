@@ -92,7 +92,7 @@ public sealed class RolePolicyTests
         "GetBusinessRatingQuery", "GetProfessionalRatingQuery",
         // Apoio interno (não é rota)
         "RatingAggregator", "AppointmentAccess", "CustomerNameResolver", "SlotGuard", "ActivationChecklist", "CurrentBusinessLoader",
-        "InvitationAcceptance", "DispatchOutboxCommand", "ExpirePendingAppointmentsCommand",
+        "InvitationAcceptance", "DispatchOutboxCommand", "ExpirePendingAppointmentsCommand", "SendAppointmentRemindersCommand",
     ];
 
     private static readonly string[] _forbiddenRolesInBusiness = ["Attendant", "Professional"];

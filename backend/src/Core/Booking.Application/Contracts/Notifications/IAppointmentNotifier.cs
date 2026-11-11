@@ -33,7 +33,23 @@ public sealed record AppointmentFacts(
 /// Avisa quem precisa saber de uma mudança no agendamento. Só enfileira (<see cref="IEmailOutbox"/>): o aviso é
 /// gravado no mesmo <c>SaveChanges</c> da mudança, que quem chama faz depois.
 /// </summary>
+/// <summary>Os dois lembretes ao consumidor (C1): 24 h antes e 1 h antes.</summary>
+public enum AppointmentReminder
+{
+    DayBefore,
+    HourBefore,
+}
+
 public interface IAppointmentNotifier
 {
     Task NotifyAsync(AppointmentFacts appointment, AppointmentChange change, CancellationToken ct = default);
+
+    /// <summary>
+    /// Quantos lembretes ainda cabem no orçamento de e-mail das últimas 24 h. <b>Só o lembrete consulta isto</b>: nenhum outro
+    /// aviso (confirmação, redefinição de senha, convite…) passa por aqui nem é contido por ele.
+    /// </summary>
+    Task<int> ReminderBudgetLeftAsync(CancellationToken ct = default);
+
+    /// <summary>Enfileira o lembrete ao consumidor. Falso se não há para quem mandar (balcão sem conta, conta inativa).</summary>
+    Task<bool> NotifyReminderAsync(AppointmentFacts appointment, AppointmentReminder reminder, CancellationToken ct = default);
 }

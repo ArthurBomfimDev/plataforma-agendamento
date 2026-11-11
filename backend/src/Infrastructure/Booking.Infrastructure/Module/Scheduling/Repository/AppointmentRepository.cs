@@ -63,6 +63,21 @@ public sealed class AppointmentRepository(BookingDbContext context) : IAppointme
             .Take(limit)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Appointment>> ListWithReminderDueAsync(DateTimeOffset now, int limit, CancellationToken ct = default)
+    {
+        DateTimeOffset inOneHour = now + Appointment.HourBeforeWindow;
+        DateTimeOffset inTwoHours = now + Appointment.DayBeforeLowerBound;
+        DateTimeOffset inOneDay = now + Appointment.DayBeforeWindow;
+
+        return await context.AcrossTenants<Appointment>()
+            .Where(x => x.Status == AppointmentStatus.Confirmed && x.CustomerId != null && x.StartsAt > now)
+            .Where(x => (x.StartsAt <= inOneHour && x.HourBeforeReminderSentAt == null)
+                || (x.StartsAt > inTwoHours && x.StartsAt <= inOneDay && x.DayBeforeReminderSentAt == null))
+            .OrderBy(x => x.StartsAt)
+            .Take(limit)
+            .ToListAsync(ct);
+    }
+
     public void Add(Appointment appointment) => context.Set<Appointment>().Add(appointment);
 
     public void Discard(Appointment appointment)

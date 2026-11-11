@@ -23,8 +23,11 @@ public sealed class AppointmentNotifier(
     IBusinessDirectory businesses,
     IPeopleDirectory people,
     IUserDirectory users,
+    ReminderBudget budget,
     TimeProvider clock) : IAppointmentNotifier
 {
+    public Task<int> ReminderBudgetLeftAsync(CancellationToken ct = default) => budget.LeftAsync(ct);
+
     public async Task NotifyAsync(AppointmentFacts appointment, AppointmentChange change, CancellationToken ct = default)
     {
         BusinessContactInfo? business = await businesses.GetContactInfoAsync(appointment.BusinessId, ct);
@@ -59,6 +62,50 @@ public sealed class AppointmentNotifier(
                 await ToBusinessAsync(appointment, business, newRequest: false, ct);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Lembrete 24 h ou 1 h antes (C1), só ao consumidor. Sem arquivo de calendário: o evento já foi na confirmação. <b>Saúde:</b>
+    /// assunto e prévia não citam serviço nem estabelecimento, como nos outros avisos. Convida a cancelar pelo aplicativo
+    /// para liberar o horário, mas não afirma que ainda dá tempo: a janela de cancelamento é regra do estabelecimento.
+    /// </summary>
+    public async Task<bool> NotifyReminderAsync(AppointmentFacts a, AppointmentReminder reminder, CancellationToken ct = default)
+    {
+        BusinessContactInfo? business = await businesses.GetContactInfoAsync(a.BusinessId, ct);
+
+        if (business is null
+            || a.CustomerId is not Guid customerId
+            || await CustomerContactAsync(customerId, ct) is not (UserContact contact, string displayName))
+        {
+            return false;
+        }
+
+        string when = EmailDates.Long(a.StartsAt, business.TimeZone);
+        string shortWhen = EmailDates.Short(a.StartsAt, business.TimeZone);
+        string? professional = (await people.GetProfessionalAsync(a.BusinessId, a.ProfessionalId, ct))?.DisplayName;
+        string? mapUrl = MapUrl(business);
+
+        (string heading, string lead) = reminder == AppointmentReminder.HourBefore
+            ? ("Seu horário é daqui a pouco", $"Lembrete: {business.Name} espera você em cerca de 1 hora.")
+            // "Amanhã" seria errado: o lembrete de 24 h sai a qualquer momento entre 24 h e 2 h antes (confirmação tardia).
+            : ("Lembrete do seu horário", $"Lembrete: {business.Name} espera você {when}.");
+
+        string subject = a.IsSensitive ? $"Lembrete do seu atendimento — {shortWhen}" : $"Lembrete: {business.Name}, {shortWhen}";
+        string preheader = a.IsSensitive ? "Abra para ver os detalhes." : $"{a.ServiceName}, {when}.";
+
+        outbox.Enqueue(EmailLayout.Build(
+            settings,
+            contact.Email,
+            displayName,
+            subject,
+            preheader,
+            heading,
+            [lead, "Se não puder comparecer, cancele pelo aplicativo para liberar o horário."],
+            Details(a, business, when, professional, includeAddress: true),
+            action: new EmailAction(mapUrl is not null ? "Ver no mapa" : "Ver meus agendamentos", mapUrl ?? settings.Link("appointments")),
+            attachment: null));
+
+        return true;
     }
 
     private async Task ToCustomerAsync(AppointmentFacts a, BusinessContactInfo business, AppointmentChange change, CancellationToken ct)

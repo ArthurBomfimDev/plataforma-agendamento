@@ -36,9 +36,8 @@ describe('BookingSentScreen', () => {
     expect(html).toContain('Pendente')
     expect(html).toContain('sex, 11 de setembro · 09:30')
     expect(html).toContain('sex, 09:30')
-    // Só o lembrete que existe: o alarme de 1 h do .ics. "24 h e 3 h" era dado provisório do wireframe, sem envio por trás.
-    expect(html).toContain('lembrete de 1 h antes')
-    expect(html).not.toContain('24 h')
+    // Lembretes de verdade (C1): e-mail 24 h e 1 h antes. "24 h e 3 h" era dado provisório do wireframe.
+    expect(html).toContain('24 h e 1 h antes, por e-mail')
     expect(html).not.toContain('3 h antes')
   })
 

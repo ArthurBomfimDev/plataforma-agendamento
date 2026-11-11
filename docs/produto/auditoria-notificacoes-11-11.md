@@ -52,3 +52,16 @@ Somando, passa de um dia e exige duas migrations, que pedem revisão humana. Nã
 - Canal alternativo (WhatsApp) e tratamento do limite diário do provedor de e-mail.
 
 Não escrever que o sistema "envia lembretes". O que ele envia é confirmação, e o lembrete é do calendário da pessoa.
+
+---
+
+## Atualização (11/11, depois do corte): lembretes por e-mail implementados
+
+O Arthur pediu os lembretes depois da auditoria, com uma condição: **o teto de e-mails não pode influenciar confirmação, redefinição de senha nem nenhum outro aviso.** Ficou assim.
+
+- **Quando.** Confirmado e com conta (balcão sem conta não recebe): lembrete de **1 h** na última hora, e de **24 h** de 24 h até 2 h antes. Entre 1 h e 2 h não há lembrete (o de 24 h ficaria colado no de 1 h). Quem confirma com menos de 2 h recebe só o de 1 h. Pendente, recusado, cancelado e expirado não recebem (a regra está no domínio: `Appointment.ReminderDue`).
+- **Sem duplicar.** O e-mail entra na outbox e a marca "enviado" (`day_before_reminder_sent_at`, `hour_before_reminder_sent_at`) no mesmo `SaveChanges`: se o worker cair e reiniciar, ou as duas coisas existem, ou nenhuma.
+- **O teto de 400.** `ReminderBudget` conta **todo** e-mail gravado nas últimas 24 h (os críticos também gastam a cota do provedor) e libera lembretes só até `App__ReminderDailyEmailBudget` (padrão 400). O lote do worker nunca passa do que cabe. **Só o lembrete consulta esse número**: `NotifyAsync` (confirmação, recusa, cancelamento, expiração, convite para avaliar) e os e-mails de conta e de convite não passam por ele, então os ~100 e-mails de folga até os cerca de 500 do Gmail ficam reservados a eles. O que passa do teto **não se perde**: fica sem marca e sai na primeira rodada com folga, se ainda estiver na janela.
+- **Verificado.** 17 testes de domínio, 9 de notificador (assunto de Saúde sem nome nem serviço; orçamento esgotado não segura a confirmação nem o convite) e 6 de integração (uma rodada, duas rodadas sem repetir, janela de 1 h, fora das janelas, pendente/cancelado/recusado, balcão, e orçamento zero: lembrete para, confirmação sai). Ao vivo, na pilha local, com o worker real e o seed (300 e-mails já gravados): saíram lembretes até a outbox chegar a **400** nas últimas 24 h e pararam; **72** ficaram retidos, sem marca.
+- **Ainda não existe:** lista in-app (sino, contador, marcar como lida) e adiamento de **todos** os e-mails quando o provedor estoura o limite (hoje só o lembrete respeita o teto; um e-mail crítico que o Gmail recusar recua e desiste em 10 tentativas, como antes). O limite de ~500/dia do Gmail é conhecimento externo, **não verificado**.
+- **Migration** `AddAppointmentReminderMarks` (duas colunas nulas em `scheduling.appointment`): revisão humana.

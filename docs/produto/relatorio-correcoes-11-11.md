@@ -43,7 +43,7 @@ Totais contra `feat/integracao-final`, já com as mesclas do Rafael e da demo-pu
 - O prompt pede `lib/masks`; o repositório usa `utils/`.
 - O prompt supunha que `PENDENTE` do mapa e do CEP de reserva cabiam no A2; precisam de decisão (CSP do site; segunda URL base de provedor).
 - A tela "Pedido enviado" mostrava lembrete "24 h e 3 h" sem envio por trás (`MOCK_REMINDER_HOURS`).
-- A decisão de 11/11 de lembretes de 24 h e 1 h não pôde ser cumprida: lembretes por e-mail não existem (C1).
+- A decisão de 11/11 de lembretes de 24 h e 1 h foi cumprida depois da auditoria (C1): primeiro a regra de corte os deixou de fora, depois o Arthur pediu e foram feitos.
 - O banner de demonstração e o Funnel não estavam na base (`feat/demo-publica`); agora estão.
 - A `.gitignore` de `scripts/seed-assets/*/` impede versionar as fotos de banco de imagem que o B3 pede.
 
@@ -51,7 +51,7 @@ Totais contra `feat/integracao-final`, já com as mesclas do Rafael e da demo-pu
 
 | O que | Resultado |
 |---|---|
-| Backend | 28 testes de arquitetura, 454 de unidade, 190 de integração: passam. `dotnet format` limpo |
+| Backend | 28 testes de arquitetura, 482 de unidade, 196 de integração: passam (com os lembretes do C1). `dotnet format` limpo |
 | Frontend | 787 testes (97 arquivos), `typecheck`, lint e Prettier limpos |
 | Scripts | `bun test scripts`: 21 passam |
 | Suíte de concorrência (grupo A, RNF-03) | Passa: nenhuma dupla reserva |
@@ -78,7 +78,7 @@ Totais contra `feat/integracao-final`, já com as mesclas do Rafael e da demo-pu
 | B3: baixar os 45 arquivos e preencher `CREDITS.md` | Os bancos de imagem bloqueiam o ambiente (Unsplash e Pixabay pedem login ou chave; Pexels bloqueia robô). Lista e verificador prontos em `scripts/seed-assets/` |
 | B3: versionar as fotos | `scripts/seed-assets/*/` está no `.gitignore` por decisão de 11/11; o prompt pede o contrário |
 | B4: logo certa | O arquivo da logo (WhatsApp) não está em `docs/design/marca/`, em nenhum checkout nem no histórico. Já existe `scripts/pwa-icons.ts` (demo-publica): trocar `vagoo_icone_escuro.png` e rodar. Falta o componente `Logo` único e o inventário |
-| C1: lembretes 24 h e 1 h e lista in-app | Regra de corte do prompt (mais de um dia, duas migrations). Etapa 1 (lembretes por e-mail) de meio dia a um dia: o Arthur decidiu pular |
+| C1: lista in-app (sino) | Regra de corte do prompt (um a um dia e meio, uma migration). Os lembretes por e-mail 24 h e 1 h **foram implementados depois**, a pedido do Arthur, com teto de 400 e-mails em 24 h que só segura lembretes (ver `auditoria-notificacoes-11-11.md`) |
 | C2: Tauri | Dispensado pelo Arthur. Nada foi medido ou escrito |
 | C3: estado de erro de rede do endereço, banner no iPhone, rotas de consumidor, capturas | Ver "não rodou"; o banner aplica a safe-area, falta o aparelho |
 | A1: destacar alternativas do 409 | Mudança na tela de horários, fora desta rodada. Mantém a limitação da seção 3.2 |
@@ -87,7 +87,7 @@ Totais contra `feat/integracao-final`, já com as mesclas do Rafael e da demo-pu
 
 ## Revisão humana obrigatória (CLAUDE.md §4)
 
-- **Migration** `AddBusinessGalleryPhotos` (duas colunas nulas em `tenancy.business`).
+- **Migrations** `AddBusinessGalleryPhotos` (duas colunas nulas em `tenancy.business`) e `AddAppointmentReminderMarks` (duas colunas nulas em `scheduling.appointment`).
 - **Autorização:** `GetCurrentVerificationQuery` classificada como só-dono; `BusinessGalleryCommand` só-dono (`RolePolicyTests` cobre os dois); novos códigos de erro 422 de horário.
 - **Multi-tenancy:** a galeria passa por `CurrentBusinessLoader.LoadForOwnerAsync`, como logotipo e capa; teste de integração com outro papel (403).
 - Nenhum segredo foi commitado. O `.env` local (gerado com segredos aleatórios, ignorado pelo git) fica só na máquina.

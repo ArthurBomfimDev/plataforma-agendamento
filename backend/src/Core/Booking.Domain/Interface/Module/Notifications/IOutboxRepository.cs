@@ -6,6 +6,9 @@ public interface IOutboxRepository
 {
     void Add(OutboxMessage message);
 
+    /// <summary>Quantas entregas foram gravadas a partir de <paramref name="since"/>, de qualquer tipo e em qualquer estado.</summary>
+    Task<int> CountCreatedSinceAsync(DateTimeOffset since, CancellationToken ct = default);
+
     /// <summary>
     /// Reivindica até <paramref name="limit"/> entregas vencidas, marcando <c>LockedUntil</c> numa instrução só, já
     /// confirmada. Duas instâncias do worker nunca pegam a mesma linha (<c>FOR UPDATE SKIP LOCKED</c>). Devolve as

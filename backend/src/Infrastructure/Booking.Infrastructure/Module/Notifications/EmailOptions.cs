@@ -39,4 +39,7 @@ public sealed class AppOptions
 
     public string? PublicBaseUrl { get; set; }
     public string BrandName { get; set; } = DefaultBrandName;
+
+    /// <summary>Teto de e-mails nas últimas 24 h para os lembretes pararem (<c>App__ReminderDailyEmailBudget</c>). O resto nunca é contido.</summary>
+    public int ReminderDailyEmailBudget { get; set; } = 400;
 }

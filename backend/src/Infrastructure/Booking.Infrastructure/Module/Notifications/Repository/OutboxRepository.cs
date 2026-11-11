@@ -1,6 +1,7 @@
 using Booking.Domain.Entity.Module.Notifications;
 using Booking.Domain.Interface.Repository.Module.Notifications;
 using Booking.Infrastructure.Persistence.Context;
+using Booking.Infrastructure.Persistence.Mapping.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Booking.Infrastructure.Module.Notifications.Repository;
@@ -8,6 +9,9 @@ namespace Booking.Infrastructure.Module.Notifications.Repository;
 public sealed class OutboxRepository(BookingDbContext context) : IOutboxRepository
 {
     public void Add(OutboxMessage message) => context.Set<OutboxMessage>().Add(message);
+
+    public Task<int> CountCreatedSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
+        context.Set<OutboxMessage>().CountAsync(x => EF.Property<DateTimeOffset>(x, AuditColumns.CreatedAt) >= since, ct);
 
     // Uma instrução só, confirmada sozinha: a reivindicação vale antes de o envio começar. SKIP LOCKED faz duas
     // instâncias do worker dividirem a fila sem esperar uma pela outra e sem pegar a mesma linha.

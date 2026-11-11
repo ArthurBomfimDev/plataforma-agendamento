@@ -79,9 +79,9 @@ export const BookingSentScreen = (props: BookingSentScreenProps) => {
   const steps = [
     { label: 'Pedido enviado', detail: elapsedLabel(sentAt, now), done: true },
     { label: 'Empresa confirma', detail: `até ${confirmationHours} h`, done: false },
-    // O lembrete que existe é o do evento de calendário (.ics) que vai com o e-mail de confirmação: alarme de 1 h antes.
-    // Lembrete por e-mail ou notificação ainda não existe (C1, 11/11): a tela não promete o que o sistema não envia.
-    { label: 'Calendário', detail: 'lembrete de 1 h antes', done: false },
+    // O que o sistema de fato envia (C1): e-mail 24 h e 1 h antes de um horário confirmado. Quem confirma já com menos de
+    // 2 h recebe só o de 1 h, e o de 24 h não sai de pedido pendente, recusado ou cancelado.
+    { label: 'Lembrete', detail: '24 h e 1 h antes, por e-mail', done: false },
     { label: 'Atendimento', detail: `${weekday}, ${time}`, done: false },
   ]
 

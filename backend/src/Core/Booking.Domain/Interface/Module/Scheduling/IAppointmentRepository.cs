@@ -34,6 +34,12 @@ public interface IAppointmentRepository
     /// <summary>Pendentes vencidos, de todos os estabelecimentos — usado só pela rotina de expiração.</summary>
     Task<IReadOnlyList<Appointment>> ListExpiredPendingAsync(DateTimeOffset now, int limit, CancellationToken ct = default);
 
+    /// <summary>
+    /// Confirmados, com conta, com lembrete na hora (24 h antes ou 1 h antes) e ainda não enviado, do mais próximo ao mais
+    /// distante. Entre tenants: roda fora de requisição. Quem chama confere o motivo exato com <c>ReminderDue</c>.
+    /// </summary>
+    Task<IReadOnlyList<Appointment>> ListWithReminderDueAsync(DateTimeOffset now, int limit, CancellationToken ct = default);
+
     void Add(Appointment appointment);
 
     /// <summary>Esquece um agendamento ainda não gravado (e o histórico dele) — usado quando a gravação foi recusada.</summary>
