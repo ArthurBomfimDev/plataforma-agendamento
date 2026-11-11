@@ -35,7 +35,7 @@ export const AccountMenu = (props: AccountMenuProps) => {
       <Menu.Root>
         <Menu.Trigger
           className={cn(
-            'type-label flex min-h-(--size-touch-min) max-w-64 items-center gap-(--space-8) rounded-md border border-(--border-interactive) bg-(--bg-surface) px-(--space-12) py-(--space-8) text-(--text-body) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
+            'type-label flex min-h-(--size-touch-min) max-w-64 min-w-0 items-center gap-(--space-8) rounded-md border border-(--border-interactive) bg-(--bg-surface) px-(--space-12) py-(--space-8) text-(--text-body) hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
             className,
           )}
         >

@@ -35,7 +35,7 @@ export const AgendaToolbar = (props: AgendaToolbarProps) => {
   }, [query, filters.query, onChange])
 
   return (
-    <div className={cn('flex flex-col gap-(--space-8) lg:flex-row lg:items-center', className)}>
+    <div className={cn('flex min-w-0 flex-col gap-(--space-8) lg:flex-row lg:flex-wrap lg:items-center', className)}>
       <form role="search" onSubmit={(event) => event.preventDefault()} className="lg:w-64">
         <SearchField
           label="Buscar pelo nome de quem vai ser atendido"
@@ -48,7 +48,7 @@ export const AgendaToolbar = (props: AgendaToolbarProps) => {
         />
       </form>
 
-      <div className="scrollbar-none -mx-(--space-16) flex items-center gap-(--space-8) overflow-x-auto px-(--space-16) lg:mx-0 lg:px-0">
+      <div className="scrollbar-none -mx-(--space-16) flex items-center gap-(--space-8) overflow-x-auto px-(--space-16) lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
         {showProfessionalFilter && (
           <FilterMenu
             label="Profissional"

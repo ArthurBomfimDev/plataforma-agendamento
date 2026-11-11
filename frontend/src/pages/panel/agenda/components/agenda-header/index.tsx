@@ -28,7 +28,7 @@ export const AgendaHeader = (props: AgendaHeaderProps) => {
         )}
       </div>
       {controls && (
-        <div className="flex flex-col gap-(--space-8) lg:flex-row lg:items-center lg:justify-between lg:gap-(--space-16)">
+        <div className="flex flex-col gap-(--space-8) xl:flex-row xl:items-center xl:justify-between xl:gap-(--space-16)">
           {controls.navigator}
           {controls.filters}
         </div>

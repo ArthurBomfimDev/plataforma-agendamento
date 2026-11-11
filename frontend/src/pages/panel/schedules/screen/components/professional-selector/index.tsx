@@ -26,13 +26,13 @@ export const ProfessionalSelector = memo((props: ProfessionalSelectorProps) => {
         {professionals.map((professional) => {
           const active = professional.id === selectedId
           return (
-            <li key={professional.id} className="shrink-0">
+            <li key={professional.id} className="max-w-full min-w-0">
               <button
                 type="button"
                 aria-pressed={active}
                 onClick={() => onSelect(professional.id)}
                 className={cn(
-                  'relative isolate flex min-h-(--size-touch-min) items-center gap-2.5 rounded-md border border-(--border-subtle) bg-(--bg-surface) py-(--space-8) pr-(--space-16) pl-(--space-12) text-left transition-colors duration-200 hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
+                  'relative isolate flex min-h-(--size-touch-min) max-w-full items-center gap-2.5 rounded-md border border-(--border-subtle) bg-(--bg-surface) py-(--space-8) pr-(--space-16) pl-(--space-12) text-left transition-colors duration-200 hover:bg-(--bg-surface-raised) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
                   active && 'border-(--action-primary) bg-transparent hover:bg-transparent',
                   !professional.hasSchedule && 'border-l-3 border-(--status-pending-fg)',
                 )}
@@ -47,10 +47,10 @@ export const ProfessionalSelector = memo((props: ProfessionalSelectorProps) => {
                   />
                 )}
                 <Avatar alt="" initials={initials(professional.name)} size="sm" />
-                <span className="flex flex-col whitespace-nowrap">
+                <span className="flex min-w-0 flex-col">
                   <span
                     className={cn(
-                      'type-label',
+                      'type-label truncate',
                       active ? 'text-(--text-on-action)' : 'text-(--text-strong)',
                     )}
                   >

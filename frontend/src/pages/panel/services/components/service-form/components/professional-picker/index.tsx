@@ -39,7 +39,7 @@ export const ProfessionalPicker = memo((props: ProfessionalPickerProps) => {
               aria-pressed={selected}
               onClick={() => onToggle(professional.id)}
               className={cn(
-                'type-label flex min-h-(--size-touch-min) items-center rounded-(--radius-full) border px-(--space-16) py-(--space-8) whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
+                'type-label flex min-h-(--size-touch-min) items-center rounded-(--radius-full) border max-w-full px-(--space-16) py-(--space-8) text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)',
                 selected
                   ? 'border-(--action-primary) bg-(--action-primary) text-(--text-on-action) hover:bg-(--action-primary-hover)'
                   : 'border-(--border-interactive) bg-(--bg-surface) text-(--text-body) hover:bg-(--bg-surface-raised)',

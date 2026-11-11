@@ -89,7 +89,7 @@ export const RequestCard = (props: RequestCardProps) => {
       <div className="flex items-center gap-(--space-12) lg:flex-wrap">
         <Avatar alt="" initials={initials(request.customerName)} className="shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col gap-(--space-2) lg:min-w-48">
-          <h2 id={titleId} className="type-body truncate text-(--text-strong)">
+          <h2 id={titleId} className="type-body line-clamp-2 wrap-break-word text-(--text-strong)">
             {request.customerName}
           </h2>
           {request.customerHistory !== undefined && (

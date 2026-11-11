@@ -18,9 +18,9 @@ export const MobileTopBar = (props: MobileTopBarProps) => {
           type="button"
           aria-label="vagoo — página inicial"
           onClick={onHome}
-          className="flex min-h-(--size-touch-min) shrink-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
+          className="flex min-h-(--size-touch-min) min-w-0 shrink items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--border-focus)"
         >
-          <Logotype tone="auto" alt="" />
+          <Logotype tone="auto" alt="" className="h-8 min-[400px]:h-10" />
         </button>
         <div className="flex-1" />
         <ThemeToggle />
@@ -30,12 +30,12 @@ export const MobileTopBar = (props: MobileTopBarProps) => {
           <>
             <Button
               variant="ghost"
-              className="min-w-(--size-touch-min) shrink-0"
+              className="min-w-(--size-touch-min) shrink-0 px-(--space-8) min-[400px]:px-(--space-16)"
               onClick={onSignIn}
             >
               Entrar
             </Button>
-            <Button className="shrink-0" onClick={onSignUp}>
+            <Button className="shrink-0 px-(--space-12) min-[400px]:px-(--space-16)" onClick={onSignUp}>
               Criar conta
             </Button>
           </>

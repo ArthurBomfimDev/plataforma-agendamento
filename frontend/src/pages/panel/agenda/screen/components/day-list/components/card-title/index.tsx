@@ -7,9 +7,9 @@ export const cardTitle = (
   className: string,
   trailing?: ReactNode,
 ) => (
-  <div className="flex items-center gap-(--space-8)">
+  <div className="flex flex-wrap items-center gap-x-(--space-8) gap-y-(--space-4)">
     {icon}
-    <p className={cn('type-body min-w-0 flex-1', className)}>{title}</p>
+    <p className={cn('type-body min-w-0 flex-1 basis-32 wrap-break-word', className)}>{title}</p>
     {trailing}
   </div>
 )
