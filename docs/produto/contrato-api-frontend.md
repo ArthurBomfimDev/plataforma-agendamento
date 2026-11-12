@@ -393,7 +393,7 @@ Só o dono. O menu do profissional não mostra estas seções, e o endereço dig
   URL absoluta passa direto.
 - **Saúde pelo mesmo endereço:** `GET /api/health` no nginx vai para o `/health` da API.
 - **Upload:** o nginx aceita até 6 MB por requisição (a API recusa acima de 5 MB de arquivo, como antes).
-- **CSP do site** (nginx): `connect-src 'self'` e `img-src 'self' data: blob:`; o script inline do tema no `index.html`
+- **CSP do site** (nginx): `connect-src 'self'` e `img-src 'self' data: blob: https://tile.openstreetmap.org` (os ladrilhos do mapa do endereço); o script inline do tema no `index.html`
   entra por hash — mudou o script, mude o hash no `nginx.conf` (o teste acusa). As respostas da API mantêm a CSP
   fechada delas (`default-src 'none'`); o nginx não duplica cabeçalho em `/api/` e `/media/`.
 - **Atrás do proxy:** a API lê o IP real do `X-Forwarded-For` só das redes em `ForwardedHeaders:KnownNetworks`

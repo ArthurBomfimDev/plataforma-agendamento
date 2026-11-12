@@ -6,11 +6,21 @@ import {
   isApproximate,
   mapLink,
 } from './consts'
+import {
+  FAR_FROM_SEARCH_METERS,
+  FAR_WARNING,
+  MAP_HELP,
+  distanceMeters,
+} from '@components/pin-map/consts'
+import { Suspense, lazy, useState } from 'react'
 
 import { Button } from '@components/button'
 import type { GeoPlaceResponse } from '@api/models'
+import type { MapPoint } from '@components/pin-map/consts'
 import { RadioOptionGroup } from '@components/radio-option-group'
-import { useState } from 'react'
+
+// O Leaflet só baixa quando o dono chega a esta etapa.
+const PinMap = lazy(() => import('@components/pin-map'))
 
 export type AddressLocationProps = {
   check: Exclude<LocationCheck, { status: 'idle' }>
@@ -24,12 +34,14 @@ export type AddressLocationProps = {
 
 /**
  * O dono confere o ponto que a busca achou antes de gravar (source `owner-confirmed`). Nada é confirmado sozinho: é esse
- * ponto que coloca o estabelecimento na busca por distância. Sem mapa embutido: a CSP do site não permite, e o link abre
- * em outra aba.
+ * ponto que coloca o estabelecimento na busca por distância. O mapa deixa o dono arrastar o pino para a porta certa, que a
+ * busca por texto nem sempre acha (cidade pequena); o ponto arrastado vale como exato (`Rooftop`).
  */
 export const AddressLocation = (props: AddressLocationProps) => {
   const { check, busy, error, onConfirm, onRetry, onEdit } = props
   const [selected, setSelected] = useState('0')
+  // Pino movido pelo dono, por resultado: trocar de resultado volta ao ponto que a busca deu.
+  const [moved, setMoved] = useState<{ index: string; point: MapPoint } | null>(null)
 
   const editButton = (
     <Button variant="ghost" disabled={busy} onClick={onEdit}>
@@ -71,7 +83,13 @@ export const AddressLocation = (props: AddressLocationProps) => {
   }
 
   const { places } = check
-  const place = places[Number(selected)] ?? places[0]!
+  const found = places[Number(selected)] ?? places[0]!
+  const point = moved?.index === selected ? moved.point : null
+  // O que vai ser gravado: o ponto arrastado (exato, porque o dono o pôs), ou o que a busca achou.
+  const place: GeoPlaceResponse = point
+    ? { ...found, latitude: point.latitude, longitude: point.longitude, precision: 'Rooftop' }
+    : found
+  const farFromSearch = point !== null && distanceMeters(found, point) > FAR_FROM_SEARCH_METERS
 
   return (
     <div className="flex flex-col gap-(--space-12)">
@@ -81,6 +99,27 @@ export const AddressLocation = (props: AddressLocationProps) => {
       {isApproximate(place) && (
         <p role="status" className="type-label text-(--text-body)">
           {APPROXIMATE_WARNING}
+        </p>
+      )}
+      <p className="type-label text-(--text-body)">{MAP_HELP}</p>
+      <Suspense
+        fallback={
+          <p role="status" className="type-body text-(--text-muted)">
+            Abrindo o mapa…
+          </p>
+        }
+      >
+        <PinMap
+          // O mapa é refeito ao trocar de resultado: centra de novo no ponto novo.
+          key={selected}
+          latitude={place.latitude}
+          longitude={place.longitude}
+          onChange={(next) => setMoved({ index: selected, point: next })}
+        />
+      </Suspense>
+      {farFromSearch && (
+        <p role="status" className="type-label text-(--status-rejected-fg)">
+          {FAR_WARNING}
         </p>
       )}
       <RadioOptionGroup

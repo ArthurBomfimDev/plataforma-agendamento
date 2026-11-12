@@ -1,0 +1,23 @@
+/* O pino do mapa: área de toque de 44px e, no centro, a marca visível. Cores só por token. */
+.pin-map__marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+}
+
+.pin-map__dot {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: var(--action-primary);
+  border: 3px solid var(--bg-surface);
+  box-shadow: 0 0 0 2px var(--action-primary);
+}
+
+.pin-map__marker:focus-visible .pin-map__dot {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}

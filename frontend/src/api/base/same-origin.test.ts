@@ -72,7 +72,7 @@ describe('nginx: uma origem só (Onda 7H)', () => {
     expect(nginxConf).toMatch(/default\s+"no-cache";/)
   })
 
-  it('a CSP libera o script inline do tema pelo hash, e a API e as imagens só da mesma origem', async () => {
+  it('a CSP libera o script inline do tema pelo hash; a API é da mesma origem e a única imagem externa são os ladrilhos do mapa', async () => {
     const inline = indexHtml.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? ''
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inline))
     const hash = btoa(String.fromCharCode(...new Uint8Array(digest)))
@@ -80,7 +80,9 @@ describe('nginx: uma origem só (Onda 7H)', () => {
     expect(inline).not.toBe('')
     expect(nginxConf).toContain(`script-src 'self' 'sha256-${hash}'`)
     expect(nginxConf).toContain("connect-src 'self';")
-    expect(nginxConf).toContain("img-src 'self' data: blob:;")
+    // Só o OpenStreetMap, do mapa de ajustar o pino do endereço (docs/operacao/publicacao-demo.md). Outro host exige decisão.
+    expect(nginxConf).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org;")
+    expect(nginxConf).not.toMatch(/(?:default|connect|script|style)-src[^;]*https:/)
     expect(nginxConf).toContain("frame-ancestors 'none'")
   })
 })

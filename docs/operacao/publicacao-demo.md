@@ -26,8 +26,10 @@ navegador ──https──> Tailscale (Funnel) ──> tailscaled (host) ──
 - **O que sai da máquina.** Só a porta do `web`. O `compose.demo.yaml` não publica banco nem API no host, e o Mailpit
   fica em `127.0.0.1:8025`, **fora do Funnel**: ele mostra o e-mail de todo mundo, com links de confirmação.
 - **Domínio por variável.** O endereço `https://vagoo.<tailnet>.ts.net` entra pelo `.env` (`PUBLIC_ORIGIN`), nunca no
-  código. A CSP do nginx é `'self'` (inclusive `connect-src` e `img-src`, já que API e mídia são da mesma origem), então
-  **não carrega domínio nenhum**.
+  código. A CSP do nginx é `'self'` (inclusive `connect-src`, já que API e mídia são da mesma origem), com **uma exceção**:
+  `img-src` também aceita `https://tile.openstreetmap.org`, os ladrilhos do mapa em que o dono ajusta o pino do endereço no
+  cadastro. É a única origem externa; o navegador de quem cadastra o estabelecimento consulta o OpenStreetMap (IP e área
+  vista), e o site manda só a origem como referência (`referrerPolicy: 'origin'` no ladrilho).
 - **IP real no limitador.** `UseForwardedHeaders` roda antes do limitador (`Program.cs`). A API confia em
   `X-Forwarded-For` só da sub-rede do compose (`DEMO_SUBNET`). O teste de integração `I7` cobre isso, inclusive que um
   salto de fora da sub-rede não é pulado. **Escrito e compilado, mas ainda não executado** (ver o relatório da rodada).
