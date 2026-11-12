@@ -4,6 +4,9 @@ using Booking.Application.Contracts.Notifications;
 using Booking.Application.Contracts.People;
 using Booking.Application.Contracts.Tenancy;
 using Booking.Application.Module.Notifications.Email;
+using Booking.Domain.Entity.Module.Notifications;
+using Booking.Domain.Enum.Module.Notifications;
+using Booking.Domain.Interface.Repository.Module.Notifications;
 
 namespace Booking.Application.Module.Notifications.Integration;
 
@@ -24,6 +27,7 @@ public sealed class AppointmentNotifier(
     IPeopleDirectory people,
     IUserDirectory users,
     ReminderBudget budget,
+    INotificationRepository bell,
     TimeProvider clock) : IAppointmentNotifier
 {
     public Task<int> ReminderBudgetLeftAsync(CancellationToken ct = default) => budget.LeftAsync(ct);
@@ -105,6 +109,7 @@ public sealed class AppointmentNotifier(
             action: new EmailAction(mapUrl is not null ? "Ver no mapa" : "Ver meus agendamentos", mapUrl ?? settings.Link("appointments")),
             attachment: null));
 
+        Ring(contact.UserId, NotificationAudience.Customer, null, reminder == AppointmentReminder.HourBefore ? NotificationType.ReminderHourBefore : NotificationType.ReminderDayBefore, a, subject, preheader);
         return true;
     }
 
@@ -167,6 +172,8 @@ public sealed class AppointmentNotifier(
             details,
             action: change is AppointmentChange.Confirmed && mapUrl is not null ? new EmailAction("Ver no mapa", mapUrl) : null,
             attachment: ics));
+
+        Ring(contact.UserId, NotificationAudience.Customer, null, ForCustomer(change), a, subject, preheader);
     }
 
     /// <summary>
@@ -215,6 +222,8 @@ public sealed class AppointmentNotifier(
             details,
             action: new EmailAction("Avaliar atendimento", settings.Link("appointments")),
             attachment: null));
+
+        Ring(contact.UserId, NotificationAudience.Customer, null, NotificationType.ReviewInvite, a, subject, preheader);
     }
 
     private async Task ToBusinessAsync(AppointmentFacts a, BusinessContactInfo business, bool newRequest, CancellationToken ct)
@@ -252,6 +261,8 @@ public sealed class AppointmentNotifier(
             details.Insert(0, new EmailDetail("Consumidor", customer));
         }
 
+        string preheader = a.IsSensitive ? "Abra o painel para ver os detalhes." : $"{a.ServiceName}, {when}.";
+
         foreach (UserContact contact in contacts)
         {
             outbox.Enqueue(EmailLayout.Build(
@@ -259,13 +270,30 @@ public sealed class AppointmentNotifier(
                 contact.Email,
                 contact.FullName,
                 subject,
-                preheader: a.IsSensitive ? "Abra o painel para ver os detalhes." : $"{a.ServiceName}, {when}.",
+                preheader,
                 heading,
                 [lead],
                 details,
                 action: new EmailAction(newRequest ? "Abrir pedidos" : "Abrir agenda", settings.Link(newRequest ? "painel/pedidos" : "painel/agenda"))));
+
+            Ring(contact.UserId, NotificationAudience.Business, a.BusinessId, newRequest ? NotificationType.RequestReceived : NotificationType.CancelledByCustomer, a, subject, preheader);
         }
     }
+
+    /// <summary>
+    /// O mesmo aviso, para o sino. Reaproveita o assunto e a prévia do e-mail como título e texto: o que já foi decidido para
+    /// não vazar dado de saúde numa tela bloqueada vale igual aqui. Vai no mesmo <c>SaveChanges</c> da mudança.
+    /// </summary>
+    private void Ring(Guid userId, NotificationAudience audience, Guid? businessId, NotificationType type, AppointmentFacts a, string title, string body) =>
+        bell.Add(Notification.Create(userId, audience, businessId, type, a.AppointmentId, title, body, clock.GetUtcNow()));
+
+    private static NotificationType ForCustomer(AppointmentChange change) => change switch
+    {
+        AppointmentChange.Confirmed => NotificationType.Confirmed,
+        AppointmentChange.Rejected => NotificationType.Rejected,
+        AppointmentChange.CancelledByBusiness => NotificationType.CancelledByBusiness,
+        _ => NotificationType.Expired,
+    };
 
     private static List<EmailDetail> Details(AppointmentFacts a, BusinessContactInfo business, string when, string? professional, bool includeAddress)
     {

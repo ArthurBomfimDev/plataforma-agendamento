@@ -93,6 +93,8 @@ public sealed class RolePolicyTests
         // Apoio interno (não é rota)
         "RatingAggregator", "AppointmentAccess", "CustomerNameResolver", "SlotGuard", "ActivationChecklist", "CurrentBusinessLoader",
         "InvitationAcceptance", "DispatchOutboxCommand", "ExpirePendingAppointmentsCommand", "SendAppointmentRemindersCommand",
+        // O sino é da própria pessoa, lido pelo lado do token (consumidor ou painel): o papel dentro do estabelecimento não muda o que ela vê.
+        "ListMyNotificationsQuery", "CountMyUnreadNotificationsQuery", "MarkNotificationReadCommand", "MarkAllNotificationsReadCommand",
     ];
 
     private static readonly string[] _forbiddenRolesInBusiness = ["Attendant", "Professional"];

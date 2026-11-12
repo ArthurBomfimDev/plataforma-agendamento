@@ -23,6 +23,7 @@ using Booking.Application.Module.Identity.Queries;
 using Booking.Application.Module.Notifications.Commands;
 using Booking.Application.Module.Notifications.Email;
 using Booking.Application.Module.Notifications.Integration;
+using Booking.Application.Module.Notifications.Queries;
 using Booking.Application.Module.People.Commands;
 using Booking.Application.Module.People.Integration;
 using Booking.Application.Module.People.Queries;
@@ -428,6 +429,13 @@ public static class DependencyInjection
         services.AddScoped<IInvitationMailer, InvitationMailer>();
         services.AddScoped<ReminderBudget>();
         services.AddScoped<IAppointmentNotifier, AppointmentNotifier>();
+
+        // O sino do aplicativo (lista, contador e leitura).
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<ListMyNotificationsQuery>();
+        services.AddScoped<CountMyUnreadNotificationsQuery>();
+        services.AddScoped<MarkNotificationReadCommand>();
+        services.AddScoped<MarkAllNotificationsReadCommand>();
         services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
         services.AddScoped<IProfessionalRemovalNotifier, ProfessionalRemovalNotifier>();
         services.AddScoped<DispatchOutboxCommand>();

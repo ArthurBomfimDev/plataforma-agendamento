@@ -4,6 +4,9 @@ using Booking.Application.Contracts.People;
 using Booking.Application.Contracts.Tenancy;
 using Booking.Application.Module.Notifications.Email;
 using Booking.Application.Module.Notifications.Integration;
+using Booking.Domain.Entity.Module.Notifications;
+using Booking.Domain.Enum.Module.Notifications;
+using Booking.UnitTests.Notifications;
 
 namespace Booking.UnitTests.Reputation;
 
@@ -58,14 +61,55 @@ public sealed class ReviewInviteEmailTests
         Assert.Empty(outbox.Sent);
     }
 
-    private static AppointmentNotifier Notifier(Outbox outbox, int emailsInLast24Hours = 0, int budget = 400)
+    private static AppointmentNotifier Notifier(Outbox outbox, int emailsInLast24Hours = 0, int budget = 400, FakeNotificationRepository? bell = null)
     {
         var settings = new NotificationSettings("Vagoo", "https://app.example", budget);
         var reminderBudget = new ReminderBudget(new FakeOutboxRepository(emailsInLast24Hours), settings, TimeProvider.System);
 
-        return new(outbox, settings, new Businesses(), new People(), new Users(), reminderBudget, TimeProvider.System);
+        return new(outbox, settings, new Businesses(), new People(), new Users(), reminderBudget, bell ?? new FakeNotificationRepository(), TimeProvider.System);
     }
 
+    // --- O sino acompanha o e-mail ---
+
+    [Fact]
+    public async Task The_bell_gets_the_same_notice_as_the_email_for_the_customer()
+    {
+        Outbox outbox = new();
+        FakeNotificationRepository bell = new();
+
+        await Notifier(outbox, bell: bell).NotifyAsync(Facts(sensitive: false), AppointmentChange.Completed);
+
+        Notification n = Assert.Single(bell.Added);
+        Assert.Equal(_userId, n.UserId);
+        Assert.Equal(NotificationAudience.Customer, n.Audience);
+        Assert.Null(n.BusinessId);
+        Assert.Equal(NotificationType.ReviewInvite, n.Type);
+        Assert.Equal(Assert.Single(outbox.Sent).Subject, n.Title);
+    }
+
+    [Fact]
+    public async Task In_health_the_bell_text_does_not_name_the_service_or_the_business()
+    {
+        Outbox outbox = new();
+        FakeNotificationRepository bell = new();
+
+        await Notifier(outbox, bell: bell).NotifyReminderAsync(Facts(sensitive: true), AppointmentReminder.HourBefore);
+
+        Notification n = Assert.Single(bell.Added);
+        Assert.Equal(NotificationType.ReminderHourBefore, n.Type);
+        Assert.DoesNotContain("Barbearia", n.Title + n.Body);
+        Assert.DoesNotContain("Corte", n.Title + n.Body);
+    }
+
+    [Fact]
+    public async Task A_counter_booking_without_account_rings_nobody()
+    {
+        FakeNotificationRepository bell = new();
+
+        await Notifier(new Outbox(), bell: bell).NotifyAsync(Facts(sensitive: false) with { CustomerId = null }, AppointmentChange.Completed);
+
+        Assert.Empty(bell.Added);
+    }
     // --- Lembretes 24 h e 1 h (C1) e o orçamento de e-mail ---
 
     [Fact]
