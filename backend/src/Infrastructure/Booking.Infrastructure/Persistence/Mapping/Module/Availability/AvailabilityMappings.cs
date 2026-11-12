@@ -18,7 +18,7 @@ public sealed class WorkScheduleMapping : BaseMapping<WorkSchedule>
         builder.Property(x => x.EndTime).IsRequired();
         builder.Property(x => x.EffectiveFrom).IsRequired();
 
-        builder.ToTable(t => t.HasCheckConstraint("ck_work_schedule_time", "end_time > start_time"));
+        builder.ToTable(t => t.HasCheckConstraint("ck_work_schedule_time", "end_time > start_time OR (end_time = '00:00:00' AND start_time > '00:00:00')"));
 
         builder.HasIndex(x => new { x.BusinessId, x.ProfessionalId, x.DayOfWeek });
     }

@@ -166,7 +166,7 @@ namespace Booking.Infrastructure.Persistence.Migrations
 
                     b.ToTable("work_schedule", "availability", t =>
                         {
-                            t.HasCheckConstraint("ck_work_schedule_time", "end_time > start_time");
+                            t.HasCheckConstraint("ck_work_schedule_time", "end_time > start_time OR (end_time = '00:00:00' AND start_time > '00:00:00')");
                         });
                 });
 
