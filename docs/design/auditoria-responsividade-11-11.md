@@ -29,9 +29,27 @@ Zero estouro horizontal e zero campo com fonte abaixo de 16 px nas 23 rotas medi
 | iPhone, endereço: estado de erro sem caminho adiante | **Reduzido pelo A2** (a escada agora desce até o município, então "não localizado" quase não ocorre). O estado de erro de rede ainda mostra só "Tentar de novo" e "Corrigir o endereço"; a tela segue com muito espaço vazio. **Não tratado** |
 | iPhone, cadastro: banner "Ambiente de demonstração" sobrepõe o relógio | **Não tratado: o banner não existe nesta branch.** Está em `feat/demo-publica` (`components/demo-banner`), 4 commits à frente desta base. Corrigir `safe-area-inset-top` lá |
 
+## Segunda passada (12/11): consumidor autenticado, tema claro e escuro
+
+Medida no navegador do app, em 360 px, **logado como consumidor**, nos dois temas, pela largura do documento
+(`scrollWidth` contra `clientWidth`) nas rotas `/`, `/appointments`, `/account`, `/context`, `/completar-cadastro`,
+`/para-estabelecimentos`, `/cadastrar-estabelecimento`, `/convite` e `/search`.
+
+- **Achado, causado por esta rodada:** o sino somou 44 px à barra superior do consumidor logado, e o menu da conta, sem
+  `min-w-0`, não encolhia: a página passou a ter 419 px em 360 (`/`, `/appointments`, `/search`, `/para-estabelecimentos`).
+  Corrigido em `layouts/public-layout` (`min-w-0` no menu da conta). Depois da correção, **nenhuma das rotas estoura**,
+  nos dois temas.
+- Alvo de toque: nenhum botão, link ou campo visível com menos de 44 px de altura nessas rotas (medido na primeira passada;
+  `smallTargets` zero).
+- **Teste que o pegaria:** não há. O estouro depende de largura real de layout e o projeto não roda navegador no CI.
+  Fica a medição manual acima.
+
 ## Não coberto
 
-- Rotas de consumidor autenticado, `/admin/estabelecimentos` e `/convite`.
-- Tema claro: só conferi os telas tocadas (jornada, vitrine, balcão), não o inventário todo.
+- `/admin/estabelecimentos` (precisa da conta Admin) e o painel do dono com o sino, em 360 px (só por leitura do CSS: nome do
+  estabelecimento com `min-w-0 flex-1`, sino e tema de 44 px).
 - Comportamento real de safe-area em iPhone e Android.
+- Capturas de tela (PNG), em qualquer largura: o painel do app ficou sem desenhar durante a sessão e o Playwright baixaria
+  um navegador. A medição acima é por leitura do DOM, não por imagem.
 - Capturas em 768 px das telas densas (agenda multi-profissional).
+- Estado de erro de rede do endereço: segue só com "Tentar de novo" e "Corrigir o endereço".

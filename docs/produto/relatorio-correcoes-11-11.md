@@ -82,12 +82,13 @@ Totais contra `feat/integracao-final`, já com as mesclas do Rafael e da demo-pu
 | C2: Tauri | Dispensado pelo Arthur. Nada foi medido ou escrito |
 | C3: estado de erro de rede do endereço, banner no iPhone, rotas de consumidor, capturas | Ver "não rodou"; o banner aplica a safe-area, falta o aparelho |
 | A1: destacar alternativas do 409 | Mudança na tela de horários, fora desta rodada. Mantém a limitação da seção 3.2 |
-| A2: mapa para arrastar o pino e CEP de reserva em outro provedor | Precisam de decisão (CSP; segunda URL base) |
-| Jornada que fecha à meia-noite | Exige migration (`end_time > start_time`) e revisão humana. Teste documenta o defeito |
+| ~~A2: mapa para arrastar o pino e CEP de reserva em outro provedor~~ | **Feitos em 12/11.** CEP: BrasilAPI e ViaCEP se cobrem (`1bb8312`). Mapa: Leaflet no cadastro, pino arrastável e botões de 10 m (`1396a15`); abre a CSP do site para `https://tile.openstreetmap.org` (**revisão humana: infraestrutura**). O mapa **não foi visto funcionando na tela**: só typecheck, lint, testes dos cálculos e a conferência de que o ladrilho do OpenStreetMap carrega sob a CSP nova |
+| ~~Jornada que fecha à meia-noite~~ | **Feita em 12/11.** Fim 00:00 vale como fim do dia (`4c9382d`); migration `AllowWorkScheduleClosingAtMidnight` em commit próprio (`ec4d9f5`, **não aplicada** em banco compartilhado; revisão humana). Teste de integração com o banco real passa |
 
 ## Revisão humana obrigatória (CLAUDE.md §4)
 
-- **Migrations** `AddBusinessGalleryPhotos` (duas colunas nulas em `tenancy.business`), `AddAppointmentReminderMarks` (duas colunas nulas em `scheduling.appointment`) e `AddNotification` (tabela nova `notifications.notification`, dois índices).
+- **Migrations** `AddBusinessGalleryPhotos` (duas colunas nulas em `tenancy.business`), `AddAppointmentReminderMarks` (duas colunas nulas em `scheduling.appointment`), `AddNotification` (tabela nova `notifications.notification`, dois índices) e `AllowWorkScheduleClosingAtMidnight` (troca a constraint `ck_work_schedule_time`; `Down` falha se já houver jornada que fecha à meia-noite).
+- **Infraestrutura / CSP:** `frontend/nginx.conf` passou a aceitar imagens de `https://tile.openstreetmap.org` (mapa do cadastro). É a única origem externa; o navegador de quem cadastra consulta o OpenStreetMap.
 - **Autorização:** `GetCurrentVerificationQuery` classificada como só-dono; `BusinessGalleryCommand` só-dono (`RolePolicyTests` cobre os dois); novos códigos de erro 422 de horário.
 - **Multi-tenancy:** a galeria passa por `CurrentBusinessLoader.LoadForOwnerAsync`, como logotipo e capa; teste de integração com outro papel (403).
 - Nenhum segredo foi commitado. O `.env` local (gerado com segredos aleatórios, ignorado pelo git) fica só na máquina.
