@@ -1,5 +1,6 @@
 using System.Globalization;
 using Booking.Application.Module.Tenancy.Geo;
+using Booking.Domain.Exceptions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
@@ -53,6 +54,41 @@ public sealed class CachingGeocodingProvider(IGeocodingProvider inner, GeoCache 
         // A chave usa o ponto já arredondado: dois pontos no mesmo quarteirão dividem a resposta.
         string key = string.Create(CultureInfo.InvariantCulture, $"reverse:{GeoPrivacy.Round(latitude):0.000},{GeoPrivacy.Round(longitude):0.000}");
         return cache.GetOrAddAsync(key, () => inner.ReverseAsync(latitude, longitude, ct), area => area is null);
+    }
+}
+
+/// <summary>
+/// Principal e reserva. Consulta a reserva quando o principal não acha o CEP ou está indisponível. Se a reserva também
+/// não acha, o CEP não existe (resposta de provedor que respondeu). Se o principal caiu e a reserva também, vale o erro
+/// de indisponibilidade: não se afirma que o CEP não existe sem que algum provedor tenha dito isso.
+/// </summary>
+public sealed class FallbackPostalCodeLookup(IPostalCodeLookup primary, IPostalCodeLookup secondary) : IPostalCodeLookup
+{
+    public async Task<PostalCodeAddress?> LookupAsync(string postalCode, CancellationToken ct = default)
+    {
+        DomainException? unavailable = null;
+        try
+        {
+            PostalCodeAddress? found = await primary.LookupAsync(postalCode, ct);
+            if (found is not null)
+            {
+                return found;
+            }
+        }
+        catch (DomainException e) when (e.Code == "geo.provider_unavailable")
+        {
+            unavailable = e;
+        }
+
+        try
+        {
+            return await secondary.LookupAsync(postalCode, ct);
+        }
+        catch (DomainException) when (unavailable is null)
+        {
+            // O principal respondeu "não existe" e a reserva caiu: fica o "não existe" do principal.
+            return null;
+        }
     }
 }
 

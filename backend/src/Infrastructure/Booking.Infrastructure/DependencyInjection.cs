@@ -154,18 +154,23 @@ public static class DependencyInjection
 
         services.AddHttpClient<NominatimGeocodingProvider>((sp, client) => Configure(sp, client, o => o.Nominatim.BaseUrl))
             .RemoveAllLoggers();
-        services.AddHttpClient<BrasilApiPostalCodeLookup>((sp, client) => Configure(sp, client, o => o.PostalCode.ResolvedBaseUrl))
+        services.AddHttpClient<BrasilApiPostalCodeLookup>((sp, client) => Configure(sp, client, o => o.PostalCode.UrlFor(PostalCodeOptions.BrasilApi)))
             .RemoveAllLoggers();
-        services.AddHttpClient<ViaCepPostalCodeLookup>((sp, client) => Configure(sp, client, o => o.PostalCode.ResolvedBaseUrl))
+        services.AddHttpClient<ViaCepPostalCodeLookup>((sp, client) => Configure(sp, client, o => o.PostalCode.UrlFor(PostalCodeOptions.ViaCep)))
             .RemoveAllLoggers();
 
         services.AddScoped<IGeocodingProvider>(sp => new CachingGeocodingProvider(
             sp.GetRequiredService<NominatimGeocodingProvider>(), sp.GetRequiredService<GeoCache>()));
         services.AddScoped<IPostalCodeLookup>(sp =>
         {
-            IPostalCodeLookup inner = sp.GetRequiredService<IOptions<GeoOptions>>().Value.PostalCode.Provider == PostalCodeOptions.ViaCep
+            PostalCodeOptions options = sp.GetRequiredService<IOptions<GeoOptions>>().Value.PostalCode;
+            IPostalCodeLookup Of(string provider) => provider == PostalCodeOptions.ViaCep
                 ? sp.GetRequiredService<ViaCepPostalCodeLookup>()
                 : sp.GetRequiredService<BrasilApiPostalCodeLookup>();
+
+            IPostalCodeLookup inner = options.FallbackEnabled
+                ? new FallbackPostalCodeLookup(Of(options.Provider), Of(options.FallbackProvider))
+                : Of(options.Provider);
             return new CachingPostalCodeLookup(inner, sp.GetRequiredService<GeoCache>());
         });
 

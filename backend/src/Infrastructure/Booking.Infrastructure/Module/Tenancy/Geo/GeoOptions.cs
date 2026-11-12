@@ -47,7 +47,25 @@ public sealed class PostalCodeOptions
     /// <summary>Endereço do provedor; vazio usa o público de cada um.</summary>
     public string? BaseUrl { get; set; }
 
-    public string ResolvedBaseUrl => !string.IsNullOrWhiteSpace(BaseUrl)
-        ? BaseUrl
-        : Provider == ViaCep ? "https://viacep.com.br/" : "https://brasilapi.com.br/";
+    public string ResolvedBaseUrl => UrlFor(Provider);
+
+    /// <summary>
+    /// Com o provedor principal fora do ar, ou sem o CEP, consulta o outro (padrão ligado): CEP novo costuma estar num
+    /// e não no outro. O CEP é só o número do código postal, sem dado pessoal.
+    /// </summary>
+    public bool FallbackEnabled { get; set; } = true;
+
+    /// <summary>Endereço do provedor de reserva; vazio usa o público dele. <see cref="BaseUrl"/> é sempre do principal.</summary>
+    public string? FallbackBaseUrl { get; set; }
+
+    public string FallbackProvider => Provider == ViaCep ? BrasilApi : ViaCep;
+
+    /// <summary>Endereço a usar para o provedor <paramref name="provider"/>: o configurado, se for o principal.</summary>
+    public string UrlFor(string provider)
+    {
+        string? configured = provider == Provider ? BaseUrl : FallbackBaseUrl;
+        return !string.IsNullOrWhiteSpace(configured)
+            ? configured
+            : provider == ViaCep ? "https://viacep.com.br/" : "https://brasilapi.com.br/";
+    }
 }
