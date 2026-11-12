@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@components/button'
 import { Checkbox } from '@components/checkbox'
 import { TimeField } from '@components/time-field'
+import { END_OF_DAY } from '@utils/work-hours'
 import type { DayEditorProps } from './types'
 import type { TimeRange } from '../../types'
 import { CloseIcon } from '@assets/icons'
@@ -42,6 +43,8 @@ export const DayEditor = (props: DayEditorProps) => {
 
   const addRange = () => {
     const last = ranges.at(-1)
+    // Quem fecha à meia-noite não tem mais dia para outra faixa.
+    if (last?.end === END_OF_DAY) return
     // A nova faixa começa onde a última termina e dura uma hora.
     const start = last ? last.end : '09:00'
     const [hours, minutes] = start.split(':').map(Number)
@@ -95,7 +98,7 @@ export const DayEditor = (props: DayEditorProps) => {
               id={`${baseId}-end-${index}`}
               label={ranges.length > 1 ? `Fim da faixa ${index + 1}` : 'Fim'}
               value={range.end}
-              endOfDay
+              endOfDay="midnight"
               onValueChange={(value) => setTime(index, 'end', value)}
               className="w-28"
             />

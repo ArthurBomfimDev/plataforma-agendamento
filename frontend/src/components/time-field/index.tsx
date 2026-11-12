@@ -1,4 +1,4 @@
-import { END_OF_DAY, TIME_STEP_MINUTES, normalizeTime, timeOptions } from './consts'
+import { END_OF_DAY, MIDNIGHT, TIME_STEP_MINUTES, normalizeTime, timeOptions } from './consts'
 import { FIELD_BOX_CLASSES, FIELD_LABEL_CLASSES } from '@components/text-field/consts'
 
 import { CloseIcon } from '@assets/icons'
@@ -58,7 +58,11 @@ export const TimeField = (props: TimeFieldProps) => {
         )}
         {timeOptions(stepMinutes, current, { endOfDay }).map((time) => (
           <option key={time} value={time}>
-            {time === END_OF_DAY ? `${time} (fim do dia)` : time}
+            {time === END_OF_DAY
+              ? `${time} (fim do dia)`
+              : time === MIDNIGHT
+                ? `${time} (meia-noite)`
+                : time}
           </option>
         ))}
       </select>

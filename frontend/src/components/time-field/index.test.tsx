@@ -36,6 +36,14 @@ describe('timeOptions', () => {
     expect(timeOptions(15, undefined, { endOfDay: true }).at(-1)).toBe('23:59')
     expect(timeOptions(15)).not.toContain('23:59')
   })
+
+  it('o fim de jornada oferece 24:00 (meia-noite) em vez de 23:59', () => {
+    const options = timeOptions(15, undefined, { endOfDay: 'midnight' })
+
+    expect(options.at(-1)).toBe('24:00')
+    expect(options).not.toContain('23:59')
+    expect(timeOptions(15)).not.toContain('24:00')
+  })
 })
 
 describe('normalizeTime', () => {

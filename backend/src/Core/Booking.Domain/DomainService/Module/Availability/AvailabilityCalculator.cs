@@ -141,7 +141,10 @@ public static class AvailabilityCalculator
             foreach (WorkSchedule schedule in r.Schedules.Where(s => s.ProfessionalId == r.ProfessionalId && s.AppliesOn(r.Date)))
             {
                 if (ToUtc(r.Date, schedule.StartTime, r.TimeZone) is DateTimeOffset start
-                    && ToUtc(r.Date, schedule.EndTime, r.TimeZone) is DateTimeOffset end
+                    // Fim 00:00 é o fim do dia: a meia-noite que abre o dia seguinte.
+                    && (schedule.ClosesAtMidnight
+                        ? ToUtc(r.Date.AddDays(1), TimeOnly.MinValue, r.TimeZone)
+                        : ToUtc(r.Date, schedule.EndTime, r.TimeZone)) is DateTimeOffset end
                     && end > start)
                 {
                     open.Add(TimeRange.Of(start, end));

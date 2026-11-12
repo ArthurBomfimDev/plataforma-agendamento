@@ -157,17 +157,44 @@ public sealed class AvailabilityCalculatorTests
     }
 
     /// <summary>
-    /// Defeito conhecido (A4, 11/11): a jornada não fecha à meia-noite. <c>TimeOnly</c> não tem 24:00, e 00:00 como fim é
-    /// recusado (<c>end_time &gt; start_time</c> no domínio e no banco). Quem fecha à meia-noite grava 23:59 e perde 1 minuto.
-    /// Corrigir exige migration (aceitar fim 00:00 como fim do dia) e revisão humana.
+    /// Fechar à meia-noite (corrigido em 12/11): <c>TimeOnly</c> não tem 24:00, então o fim 00:00 significa "fim do dia".
+    /// Só vale com início depois das 00:00; <c>00:00–00:00</c> continua recusado (não é nem vazio nem 24 h).
     /// </summary>
     [Fact]
-    public void Closing_at_midnight_cannot_be_saved_as_00_00()
+    public void A_shift_ending_at_00_00_closes_at_the_end_of_the_day()
+    {
+        WorkSchedule night = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(18, 0), new(0, 0), new(2026, 1, 1), null);
+
+        Assert.True(night.ClosesAtMidnight);
+
+        IReadOnlyList<DateTimeOffset> slots = AvailabilityCalculator.Calculate(new AvailabilityRequest(
+            _professional, _monday, _zone, [night], [], [], 45, 0, 0, 15, _dayBefore, MinLeadTimeHours: 2, 60));
+
+        // 23:15 + 45 min = 00:00: o último horário usa o minuto que 23:59 perdia.
+        Assert.Equal(Local(23, 15), slots[^1]);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0, 0)]
+    [InlineData(10, 0, 9, 0)]
+    public void Midnight_end_still_refuses_an_empty_or_backwards_shift(int startHour, int startMinute, int endHour, int endMinute)
     {
         DomainException e = Assert.Throws<DomainException>(() =>
-            WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(18, 0), new(0, 0), new(2026, 1, 1), null));
+            WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(startHour, startMinute), new(endHour, endMinute), new(2026, 1, 1), null));
 
         Assert.Equal("work_schedule.end_before_start", e.Code);
+    }
+
+    [Fact]
+    public void A_shift_that_closes_at_midnight_conflicts_with_a_later_overlap_on_the_same_day()
+    {
+        WorkSchedule night = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(18, 0), new(0, 0), new(2026, 1, 1), null);
+        WorkSchedule late = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(22, 0), new(23, 0), new(2026, 1, 1), null);
+        WorkSchedule morning = WorkSchedule.Create(_business, _professional, DayOfWeek.Monday, new(8, 0), new(12, 0), new(2026, 1, 1), null);
+
+        Assert.True(night.ConflictsWith(late));
+        Assert.True(late.ConflictsWith(night));
+        Assert.False(night.ConflictsWith(morning));
     }
 
     [Fact]

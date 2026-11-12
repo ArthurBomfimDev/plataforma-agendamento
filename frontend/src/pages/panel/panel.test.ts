@@ -78,6 +78,12 @@ describe('workHoursOn', () => {
     expect(workHoursOn(rules, '2026-11-03')).toEqual({ start: '09:00', end: '18:00' })
     expect(workHoursOn(rules, '2026-11-04')).toBeNull()
   })
+
+  it('uma faixa que fecha à meia-noite (00:00 na API) vai até 24:00 na agenda', () => {
+    const rules = [tuesday('p1', '09:00', '12:00'), tuesday('p1', '18:00', '00:00')]
+
+    expect(workHoursOn(rules, '2026-11-03')).toEqual({ start: '09:00', end: '24:00' })
+  })
 })
 
 describe('toAgendaDay', () => {

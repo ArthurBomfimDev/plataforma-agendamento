@@ -53,9 +53,19 @@ public sealed class WorkSchedule : BaseEntity, IAuditable, ITenantScoped
         EffectiveTo = effectiveTo;
     }
 
+    /// <summary>
+    /// O fim <c>00:00</c> é "fim do dia" (<c>TimeOnly</c> não tem 24:00). O banco espelha a regra em
+    /// <c>ck_work_schedule_time</c>.
+    /// </summary>
+    public bool ClosesAtMidnight => EndTime == TimeOnly.MinValue;
+
+    private TimeOnly EffectiveEnd => ClosesAtMidnight ? TimeOnly.MaxValue : EndTime;
+
     private static void Validate(TimeOnly start, TimeOnly end, DateOnly effectiveFrom, DateOnly? effectiveTo)
     {
-        if (end <= start)
+        bool closesAtMidnight = end == TimeOnly.MinValue && start > TimeOnly.MinValue;
+
+        if (end <= start && !closesAtMidnight)
         {
             throw new DomainException("work_schedule.end_before_start");
         }
@@ -74,7 +84,7 @@ public sealed class WorkSchedule : BaseEntity, IAuditable, ITenantScoped
         other.Id != Id
         && other.ProfessionalId == ProfessionalId
         && other.DayOfWeek == DayOfWeek
-        && StartTime < other.EndTime && other.StartTime < EndTime
+        && StartTime < other.EffectiveEnd && other.StartTime < EffectiveEnd
         && EffectiveFrom <= (other.EffectiveTo ?? DateOnly.MaxValue)
         && other.EffectiveFrom <= (EffectiveTo ?? DateOnly.MaxValue);
 }

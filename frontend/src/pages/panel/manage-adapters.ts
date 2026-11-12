@@ -27,6 +27,7 @@ import {
 } from './schedules/screen/consts'
 import type { PreviewHours, ServiceDraft } from './services/components/service-form/types'
 import { dateKeyIn, instantIn, timeIn } from '@utils/time-zone'
+import { endFromApi, endToApi } from '@utils/work-hours'
 
 import { CATEGORY_LABELS } from '@pages/customer/search/screen/consts'
 import type { ServiceListItem } from './services/screen/types'
@@ -183,7 +184,7 @@ export const toScheduleRow = (schedule: WorkScheduleResponse): ScheduleRow => ({
   id: schedule.id,
   dayOfWeek: schedule.dayOfWeek,
   start: schedule.startTime.slice(0, 5),
-  end: schedule.endTime.slice(0, 5),
+  end: endFromApi(schedule.startTime, schedule.endTime),
   effectiveFrom: schedule.effectiveFrom,
   effectiveTo: schedule.effectiveTo,
 })
@@ -192,7 +193,7 @@ export const toScheduleRow = (schedule: WorkScheduleResponse): ScheduleRow => ({
 export const toScheduleRequest = (draft: ScheduleDraft): SaveWorkScheduleRequest => ({
   dayOfWeek: draft.dayOfWeek,
   startTime: `${draft.start}:00`,
-  endTime: `${draft.end}:00`,
+  endTime: endToApi(draft.end),
   effectiveFrom: draft.effectiveFrom,
   effectiveTo: draft.effectiveTo,
 })

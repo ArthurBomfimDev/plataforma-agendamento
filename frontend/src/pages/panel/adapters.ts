@@ -1,6 +1,7 @@
 import type { AgendaAppointment, AgendaDay, AgendaProfessional } from './agenda/screen/types'
 import type { AppointmentResponse, ProfessionalResponse, WorkScheduleResponse } from '@api/models'
 import { dateKeyIn, timeIn } from '@utils/time-zone'
+import { endFromApi } from '@utils/work-hours'
 import { entryEnd, summarize, toMinutes, toTime } from './agenda/screen/consts'
 
 import type { PendingRequest } from './requests/screen/types'
@@ -50,7 +51,7 @@ export const workHoursOn = (schedules: WorkScheduleResponse[], date: string) => 
   return {
     start: rules.map(({ startTime }) => startTime.slice(0, 5)).sort()[0]!,
     end: rules
-      .map(({ endTime }) => endTime.slice(0, 5))
+      .map(({ startTime, endTime }) => endFromApi(startTime, endTime))
       .sort()
       .at(-1)!,
   }

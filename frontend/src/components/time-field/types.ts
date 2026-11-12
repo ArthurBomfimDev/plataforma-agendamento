@@ -7,8 +7,8 @@ export type TimeFieldProps = {
   onValueChange: (value: string) => void
   /** Passo da lista em minutos. Padrão: 15, a granularidade do produto. */
   stepMinutes?: number
-  /** Oferece 23:59 como "fim do dia" (campo de fim de faixa). */
-  endOfDay?: boolean
+  /** Oferece 23:59 como "fim do dia" (campo de fim de bloqueio); `'midnight'` oferece 24:00 (fim de jornada). */
+  endOfDay?: boolean | 'midnight'
   error?: string
   disabled?: boolean
   className?: string
