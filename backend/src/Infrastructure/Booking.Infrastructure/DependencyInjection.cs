@@ -441,6 +441,7 @@ public static class DependencyInjection
         services.AddScoped<CountMyUnreadNotificationsQuery>();
         services.AddScoped<MarkNotificationReadCommand>();
         services.AddScoped<MarkAllNotificationsReadCommand>();
+        services.AddScoped<PurgeOldNotificationsCommand>();
         services.AddScoped<IBusinessStatusNotifier, BusinessStatusNotifier>();
         services.AddScoped<IProfessionalRemovalNotifier, ProfessionalRemovalNotifier>();
         services.AddScoped<DispatchOutboxCommand>();

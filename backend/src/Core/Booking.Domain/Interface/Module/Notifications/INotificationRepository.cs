@@ -21,4 +21,10 @@ public interface INotificationRepository
 
     /// <summary>Marca como lidos todos os não lidos do lado pedido, numa instrução só. Devolve quantos mudaram.</summary>
     Task<int> MarkAllReadAsync(Guid userId, NotificationAudience audience, Guid? businessId, DateTimeOffset now, CancellationToken ct = default);
+
+    /// <summary>
+    /// Apaga, numa instrução só e de todas as pessoas, os avisos lidos antes de <paramref name="readBefore"/> e os criados antes
+    /// de <paramref name="createdBefore"/> (lidos ou não). Devolve quantos saíram.
+    /// </summary>
+    Task<int> DeleteExpiredAsync(DateTimeOffset readBefore, DateTimeOffset createdBefore, CancellationToken ct = default);
 }

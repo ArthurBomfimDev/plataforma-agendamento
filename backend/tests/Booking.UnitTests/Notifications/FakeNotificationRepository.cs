@@ -23,4 +23,13 @@ public sealed class FakeNotificationRepository : INotificationRepository
 
     public Task<int> MarkAllReadAsync(Guid userId, NotificationAudience audience, Guid? businessId, DateTimeOffset now, CancellationToken ct = default) =>
         throw new NotSupportedException();
+
+    public (DateTimeOffset ReadBefore, DateTimeOffset CreatedBefore)? Purged { get; private set; }
+
+    public Task<int> DeleteExpiredAsync(DateTimeOffset readBefore, DateTimeOffset createdBefore, CancellationToken ct = default)
+    {
+        Purged = (readBefore, createdBefore);
+
+        return Task.FromResult(0);
+    }
 }

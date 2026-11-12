@@ -78,7 +78,7 @@ Totais contra `feat/integracao-final`, já com as mesclas do Rafael e da demo-pu
 | B3: baixar os 45 arquivos e preencher `CREDITS.md` | Os bancos de imagem bloqueiam o ambiente (Unsplash e Pixabay pedem login ou chave; Pexels bloqueia robô). Lista e verificador prontos em `scripts/seed-assets/` |
 | B3: versionar as fotos | `scripts/seed-assets/*/` está no `.gitignore` por decisão de 11/11; o prompt pede o contrário |
 | B4: logo certa | O arquivo da logo (WhatsApp) não está em `docs/design/marca/`, em nenhum checkout nem no histórico. Já existe `scripts/pwa-icons.ts` (demo-publica): trocar `vagoo_icone_escuro.png` e rodar. Falta o componente `Logo` único e o inventário |
-| C1: lista in-app (sino) | **Implementada depois**, a pedido do Arthur (backend `8641e2d`, mais o frontend). Os lembretes por e-mail 24 h e 1 h também, com teto de 400 e-mails em 24 h que só segura lembretes (ver `auditoria-notificacoes-11-11.md`). Falta: expurgo e retenção dos avisos |
+| C1: lista in-app (sino) | **Implementada depois**, a pedido do Arthur (backend `8641e2d`, mais o frontend). Os lembretes por e-mail 24 h e 1 h também, com teto de 400 e-mails em 24 h que só segura lembretes (ver `auditoria-notificacoes-11-11.md`). Retenção feita em 12/11: o aviso lido sai com 30 dias e o não lido com 90, por um worker diário |
 | C2: Tauri | Dispensado pelo Arthur. Nada foi medido ou escrito |
 | C3: estado de erro de rede do endereço, banner no iPhone, rotas de consumidor, capturas | Ver "não rodou"; o banner aplica a safe-area, falta o aparelho |
 | A1: destacar alternativas do 409 | Mudança na tela de horários, fora desta rodada. Mantém a limitação da seção 3.2 |

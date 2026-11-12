@@ -1,6 +1,8 @@
+using Booking.Application.Module.Notifications.Commands;
 using Booking.Domain.Entity.Module.Notifications;
 using Booking.Domain.Enum.Module.Notifications;
 using Booking.Domain.Exceptions;
+using Booking.UnitTests.Identity;
 
 namespace Booking.UnitTests.Notifications;
 
@@ -16,6 +18,16 @@ public sealed class NotificationTests
         Assert.Null(n.BusinessId);
         Assert.False(n.IsRead);
         Assert.Equal(_now, n.OccurredAt);
+    }
+
+    [Fact]
+    public async Task Purge_keeps_read_notices_30_days_and_unread_90()
+    {
+        var repository = new FakeNotificationRepository();
+
+        await new PurgeOldNotificationsCommand(repository, new MutableClock(_now)).ExecuteAsync();
+
+        Assert.Equal((_now.AddDays(-30), _now.AddDays(-90)), repository.Purged);
     }
 
     [Fact]

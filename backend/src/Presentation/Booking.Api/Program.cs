@@ -19,6 +19,7 @@ builder.Services.AddScoped<IActorContext, HttpActorContext>();
 builder.Services.AddHostedService<PendingExpirationWorker>();
 builder.Services.AddHostedService<AppointmentReminderWorker>();
 builder.Services.AddHostedService<OutboxWorker>();
+builder.Services.AddHostedService<NotificationRetentionWorker>();
 builder.Services.AddInfrastructure(builder.Configuration, isDevelopment: builder.Environment.IsDevelopment());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();

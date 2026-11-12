@@ -104,7 +104,7 @@ public sealed class BookingApiFactory(
         {
             // Os workers rodariam no meio de um teste e mudariam o resultado: o de expiração expira pedidos, o da
             // outbox envia e-mail. Os testes chamam os comandos deles quando querem.
-            foreach (Type worker in new[] { typeof(PendingExpirationWorker), typeof(OutboxWorker), typeof(AppointmentReminderWorker) })
+            foreach (Type worker in new[] { typeof(PendingExpirationWorker), typeof(OutboxWorker), typeof(AppointmentReminderWorker), typeof(NotificationRetentionWorker) })
             {
                 services.Remove(services.Single(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == worker));
             }

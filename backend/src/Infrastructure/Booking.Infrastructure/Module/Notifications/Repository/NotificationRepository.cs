@@ -29,6 +29,11 @@ public sealed class NotificationRepository(BookingDbContext context) : INotifica
             .Where(x => x.ReadAt == null)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReadAt, now), ct);
 
+    public Task<int> DeleteExpiredAsync(DateTimeOffset readBefore, DateTimeOffset createdBefore, CancellationToken ct = default) =>
+        context.Set<Notification>()
+            .Where(x => (x.ReadAt != null && x.ReadAt < readBefore) || x.OccurredAt < createdBefore)
+            .ExecuteDeleteAsync(ct);
+
     private IQueryable<Notification> Side(Guid userId, NotificationAudience audience, Guid? businessId) =>
         context.Set<Notification>().Where(x => x.UserId == userId
             && x.Audience == audience

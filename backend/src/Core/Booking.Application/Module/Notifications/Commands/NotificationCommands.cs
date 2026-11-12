@@ -26,6 +26,23 @@ public sealed class MarkNotificationReadCommand(INotificationRepository notifica
     }
 }
 
+/// <summary>
+/// Retenção do sino: o aviso lido sai 30 dias depois de lido e o que ninguém abriu, 90 dias depois de criado. O sino mostra
+/// só os mais novos, então o que sai não faz falta, e a tabela deixa de crescer sem limite. Roda pelo worker, não por rota.
+/// </summary>
+public sealed class PurgeOldNotificationsCommand(INotificationRepository notifications, TimeProvider clock)
+{
+    public static readonly TimeSpan ReadRetention = TimeSpan.FromDays(30);
+    public static readonly TimeSpan UnreadRetention = TimeSpan.FromDays(90);
+
+    public Task<int> ExecuteAsync(CancellationToken ct = default)
+    {
+        DateTimeOffset now = clock.GetUtcNow();
+
+        return notifications.DeleteExpiredAsync(now - ReadRetention, now - UnreadRetention, ct);
+    }
+}
+
 public sealed class MarkAllNotificationsReadCommand(INotificationRepository notifications, IActorContext actor, TimeProvider clock)
 {
     /// <summary>Uma instrução só, já confirmada; devolve quantos eram não lidos.</summary>
