@@ -19,7 +19,7 @@
 # Variáveis (no .env, que não é versionado):
 #   PUBLIC_ORIGIN   obrigatória. https://vagoo.<tailnet>.ts.net, o endereço que o Funnel mostra. Nunca no código.
 #   WEB_PORT        a porta que o Funnel expõe. Use 8090.
-#   DEMO_BANNER     texto do aviso no topo; vazio apaga o aviso.
+#   DEMO_BANNER     texto da faixa de aviso no topo. Padrão: vazio, sem faixa. Preencha para ligá-la.
 #   DEMO_SUBNET     sub-rede fixa do compose (padrão 172.28.0.0/24); troque se colidir com outra rede do Docker.
 
 services:
@@ -53,8 +53,9 @@ services:
     restart: unless-stopped
     build:
       args:
-        # Aviso visível de demonstração. Entra no build do frontend (VITE_DEMO_BANNER).
-        VITE_DEMO_BANNER: ${DEMO_BANNER-Ambiente de demonstração — dados fictícios}
+        # Faixa de aviso no topo. Entra no build do frontend (VITE_DEMO_BANNER). Desde 11/11 o padrão é SEM faixa
+        # (decisão do Arthur, ADR-036): para ligá-la, DEMO_BANNER="Ambiente de demonstração — dados fictícios" no .env.
+        VITE_DEMO_BANNER: ${DEMO_BANNER-}
     ports: !override
       - "127.0.0.1:${WEB_PORT:-8090}:80"
 

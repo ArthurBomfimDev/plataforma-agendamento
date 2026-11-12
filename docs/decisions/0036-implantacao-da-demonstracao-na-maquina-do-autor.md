@@ -63,6 +63,10 @@ Adotamos **A** para a demonstração final.
 4. **Proxy confiável mínimo**: só a sub-rede fixa do compose (`DEMO_SUBNET`, 172.28.0.0/24), em vez das três faixas
    privadas inteiras do `compose.yaml`. `UseForwardedHeaders` continua antes do limitador.
 5. **Aviso visível** "Ambiente de demonstração — dados fictícios" em toda tela, por variável de build (`DEMO_BANNER`).
+   > **Atualização de 11/11/2026 (decisão do Arthur):** o padrão passou a ser **sem faixa** (`DEMO_BANNER` vazio). O
+   > componente e a variável continuam: para voltar a ter o aviso, defina `DEMO_BANNER` no `.env` e reconstrua o `web`.
+   > Sem a faixa, nada na tela avisa quem abre o link de que os dados e os e-mails são fictícios; essa informação passa a
+   > depender de quem apresenta.
 6. **Operação documentada** em `docs/operacao/publicacao-demo.md`: abrir, derrubar (`tailscale funnel reset`) e restaurar
    (`down -v`, `up`, seed).
 

@@ -62,7 +62,7 @@ O `.env` **não é versionado** e ninguém além de você pode lê-lo. Gere-o co
 ```dotenv
 PUBLIC_ORIGIN=https://vagoo.SEU-TAILNET.ts.net
 WEB_PORT=8090
-# DEMO_BANNER=Ambiente de demonstração — dados fictícios   (padrão; vazio apaga o aviso)
+# DEMO_BANNER=Ambiente de demonstração — dados fictícios   (padrão: vazio, sem faixa; preencha para ligá-la)
 # DEMO_SUBNET=172.28.0.0/24                                 (troque só se colidir com outra rede do Docker)
 ```
 
@@ -134,7 +134,8 @@ sua rede** (dados móveis, por exemplo) e entre com `consumidor@example.com`.
 - [ ] **Docker inicia com o Windows.** Docker Desktop → Settings → General → *Start Docker Desktop when you sign in*.
       Os contêineres voltam sozinhos (`restart: unless-stopped`). O Tailscale também deve iniciar com o Windows.
 - [ ] **O Funnel só expõe o 8090** (`tailscale funnel status`). Nenhuma outra porta; o Mailpit nunca.
-- [ ] **A faixa de demonstração aparece** no topo (se sumiu, `DEMO_BANNER` ficou vazio no build).
+- [ ] **A faixa de demonstração:** por padrão **não aparece** (decisão de 11/11). Se quiser o aviso no topo, preencha
+      `DEMO_BANNER` no `.env` e reconstrua o `web`; se ele aparecer sem você ter pedido, `DEMO_BANNER` ficou preenchido.
 - [ ] Você sabe derrubar (abaixo) e vai derrubar quando acabar.
 
 ---
