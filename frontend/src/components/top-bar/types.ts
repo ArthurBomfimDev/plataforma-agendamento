@@ -19,6 +19,8 @@ export type TopBarProps = {
   onSearch?: (term: string) => void
   /** Com sessão, o menu da conta (troca de contexto e sair) no lugar do "Sair". */
   accountMenu?: ReactNode
+  /** Com sessão, o sino de avisos, antes do tema. */
+  notifications?: ReactNode
   /**
    * Contexto de estabelecimento (Onda 7A): a barra do consumidor some — busca, localização e
    * "Meus agendamentos" — e entra "Voltar ao painel".

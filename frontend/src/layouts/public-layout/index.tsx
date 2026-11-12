@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { AccountMenu } from '@components/account-menu'
 import { LocationPicker } from '@components/location-picker'
 import { MobileTopBar } from '@components/mobile-top-bar'
+import { NotificationBell } from '@components/notification-bell'
 import {
   ROUTES,
   businessEntryPath,
@@ -45,6 +46,7 @@ export const AppLayout = () => {
         onSignIn={() => navigate(signInPath(returnTo))}
         onSignUp={() => navigate(signUpPath(returnTo))}
         accountMenu={accountMenu && <AccountMenu {...accountMenu} className="max-w-44" />}
+        notifications={<NotificationBell />}
       />
       <TopBar
         showSearch={!isHome && !isSearch}
@@ -58,6 +60,7 @@ export const AppLayout = () => {
         onSignIn={() => navigate(signInPath(returnTo))}
         onSignOut={accountMenu?.onSignOut}
         accountMenu={accountMenu && <AccountMenu {...accountMenu} />}
+        notifications={<NotificationBell />}
         onOpenPanel={context ? () => navigate(ROUTES.panelRequests) : undefined}
       />
       <Suspense fallback={<LoadingScreen />}>

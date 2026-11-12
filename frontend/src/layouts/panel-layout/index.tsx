@@ -31,6 +31,7 @@ import type { PanelBottomItem } from '@components/bottom-navigation/types'
 import { BottomNavigation } from '@components/bottom-navigation'
 import { BusinessStatusPanel } from './business-status'
 import { PANEL_NAVIGATION_ITEMS } from '@components/bottom-navigation/consts'
+import { NotificationBell } from '@components/notification-bell'
 import { PageTransition } from '@components/page-transition'
 import { PendingBadge } from '@components/pending-badge'
 import type { PanelSection } from '@components/panel-sidebar/types'
@@ -254,6 +255,7 @@ const PanelShell = ({
         pendingRequests={pendingCount}
         onNavigate={navigateTo}
         hiddenSections={hidden}
+        notifications={<NotificationBell />}
         footer={
           accountMenu && (
             <AccountMenu {...accountMenu} side="top" align="start" className="w-full max-w-none" />
@@ -266,6 +268,7 @@ const PanelShell = ({
           businessName={business.name}
           logo={business.logo}
           category={business.category}
+          notifications={<NotificationBell />}
         />
         <BusinessStatusPanel context={context} />
         <Suspense

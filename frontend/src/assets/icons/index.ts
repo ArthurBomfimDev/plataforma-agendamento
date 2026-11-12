@@ -41,6 +41,7 @@ export { default as InboxIcon } from '~icons/material-symbols/inbox-outline-roun
 export { default as LightModeIcon } from '~icons/material-symbols/light-mode-outline-rounded'
 export { default as LocationIcon } from '~icons/material-symbols/location-on-outline-rounded'
 export { default as LockIcon } from '~icons/material-symbols/lock-outline-rounded'
+export { default as NotificationsIcon } from '~icons/material-symbols/notifications-outline-rounded'
 export { default as LogoutIcon } from '~icons/material-symbols/logout-rounded'
 export { default as MarkEmailReadIcon } from '~icons/material-symbols/mark-email-read-outline-rounded'
 export { default as MenuIcon } from '~icons/material-symbols/menu-rounded'

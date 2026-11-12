@@ -21,7 +21,7 @@ Auditoria do que existe no código, feita antes de decidir entre implementar o m
 | Peça | Estado |
 |---|---|
 | **Lembrete por e-mail, 24 h e 1 h antes** | **Não existe.** Não há worker, coluna de controle nem gatilho. O único lembrete real é o alarme de 1 h dentro do `.ics`, que só vale se a pessoa adicionar o evento ao calendário |
-| **Lista in-app** (sino, contador de não lidas, marcar como lida) | **Não existe.** Não há tabela, endpoint nem tela. A `Notification` do modelo de domínio (`docs/produto/modelo-de-dominio.md`) nunca foi implementada |
+| **Lista in-app** (sino, contador de não lidas, marcar como lida) | **Existe desde 11/11 (implementada depois da auditoria, a pedido do Arthur).** Tabela `notifications.notification` (migration `AddNotification`), gravada no mesmo `SaveChanges` de cada e-mail de agendamento; `GET /api/notifications`, `GET .../unread-count`, `POST .../{id}/read` e `POST .../read-all`; sino no cabeçalho do consumidor e do painel. Veja a seção "O sino" no fim |
 | Tratamento do limite diário do Gmail | **Não existe.** Passando do limite, as entregas falham, recuam até 1 h e desistem em 10 tentativas |
 
 ## Defeito encontrado e corrigido
@@ -63,5 +63,17 @@ O Arthur pediu os lembretes depois da auditoria, com uma condição: **o teto de
 - **Sem duplicar.** O e-mail entra na outbox e a marca "enviado" (`day_before_reminder_sent_at`, `hour_before_reminder_sent_at`) no mesmo `SaveChanges`: se o worker cair e reiniciar, ou as duas coisas existem, ou nenhuma.
 - **O teto de 400.** `ReminderBudget` conta **todo** e-mail gravado nas últimas 24 h (os críticos também gastam a cota do provedor) e libera lembretes só até `App__ReminderDailyEmailBudget` (padrão 400). O lote do worker nunca passa do que cabe. **Só o lembrete consulta esse número**: `NotifyAsync` (confirmação, recusa, cancelamento, expiração, convite para avaliar) e os e-mails de conta e de convite não passam por ele, então os ~100 e-mails de folga até os cerca de 500 do Gmail ficam reservados a eles. O que passa do teto **não se perde**: fica sem marca e sai na primeira rodada com folga, se ainda estiver na janela.
 - **Verificado.** 17 testes de domínio, 9 de notificador (assunto de Saúde sem nome nem serviço; orçamento esgotado não segura a confirmação nem o convite) e 6 de integração (uma rodada, duas rodadas sem repetir, janela de 1 h, fora das janelas, pendente/cancelado/recusado, balcão, e orçamento zero: lembrete para, confirmação sai). Ao vivo, na pilha local, com o worker real e o seed (300 e-mails já gravados): saíram lembretes até a outbox chegar a **400** nas últimas 24 h e pararam; **72** ficaram retidos, sem marca.
-- **Ainda não existe:** lista in-app (sino, contador, marcar como lida) e adiamento de **todos** os e-mails quando o provedor estoura o limite (hoje só o lembrete respeita o teto; um e-mail crítico que o Gmail recusar recua e desiste em 10 tentativas, como antes). O limite de ~500/dia do Gmail é conhecimento externo, **não verificado**.
+- **Ainda não existe:** adiamento de **todos** os e-mails quando o provedor estoura o limite (hoje só o lembrete respeita o teto; um e-mail crítico que o Gmail recusar recua e desiste em 10 tentativas, como antes). O limite de ~500/dia do Gmail é conhecimento externo, **não verificado**.
 - **Migration** `AddAppointmentReminderMarks` (duas colunas nulas em `scheduling.appointment`): revisão humana.
+
+## O sino (lista in-app), implementado depois da auditoria
+
+Feito a pedido do Arthur em 11/11, depois da regra de corte ter dito para não implementar.
+
+- **Dado.** `notifications.notification`: `user_id`, `audience` (`Customer` ou `Business`), `business_id` (só no lado do estabelecimento), `type`, `appointment_id`, `title`, `body`, `occurred_at`, `read_at`. Sem chave estrangeira (os ids são de outros módulos) e fora do tenant: o aviso é da pessoa. Dois índices: a lista por pessoa e lado, e um parcial só com as não lidas, que o contador consulta a cada minuto.
+- **Quem escreve.** O `AppointmentNotifier`, nos mesmos pontos dos e-mails e no mesmo `SaveChanges`: consumidor recebe confirmado, recusado, cancelado pelo estabelecimento, expirado, convite de avaliação e os lembretes de 24 h e 1 h; o dono e o profissional com login recebem pedido novo e cancelamento pelo consumidor. Balcão sem conta não tem para quem.
+- **Saúde (LGPD, Art. 11).** Título e texto são o assunto e a prévia do e-mail, que já não citam serviço, categoria nem nome do estabelecimento. Teste de unidade cobre.
+- **Lado.** Vem do token: com estabelecimento ativo lê o sino do painel daquele estabelecimento; sem, o do consumidor. Quem troca de contexto troca de sino. Aviso de outra pessoa ou do outro lado devolve 404 (não confirma que existe).
+- **O sino não conta no teto de e-mail.** O teto de 400 em 24 h só segura lembrete por e-mail; o aviso no aplicativo é gravado de qualquer forma.
+- **Não feito.** Push (nada além da lista dentro do app); expurgo de avisos antigos (a lista mostra os 20 mais novos, a tabela cresce); apagar os avisos de quem exclui a conta (a tabela não tem política de retenção ainda). Os dois últimos precisam de decisão.
+- **Verificado.** Testes de unidade e de integração (N1–N7: lado, leitura idempotente, marcar todas, 404 de outro dono, 401 sem sessão, paginação), componente com `renderToString`, migration aplicada em pilha nova e fluxo conferido no navegador: agendar como consumidor, ver o contador, abrir, ir aos agendamentos, contador zerar. **Não visto** em aparelho real nem no painel do dono pela tela (só por teste de integração).

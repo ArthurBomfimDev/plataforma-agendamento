@@ -20,6 +20,7 @@ export const PanelSidebar = (props: PanelSidebarProps) => {
     onNavigate,
     hiddenSections = [],
     footer,
+    notifications,
   } = props
   const sections = SECTIONS.filter(({ id }) => !hiddenSections.includes(id))
 
@@ -40,6 +41,7 @@ export const PanelSidebar = (props: PanelSidebarProps) => {
           <p className="type-label truncate text-(--text-strong)">{businessName}</p>
           <p className="type-caption text-(--text-muted)">Painel do estabelecimento</p>
         </div>
+        {notifications}
         <ThemeToggle />
       </div>
 

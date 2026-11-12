@@ -28,6 +28,7 @@ export const TopBar = (props: TopBarProps) => {
     onChooseLocation,
     onSearch,
     accountMenu,
+    notifications,
     onOpenPanel,
   } = props
   const [term, setTerm] = useState('')
@@ -83,6 +84,7 @@ export const TopBar = (props: TopBarProps) => {
           <div className="flex-1" />
         )}
 
+        {signedIn && notifications}
         <ThemeToggle />
         {inPanel ? (
           <Button variant="ghost" className="shrink-0" onClick={onOpenPanel}>

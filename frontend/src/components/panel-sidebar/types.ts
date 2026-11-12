@@ -31,4 +31,6 @@ export type PanelSidebarProps = {
   hiddenSections?: ReadonlyArray<PanelSection>
   /** Fim da barra: o menu da conta, com a troca de contexto. */
   footer?: ReactNode
+  /** O sino de avisos do painel, ao lado do tema. */
+  notifications?: ReactNode
 }

@@ -7,4 +7,6 @@ export type MobileTopBarProps = {
   onSignUp: () => void
   /** Com sessão, o menu da conta (troca de contexto, minha conta e sair). */
   accountMenu?: ReactNode
+  /** Com sessão, o sino de avisos, antes do tema. */
+  notifications?: ReactNode
 }

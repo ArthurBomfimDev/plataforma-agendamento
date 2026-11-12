@@ -26,6 +26,10 @@ export const queryKeys = {
   // Sob `me`: sai do cache ao trocar de conta.
   consents: ['me', 'consents'] as const,
   consentVersions: ['consent-versions'] as const,
+  // O sino (sob `me`: sai do cache ao trocar de conta). O escopo é o estabelecimento ativo, ou `customer`.
+  notifications: (scope: string | null) => ['me', 'notifications', scope ?? 'customer'] as const,
+  unreadNotifications: (scope: string | null) =>
+    ['me', 'notifications', scope ?? 'customer', 'unread'] as const,
   // Avaliações (ADR-032). As públicas moram sob `reviews`; as do consumidor, sob `appointments` (saem do cache ao trocar de conta).
   reviews: ['reviews'] as const,
   myReviews: ['appointments', 'reviews', 'mine'] as const,

@@ -9,7 +9,7 @@ import { ThemeToggle } from '@components/theme-toggle'
  * "Entrar" e "Criar conta"; com sessão, o menu da conta. Todo controle tem 44px de alvo de toque.
  */
 export const MobileTopBar = (props: MobileTopBarProps) => {
-  const { signedIn, onHome, onSignIn, onSignUp, accountMenu } = props
+  const { signedIn, onHome, onSignIn, onSignUp, accountMenu, notifications } = props
 
   return (
     <header className="border-b border-(--border-subtle) bg-(--bg-surface) pt-[env(safe-area-inset-top)] lg:hidden">
@@ -23,6 +23,7 @@ export const MobileTopBar = (props: MobileTopBarProps) => {
           <Logotype tone="auto" alt="" />
         </button>
         <div className="flex-1" />
+        {signedIn && notifications}
         <ThemeToggle />
         {signedIn ? (
           accountMenu
